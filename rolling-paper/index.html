@@ -209,6 +209,18 @@
   .notes.grid-layout{gap:18px}
   .notes.grid-layout .note{transform:none!important}
 
+  /* ── 전체 영상 편지 카드 ── */
+  #boardVideoCard{position:relative;z-index:1;max-width:640px;margin:0 auto 22px;cursor:pointer;border-radius:20px;
+    background:linear-gradient(90deg,var(--rose),var(--lav));color:#fff;box-shadow:0 14px 32px rgba(232,85,122,.32);transition:.16s}
+  #boardVideoCard:hover{transform:translateY(-3px);box-shadow:0 20px 40px rgba(232,85,122,.4)}
+  #boardVideoCard .bv-inner{display:flex;align-items:center;gap:18px;padding:20px 24px}
+  #boardVideoCard .bv-ico{font-size:42px;line-height:1}
+  #boardVideoCard .bv-txt{display:flex;flex-direction:column;gap:4px}
+  #boardVideoCard .bv-txt b{font-size:19px;font-weight:900}
+  #boardVideoCard .bv-txt span{font-size:13.5px;opacity:.92;font-weight:700}
+  #boardVideoCard .bv-play{margin-left:auto;font-size:30px;background:rgba(255,255,255,.25);width:56px;height:56px;
+    border-radius:50%;display:grid;place-items:center;flex:none}
+
   /* ── PDF 페이지(화면 밖에서 렌더 후 캡처) ── */
   .pdfpage{position:fixed;left:-99999px;top:0;width:794px;height:1123px;overflow:hidden;background:#fff;
     font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif}
@@ -295,13 +307,6 @@
       <label>이름 또는 별명 <span style="color:var(--muted);font-weight:600">(비워도 돼요)</span></label>
       <input class="txt" id="name" maxlength="24" placeholder="예) 2반 지우 / 짝꿍 / 비밀친구">
     </div>
-    <div class="field">
-      <details class="disclose">
-        <summary>🎬 영상 링크 첨부하기 (선택)</summary>
-        <input class="txt" id="video" style="margin-top:8px" placeholder="유튜브·드라이브 링크 붙여넣기">
-        <p class="hintline">폰으로 짧은 영상을 찍어 유튜브(일부공개)나 드라이브에 올린 뒤, 그 링크를 붙이면 롤링페이퍼에서 재생돼요.</p>
-      </details>
-    </div>
     <button class="btn btn-primary btn-block" id="send" style="margin-top:20px">💗 마음 보내기</button>
   </div>
   <p class="sub" style="text-align:center;margin-top:14px;font-size:13px">여러 번 써도 괜찮아요 · 실수해도 선생님이 정리해줄 거예요</p>
@@ -380,10 +385,16 @@
         <input type="range" id="lppR" min="2" max="12" step="1">
         <span class="hintline">숫자가 작을수록 편지가 크게 나와요. 편지가 많으면 PDF가 여러 장으로 나뉩니다.</span>
       </div>
+      <div class="dp-row" style="grid-column:1/-1">
+        <span>🎬 전체 영상 편지 링크 <span style="font-weight:600;color:var(--muted)">(선생님이 편집한 영상 — 롤링페이퍼 맨 위에 올라가요)</span></span>
+        <input class="txt" id="boardVideoInput" placeholder="유튜브·드라이브 링크 붙여넣기 (비우면 사라져요)">
+        <span class="hintline">이 링크는 학생 작성 화면엔 안 보이고, 전시 화면 맨 위에 '영상 편지' 카드로만 올라가요. 유튜브는 눌렀을 때 바로 재생됩니다.</span>
+      </div>
     </div>
   </div>
   <div class="countline"><span class="netpill" id="boardNet"><span class="led"></span><span id="boardNetText">…</span></span>
     &nbsp; 친구들이 남긴 마음 <b id="boardCount">0</b>개</div>
+  <div id="boardVideoCard" class="hidden"></div>
   <div class="notes" id="notes"></div>
 </div>
 
@@ -537,7 +548,7 @@ function buildWrite(){
   const ta=$("#msg"); ta.oninput=()=>$("#msgCount").textContent=ta.value.length;
   // 보내기
   $("#send").onclick=submitMessage;
-  $("#writeAgain").onclick=()=>{ $("#thanks").classList.remove("show"); ta.value=""; $("#name").value=""; $("#video").value=""; $("#msgCount").textContent="0"; window.scrollTo({top:0,behavior:"smooth"}); };
+  $("#writeAgain").onclick=()=>{ $("#thanks").classList.remove("show"); ta.value=""; $("#name").value=""; $("#msgCount").textContent="0"; window.scrollTo({top:0,behavior:"smooth"}); };
   // 반전 공개 팝업 (들어오자마자)
   $("#revealTitle").textContent = REVEAL_TITLE;
   $("#revealMsg").innerHTML = REVEAL_MSG;
@@ -550,7 +561,7 @@ async function submitMessage(){
   const text=$("#msg").value.trim();
   if(!text){ toast("하고 싶은 말을 적어주세요 🌱"); $("#msg").focus(); return; }
   const btn=$("#send"); btn.disabled=true; btn.textContent="보내는 중…";
-  const m={ id:uid(), name:$("#name").value.trim(), text, color:sel.color, sticker:sel.sticker, video:$("#video").value.trim() };
+  const m={ id:uid(), name:$("#name").value.trim(), text, color:sel.color, sticker:sel.sticker, video:"" };
   try{
     if(online){ const {error}=await sb.from(TABLE).insert(msgToRow(m)); if(error) throw error; }
     else { lsAdd({...msgToRow(m),created_at:new Date().toISOString()}); }
@@ -692,7 +703,7 @@ const PRESETS = {
   paper: "radial-gradient(circle at 50% 30%,#fffdf6,#f2e6cf)"
 };
 const DEFAULT_BG = "linear-gradient(160deg,#fdeff3,#fff5e6 45%,#eaf3ff)";
-function defaultDesign(){ return { photos:[], bgFit:"cover", scale:100, opacity:45, preset:"none", layout:"collage", lpp:6 }; }
+function defaultDesign(){ return { photos:[], bgFit:"cover", scale:100, opacity:45, preset:"none", layout:"collage", lpp:6, boardVideo:"" }; }
 let design = loadDesign();
 function loadDesign(){ try{ return Object.assign(defaultDesign(), JSON.parse(localStorage.getItem("fw-design-"+room)||"null")||{}); }catch(e){ return defaultDesign(); } }
 function saveDesign(){ try{ localStorage.setItem("fw-design-"+room, JSON.stringify(design)); }
@@ -737,13 +748,33 @@ function applyDesign(){
     }
   }
   $("#notes").classList.toggle("grid-layout", design.layout==="grid");
+  renderBoardVideo();
   syncDesignControls();
+}
+function renderBoardVideo(){
+  const card=$("#boardVideoCard"); if(!card) return;
+  if(design.boardVideo && design.boardVideo.trim()){
+    card.classList.remove("hidden");
+    card.innerHTML = `<div class="bv-inner"><span class="bv-ico">🎬</span>
+      <div class="bv-txt"><b>${esc(RECIPIENT)}이에게 보내는 영상 편지</b><span>우리 반이 함께 준비했어 · 눌러서 재생</span></div>
+      <span class="bv-play">▶</span></div>`;
+    card.onclick=openBoardVideo;
+  } else { card.classList.add("hidden"); card.innerHTML=""; card.onclick=null; }
+}
+function openBoardVideo(){
+  const m={ sticker:"🎬", text:RECIPIENT+"이에게 보내는 영상 편지 💌", name:"우리 반", color:"#ffe1ec", video:design.boardVideo };
+  modalList=[m]; modalIdx=0;
+  $("#navPrev").style.display=$("#navNext").style.display="none";
+  $("#slidePos").style.display="none";
+  renderSheet(m,false);
+  $("#modal").classList.add("show");
 }
 function syncDesignControls(){
   if(!$("#scaleR")) return;
   $("#scaleR").value=design.scale; $("#scaleVal").textContent=design.scale+"%";
   $("#opacityR").value=design.opacity; $("#opacityVal").textContent=design.opacity+"%";
   $("#lppR").value=design.lpp; $("#lppVal").textContent=design.lpp+"개";
+  if($("#boardVideoInput")) $("#boardVideoInput").value=design.boardVideo||"";
   document.querySelectorAll("#segFit button").forEach(b=>b.classList.toggle("on",b.dataset.v===design.bgFit));
   document.querySelectorAll("#segLayout button").forEach(b=>b.classList.toggle("on",b.dataset.v===design.layout));
   document.querySelectorAll("#presetRow .preset").forEach(b=>b.classList.toggle("on",b.dataset.v===design.preset));
@@ -780,6 +811,8 @@ function buildDesign(){
   $("#opacityR").onchange=saveDesign;
   $("#lppR").oninput=e=>{ design.lpp=+e.target.value; $("#lppVal").textContent=design.lpp+"개"; };
   $("#lppR").onchange=saveDesign;
+  $("#boardVideoInput").oninput=e=>{ design.boardVideo=e.target.value; renderBoardVideo(); };
+  $("#boardVideoInput").onchange=e=>{ design.boardVideo=e.target.value.trim(); saveDesign(); renderBoardVideo(); };
   syncDesignControls();
 }
 
