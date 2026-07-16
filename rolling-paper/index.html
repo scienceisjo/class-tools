@@ -305,7 +305,7 @@
     </div>
     <div class="field">
       <label>이름 또는 별명 <span style="color:var(--muted);font-weight:600">(비워도 돼요)</span></label>
-      <input class="txt" id="name" maxlength="24" placeholder="예) 2반 지우 / 짝꿍 / 비밀친구">
+      <input class="txt" id="name" maxlength="30" placeholder="예) 2년 연속 담임선생님 승재쌤, 3반 서윤이">
     </div>
     <button class="btn btn-primary btn-block" id="send" style="margin-top:20px">💗 마음 보내기</button>
   </div>
@@ -337,7 +337,7 @@
   <div id="setupBanner" class="setup-banner hidden"></div>
   <div class="board-head">
     <div class="grow">
-      <h1 class="heart-title" id="bTitle">💐 다현아, 우리가 준비했어</h1>
+      <h1 class="heart-title" id="bTitle">💐 다현아 새 학교에 가서도! 주변을 밝게하는 멋진 학생이길 바랄게</h1>
       <p class="sub">반 친구들이 한 자 한 자 남긴 마음이야. 새 학교에서도 늘 응원할게 💗</p>
     </div>
     <div class="toolbar">
@@ -579,7 +579,7 @@ async function submitMessage(){
 /* ═══════════════ 전시(롤링페이퍼) ═══════════════ */
 function buildBoard(){
   $("#board").classList.remove("hidden");
-  $("#bTitle").innerHTML = "💐 "+esc(RECIPIENT)+"아, 우리가 준비했어";
+  $("#bTitle").innerHTML = "💐 "+esc(RECIPIENT)+"아 새 학교에 가서도! 주변을 밝게하는 멋진 학생이길 바랄게";
   $("#designBtn").onclick=()=>$("#designPanel").classList.toggle("hidden");
   $("#pdfBtn").onclick=exportPDF;
   $("#slideBtn").onclick=()=>startSlideshow();
@@ -838,7 +838,7 @@ function buildPdfPage(list, idx, total){
   }
   const cols = design.lpp<=3 ? 1 : (design.lpp<=8 ? 2 : 3);
   const inner=document.createElement("div"); inner.className="pdf-inner";
-  let h = idx===0 ? `<div class="pdf-head">💐 ${esc(RECIPIENT)}아, 우리가 준비했어</div>` : "";
+  let h = idx===0 ? `<div class="pdf-head">💐 ${esc(RECIPIENT)}아 새 학교에 가서도! 주변을 밝게하는 멋진 학생이길 바랄게</div>` : "";
   h += `<div class="pdf-notes" style="column-count:${cols};column-gap:15px">`;
   list.forEach(m=>{ h += `<div class="pdf-note" style="background:${m.color}">
     <span class="s">${m.sticker}</span>
