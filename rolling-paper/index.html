@@ -286,8 +286,8 @@
 
 <!-- ═══════════════ 학생 작성 화면 ═══════════════ -->
 <div id="write" class="wrap hidden">
-  <h1 class="heart-title" id="wTitle">다현이에게 마음을 전해요 💌</h1>
-  <p class="sub">네가 쓴 이야기는 다현이에게 <b>그대로</b> 전해질 거예요. 짧아도 괜찮아요 🌱</p>
+  <h1 class="heart-title" id="wTitle">전학을 가는 다현이에게 해 줄 말이 있다면 써주세요 💌</h1>
+  <p class="sub">여기에 하고 싶은 말을 써서 보내면, 다현이에게 보여줄 <b>롤링페이퍼(전시 화면)</b>에 예쁜 쪽지로 올라가요. 색과 스티커를 고르고 마음을 적어주세요 🌱</p>
 
   <div class="paper" style="margin-top:18px">
     <div class="field">
@@ -534,7 +534,7 @@ function rot(id){ let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))&255; retu
 /* ═══════════════ 학생 작성 화면 ═══════════════ */
 function buildWrite(){
   $("#write").classList.remove("hidden");
-  $("#wTitle").textContent = RECIPIENT+"에게 마음을 전해요 💌";
+  $("#wTitle").textContent = "전학을 가는 "+RECIPIENT+"이에게 해 줄 말이 있다면 써주세요 💌";
   document.querySelectorAll('.sub b').forEach(()=>{}); // (문구는 정적)
   // 색깔
   $("#swatches").innerHTML = COLORS.map((c,i)=>`<div class="swatch ${i===0?'sel':''}" data-c="${c}" style="background:${c}"></div>`).join("");
