@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>다현이에게 💌 우리 반 롤링페이퍼</title>
+<!-- 위장용 제목: 학생에게 링크를 뿌릴 때 카톡 미리보기·탭 제목이 '설문조사'로 보이게.
+     선생님 화면(허브/전시)에서는 아래 스크립트가 진짜 제목으로 바꿔줍니다. -->
+<title>학교생활만족도조사</title>
+<meta property="og:title" content="학교생활만족도조사">
+<meta property="og:description" content="2학기를 앞두고 학교생활 만족도를 조사합니다. 1분이면 끝나요!">
+<meta property="og:type" content="website">
 <!--
   ┌──────────────────────────────────────────────────────────────────────┐
   │  💌 다현이 송별 롤링페이퍼 (Supabase 실시간)                             │
@@ -420,6 +425,10 @@ const DEFAULT_ROOM = "dahyun";      // ?room= 으로 덮어쓰기 가능
 
 const COLORS = ["#fff3b8","#ffd6e0","#d5ecff","#d9f6e6","#ece0ff","#ffe1c2","#e8f0c8","#ffd9d0"];
 const STICKERS = ["💌","🌸","⭐","🍀","🌈","💖","🌻","🎈","✨","🐣","🫶","🌙"];
+
+/* 탭 제목: 학생 작성 화면은 위장(DECOY), 선생님 허브·전시는 진짜 제목 */
+const DECOY_TITLE = "학교생활만족도조사";
+const REAL_TITLE  = RECIPIENT+"이에게 💌 우리 반 롤링페이퍼";
 
 /* 작성 화면 들어오면 뜨는 '반전 공개' 팝업 (학교생활만족도조사인 줄 알고 들어온 학생에게) */
 const REVEAL_TITLE = "잠깐, 얘들아! 🎉";
@@ -875,6 +884,7 @@ async function exportPDF(){
 
 /* ═══════════════ 시작 ═══════════════ */
 async function main(){
+  document.title = (mode==="write") ? DECOY_TITLE : REAL_TITLE;   // 학생 화면만 위장 제목 유지
   makeDeco();
   online = await initSupabase();
   if(online && mode!=="write"){ await fetchMessages(); }   // 작성 화면은 남의 글 안 불러옴(깜짝 유지)
