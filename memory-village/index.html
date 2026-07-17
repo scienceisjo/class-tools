@@ -3,20 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>우리 반 추억 마을</title>
+<title>이삼한 친구들의 숲</title>
 <!--
   ┌───────────────────────────────────────────────────────────────────┐
-  │  🏡 우리 반 추억 마을 (다짐 나무 확장판)                              │
-  │  캐릭터를 움직여 다섯 공간을 갤러리 워크로 관람하는 학급 추억 보관소     │
+  │  🌲 이삼한 친구들의 숲 (진짜 3D 버전, three.js WebGL)                 │
+  │  학기말 회고·다짐·추억을 담는 3D 학급 공간                            │
   │                                                                     │
-  │  ● Supabase 연결: 아래 SUPABASE_URL / SUPABASE_ANON_KEY (설정됨)     │
-  │  ● 테이블 셋업: 파일 맨 아래 [SUPABASE SETUP SQL] 주석 참고            │
-  │    (likes 컬럼·공감 함수가 추가되었으니 SQL을 다시 한 번 실행하세요.     │
-  │     전부 idempotent라 이미 만든 테이블에 그대로 실행해도 안전합니다)     │
+  │  ● Supabase: 아래 SUPABASE_URL / SUPABASE_ANON_KEY (설정됨)          │
+  │  ● 테이블 셋업 SQL: 파일 맨 아래 주석 (idempotent, 재실행 안전)        │
   │  ● 반 구분: 링크 끝에 ?room=2-3                                      │
+  │  ● 3D 엔진(three.js)은 CDN에서 로드 — 인터넷 연결 필요                │
   └───────────────────────────────────────────────────────────────────┘
 -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <style>
+  @import url('https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css');
   :root{
     --ink:#2c3a2e;
     --panel:rgba(255,255,255,.93);
@@ -25,98 +26,19 @@
     font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
   }
   *{box-sizing:border-box}
+  h1,.count-badge{font-family:'Galmuri11','Galmuri9',system-ui,'Malgun Gothic',sans-serif}
   html,body{margin:0;height:100%}
-  body{color:var(--ink);background:#7fce77;overflow:hidden;-webkit-tap-highlight-color:transparent;
-    overscroll-behavior:none}
+  body{color:var(--ink);background:#9fd8f5;overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 
-  /* ═════════ 게임 화면 ═════════ */
-  #game{position:fixed;inset:0;overflow:hidden;touch-action:none;
-    background:linear-gradient(#8ed382,#7fce77)}
-  #world{position:absolute;left:0;top:0;width:2600px;height:1600px;transform-origin:0 0;will-change:transform;
-    background:
-      radial-gradient(ellipse 700px 420px at 20% 75%, rgba(255,255,255,.10), transparent 70%),
-      radial-gradient(ellipse 800px 500px at 78% 22%, rgba(255,255,255,.08), transparent 70%),
-      radial-gradient(ellipse 900px 560px at 50% 55%, rgba(180,235,150,.5), transparent 72%),
-      linear-gradient(#93d787,#7cc973)}
+  #game{position:fixed;inset:0;overflow:hidden;touch-action:none}
+  #game canvas{position:absolute;inset:0;display:block}
 
-  .deco{position:absolute;transform:translate(-50%,-50%);pointer-events:none;user-select:none}
-  .stone{position:absolute;width:46px;height:26px;border-radius:50%;background:rgba(240,230,190,.55);
-    box-shadow:inset 0 -3px 0 rgba(120,110,70,.15);transform:translate(-50%,-50%);pointer-events:none}
-  .pond{position:absolute;left:1300px;top:170px;width:250px;height:104px;transform:translate(-50%,-50%);
-    border-radius:50%;background:radial-gradient(ellipse at 45% 38%,#bfe9ff,#7cc3ef 75%);
-    box-shadow:inset 0 6px 14px rgba(30,90,140,.25), 0 3px 0 rgba(255,255,255,.35);pointer-events:none}
-  .cloud{position:absolute;font-size:90px;opacity:.5;filter:blur(.5px);pointer-events:none;animation:drift linear infinite}
-  @keyframes drift{from{transform:translateX(-300px)}to{transform:translateX(2900px)}}
-
-  /* 팻말 */
-  .sign{position:absolute;transform:translate(-50%,-50%);z-index:4;pointer-events:none;text-align:center}
-  .sign .board{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(#c89b62,#a97c46);
-    color:#fff;font-weight:900;font-size:19px;padding:8px 16px;border-radius:12px;
-    box-shadow:0 4px 10px rgba(60,40,10,.3);border:2px solid #8a6236;text-shadow:0 1px 2px rgba(0,0,0,.25);
-    white-space:nowrap}
-  .sign .board .n{background:rgba(255,255,255,.25);border-radius:999px;padding:1px 10px;font-size:15px}
-  .sign .post{width:10px;height:26px;margin:0 auto;background:#8a6236;border-radius:0 0 4px 4px}
-
-  /* 별빛 갤러리 벽 */
-  .gallery-wall{position:absolute;left:160px;top:160px;width:610px;height:310px;border-radius:22px;
-    background:radial-gradient(ellipse at 50% 0%,#3d4a7a,#232a4d 75%);
-    border:10px solid #8a6236;box-shadow:0 10px 24px rgba(20,25,60,.35);pointer-events:none}
-  .gallery-wall::before{content:"✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦";position:absolute;left:0;right:0;top:8px;text-align:center;
-    color:#ffe27a;font-size:14px;letter-spacing:8px;opacity:.8}
-  .gallery-wall::after{content:"기억에 남는 순간들";position:absolute;left:0;right:0;bottom:10px;text-align:center;
-    color:rgba(255,255,255,.55);font-weight:800;font-size:13px;letter-spacing:2px}
-
-  /* 온실 */
-  .greenhouse{position:absolute;left:1900px;top:1060px;width:510px;height:290px;border-radius:18px 18px 14px 14px;
-    background:linear-gradient(rgba(220,245,255,.38),rgba(200,240,220,.30));
-    border:6px solid #7ea77f;box-shadow:0 8px 20px rgba(40,80,50,.2), inset 0 0 40px rgba(255,255,255,.25);
-    pointer-events:none}
-  .greenhouse::before{content:"";position:absolute;left:-6px;right:-6px;top:-34px;height:40px;
-    background:linear-gradient(rgba(230,250,255,.5),rgba(210,240,230,.35));
-    border:6px solid #7ea77f;border-bottom:none;border-radius:60% 60% 0 0}
-  .greenhouse::after{content:"🪴          🪴          🪴";position:absolute;left:0;right:0;bottom:8px;
-    text-align:center;font-size:24px;opacity:.9}
-
-  /* ═════════ 마음 마커 ═════════ */
-  .marker{position:absolute;transform:translate(-50%,-50%);cursor:pointer;border:none;background:none;padding:0;
-    font-size:40px;line-height:1;z-index:5;transition:opacity .3s, filter .2s;
-    animation:bob 4.2s ease-in-out infinite;filter:drop-shadow(0 4px 4px rgba(0,0,0,.2))}
-  .marker::after{content:"";position:absolute;inset:-32% -32%;border-radius:50%;z-index:-1;
-    background:radial-gradient(circle, var(--glow) 0%, rgba(255,255,255,0) 66%);opacity:.85}
-  .marker:hover{filter:drop-shadow(0 0 14px var(--glow))}
-  .marker.near{filter:drop-shadow(0 0 16px var(--glow));animation-duration:1.6s}
-  .marker.pop{animation:pop .75s cubic-bezier(.2,1.5,.4,1) both, bob 4.2s .9s ease-in-out infinite}
-  .marker.dim{opacity:.13;filter:grayscale(.6)}
-  @keyframes bob{0%,100%{margin-top:0}50%{margin-top:-8px}}
-  @keyframes pop{0%{transform:translate(-50%,120%) scale(.2);opacity:0}60%{transform:translate(-50%,-50%) scale(1.25)}100%{transform:translate(-50%,-50%) scale(1)}}
-
-  /* ═════════ 플레이어 ═════════ */
-  #player{position:absolute;z-index:8;width:140px;margin-left:-70px;transform:translateY(-88%);pointer-events:none;text-align:center}
-  #player .body{font-size:48px;line-height:1;display:inline-block;filter:drop-shadow(0 5px 5px rgba(0,0,0,.25));
-    transition:transform .12s}
-  #player.walking .body{animation:hop .32s ease-in-out infinite}
-  @keyframes hop{0%,100%{translate:0 0}50%{translate:0 -7px}}
-  #player .pname{margin-top:2px;display:inline-block;background:rgba(255,255,255,.88);border-radius:999px;
-    padding:2px 11px;font-size:13px;font-weight:800;color:#3a5a3f;white-space:nowrap;
-    box-shadow:0 2px 6px rgba(0,0,0,.18)}
-  #player .pshadow{position:absolute;left:50%;top:46px;width:44px;height:13px;transform:translateX(-50%);
-    border-radius:50%;background:rgba(0,0,0,.18);filter:blur(2px);z-index:-1}
-
-  /* 말풍선 미리보기 */
-  #bubble{position:absolute;z-index:9;transform:translate(-50%,-118%);max-width:300px;min-width:150px;
-    background:rgba(255,255,255,.96);border-radius:16px;padding:11px 14px;box-shadow:var(--shadow);
-    font-size:15px;line-height:1.45;font-weight:700;display:none;cursor:pointer;border:2.5px solid var(--glow,#7fce77)}
-  #bubble::after{content:"";position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);
-    border:11px solid transparent;border-top-color:rgba(255,255,255,.96);border-bottom:none}
-  #bubble .bmeta{display:flex;justify-content:space-between;gap:10px;margin-top:5px;font-size:12px;color:#8a9a8e;font-weight:800}
-  #bubble .bhint{color:#e0662f}
-
-  /* ═════════ 상단바 ═════════ */
+  /* ---------- 상단바 ---------- */
   .topbar{position:fixed;left:0;right:0;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
     padding:10px 14px;pointer-events:none}
   .topbar > *{pointer-events:auto}
   h1{margin:0;font-size:clamp(17px,2.2vw,26px);font-weight:900;letter-spacing:-.5px;color:#fff;
-    text-shadow:0 2px 6px rgba(30,80,40,.5);display:flex;align-items:center;gap:8px}
+    text-shadow:0 2px 6px rgba(30,80,40,.55);display:flex;align-items:center;gap:8px}
   .classname,.netdot{border:none;background:rgba(255,255,255,.82);color:#3a5a3f;font-weight:800;
     font-size:clamp(11px,1.3vw,14px);padding:5px 12px;border-radius:999px;box-shadow:0 3px 10px rgba(40,70,45,.15)}
   .classname{cursor:pointer}
@@ -143,19 +65,26 @@
   #minimap .mp{position:absolute;width:9px;height:9px;border-radius:50%;background:#fff;border:2px solid #2c3a2e;
     transform:translate(-50%,-50%);z-index:2}
 
-  /* 남기기 버튼 */
   .fab{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:25;border:none;cursor:pointer;
     color:#fff;font-weight:900;font-size:clamp(16px,2vw,20px);padding:14px 32px;border-radius:999px;
     background:linear-gradient(135deg,#ffa93d,#ff7a45);box-shadow:0 10px 24px rgba(255,120,60,.5);transition:.15s}
   .fab:hover{transform:translateX(-50%) translateY(-2px)}
   .fab:active{transform:translateX(-50%) scale(.96)}
 
-  /* 조작 힌트 */
   #ctrlHint{position:fixed;left:50%;bottom:82px;transform:translateX(-50%);z-index:19;
     background:rgba(44,58,46,.82);color:#fff;font-weight:700;font-size:13px;padding:8px 18px;border-radius:999px;
     transition:opacity 1s;pointer-events:none;white-space:nowrap}
 
-  /* ═════════ 오버레이 공통 ═════════ */
+  /* 말풍선 (3D 위치를 화면에 투영) */
+  #bubble{position:fixed;z-index:18;transform:translate(-50%,-100%);max-width:300px;min-width:150px;
+    background:rgba(255,255,255,.96);border-radius:16px;padding:11px 14px;box-shadow:var(--shadow);
+    font-size:15px;line-height:1.45;font-weight:700;display:none;cursor:pointer;border:2.5px solid var(--glow,#7fce77)}
+  #bubble::after{content:"";position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);
+    border:11px solid transparent;border-top-color:rgba(255,255,255,.96);border-bottom:none}
+  #bubble .bmeta{display:flex;justify-content:space-between;gap:10px;margin-top:5px;font-size:12px;color:#8a9a8e;font-weight:800}
+  #bubble .bhint{color:#e0662f}
+
+  /* ---------- 오버레이 공통 ---------- */
   .overlay{position:fixed;inset:0;z-index:100;background:rgba(30,45,35,.55);backdrop-filter:blur(4px);
     display:none;place-items:center;padding:16px;animation:fade .2s ease}
   .overlay.show{display:grid}
@@ -168,22 +97,12 @@
   .x{position:absolute;top:13px;right:14px;border:none;background:rgba(0,0,0,.06);width:36px;height:36px;
     border-radius:11px;font-size:17px;cursor:pointer;z-index:2}
 
-  /* 입장(아바타) */
   .avatars{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px;margin:12px 0 16px}
   .av{border:2.5px solid var(--line);background:#fff;border-radius:14px;font-size:30px;padding:7px 0;cursor:pointer;
     transition:.12s;text-align:center}
   .av:hover{transform:translateY(-2px)}
   .av.on{border-color:#3fae63;background:#eefaef;box-shadow:0 5px 14px rgba(63,174,99,.25)}
-  .av.photo{background:linear-gradient(135deg,#fff,#eef6ff);display:grid;place-items:center;min-height:46px;padding:4px 0}
-  .av.photo img{width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,.2)}
-  .av-remove{border:none;background:rgba(0,0,0,.06);border-radius:999px;padding:6px 14px;font-weight:800;
-    font-size:12px;color:#c0554a;cursor:pointer;margin:-8px 0 12px}
-  #player .body img{width:54px;height:54px;border-radius:50%;object-fit:cover;border:3px solid #fff;
-    box-shadow:0 4px 10px rgba(0,0,0,.28);display:block}
-  .avmini{border-radius:50%;object-fit:cover;vertical-align:-5px;border:2px solid #fff;
-    box-shadow:0 1px 4px rgba(0,0,0,.25)}
 
-  /* 카테고리 선택 */
   .cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-bottom:15px}
   .cat{border:2.5px solid var(--line);background:#fff;border-radius:15px;padding:10px 6px;cursor:pointer;
     text-align:center;transition:.13s;font-weight:800;font-size:13px}
@@ -199,16 +118,16 @@
     font-size:16px;font-family:inherit;background:#fff;color:var(--ink);resize:none}
   input[type=text]:focus,textarea:focus{outline:none;border-color:#7fce77}
   textarea{min-height:104px;line-height:1.5}
-  .anon{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:#5f7563;
-    white-space:nowrap;cursor:pointer;background:#fff;border:2px solid var(--line);padding:10px 11px;border-radius:13px}
   .author-line{display:inline-flex;align-items:center;gap:8px;background:#eefaef;border:2px solid #cdeccd;
     border-radius:13px;padding:10px 16px;font-weight:800;font-size:17px;color:#2c7a3f}
+  .warnbox{background:#fff3f0;border:2.5px solid #ffb3a1;border-radius:14px;padding:12px 15px;
+    font-size:13px;line-height:1.7;color:#8a3b2a;font-weight:700;margin-bottom:14px}
+  .warnbox b{color:#d63f2a}
   .counter{text-align:right;font-size:12px;color:#8a9a8e;margin-top:4px}
   .submit{width:100%;border:none;color:#fff;font-weight:900;font-size:17px;padding:14px;border-radius:15px;
     cursor:pointer;background:linear-gradient(135deg,#65c86f,#3fae63);box-shadow:0 8px 20px rgba(63,174,99,.35);margin-top:2px}
   .submit:disabled{opacity:.45;cursor:not-allowed}
 
-  /* 상세 카드 */
   .view-emoji{font-size:60px;text-align:center;margin:4px 0}
   .view-cat{text-align:center;font-weight:800;font-size:14px;margin-bottom:12px}
   .view-text{font-size:clamp(18px,2.4vw,24px);line-height:1.55;text-align:center;font-weight:700;
@@ -222,7 +141,6 @@
   .like-btn .heart{font-size:19px}
   .like-btn.liked{background:#ffe3e9;border-color:#ff8fa8}
 
-  /* 모아보기 */
   .list-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
   .lf{border:2px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;cursor:pointer;font-weight:700;font-size:13px}
   .lf.on{border-color:#3fae63;background:#eefaef}
@@ -236,7 +154,6 @@
   .item .del{border:none;background:rgba(0,0,0,.05);width:29px;height:29px;border-radius:9px;cursor:pointer;font-size:13px;color:#c0554a}
   .empty-list{text-align:center;color:#8a9a8e;padding:38px 0;font-weight:700}
 
-  /* 메뉴 */
   .menu-list{display:grid;gap:7px}
   .menu-list button{display:flex;align-items:center;gap:11px;text-align:left;border:2px solid var(--line);
     background:#fff;border-radius:13px;padding:12px 15px;cursor:pointer;font-weight:800;font-size:14px;color:var(--ink)}
@@ -247,7 +164,13 @@
   .howto b{color:#2c3a2e}
   .howto code{background:rgba(0,0,0,.06);padding:1px 6px;border-radius:6px;font-size:.9em}
 
-  /* 발표모드 */
+  .noticebox{background:#f0f7ff;border:2.5px solid #a9cdf0;border-radius:14px;padding:13px 15px;margin-bottom:14px}
+  .noticebox label{display:block;font-weight:800;margin-bottom:7px;font-size:14px;color:#2b6cb0}
+  .noticebox textarea{min-height:72px}
+  .noticebox .nbtns{display:flex;gap:8px;margin-top:8px}
+
+  .avmini{border-radius:50%;object-fit:cover;vertical-align:-5px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+
   #present{background:radial-gradient(ellipse at 50% 30%,#25402c,#132018)}
   .present-card{text-align:center;color:#fff;max-width:min(840px,94vw)}
   .present-emoji{font-size:clamp(64px,11vw,140px);filter:drop-shadow(0 0 30px var(--glow))}
@@ -262,15 +185,12 @@
   .present-exit{position:fixed;top:20px;right:20px;border:none;background:rgba(255,255,255,.16);color:#fff;
     padding:10px 17px;border-radius:999px;font-weight:800;cursor:pointer;z-index:110}
 
-  /* 토스트 / 폭죽 / 반짝 */
   .toast{position:fixed;top:64px;left:50%;transform:translateX(-50%) translateY(-90px);z-index:200;
     background:#2c3a2e;color:#fff;padding:11px 21px;border-radius:999px;font-weight:800;font-size:14px;
     box-shadow:0 10px 24px rgba(0,0,0,.28);opacity:0;transition:.35s;max-width:92vw;text-align:center}
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
   .confetti{position:fixed;top:-20px;width:11px;height:16px;z-index:190;pointer-events:none;border-radius:2px;animation:cdrop linear forwards}
   @keyframes cdrop{to{transform:translateY(105vh) rotate(720deg)}}
-  .sparkle{position:absolute;z-index:9;pointer-events:none;font-size:20px;animation:spark .85s ease-out forwards}
-  @keyframes spark{0%{transform:translate(0,0) scale(.4);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.2);opacity:0}}
   .heart-fly{position:fixed;z-index:210;pointer-events:none;font-size:26px;animation:hfly 1s ease-out forwards}
   @keyframes hfly{0%{transform:translateY(0) scale(.6);opacity:1}100%{transform:translateY(-90px) scale(1.4);opacity:0}}
 
@@ -282,39 +202,10 @@
 </style>
 </head>
 <body>
-<div id="game">
-  <div id="world">
-    <!-- 장식·건물은 JS(buildWorld)가 채움 -->
-    <div class="pond"><span style="position:absolute;left:58%;top:8%;font-size:26px">🦆</span></div>
-    <div class="gallery-wall"></div>
-    <div class="greenhouse"></div>
-    <div id="treeWrap" style="position:absolute;left:900px;top:230px;width:800px;height:760px;pointer-events:none">
-      <div id="foliage" style="position:absolute;inset:0;z-index:2;filter:drop-shadow(0 14px 22px rgba(40,80,40,.2))"></div>
-      <svg style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:340px;z-index:1;
-        filter:drop-shadow(0 10px 14px rgba(60,50,20,.25))" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg">
-        <defs><linearGradient id="bark" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#7a5230"/><stop offset=".5" stop-color="#9a6a3c"/><stop offset="1" stop-color="#6f4a2a"/>
-        </linearGradient></defs>
-        <g stroke="#7a5230" stroke-linecap="round" fill="none">
-          <path d="M200 300 C160 280 138 250 120 214" stroke-width="20"/>
-          <path d="M205 285 C250 268 272 240 292 208" stroke-width="18"/>
-          <path d="M200 268 C196 236 198 206 200 176" stroke-width="15"/>
-          <path d="M150 250 C140 232 132 214 128 196" stroke-width="11"/>
-          <path d="M258 250 C270 232 278 214 282 198" stroke-width="11"/>
-        </g>
-        <path d="M182 460 C176 380 172 330 190 285 C210 330 224 380 218 460 Z" fill="url(#bark)"/>
-        <path d="M190 285 C186 360 188 410 190 458" stroke="#5f3f24" stroke-width="3" fill="none" opacity=".5"/>
-      </svg>
-    </div>
-    <div id="decoLayer"></div>
-    <div id="markers"></div>
-    <div id="player"><span class="body" id="pBody">🦊</span><div class="pshadow"></div><br><span class="pname" id="pNameTag">탐험가</span></div>
-    <div id="bubble"></div>
-  </div>
-</div>
+<div id="game"></div>
 
 <header class="topbar">
-  <h1>🏡 우리 반 추억 마을</h1>
+  <h1>🌲 이삼한 친구들의 숲</h1>
   <button class="classname" id="classNameBtn">반 이름 ✎</button>
   <span class="netdot" id="netDot"><span class="led"></span><span id="netText">오프라인</span></span>
   <div class="legend" id="legend"></div>
@@ -328,20 +219,34 @@
 
 <div id="minimap"></div>
 <button class="fab" id="addBtn">＋ 남기기</button>
-<div id="ctrlHint">🚶 화면을 터치하거나 방향키(WASD)로 움직여요 · 가까이 가면 내용이 보여요</div>
+<div id="ctrlHint">🚶 바닥을 터치하면 그곳으로 걸어가요 · 방향키(WASD)도 OK</div>
+<div id="bubble"></div>
 
-<!-- 입장(캐릭터 선택) -->
+<!-- 입장 -->
 <div class="overlay" id="enterOverlay">
   <div class="card">
-    <h2>우리 반 추억 마을에 온 걸 환영해! 🎈</h2>
-    <p class="sub">캐릭터를 고르고 별명을 정해 입장하세요<br>
-      <span style="font-size:12px;color:#8a9a8e">고른 캐릭터와 별명으로 내 마음이 전시돼요</span></p>
+    <h2>이삼한 친구들의 숲에 온 것을 환영합니다! 🌲</h2>
+    <p class="sub">캐릭터를 고르고 별명을 정해 입장하세요</p>
+    <div class="warnbox">⚠️ <b>입장 전 꼭 읽기!</b><br>
+      반드시 <b>자기 이름(별명)</b>으로 들어와요. 익명이나 친구 이름을 사칭해 장난 글을 쓰면
+      <b>선생님이 확인 후 삭제</b>하며 기록이 남아요.<br>
+      우리 반 모두가 함께 보는 공간이에요. 진심을 담아, 서로를 아끼는 글을 남겨주세요 🙂</div>
     <div class="avatars" id="avatarGrid"></div>
     <div class="field">
       <label>별명 (이름) — 꼭 입력해요</label>
       <input type="text" id="avatarName" maxlength="8" placeholder="예: 승재, 별빛여우">
     </div>
-    <button class="submit" id="enterBtn">🚪 마을 입장하기</button>
+    <button class="submit" id="enterBtn">🚪 숲으로 입장하기</button>
+  </div>
+</div>
+
+<!-- 선생님 알림 -->
+<div class="overlay" id="noticeOverlay">
+  <div class="card" style="text-align:center">
+    <div style="font-size:52px">📢</div>
+    <h2>선생님 알림</h2>
+    <div id="noticeBody" class="view-text" style="--soft:#fff6db;margin-top:10px;font-size:clamp(16px,2.2vw,21px)"></div>
+    <button class="submit" id="noticeOkBtn" style="margin-top:16px">확인했어요!</button>
   </div>
 </div>
 
@@ -349,13 +254,13 @@
 <div class="overlay" id="addOverlay">
   <div class="card">
     <button class="x" data-close>✕</button>
-    <h2>마을에 마음 남기기 🌱</h2>
+    <h2>숲에 마음 남기기 🌱</h2>
     <p class="sub">종류를 고르면 해당 공간에 전시돼요</p>
     <div class="cats" id="catPicker"></div>
     <div class="field">
       <label id="textLabel">내용</label>
-      <textarea id="entryText" maxlength="200" placeholder="여기에 적어주세요"></textarea>
-      <div class="counter"><span id="charCount">0</span>/200</div>
+      <textarea id="entryText" maxlength="300" placeholder="여기에 적어주세요"></textarea>
+      <div class="counter"><span id="charCount">0</span>/300</div>
     </div>
     <div class="field">
       <label>작성자</label>
@@ -395,7 +300,19 @@
   <div class="card">
     <button class="x" data-close>✕</button>
     <h2>교사 대시보드 🛠️</h2>
-    <p class="sub">부적절한 답변을 찾아 <b>삭제</b>할 수 있어요. 삭제하면 모든 학생 화면에서 사라집니다.</p>
+    <p class="sub">공지 등록, 추억 사진 관리, 부적절한 답변 삭제를 할 수 있어요.</p>
+    <div class="noticebox">
+      <label>📢 입장 알림 공지 — 학생이 입장할 때 팝업으로 떠요 (접속 중인 학생에게도 바로 전달)</label>
+      <textarea id="noticeText" maxlength="300" placeholder="예: 이번 주 금요일까지 모두 3개 이상 남겨주세요! 서로의 마음에 공감도 눌러줘요 ❤️"></textarea>
+      <div class="nbtns">
+        <button class="lf" id="noticeSaveBtn" style="border-color:#3fae63;font-weight:800">💾 공지 저장·발송</button>
+        <button class="lf" id="noticeClearBtn" style="color:#c0554a">공지 내리기</button>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <button class="lf" id="photoAddBtn" style="border-color:#5aa7e8;color:#2b6cb0">📷 추억 사진 추가 — 별빛 갤러리에 걸려요</button>
+      <input type="file" id="photoFile" accept="image/*" hidden>
+    </div>
     <input type="text" id="teacherSearch" placeholder="🔍 내용·이름으로 검색" style="margin-bottom:12px">
     <div class="list-filter" id="teacherFilter"></div>
     <div class="items" id="teacherItems"></div>
@@ -408,7 +325,7 @@
     <button class="x" data-close>✕</button>
     <h2>메뉴 ⚙️</h2>
     <div class="menu-list">
-      <button id="mTeacher"><span class="mi">🛠️</span> 교사 대시보드 (답변 관리·삭제)</button>
+      <button id="mTeacher"><span class="mi">🛠️</span> 교사 대시보드 (공지·사진·답변 관리)</button>
       <button id="mAvatar"><span class="mi">🦊</span> 캐릭터·별명 바꾸기</button>
       <button id="mRoom"><span class="mi">🚪</span> 방(반) 코드 바꾸기</button>
       <button id="mLink"><span class="mi">🔗</span> 학생 참여 링크 복사</button>
@@ -421,11 +338,11 @@
       <button id="mReset" class="danger"><span class="mi">🗑️</span> 전체 지우기</button>
     </div>
     <div class="howto" id="howtoBox" style="display:none">
-      <b>🚶 돌아다니기</b> — 화면(가고 싶은 곳)을 터치하거나 방향키·WASD로 이동해요. 미니맵을 눌러도 이동!<br>
+      <b>🚶 돌아다니기</b> — 바닥을 터치하면 그곳으로 걸어가요. 방향키·WASD, 미니맵 터치도 OK.<br>
       <b>👀 관람하기</b> — 마음 근처에 가면 말풍선 미리보기가 떠요. 말풍선(또는 Space)을 누르면 크게 보기 + ❤️ 공감.<br>
-      <b>🗺️ 다섯 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(기억에 남는 순간) / 🎪추억광장(기억에 남는 행사) / 📮마음우체국(친구에게 한마디) / 🌱도전온실(도전할 것·우리 반 1인1역)<br>
-      <b>🛠️ 교사용</b> — 메뉴 → 교사 대시보드에서 부적절한 답변을 검색·삭제할 수 있어요. (모든 답변은 캐릭터·별명으로 기록 — 익명 없음)<br>
-      <b>🏫 수업 활용</b> — 학생은 각자 폰·태블릿으로 남기고, 전자칠판에서 <b>📺 발표</b>로 함께 읽어요. 남긴 후엔 자유롭게 돌아다니며 친구 것에 공감(갤러리 워크)!<br>
+      <b>🗺️ 여섯 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(기억에 남는 순간·추억 사진) / 🎪추억광장(기억에 남는 행사) / 📮마음우체국(친구에게 한마디) / 🤝1인1역 본부(점검·스타 추천·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
+      <b>🏆 1인1역 스타</b> — 추천 글에 ❤️ 공감을 누르는 게 곧 투표! 발표 모드에서 공감 수를 함께 보여줘요.<br>
+      <b>🛠️ 교사용</b> — 메뉴 → 교사 대시보드: 입장 알림 공지, 추억 사진 추가, 답변 검색·삭제.<br>
       <b>🚪 반 구분</b> — 링크 끝 <code>?room=2-3</code>. 메뉴의 <b>학생 참여 링크 복사</b> 사용.<br>
       <b>📡 저장</b> — Supabase 연결 시 실시간 공유, 미연결 시 이 기기에만 저장돼요.
     </div>
@@ -460,14 +377,15 @@ const SUPABASE_URL      = "https://vbvtnmnodeoocbbjauap.supabase.co";   // 과�
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRubW5vZGVvb2NiYmphdWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0OTQ0OTYsImV4cCI6MjA5NTA3MDQ5Nn0.dvuRrt3qw2Tya_QwGbcXrmGPdfDgI4xmgyH8UjU73Nc";
 const TABLE = "dajim_entries";
 
-/* ═══════════════ 월드 / 공간 정의 ═══════════════ */
+/* ═══════════════ 월드(3D) / 공간 정의 — 평면 좌표 x:0~2600, z:0~1600 ═══════════════ */
 const W = 2600, H = 1600;
 const ZONES = {
-  tree:    { label:"다짐 나무",   emoji:"🌳", color:"#e8542f", sign:{x:1300,y:1060} },
-  gallery: { label:"별빛 갤러리", emoji:"⭐", color:"#f2b705", sign:{x:465,y:540},  spots:{x0:220,x1:720,y0:210,y1:420} },
-  plaza:   { label:"추억 광장",   emoji:"🎪", color:"#ff8fb1", sign:{x:2150,y:565}, spots:{x0:1930,x1:2390,y0:210,y1:450} },
-  post:    { label:"마음 우체국", emoji:"📮", color:"#b07cf0", sign:{x:455,y:1425}, spots:{x0:230,x1:700,y0:1090,y1:1320} },
-  green:   { label:"도전 온실",   emoji:"🌱", color:"#5cb85c", sign:{x:2150,y:1425},spots:{x0:1950,x1:2360,y0:1100,y1:1310} },
+  tree:    { label:"다짐 나무",   emoji:"🌳", color:"#e8542f", sign:{x:1300,z:1000} },
+  gallery: { label:"별빛 갤러리", emoji:"⭐", color:"#f2b705", sign:{x:465,z:545},  spots:{x0:230,x1:700,z0:0,z1:0} },
+  plaza:   { label:"추억 광장",   emoji:"🎪", color:"#ff8fb1", sign:{x:2150,z:565}, spots:{x0:1930,x1:2390,z0:210,z1:450} },
+  post:    { label:"마음 우체국", emoji:"📮", color:"#b07cf0", sign:{x:455,z:1420}, spots:{x0:230,x1:700,z0:1090,z1:1320} },
+  green:   { label:"도전 온실",   emoji:"🌱", color:"#5cb85c", sign:{x:2150,z:1420},spots:{x0:1960,x1:2340,z0:1110,z1:1290} },
+  role:    { label:"1인1역 본부", emoji:"🤝", color:"#2bb0a3", sign:{x:2150,z:980}, spots:{x0:1900,x1:2430,z0:830,z1:945} },
 };
 const CATS = [
   { id:"resolve", emoji:"🍎", label:"나의 다짐",        zone:"tree",    color:"#ef5350", soft:"#fdeceb", prompt:"2학기의 나에게 다짐 한 가지! (예: 수업시간에 더 집중할래)" },
@@ -475,10 +393,18 @@ const CATS = [
   { id:"memory",  emoji:"⭐", label:"기억에 남는 순간", zone:"gallery", color:"#f2b705", soft:"#fff6db", prompt:"1학기, 가장 기억에 남는 순간·장면·경험을 남겨주세요" },
   { id:"event",   emoji:"🎉", label:"기억에 남는 행사", zone:"plaza",   color:"#ff7ab8", soft:"#ffe9f4", prompt:"체육대회, 현장체험학습, 축제… 최고의 행사와 그 이유는?" },
   { id:"friend",  emoji:"💌", label:"친구에게 한마디",  zone:"post",    color:"#b07cf0", soft:"#f3ecfd", prompt:"고마웠던 친구, 응원하고 싶은 친구에게 한마디" },
-  { id:"try",     emoji:"🌱", label:"도전하고 싶은 것", zone:"green",   color:"#5cb85c", soft:"#e9f7e9", prompt:"2학기에 새롭게 도전해보고 싶은 것" },
-  { id:"role",    emoji:"🤝", label:"우리 반 1인1역",   zone:"green",   color:"#2bb0a3", soft:"#e3f6f3", prompt:"2학기에 우리 반을 위해 내가 할 수 있는 일·맡고 싶은 1인1역은? (예: 칠판 담당, 분리수거 지킴이)" },
+  { id:"try",     emoji:"🌱", label:"방학 중 도전하고 싶은 것", zone:"green", color:"#5cb85c", soft:"#e9f7e9", prompt:"이번 방학에 새롭게 도전해보고 싶은 것과 그 이유는? (예: 매일 30분 달리기 — 체력을 키우고 싶어서)" },
+  { id:"rolecheck", emoji:"✅", label:"나의 1인1역 점검", zone:"role", color:"#0f9d8f", soft:"#e0f5f2",
+    prompt:"1학기 내 1인1역은 무엇이었고, 어떻게 실천했나요? 솔직하게 점검해요.\n(예: 매일 아침 창문을 열어 환기했다 / 내 역할이 할 일이 없어서 ○○의 1인1역을 함께 도왔다 / 자주 깜빡해서 아쉬웠고 2학기엔 알림을 정할 것이다)" },
+  { id:"rolestar",  emoji:"🏆", label:"1인1역 스타 추천", zone:"role", color:"#e8a200", soft:"#fff4d6",
+    prompt:"1학기 1인1역을 가장 잘한 친구를 추천해요! 누가·무엇을·어떻게 잘했는지 구체적으로.\n(예: ○○ — 우유 당번을 한 번도 빼먹지 않고 조용히 실천했어요)" },
+  { id:"role",      emoji:"🤝", label:"만들고 싶은 1인1역", zone:"role", color:"#2bb0a3", soft:"#e3f6f3",
+    prompt:"2학기에 우리 반을 위해 내가 할 수 있는 일·새로 만들고 싶은 1인1역은? 그 이유도 함께!\n(예: 칠판 지킴이 — 수업 전 칠판을 닦아 선생님과 친구들을 돕고 싶다)" },
+  { id:"photo",     emoji:"📷", label:"추억 사진", zone:"gallery", color:"#5aa7e8", soft:"#e8f3ff",
+    hidden:true, prompt:"" },   // 교사 대시보드에서만 추가/삭제
 ];
 const catById = id => CATS.find(c => c.id === id) || CATS[0];
+const isPhoto = e => e.category === "photo";
 const AVATARS = [
   "🦊","🐱","🐶","🐰","🐻","🐼","🐨","🐯","🦁","🐸","🐵","🐷","🐮","🐹","🐭","🐔",
   "🐧","🐤","🦉","🦆","🦅","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐢","🐍",
@@ -491,33 +417,27 @@ const AVATARS = [
 /* ═══════════════ 상태 ═══════════════ */
 const KEY = "dajim-namu-v1";
 let state = { className:"", entries:[], sound:true };
+let notice = "";
 let sb = null, online = false;
 let room = resolveRoom();
 let avatar = loadAvatar();
 let selectedCat = CATS[0].id;
-let filterCat = null, listFilter = null, presentIdx = 0;
+let filterCat = null, listFilter = null, teacherFilter = null, presentIdx = 0;
 let likedSet = loadLiked();
 let viewingId = null;
 
-/* 플레이어 */
-const player = { x:1300, y:1180, vx:0, vy:0 };
-let walkTarget = null;      // {x,y,openId?}
-let nearestId = null;
-const keys = {};
-const SPEED = 320;
+const NOTICE_ID = () => "notice::" + room;
 
 const $ = s => document.querySelector(s);
 const rand = () => Math.random();
 function uid(){ return Date.now().toString(36) + Math.floor(rand()*1e6).toString(36); }
 function esc(s){ return String(s).replace(/[&<>"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
-/* 작성자 캐릭터 표시(사진 dataURL 또는 이모지) */
 function avatarHTML(a, size){
   if(!a) return "";
   if(a.startsWith("data:image/"))
     return `<img class="avmini" style="width:${size}px;height:${size}px" src="${esc(a)}" alt="">`;
   return `<span style="font-size:${Math.round(size*.9)}px;line-height:1">${esc(a)}</span>`;
 }
-
 function resolveRoom(){
   const u = new URLSearchParams(location.search).get("room");
   if(u){ localStorage.setItem("dajim-room", u.trim()); return u.trim(); }
@@ -536,22 +456,21 @@ function loadLiked(){
   try{ return new Set(JSON.parse(localStorage.getItem("dajim-liked")||"[]")); }catch(e){ return new Set(); }
 }
 function saveLiked(){ try{ localStorage.setItem("dajim-liked", JSON.stringify([...likedSet])); }catch(e){} }
-
 function loadPrefs(){
   try{
     const d = JSON.parse(localStorage.getItem(KEY) || "{}");
     state.className = d.className || "";
     state.sound = d.sound !== false;
-    if(!online) state.entries = Array.isArray(d.entries) ? d.entries : [];
+    if(!online){ state.entries = Array.isArray(d.entries) ? d.entries : []; notice = d.notice || ""; }
   }catch(e){}
 }
 function save(){
   const d = { className:state.className, sound:state.sound };
-  if(!online) d.entries = state.entries;
+  if(!online){ d.entries = state.entries; d.notice = notice; }
   try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch(e){}
 }
 
-/* ═══════════════ 위치 결정(결정적 해시 → 모든 기기 동일 배치) ═══════════════ */
+/* ═══════════════ 위치 결정(결정적 해시) ═══════════════ */
 function hash2(id){
   let h = 2166136261>>>0;
   for(let i=0;i<id.length;i++){ h ^= id.charCodeAt(i); h = Math.imul(h,16777619)>>>0; }
@@ -561,15 +480,22 @@ function hash2(id){
   const b = ((Math.imul(h2,2246822519)>>>0)) / 4294967296;
   return [a,b];
 }
+/* 3D 좌표: {x, y(높이), z} */
 function posFor(e){
   const [u,v] = hash2(e.id);
   const c = catById(e.category);
   if(c.zone === "tree"){
-    const ang = 2*Math.PI*u, r = Math.sqrt(v);
-    return { x: 1300 + 290*r*Math.cos(ang), y: 480 + 150*r*Math.sin(ang) };
+    // 다짐나무 수관(구) 표면에 매달림
+    const th = 2*Math.PI*u, ph = Math.acos(1 - v*0.95);   // 위쪽 반구 위주
+    const R = 215;
+    return { x: 1300 + R*Math.sin(ph)*Math.cos(th), y: 360 + R*Math.cos(ph)*0.85, z: 680 + R*Math.sin(ph)*Math.sin(th)*0.8 };
   }
-  const z = ZONES[c.zone].spots;
-  return { x: z.x0 + u*(z.x1-z.x0), y: z.y0 + v*(z.y1-z.y0) };
+  if(c.zone === "gallery"){
+    // 별빛 갤러리 벽면에 붙음
+    return { x: 235 + u*(695-235), y: 85 + v*185, z: 328 };
+  }
+  const s = ZONES[c.zone].spots;
+  return { x: s.x0 + u*(s.x1-s.x0), y: 30, z: s.z0 + v*(s.z1-s.z0) };
 }
 
 /* ═══════════════ Supabase ═══════════════ */
@@ -600,25 +526,34 @@ async function initSupabase(){
 async function fetchEntries(){
   const { data, error } = await sb.from(TABLE).select("*").eq("room", room).order("created_at",{ascending:true});
   if(error){ toast("불러오기 오류: " + error.message); return; }
-  state.entries = data.map(rowToEntry);
+  notice = "";
+  state.entries = [];
+  data.forEach(r=>{
+    if(r.category === "notice"){ notice = r.content || ""; }
+    else state.entries.push(rowToEntry(r));
+  });
   renderAll();
 }
 function subscribe(){
   sb.channel("dajim-room-" + room)
     .on("postgres_changes",{event:"INSERT",schema:"public",table:TABLE,filter:"room=eq."+room}, p=>{
       if(!p.new || p.new.room!==room) return;
+      if(p.new.category === "notice"){ notice = p.new.content || ""; onNoticeChanged(); return; }
       const e = rowToEntry(p.new);
       if(state.entries.some(x=>x.id===e.id)) return;
       state.entries.push(e); renderAll(e.id); afterAdd(e, false);
     })
     .on("postgres_changes",{event:"UPDATE",schema:"public",table:TABLE,filter:"room=eq."+room}, p=>{
       if(!p.new) return;
+      if(p.new.category === "notice"){ notice = p.new.content || ""; onNoticeChanged(); return; }
       const e = state.entries.find(x=>x.id===p.new.id);
       if(e){ e.likes = (typeof p.new.likes==="number"?p.new.likes:e.likes); refreshLikeUI(e); }
     })
     .on("postgres_changes",{event:"DELETE",schema:"public",table:TABLE}, p=>{
       const id = p.old && p.old.id;
-      if(id && state.entries.some(x=>x.id===id)){ state.entries = state.entries.filter(x=>x.id!==id); renderAll(); }
+      if(!id) return;
+      if(id === NOTICE_ID()){ notice = ""; return; }
+      if(state.entries.some(x=>x.id===id)){ state.entries = state.entries.filter(x=>x.id!==id); renderAll(); }
     })
     .subscribe();
 }
@@ -628,94 +563,281 @@ function updateStatus(){
   else { d.classList.remove("on"); t.textContent = "오프라인 (이 기기)"; }
 }
 
-/* ═══════════════ 월드 건설 ═══════════════ */
-function buildWorld(){
-  /* 나무 잎사귀 */
-  const greens = ["#8fd47f","#79c96b","#a6dd96","#6fbf63","#98d888","#84cf76"];
-  const blobs = [{x:50,y:30,r:30},{x:30,y:36,r:22},{x:70,y:36,r:22},{x:38,y:20,r:20},{x:62,y:20,r:20},{x:50,y:14,r:17},{x:22,y:30,r:15},{x:78,y:30,r:15},{x:50,y:44,r:22}];
-  $("#foliage").innerHTML = blobs.map((b,i)=>{
-    const g = greens[i%greens.length], g2 = greens[(i+2)%greens.length];
-    return `<div style="position:absolute;left:${b.x}%;top:${b.y}%;width:${b.r*2}%;height:${b.r*2.05}%;
-      border-radius:50%;transform:translate(-50%,-50%);
-      background:radial-gradient(circle at 40% 35%, ${g} 0%, ${g2} 70%)"></div>`;
-  }).join("");
+/* ═══════════════ 3D 월드 (three.js) ═══════════════ */
+let scene, camera, renderer, groundMesh, markersGroup, playerSprite;
+const signMeta = {};        // zone → {canvas, ctx, texture}
+const texCache = {};        // 이모지 → texture
+let photoTexCache = {};     // entry id → texture
 
-  const L = [];
-  /* 팻말 */
-  for(const [k,z] of Object.entries(ZONES)){
-    L.push(`<div class="sign" style="left:${z.sign.x}px;top:${z.sign.y}px">
-      <div class="board">${z.emoji} ${z.label}<span class="n" id="signN-${k}">0</span></div><div class="post"></div></div>`);
-  }
-  /* 건물·소품 (이모지) */
-  const props = [
-    [300,1170,"🏤",120],[560,1150,"📮",62],[660,1250,"🐦",30],
-    [2400,240,"🎪",130],[1965,250,"🎠",64],[2400,470,"🧺",40],
-    [820,540,"🪧",0],[130,620,"🐿️",34],[2480,880,"🦔",32],
-    [1140,1120,"🪑",40],[1460,1120,"🪑",40],
-  ];
-  props.forEach(([x,y,e,s])=>{ if(s) L.push(`<div class="deco" style="left:${x}px;top:${y}px;font-size:${s}px">${e}</div>`); });
-  /* 테두리 나무 */
-  const border = [];
-  for(let x=80;x<W;x+=260){ border.push([x,55],[x+120,H-45]); }
-  for(let y=300;y<H-100;y+=300){ border.push([45,y],[W-45,y+140]); }
-  border.forEach(([x,y])=>L.push(`<div class="deco" style="left:${x}px;top:${y}px;font-size:${44+((x*7+y)%3)*8}px">${((x+y)%2)?"🌲":"🌳"}</div>`));
-  /* 꽃/풀 */
-  const flowers = ["🌼","🌷","🌻","🌺","🍀","🌾"];
-  for(let i=0;i<26;i++){
-    const x = 130+((i*397)%2340), y = 620+((i*271)%420);
-    if(Math.abs(x-1300)<420 && y<1010) continue;
-    L.push(`<div class="deco" style="left:${x}px;top:${y}px;font-size:${22+(i%3)*6}px">${flowers[i%flowers.length]}</div>`);
-  }
-  /* 징검다리 길 (중앙광장 → 4개 공간) */
-  const paths = [[1300,1100,465,520],[1300,1100,2150,540],[1300,1100,455,1330],[1300,1100,2150,1330]];
-  paths.forEach(([x0,y0,x1,y1])=>{
-    for(let i=1;i<=7;i++){
-      const t = i/8;
-      L.push(`<div class="stone" style="left:${x0+(x1-x0)*t + ((i%2)?14:-14)}px;top:${y0+(y1-y0)*t}px"></div>`);
-    }
-  });
-  /* 구름 */
-  L.push(`<div class="cloud" style="top:70px;animation-duration:80s">☁️</div>`);
-  L.push(`<div class="cloud" style="top:820px;animation-duration:110s;animation-delay:-40s;font-size:70px;opacity:.35">☁️</div>`);
-  $("#decoLayer").innerHTML = L.join("");
+function makeCanvas(w,h){ const c = document.createElement("canvas"); c.width=w; c.height=h; return c; }
+function emojiTexture(ch){
+  if(texCache[ch]) return texCache[ch];
+  const c = makeCanvas(128,128), g = c.getContext("2d");
+  g.font = "100px 'Segoe UI Emoji','Apple Color Emoji',serif";
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(ch, 64, 72);
+  const t = new THREE.CanvasTexture(c);
+  texCache[ch] = t; return t;
+}
+function photoTexture(e){
+  if(photoTexCache[e.id]) return photoTexCache[e.id];
+  const c = makeCanvas(256,208), g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0,0,256,208);            // 폴라로이드 틀
+  g.fillStyle = "#dde"; g.fillRect(10,10,236,160);
+  const t = new THREE.CanvasTexture(c);
+  const img = new Image();
+  img.onload = ()=>{
+    const r = Math.max(236/img.width, 160/img.height);
+    const w = img.width*r, h = img.height*r;
+    g.save(); g.beginPath(); g.rect(10,10,236,160); g.clip();
+    g.drawImage(img, 10+(236-w)/2, 10+(160-h)/2, w, h); g.restore();
+    if(e.name){ g.fillStyle="#445"; g.font="700 22px 'Malgun Gothic',sans-serif"; g.textAlign="center";
+      g.fillText(e.name.slice(0,14), 128, 194); }
+    t.needsUpdate = true;
+  };
+  img.src = e.text;
+  photoTexCache[e.id] = t; return t;
+}
+function playerTexture(av){
+  const c = makeCanvas(256,320), g = c.getContext("2d");
+  g.font = "150px 'Segoe UI Emoji','Apple Color Emoji',serif";
+  g.textAlign="center"; g.textBaseline="middle";
+  g.fillText(av.emoji||"🦊", 128, 120);
+  const name = av.name || "탐험가";
+  g.font = "700 34px Galmuri11,'Malgun Gothic',sans-serif";
+  const tw = g.measureText(name).width + 40;
+  g.fillStyle = "rgba(255,255,255,.92)";
+  roundRect(g, 128-tw/2, 226, tw, 52, 26); g.fill();
+  g.fillStyle = "#2c5a3f";
+  g.fillText(name, 128, 254);
+  return new THREE.CanvasTexture(c);
+}
+function roundRect(g,x,y,w,h,r){
+  g.beginPath();
+  g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r);
+  g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath();
+}
+function drawSign(k, count){
+  const z = ZONES[k], m = signMeta[k];
+  if(!m) return;
+  const g = m.ctx;
+  g.clearRect(0,0,512,192);
+  g.fillStyle = "#a97c46"; roundRect(g, 8, 20, 496, 128, 26); g.fill();
+  g.strokeStyle = "#8a6236"; g.lineWidth = 8; roundRect(g, 8, 20, 496, 128, 26); g.stroke();
+  g.fillStyle = "#fff";
+  g.font = "700 52px Galmuri11,'Malgun Gothic',sans-serif";
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(`${z.emoji} ${z.label}`, 236, 86);
+  g.fillStyle = "rgba(255,255,255,.28)"; roundRect(g, 420, 52, 72, 66, 20); g.fill();
+  g.fillStyle = "#fff"; g.font = "700 42px Galmuri11,'Malgun Gothic',sans-serif";
+  g.fillText(String(count), 456, 87);
+  m.texture.needsUpdate = true;
+}
+function lam(color, opt){ return new THREE.MeshLambertMaterial(Object.assign({color}, opt||{})); }
+function box(w,h,d,color,x,y,z,opt){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), lam(color,opt));
+  m.position.set(x,y,z); scene.add(m); return m;
+}
+function groundPlane(w,d,color,x,z,y,opt){
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w,d), lam(color,opt));
+  m.rotation.x = -Math.PI/2; m.position.set(x, y||1, z); scene.add(m); return m;
 }
 
-/* ═══════════════ 렌더 ═══════════════ */
+function buildScene(){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x9fd8f5);
+  scene.fog = new THREE.Fog(0x9fd8f5, 1400, 3400);
+  camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 1, 6000);
+  renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  $("#game").appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, .78));
+  const sun = new THREE.DirectionalLight(0xfff6dd, .65);
+  sun.position.set(600, 1200, 400); scene.add(sun);
+
+  /* 잔디 (체커 텍스처) */
+  const gc = makeCanvas(128,128), gg = gc.getContext("2d");
+  gg.fillStyle="#7cc653"; gg.fillRect(0,0,128,128);
+  gg.fillStyle="#85cf5c"; gg.fillRect(0,0,64,64); gg.fillRect(64,64,64,64);
+  const gt = new THREE.CanvasTexture(gc);
+  gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(34, 26);
+  groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(4400,3400), new THREE.MeshLambertMaterial({ map:gt }));
+  groundMesh.rotation.x = -Math.PI/2; groundMesh.position.set(1300, 0, 750);
+  scene.add(groundMesh);
+
+  /* 흙길 */
+  const PATHS = [
+    [1310, 74, 1075+37, 430+1760/2],       // [w,d, zc, xc] 가로길
+  ];
+  groundPlane(1760, 74, 0xecd9a8, 430+880, 1075+37, 2);
+  groundPlane(74, 164, 0xecd9a8, 1300, 985+82, 2);
+  groundPlane(74, 520, 0xecd9a8, 467, 555+260, 2);
+  groundPlane(74, 320, 0xecd9a8, 467, 1075+160, 2);
+  groundPlane(74, 357, 0xecd9a8, 2153, 792+178, 2);
+  groundPlane(74, 320, 0xecd9a8, 2153, 1075+160, 2);
+
+  /* 연못 */
+  const pond = new THREE.Mesh(new THREE.CircleGeometry(115, 28), lam(0x4faae6));
+  pond.rotation.x = -Math.PI/2; pond.position.set(1300, 2, 170); scene.add(pond);
+
+  /* ── 다짐 나무 (중앙 대형 3D 트리) ── */
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(30, 52, 330, 10), lam(0x8a6236));
+  trunk.position.set(1300, 165, 680); scene.add(trunk);
+  [[1300,390,680,205],[1160,320,640,145],[1440,320,720,145],[1300,300,560,120],[1300,310,800,120]].forEach(([x,y,z,r],i)=>{
+    const s = new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),
+      new THREE.MeshStandardMaterial({ color:[0x6fbf63,0x84cf76,0x79c96b,0x8fd47f,0x84cf76][i%5], flatShading:true, roughness:1 }));
+    s.position.set(x,y,z); scene.add(s);
+  });
+
+  /* ── 별빛 갤러리 (밤하늘 벽) ── */
+  box(640, 300, 26, 0x232a4d, 465, 152, 300);
+  box(668, 22, 40, 0x8a6236, 465, 306, 300);
+  box(668, 22, 40, 0x8a6236, 465, 8, 300);
+
+  /* ── 추억 광장 (서커스 텐트) ── */
+  const tentBase = new THREE.Mesh(new THREE.CylinderGeometry(110, 118, 70, 12), lam(0xfff1f5));
+  tentBase.position.set(2330, 35, 230); scene.add(tentBase);
+  const tentTop = new THREE.Mesh(new THREE.ConeGeometry(130, 120, 12), lam(0xff6f9d));
+  tentTop.position.set(2330, 130, 230); scene.add(tentTop);
+  const flag = new THREE.Mesh(new THREE.ConeGeometry(14, 30, 6), lam(0xffd166));
+  flag.position.set(2330, 205, 230); scene.add(flag);
+  groundPlane(430, 250, 0xf7e9c8, 2160, 330, 1.5);
+
+  /* ── 마음 우체국 ── */
+  box(210, 150, 160, 0xfdf3dc, 300, 75, 1170);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(175, 95, 4), lam(0xe86a5e));
+  roof.rotation.y = Math.PI/4; roof.position.set(300, 197, 1170); scene.add(roof);
+  box(46, 60, 12, 0x8a6236, 300, 30, 1252);                       // 문
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(6,6,70,8), lam(0x666));
+  post.position.set(560, 35, 1150); scene.add(post);
+  box(44, 52, 40, 0xe8453c, 560, 95, 1150);                        // 우체통
+
+  /* ── 도전 온실 (유리 온실) ── */
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(440, 150, 240),
+    new THREE.MeshLambertMaterial({ color:0xbfe6ff, transparent:true, opacity:.32 }));
+  glass.position.set(2150, 76, 1200); scene.add(glass);
+  const gRoof = new THREE.Mesh(new THREE.CylinderGeometry(120,120,440,3,1,false,0,Math.PI),
+    new THREE.MeshLambertMaterial({ color:0xd4f0ff, transparent:true, opacity:.34 }));
+  gRoof.rotation.z = Math.PI/2; gRoof.position.set(2150, 150, 1200); scene.add(gRoof);
+  const frame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(440,150,240)),
+    new THREE.LineBasicMaterial({ color:0x5f8f60 }));
+  frame.position.copy(glass.position); scene.add(frame);
+
+  /* ── 1인1역 본부 (센터풍 건물) ── */
+  box(300, 110, 160, 0xfdf3dc, 2150, 55, 715);
+  box(340, 34, 200, 0x2bb0a3, 2150, 127, 715);
+  box(56, 66, 12, 0x8a6236, 2150, 33, 797);
+  box(46, 40, 8, 0xbfe6ff, 2062, 70, 797);
+  box(46, 40, 8, 0xbfe6ff, 2238, 70, 797);
+  const hqc = makeCanvas(512,128), hg = hqc.getContext("2d");
+  hg.fillStyle="#fff"; hg.font="700 56px Galmuri11,'Malgun Gothic',sans-serif";
+  hg.textAlign="center"; hg.textBaseline="middle"; hg.fillText("🤝 1인1역 본부", 256, 66);
+  const hqTex = new THREE.CanvasTexture(hqc);
+  const hqSign = new THREE.Mesh(new THREE.PlaneGeometry(240,60),
+    new THREE.MeshBasicMaterial({ map:hqTex, transparent:true }));
+  hqSign.position.set(2150, 127, 816); scene.add(hqSign);
+
+  /* ── 테두리 숲 (인스턴스 나무) ── */
+  const spots3 = [];
+  for(let x=60;x<=W-60;x+=112){ spots3.push([x,60],[x+56,150],[x,H-40],[x+56,H-130]); }
+  for(let z=260;z<=H-220;z+=112){ spots3.push([50,z],[130,z+56],[W-50,z],[W-130,z+56]); }
+  const tGeo = new THREE.CylinderGeometry(9, 13, 64, 6);
+  const fGeo = new THREE.IcosahedronGeometry(55, 0);
+  const tMesh = new THREE.InstancedMesh(tGeo, lam(0x7a5230), spots3.length);
+  const fMesh = new THREE.InstancedMesh(fGeo,
+    new THREE.MeshStandardMaterial({ color:0x4e9e4e, flatShading:true, roughness:1 }), spots3.length);
+  const M = new THREE.Matrix4();
+  spots3.forEach(([x,z],i)=>{
+    M.makeTranslation(x, 32, z); tMesh.setMatrixAt(i, M);
+    const s = 0.85 + ((x*7+z)%40)/100;
+    M.makeScale(s,s,s).setPosition(x, 64+55*s*0.8, z); fMesh.setMatrixAt(i, M);
+  });
+  scene.add(tMesh); scene.add(fMesh);
+
+  /* ── 풀숲 (초록 원뿔 다발) ── */
+  const GRASS = [[680,600],[1700,610],[880,1240],[1580,1280],[210,830],[980,420],[1660,900]];
+  const grassGeo = new THREE.ConeGeometry(15, 40, 5);
+  const gTotal = GRASS.length * 10;
+  const grassMesh = new THREE.InstancedMesh(grassGeo,
+    new THREE.MeshStandardMaterial({ color:0x3f9440, flatShading:true, roughness:1 }), gTotal);
+  let gi = 0;
+  GRASS.forEach(([cx,cz])=>{
+    for(let k=0;k<10;k++){
+      const gx = cx + ((k*73)%140) - 70, gz = cz + ((k*137)%100) - 50;
+      M.makeTranslation(gx, 20, gz); grassMesh.setMatrixAt(gi++, M);
+    }
+  });
+  scene.add(grassMesh);
+
+  /* ── 꽃 (스프라이트) ── */
+  ["🌼","🌷","🌻","🌺","🍀","🌼","🌷","🌻"].forEach((f,i)=>{
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:emojiTexture(f), transparent:true }));
+    const x = 300+((i*641)%2000), z = 560+((i*389)%520);
+    if(Math.abs(x-1300)<430 && z<1010) return;
+    s.scale.set(30,30,1); s.position.set(x, 15, z); scene.add(s);
+  });
+
+  /* ── 공간 팻말 (canvas 스프라이트) ── */
+  for(const [k,z] of Object.entries(ZONES)){
+    const c = makeCanvas(512,192);
+    const tex = new THREE.CanvasTexture(c);
+    signMeta[k] = { canvas:c, ctx:c.getContext("2d"), texture:tex };
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true }));
+    spr.scale.set(230, 86, 1);
+    spr.position.set(z.sign.x, 58, z.sign.z);
+    scene.add(spr);
+    drawSign(k, 0);
+  }
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ for(const k in ZONES) drawSign(k, zoneCount(k)); });
+
+  /* 마커 그룹 + 플레이어 */
+  markersGroup = new THREE.Group(); scene.add(markersGroup);
+  playerSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map:playerTexture(avatar||{emoji:"🦊",name:"탐험가"}), transparent:true }));
+  playerSprite.scale.set(96, 120, 1);
+  playerSprite.position.set(player.x, 62, player.z);
+  scene.add(playerSprite);
+}
+function zoneCount(k){ return state.entries.filter(e=>catById(e.category).zone===k).length; }
+
+/* ═══════════════ 마커(마음) 렌더 ═══════════════ */
 function renderAll(newestId){
   $("#classNameBtn").textContent = (state.className || "반 이름") + " ✎";
-  const box = $("#markers"); box.innerHTML = "";
-  state.entries.forEach(e=>{
-    const c = catById(e.category), p = posFor(e);
-    const b = document.createElement("button");
-    b.className = "marker" + (e.id===newestId ? " pop":"");
-    b.style.left = p.x+"px"; b.style.top = p.y+"px";
-    b.style.setProperty("--glow", c.color);
-    if(e.id!==newestId) b.style.animationDelay = (rand()*3.5)+"s";
-    b.textContent = c.emoji;
-    b.dataset.id = e.id;
-    b.addEventListener("click", ev=>{
-      ev.stopPropagation();
-      const d = Math.hypot(player.x-p.x, player.y-p.y);
-      if(d < 190) openView(e);
-      else { walkTarget = { x:p.x, y:p.y+60, openId:e.id }; }
+  if(markersGroup){
+    markersGroup.clear();
+    state.entries.forEach(e=>{
+      const c = catById(e.category), p = posFor(e);
+      let spr;
+      if(isPhoto(e)){
+        spr = new THREE.Sprite(new THREE.SpriteMaterial({ map:photoTexture(e), transparent:true }));
+        spr.userData.size = [96, 78];
+      } else {
+        spr = new THREE.Sprite(new THREE.SpriteMaterial({ map:emojiTexture(c.emoji), transparent:true }));
+        spr.userData.size = [58, 58];
+      }
+      const dim = filterCat && e.category!==filterCat;
+      spr.material.opacity = dim ? 0.15 : 1;
+      spr.scale.set(spr.userData.size[0], spr.userData.size[1], 1);
+      spr.position.set(p.x, p.y, p.z);
+      spr.userData.entry = e;
+      spr.userData.baseY = p.y;
+      spr.userData.gx = p.x; spr.userData.gz = c.zone==="gallery" ? 380 : (c.zone==="tree" ? 850 : p.z);
+      spr.userData.phase = hash2(e.id)[0]*6.28;
+      if(e.id === newestId) spr.userData.pop = performance.now();
+      markersGroup.add(spr);
     });
-    if(filterCat && e.category!==filterCat) b.classList.add("dim");
-    box.appendChild(b);
-  });
-  /* 팻말 개수 */
-  for(const [k] of Object.entries(ZONES)){
-    const n = state.entries.filter(e=>catById(e.category).zone===k).length;
-    const el = $("#signN-"+k); if(el) el.textContent = n;
   }
+  for(const k in ZONES) drawSign(k, zoneCount(k));
   renderLegend();
   $("#soundBtn").textContent = state.sound ? "🔊" : "🔇";
-  nearestId = null; updateBubble();
+  nearestId = null; updateBubbleContent();
   if($("#teacherOverlay").classList.contains("show")) renderTeacher();
   if($("#listOverlay").classList.contains("show")){ renderListFilter(); renderListItems(); }
 }
 function renderLegend(){
   const counts = {}; state.entries.forEach(e=>counts[e.category]=(counts[e.category]||0)+1);
-  $("#legend").innerHTML = CATS.map(c=>`
+  $("#legend").innerHTML = CATS.filter(c=>!c.hidden).map(c=>`
     <span class="chip ${filterCat===c.id?"active":""}" data-cat="${c.id}" style="color:${c.color}">
       ${c.emoji}<span style="color:var(--ink)">${c.label}</span><span class="n">${counts[c.id]||0}</span></span>`).join("");
   document.querySelectorAll("#legend .chip").forEach(ch=>{
@@ -723,94 +845,110 @@ function renderLegend(){
   });
 }
 
-/* ═══════════════ 카메라 / 이동 루프 ═══════════════ */
-let SCALE = 1, camX = 0, camY = 0;
-function computeScale(){
-  const vw = innerWidth, vh = innerHeight;
-  SCALE = Math.min(1, Math.max(0.6, Math.min(vw/1250, vh/850)));
-}
-addEventListener("resize", computeScale);
+/* ═══════════════ 플레이어 / 카메라 / 루프 ═══════════════ */
+const player = { x:1300, z:1180 };
+let walkTarget = null, walking = false, faceRight = false;
+const keys = {};
+const SPEED = 330;
+let nearestId = null;
+let lastT = performance.now();
+const rayc = new THREE.Raycaster ? null : null;   // (아래에서 생성)
+let raycaster, pointerV, projV;
 
 function overlayOpen(){ return !!document.querySelector(".overlay.show"); }
+function clampX(x){ return Math.max(70, Math.min(W-70, x)); }
+function clampZ(z){ return Math.max(170, Math.min(H-60, z)); }
 
-let lastT = performance.now();
-function loop(t){
+function stepPlayer(dt){
+  let dx=0, dz=0;
+  if(keys.ArrowLeft||keys.a) dx -= 1;
+  if(keys.ArrowRight||keys.d) dx += 1;
+  if(keys.ArrowUp||keys.w) dz -= 1;
+  if(keys.ArrowDown||keys.s) dz += 1;
+  if(dx||dz){
+    walkTarget = null;
+    const m = Math.hypot(dx,dz); dx/=m; dz/=m;
+    player.x += dx*SPEED*dt; player.z += dz*SPEED*dt;
+    walking = true; if(Math.abs(dx)>0.1) faceRight = dx>0;
+  } else if(walkTarget){
+    const tx = walkTarget.x-player.x, tz = walkTarget.z-player.z;
+    const d = Math.hypot(tx,tz);
+    if(d < 14){
+      const open = walkTarget.openId;
+      walkTarget = null; walking = false;
+      if(open){ const e = state.entries.find(x=>x.id===open); if(e) openView(e); }
+    } else {
+      const step = Math.min(d, SPEED*dt);
+      player.x += tx/d*step; player.z += tz/d*step;
+      walking = true; if(Math.abs(tx)>4) faceRight = tx>0;
+    }
+  } else walking = false;
+  player.x = clampX(player.x); player.z = clampZ(player.z);
+}
+function animate(t){
+  requestAnimationFrame(animate);
   const dt = Math.min(0.05, (t-lastT)/1000); lastT = t;
-  if(!overlayOpen()){
-    let dx = 0, dy = 0;
-    if(keys.ArrowLeft||keys.a) dx -= 1;
-    if(keys.ArrowRight||keys.d) dx += 1;
-    if(keys.ArrowUp||keys.w) dy -= 1;
-    if(keys.ArrowDown||keys.s) dy += 1;
-    if(dx||dy){
-      walkTarget = null;
-      const m = Math.hypot(dx,dy); dx/=m; dy/=m;
-      player.x += dx*SPEED*dt; player.y += dy*SPEED*dt;
-      setWalking(true, dx);
-    } else if(walkTarget){
-      const tx = walkTarget.x - player.x, ty = walkTarget.y - player.y;
-      const d = Math.hypot(tx,ty);
-      if(d < 12){
-        const open = walkTarget.openId;
-        walkTarget = null; setWalking(false, 0);
-        if(open){ const e = state.entries.find(x=>x.id===open); if(e) openView(e); }
-      } else {
-        const step = Math.min(d, SPEED*dt);
-        player.x += tx/d*step; player.y += ty/d*step;
-        setWalking(true, tx);
-      }
-    } else setWalking(false, 0);
-    player.x = Math.max(60, Math.min(W-60, player.x));
-    player.y = Math.max(130, Math.min(H-40, player.y));
-  }
-  /* 카메라 */
-  const vw = innerWidth, vh = innerHeight;
-  let tx = vw/2 - player.x*SCALE, ty = vh/2 - player.y*SCALE;
-  tx = (W*SCALE<=vw) ? (vw-W*SCALE)/2 : Math.max(vw-W*SCALE, Math.min(0, tx));
-  ty = (H*SCALE<=vh) ? (vh-H*SCALE)/2 : Math.max(vh-H*SCALE, Math.min(0, ty));
-  camX = tx; camY = ty;
-  $("#world").style.transform = `translate(${tx}px,${ty}px) scale(${SCALE})`;
-  const pl = $("#player");
-  pl.style.left = player.x+"px"; pl.style.top = player.y+"px";
+  if(!overlayOpen()) stepPlayer(dt);
+  /* 플레이어 스프라이트 */
+  const hop = walking ? Math.abs(Math.sin(t/95))*12 : 0;
+  playerSprite.position.set(player.x, 62+hop, player.z);
+  playerSprite.scale.x = faceRight ? -96 : 96;
+  /* 카메라 팔로우 */
+  camera.position.lerp(new THREE.Vector3(player.x, 440, player.z+560), 0.14);
+  camera.lookAt(player.x, 20, player.z-120);
+  /* 마커 둥실 + 등장 팝 */
+  const now = t;
+  markersGroup.children.forEach(s=>{
+    s.position.y = s.userData.baseY + Math.sin(now/650 + s.userData.phase)*5;
+    let k = 1;
+    if(s.userData.pop){
+      k = Math.min(1, (now - s.userData.pop)/500);
+      k = 0.2 + 0.8 * (1 - Math.pow(1-k, 3));
+      if(k >= 0.999){ delete s.userData.pop; k = 1; }
+    }
+    const hl = (s.userData.entry.id === nearestId) ? 1.18 : 1;
+    s.scale.set(s.userData.size[0]*k*hl, s.userData.size[1]*k*hl, 1);
+  });
   updateNearest();
+  updateBubblePos();
   updateMinimap();
-  requestAnimationFrame(loop);
-}
-let walkingState = false;
-function setWalking(w, dx){
-  const pl = $("#player");
-  if(w!==walkingState){ pl.classList.toggle("walking", w); walkingState = w; }
-  if(dx>0.1) $("#pBody").style.transform = "scaleX(-1)";
-  else if(dx<-0.1) $("#pBody").style.transform = "";
+  renderer.render(scene, camera);
 }
 
-/* 가까운 마음 → 말풍선 */
+/* 근접 감지 + 말풍선 */
 function updateNearest(){
-  let best = null, bestD = 175;
-  for(const e of state.entries){
+  let best = null, bestD = 185;
+  for(const s of markersGroup.children){
+    const e = s.userData.entry;
     if(filterCat && e.category!==filterCat) continue;
-    const p = posFor(e);
-    const d = Math.hypot(player.x-p.x, player.y-p.y);
+    const d = Math.hypot(player.x - s.userData.gx, player.z - s.userData.gz);
     if(d < bestD){ bestD = d; best = e; }
   }
   const id = best ? best.id : null;
-  if(id !== nearestId){
-    nearestId = id;
-    document.querySelectorAll(".marker.near").forEach(m=>m.classList.remove("near"));
-    if(id){ const m = document.querySelector(`.marker[data-id="${CSS.escape(id)}"]`); if(m) m.classList.add("near"); }
-    updateBubble();
-  }
+  if(id !== nearestId){ nearestId = id; updateBubbleContent(); }
 }
-function updateBubble(){
+function findSprite(id){ return markersGroup.children.find(s=>s.userData.entry.id===id); }
+function updateBubbleContent(){
   const bb = $("#bubble");
   const e = state.entries.find(x=>x.id===nearestId);
   if(!e){ bb.style.display = "none"; return; }
-  const c = catById(e.category), p = posFor(e);
+  const c = catById(e.category);
   bb.style.display = "block";
-  bb.style.left = p.x+"px"; bb.style.top = (p.y-30)+"px";
   bb.style.setProperty("--glow", c.color);
-  const t = e.text.length>44 ? e.text.slice(0,44)+"…" : e.text;
+  const t = isPhoto(e) ? (e.name || "우리 반의 추억") : (e.text.length>44 ? e.text.slice(0,44)+"…" : e.text);
   bb.innerHTML = `${c.emoji} ${esc(t)}<div class="bmeta"><span>${avatarHTML(e.avatar,18)} ${esc(e.name||"익명")} · ❤️${e.likes||0}</span><span class="bhint">눌러서 자세히 ▸</span></div>`;
+}
+function updateBubblePos(){
+  const bb = $("#bubble");
+  if(bb.style.display === "none") return;
+  const s = findSprite(nearestId);
+  if(!s){ bb.style.display="none"; return; }
+  projV.copy(s.position); projV.y += s.userData.size[1]*0.75;
+  projV.project(camera);
+  if(projV.z > 1){ bb.style.visibility = "hidden"; return; }
+  bb.style.visibility = "visible";
+  bb.style.left = ((projV.x*0.5+0.5)*innerWidth) + "px";
+  bb.style.top  = ((-projV.y*0.5+0.5)*innerHeight) + "px";
 }
 $("#bubble").addEventListener("click", ev=>{
   ev.stopPropagation();
@@ -818,32 +956,7 @@ $("#bubble").addEventListener("click", ev=>{
   if(e) openView(e);
 });
 
-/* 미니맵 */
-function buildMinimap(){
-  const mm = $("#minimap");
-  const sx = mm.clientWidth/W, sy = mm.clientHeight/H;
-  let html = "";
-  const zr = [
-    ["gallery",160,160,610,310],["plaza",1900,170,520,340],["post",170,1050,560,330],["green",1900,1030,520,330],["tree",1000,300,600,560],
-  ];
-  zr.forEach(([k,x,y,w,h])=>{
-    html += `<div class="mz" style="left:${x*sx}px;top:${y*sy}px;width:${w*sx}px;height:${h*sy}px;background:${ZONES[k].color}"></div>`;
-  });
-  html += `<div class="mp" id="mmP"></div>`;
-  mm.innerHTML = html;
-  mm.addEventListener("click", ev=>{
-    const r = mm.getBoundingClientRect();
-    walkTarget = { x:(ev.clientX-r.left)/r.width*W, y:(ev.clientY-r.top)/r.height*H };
-  });
-}
-function updateMinimap(){
-  const mm = $("#minimap"), p = $("#mmP");
-  if(!p) return;
-  p.style.left = (player.x/W*mm.clientWidth)+"px";
-  p.style.top  = (player.y/H*mm.clientHeight)+"px";
-}
-
-/* ═══════════════ 입력 ═══════════════ */
+/* 입력 */
 addEventListener("keydown", e=>{
   const tag = (e.target.tagName||"").toLowerCase();
   if(tag==="input"||tag==="textarea") return;
@@ -868,20 +981,56 @@ addEventListener("keyup", e=>{
   const map = {ArrowLeft:"ArrowLeft",ArrowRight:"ArrowRight",ArrowUp:"ArrowUp",ArrowDown:"ArrowDown",a:"a",d:"d",w:"w",s:"s",A:"a",D:"d",W:"w",S:"s"};
   if(map[e.key]) keys[map[e.key]] = false;
 });
-/* 탭/클릭 → 그 지점으로 걷기 */
-$("#game").addEventListener("pointerdown", ev=>{
+function onPointerDown(ev){
   if(overlayOpen()) return;
-  if(ev.target.closest(".marker")||ev.target.closest("#bubble")) return;
-  const wx = (ev.clientX - camX)/SCALE, wy = (ev.clientY - camY)/SCALE;
-  walkTarget = { x:Math.max(60,Math.min(W-60,wx)), y:Math.max(130,Math.min(H-40,wy)) };
-  hideCtrlHint();
-});
+  const r = renderer.domElement.getBoundingClientRect();
+  pointerV.x = ((ev.clientX-r.left)/r.width)*2-1;
+  pointerV.y = -((ev.clientY-r.top)/r.height)*2+1;
+  raycaster.setFromCamera(pointerV, camera);
+  const hits = raycaster.intersectObjects(markersGroup.children, false);
+  if(hits.length){
+    const u = hits[0].object.userData, e = u.entry;
+    const d = Math.hypot(player.x-u.gx, player.z-u.gz);
+    if(d < 200) openView(e);
+    else walkTarget = { x:clampX(u.gx), z:clampZ(u.gz+80), openId:e.id };
+    hideCtrlHint(); return;
+  }
+  const gh = raycaster.intersectObject(groundMesh, false)[0];
+  if(gh){ walkTarget = { x:clampX(gh.point.x), z:clampZ(gh.point.z) }; hideCtrlHint(); }
+}
 let hintHidden = false;
 function hideCtrlHint(){
   if(hintHidden) return; hintHidden = true;
-  const h = $("#ctrlHint"); h.style.opacity = "0"; setTimeout(()=>h.remove(), 1200);
+  const h = $("#ctrlHint"); if(h){ h.style.opacity = "0"; setTimeout(()=>h.remove(), 1200); }
 }
-setTimeout(hideCtrlHint, 9000);
+setTimeout(hideCtrlHint, 10000);
+
+/* 미니맵 */
+function buildMinimap(){
+  const mm = $("#minimap");
+  const sx = mm.clientWidth/W, sy = mm.clientHeight/H;
+  let html = "";
+  const zr = [
+    ["gallery",160,160,610,310],["plaza",1900,120,540,340],["post",170,1050,560,330],
+    ["green",1900,1060,520,300],["role",1930,620,470,320],["tree",1020,420,560,540],
+  ];
+  zr.forEach(([k,x,z,w,h])=>{
+    html += `<div class="mz" style="left:${x*sx}px;top:${z*sy}px;width:${w*sx}px;height:${h*sy}px;background:${ZONES[k].color}"></div>`;
+  });
+  html += `<div class="mp" id="mmP"></div>`;
+  mm.innerHTML = html;
+  mm.addEventListener("click", ev=>{
+    const r = mm.getBoundingClientRect();
+    walkTarget = { x:clampX((ev.clientX-r.left)/r.width*W), z:clampZ((ev.clientY-r.top)/r.height*H) };
+    hideCtrlHint();
+  });
+}
+function updateMinimap(){
+  const mm = $("#minimap"), p = $("#mmP");
+  if(!p) return;
+  p.style.left = (player.x/W*mm.clientWidth)+"px";
+  p.style.top  = (player.z/H*mm.clientHeight)+"px";
+}
 
 /* ═══════════════ 입장(아바타) ═══════════════ */
 let pickedAvatar = (avatar && avatar.emoji) ? avatar.emoji : AVATARS[0];
@@ -908,23 +1057,58 @@ $("#enterBtn").addEventListener("click", ()=>{
   applyAvatar();
   hideOverlay("#enterOverlay");
   chime();
+  showNotice();   // 입장 시 선생님 알림
 });
 function applyAvatar(){
-  if(!avatar) return;
-  $("#pBody").textContent = avatar.emoji || "🦊";
-  $("#pNameTag").textContent = avatar.name;
+  if(!avatar || !playerSprite) return;
+  playerSprite.material.map = playerTexture(avatar);
+  playerSprite.material.needsUpdate = true;
 }
+
+/* ═══════════════ 선생님 알림(공지) ═══════════════ */
+function showNotice(){
+  if(!notice) return;
+  $("#noticeBody").textContent = notice;
+  showOverlay("#noticeOverlay");
+}
+function onNoticeChanged(){
+  if($("#teacherOverlay").classList.contains("show")){
+    $("#noticeText").value = notice;
+    toast(notice ? "공지가 저장됐어요 📢" : "공지를 내렸어요");
+  } else if(notice){
+    showNotice();
+    toast("📢 선생님 알림이 도착했어요");
+  }
+}
+$("#noticeOkBtn").addEventListener("click", ()=> hideOverlay("#noticeOverlay"));
+$("#noticeSaveBtn").addEventListener("click", async ()=>{
+  const t = $("#noticeText").value.trim();
+  if(!t){ toast("공지 내용을 입력해 주세요"); return; }
+  notice = t;
+  if(online){
+    const { error } = await sb.from(TABLE).upsert({ id:NOTICE_ID(), room, category:"notice", author:"teacher", content:t, x:0, y:0 });
+    if(error){ toast("공지 저장 오류: " + error.message); return; }
+  } else save();
+  toast("📢 공지 저장! 학생이 입장할 때 알림으로 떠요");
+});
+$("#noticeClearBtn").addEventListener("click", async ()=>{
+  notice = "";
+  $("#noticeText").value = "";
+  if(online){ await sb.from(TABLE).delete().eq("id", NOTICE_ID()); }
+  else save();
+  toast("공지를 내렸어요");
+});
 
 /* ═══════════════ 남기기 ═══════════════ */
 function openAdd(){
-  if(!avatar){ openEnter(); return; }   // 캐릭터(이름) 없으면 먼저 입장
+  if(!avatar){ openEnter(); return; }
   buildCatPicker();
   $("#entryText").value = ""; $("#charCount").textContent = "0";
   $("#authorLine").textContent = (avatar.emoji||"🦊") + " " + (avatar.name||"탐험가");
   updateSubmit(); showOverlay("#addOverlay"); updatePrompt();
 }
 function buildCatPicker(){
-  $("#catPicker").innerHTML = CATS.map(c=>`
+  $("#catPicker").innerHTML = CATS.filter(c=>!c.hidden).map(c=>`
     <div class="cat ${c.id===selectedCat?"on":""}" data-cat="${c.id}" style="--c:${c.color};--soft:${c.soft}">
       <span class="e">${c.emoji}</span>${c.label}
       <span class="z">${ZONES[c.zone].emoji} ${ZONES[c.zone].label}</span>
@@ -938,16 +1122,15 @@ function updateSubmit(){ $("#submitBtn").disabled = $("#entryText").value.trim()
 
 async function submitEntry(){
   const text = $("#entryText").value.trim(); if(!text) return;
-  const name = avatar ? (avatar.name||"탐험가") : "탐험가";   // 익명 불가 — 캐릭터 이름으로 기록
+  const name = avatar ? (avatar.name||"탐험가") : "탐험가";   // 익명 불가
   const av = avatar ? (avatar.emoji||"") : "";
   const entry = { id:uid(), category:selectedCat, name, text, avatar:av, likes:0, ts:Date.now() };
   hideOverlay("#addOverlay");
   if(online){
     let { error } = await sb.from(TABLE).insert(entryToRow(entry));
-    if(error && /avatar/i.test(error.message)){   // DB에 avatar 컬럼이 아직 없으면 사진 없이 재시도
+    if(error && /avatar/i.test(error.message)){
       const row = entryToRow(entry); delete row.avatar; entry.avatar = "";
       ({ error } = await sb.from(TABLE).insert(row));
-      if(!error) toast("저장 완료! (작성자 캐릭터 표시는 SQL 업데이트 후 켜져요)");
     }
     if(error){ toast("저장 오류: " + error.message); return; }
     if(!state.entries.some(x=>x.id===entry.id)){ state.entries.push(entry); renderAll(entry.id); afterAdd(entry, true); }
@@ -957,11 +1140,12 @@ async function submitEntry(){
 }
 function afterAdd(entry, mine){
   chime();
-  const p = posFor(entry);
-  sparkleAt(p.x, p.y);
-  if(mine){ walkTarget = { x:p.x, y:p.y+80 }; }   // 내가 남긴 곳으로 걸어가 보기
+  if(mine){
+    const s = findSprite(entry.id);
+    if(s) walkTarget = { x:clampX(s.userData.gx), z:clampZ(s.userData.gz+90) };
+  }
   const n = state.entries.length;
-  if(n===1){ toast("첫 마음이 마을에 전시됐어요! 🌱"); confetti(); }
+  if(n===1){ toast("첫 마음이 숲에 전시됐어요! 🌱"); confetti(); }
   else if(n%10===0){ toast(`벌써 ${n}개의 마음이 모였어요! 🎉`); confetti(); }
   else if(!mine){ const c = catById(entry.category); toast(`${c.emoji} 새 마음이 ${ZONES[c.zone].label}에 걸렸어요!`); }
 }
@@ -974,19 +1158,24 @@ function openView(e){
   $("#viewEmoji").textContent = c.emoji;
   $("#viewCat").textContent = ZONES[c.zone].emoji + " " + ZONES[c.zone].label + " · " + c.label;
   $("#viewCat").style.color = c.color;
-  $("#viewText").textContent = e.text;
-  $("#viewName").innerHTML = `${avatarHTML(e.avatar,26)} ${e.name ? "— " + esc(e.name) : "— 익명"}`;
+  if(isPhoto(e)){
+    $("#viewText").innerHTML = `<img src="${esc(e.text)}" alt="추억 사진" style="max-width:100%;max-height:52vh;border-radius:12px;display:block;margin:0 auto">`;
+    $("#viewName").textContent = e.name || "우리 반의 추억";
+  } else {
+    $("#viewText").textContent = e.text;
+    $("#viewName").innerHTML = `${avatarHTML(e.avatar,26)} ${e.name ? "— " + esc(e.name) : "— 익명"}`;
+  }
   refreshLikeUI(e);
   showOverlay("#viewOverlay");
 }
 function refreshLikeUI(e){
-  if(viewingId !== e.id) { updateBubble(); return; }
+  if(viewingId !== e.id){ updateBubbleContent(); return; }
   $("#likeCount").textContent = e.likes || 0;
   const btn = $("#likeBtn");
   const liked = likedSet.has(e.id);
   btn.classList.toggle("liked", liked);
   btn.disabled = liked;
-  updateBubble();
+  updateBubbleContent();
 }
 $("#likeBtn").addEventListener("click", async ev=>{
   const e = state.entries.find(x=>x.id===viewingId);
@@ -1000,7 +1189,7 @@ $("#likeBtn").addEventListener("click", async ev=>{
   document.body.appendChild(h); setTimeout(()=>h.remove(), 1050);
   if(online){
     const { error } = await sb.rpc("dajim_like", { entry_id: e.id });
-    if(error){  // 함수 없으면 일반 update 폴백
+    if(error){
       const { error: e2 } = await sb.from(TABLE).update({ likes: e.likes }).eq("id", e.id);
       if(e2) toast("공감이 이 기기에만 저장됐어요 (SQL 업데이트 필요)");
     }
@@ -1026,19 +1215,25 @@ function renderListItems(){
   if(!items.length){ box.innerHTML = `<div class="empty-list">아직 남긴 마음이 없어요 🌿</div>`; return; }
   box.innerHTML = items.map(e=>{
     const c = catById(e.category);
+    const body = isPhoto(e) ? `<img src="${esc(e.text)}" style="max-width:140px;max-height:100px;border-radius:8px;display:block">` : esc(e.text);
     return `<div class="item" style="border-color:${c.soft}"><span class="ie">${c.emoji}</span>
-      <div class="it"><div class="txt">${esc(e.text)}</div>
+      <div class="it"><div class="txt">${body}</div>
       <div class="meta">${avatarHTML(e.avatar,16)} ${esc(e.name||"익명")} · ${c.label} · ❤️${e.likes||0}</div></div></div>`;
   }).join("");
 }
 
-/* ═══════════════ 교사 대시보드 (답변 관리·삭제) ═══════════════ */
-let teacherFilter = null;
+/* ═══════════════ 교사 대시보드 ═══════════════ */
 async function deleteEntry(id){
   if(online){ const { error } = await sb.from(TABLE).delete().eq("id", id); if(error){ toast("삭제 오류: "+error.message); return false; } }
   state.entries = state.entries.filter(x=>x.id!==id); save(); renderAll(); return true;
 }
-function openTeacher(){ hideOverlay("#menuOverlay"); $("#teacherSearch").value=""; renderTeacher(); showOverlay("#teacherOverlay"); }
+function openTeacher(){
+  hideOverlay("#menuOverlay");
+  $("#teacherSearch").value = "";
+  $("#noticeText").value = notice;
+  renderTeacher();
+  showOverlay("#teacherOverlay");
+}
 function renderTeacher(){
   const all = `<button class="lf ${!teacherFilter?"on":""}" data-f="">전체 ${state.entries.length}</button>`;
   const rest = CATS.map(c=>{ const n = state.entries.filter(e=>e.category===c.id).length;
@@ -1049,22 +1244,60 @@ function renderTeacher(){
   const q = ($("#teacherSearch").value||"").trim().toLowerCase();
   let items = state.entries.slice().reverse();
   if(teacherFilter) items = items.filter(e=>e.category===teacherFilter);
-  if(q) items = items.filter(e=>((e.text||"")+" "+(e.name||"")).toLowerCase().includes(q));
+  if(q) items = items.filter(e=>(( isPhoto(e) ? (e.name||"") : (e.text||"")+" "+(e.name||"") )).toLowerCase().includes(q));
   const box = $("#teacherItems");
   if(!items.length){ box.innerHTML = `<div class="empty-list">해당하는 답변이 없어요</div>`; return; }
   box.innerHTML = items.map(e=>{
     const c = catById(e.category);
+    const body = isPhoto(e) ? `<img src="${esc(e.text)}" style="max-width:140px;max-height:100px;border-radius:8px;display:block">` : esc(e.text);
     return `<div class="item" style="border-color:${c.soft}"><span class="ie">${c.emoji}</span>
-      <div class="it"><div class="txt">${esc(e.text)}</div>
+      <div class="it"><div class="txt">${body}</div>
       <div class="meta">${avatarHTML(e.avatar,16)} <b>${esc(e.name||"익명")}</b> · ${ZONES[c.zone].label}·${c.label} · ❤️${e.likes||0}</div></div>
       <button class="del" data-id="${e.id}" title="삭제">🗑</button></div>`;
   }).join("");
   document.querySelectorAll("#teacherItems .del").forEach(b=> b.addEventListener("click", async ()=>{
     const e = state.entries.find(x=>x.id===b.dataset.id); if(!e) return;
-    if(!confirm(`이 답변을 삭제할까요?\n\n"${e.text}"\n— ${e.name||"익명"}`)) return;
+    const label = isPhoto(e) ? `📷 추억 사진 (${e.name||"설명 없음"})` : `"${e.text}"\n— ${e.name||"익명"}`;
+    if(!confirm(`삭제할까요?\n\n${label}`)) return;
     if(await deleteEntry(b.dataset.id)){ toast("삭제했어요 🗑"); renderTeacher(); }
   }));
 }
+/* 사진 → 긴 변 640px 리사이즈 + JPEG 압축 (교사 전용) */
+function compressPhoto(file, max){
+  return new Promise((res,rej)=>{
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      try{
+        const r = Math.min(1, max/Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.max(1, Math.round(img.naturalWidth*r)), h = Math.max(1, Math.round(img.naturalHeight*r));
+        const c = makeCanvas(w,h);
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        res(c.toDataURL("image/jpeg", 0.78));
+      }catch(e){ rej(e); }
+      finally{ URL.revokeObjectURL(url); }
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); rej(new Error("decode")); };
+    img.src = url;
+  });
+}
+$("#photoAddBtn").addEventListener("click", ()=> $("#photoFile").click());
+$("#photoFile").addEventListener("change", async ev=>{
+  const f = ev.target.files[0]; ev.target.value = "";
+  if(!f) return;
+  try{
+    const data = await compressPhoto(f, 640);
+    const caption = (prompt("사진 설명 (선택, 40자)", "") || "").trim().slice(0,40);
+    const entry = { id:uid(), category:"photo", name:caption, text:data, avatar:"", likes:0, ts:Date.now() };
+    if(online){
+      const { error } = await sb.from(TABLE).insert(entryToRow(entry));
+      if(error){ toast("사진 저장 오류: " + error.message); return; }
+      if(!state.entries.some(x=>x.id===entry.id)){ state.entries.push(entry); renderAll(entry.id); }
+    } else { state.entries.push(entry); save(); renderAll(entry.id); }
+    toast("📷 추억 사진을 별빛 갤러리에 걸었어요!");
+    renderTeacher();
+  }catch(e){ toast("사진을 읽을 수 없어요 😢 다른 사진으로 시도해 주세요"); }
+});
 
 /* ═══════════════ 발표 ═══════════════ */
 function openPresent(){
@@ -1078,8 +1311,13 @@ function renderPresent(){
   $("#pEmoji").textContent = c.emoji;
   $("#pCat").textContent = ZONES[c.zone].emoji + " " + ZONES[c.zone].label + " · " + c.label;
   $("#pCat").style.color = c.color;
-  $("#pText").textContent = e.text;
-  $("#pName").innerHTML = `${avatarHTML(e.avatar,34)} ${e.name ? "— " + esc(e.name) : "— 익명"}`;
+  if(isPhoto(e)){
+    $("#pText").innerHTML = `<img src="${esc(e.text)}" alt="추억 사진" style="max-width:min(82vw,760px);max-height:56vh;border-radius:14px">`;
+    $("#pName").textContent = e.name || "우리 반의 추억";
+  } else {
+    $("#pText").textContent = e.text;
+    $("#pName").innerHTML = `${avatarHTML(e.avatar,34)} ${e.name ? "— " + esc(e.name) : "— 익명"}`;
+  }
   $("#pLike").textContent = (e.likes||0) > 0 ? `❤️ ${e.likes}` : "";
   $("#pCount").textContent = (presentIdx+1) + " / " + state.entries.length;
 }
@@ -1088,7 +1326,7 @@ function presentMove(d){ const n = state.entries.length; if(!n) return; presentI
 /* ═══════════════ 메뉴 ═══════════════ */
 function renameClass(){ const v = prompt("반 이름을 입력하세요 (예: 2학년 3반)", state.className||""); if(v!==null){ state.className = v.trim(); save(); renderAll(); } }
 function changeRoom(){
-  const v = prompt("방(반) 코드를 입력하세요.\n같은 코드를 쓰면 같은 마을을 함께 봅니다.\n예: 2-3", room);
+  const v = prompt("방(반) 코드를 입력하세요.\n같은 코드를 쓰면 같은 숲을 함께 봅니다.\n예: 2-3", room);
   if(v!==null && v.trim()){
     localStorage.setItem("dajim-room", v.trim());
     const p = new URLSearchParams(location.search); p.set("room", v.trim());
@@ -1113,7 +1351,7 @@ function exportData(){
   const dump = { className:state.className, room, entries:state.entries };
   const blob = new Blob([JSON.stringify(dump,null,2)], {type:"application/json"});
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-  a.download = ((state.className||"추억마을").replace(/\s+/g,"_")) + "_백업.json"; a.click();
+  a.download = ((state.className||"이삼한친구들의숲").replace(/\s+/g,"_")) + "_백업.json"; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000); toast("백업 파일을 저장했어요 💾");
 }
 async function importData(file){
@@ -1122,7 +1360,7 @@ async function importData(file){
     try{
       const d = JSON.parse(fr.result); if(!d || !Array.isArray(d.entries)) throw 0;
       const have = new Set(state.entries.map(e=>e.id)); const toAdd = [];
-      d.entries.forEach(e=>{ if(e && e.id && !have.has(e.id)){ toAdd.push(e); have.add(e.id); } });
+      d.entries.forEach(e=>{ if(e && e.id && e.category!=="notice" && !have.has(e.id)){ toAdd.push(e); have.add(e.id); } });
       if(!state.className && d.className) state.className = d.className;
       if(online && toAdd.length){
         const { error } = await sb.from(TABLE).insert(toAdd.map(entryToRow));
@@ -1138,7 +1376,7 @@ async function resetAll(){
   if(!state.entries.length){ toast("이미 비어 있어요"); return; }
   if(confirm("정말 전체를 지울까요? 되돌릴 수 없어요.") && confirm("한 번 더 확인할게요. 이 방의 모든 마음을 지웁니다.")){
     if(online){ const { error } = await sb.from(TABLE).delete().eq("room", room); if(error){ toast("삭제 오류: "+error.message); return; } }
-    state.entries = []; filterCat = null; save(); renderAll(); hideOverlay("#menuOverlay"); toast("마을을 비웠어요 🏡");
+    state.entries = []; filterCat = null; notice = ""; save(); renderAll(); hideOverlay("#menuOverlay"); toast("숲을 비웠어요 🌲");
   }
 }
 
@@ -1156,15 +1394,6 @@ function chime(){
     });
   }catch(e){}
 }
-function sparkleAt(wx,wy){
-  for(let i=0;i<6;i++){
-    const s=document.createElement("div"); s.className="sparkle"; s.textContent="✨";
-    s.style.left=wx+"px"; s.style.top=wy+"px";
-    const ang=rand()*2*Math.PI, dist=34+rand()*44;
-    s.style.setProperty("--dx",(Math.cos(ang)*dist)+"px"); s.style.setProperty("--dy",(Math.sin(ang)*dist)+"px");
-    $("#world").appendChild(s); setTimeout(()=>s.remove(),900);
-  }
-}
 function confetti(){
   const colors = CATS.map(c=>c.color).concat("#ffd166","#06d6a0");
   for(let i=0;i<40;i++){
@@ -1181,7 +1410,7 @@ function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("sh
 function showOverlay(sel){ $(sel).classList.add("show"); }
 function hideOverlay(sel){ $(sel).classList.remove("show"); }
 document.querySelectorAll(".overlay").forEach(ov=>{
-  if(ov.id==="enterOverlay") return;   // 입장은 바깥 클릭으로 안 닫힘
+  if(ov.id==="enterOverlay"||ov.id==="noticeOverlay") return;   // 바깥 클릭으로 안 닫힘
   ov.addEventListener("mousedown", e=>{ if(e.target===ov) ov.classList.remove("show"); });
 });
 document.querySelectorAll("[data-close]").forEach(b=> b.addEventListener("click", ()=> b.closest(".overlay").classList.remove("show")));
@@ -1217,21 +1446,42 @@ $("#pPrev").addEventListener("click", ()=> presentMove(-1));
 $("#pNext").addEventListener("click", ()=> presentMove(1));
 
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && online) fetchEntries(); });
+addEventListener("resize", ()=>{
+  if(!renderer) return;
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
 
 /* ═══════════════ 시작 ═══════════════ */
 (async function boot(){
-  computeScale();
-  buildWorld();
+  if(!window.THREE){
+    document.body.innerHTML = `<div style="display:grid;place-items:center;height:100dvh;padding:20px;text-align:center;
+      font-weight:800;color:#2c3a2e;background:#eafaf1">
+      <div><div style="font-size:60px">🌲</div><h2>3D 숲을 불러오지 못했어요</h2>
+      <p>인터넷 연결을 확인하고 새로고침해 주세요.<br>(3D 엔진을 온라인에서 불러와요)</p></div></div>`;
+    return;
+  }
+  raycaster = new THREE.Raycaster();
+  pointerV = new THREE.Vector2();
+  projV = new THREE.Vector3();
+  buildScene();
   buildMinimap();
-  if(avatar) applyAvatar(); else openEnter();
+  renderer.domElement.addEventListener("pointerdown", onPointerDown);
+  camera.position.set(player.x, 440, player.z+560);
+  camera.lookAt(player.x, 20, player.z-120);
+
   online = await initSupabase();
   loadPrefs();
   renderAll(); updateStatus();
-  requestAnimationFrame(t=>{ lastT=t; loop(t); });
+  requestAnimationFrame(t=>{ lastT=t; animate(t); });
+
+  if(avatar){ applyAvatar(); }
   if(online){
     try{ await fetchEntries(); subscribe(); }
     catch(e){ toast("서버 연결 문제로 오프라인으로 표시해요"); online=false; loadPrefs(); renderAll(); updateStatus(); }
   }
+  if(!avatar) openEnter();
+  else showNotice();   // 재방문 학생도 입장 알림
 })();
 </script>
 
@@ -1241,7 +1491,7 @@ document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && onlin
   (모두 idempotent — 이미 만든 테이블이 있어도 그대로 실행하면 됩니다)
 ════════════════════════════════════════════════════════════════════
 
--- 1) 테이블 + likes 컬럼
+-- 1) 테이블 + likes + avatar 컬럼
 create table if not exists public.dajim_entries (
   id          text primary key,
   room        text not null default 'default',
@@ -1253,7 +1503,7 @@ create table if not exists public.dajim_entries (
   created_at  timestamptz not null default now()
 );
 alter table public.dajim_entries add column if not exists likes integer not null default 0;
-alter table public.dajim_entries add column if not exists avatar text;  -- 작성자 캐릭터(압축 사진 dataURL 또는 이모지)
+alter table public.dajim_entries add column if not exists avatar text;
 create index if not exists dajim_entries_room_idx on public.dajim_entries (room, created_at);
 
 -- 2) RLS + 익명 접근 (수업용: 링크 아는 사람 읽기/쓰기/공감/삭제 가능)
@@ -1278,11 +1528,13 @@ as $$
 $$;
 grant execute on function public.dajim_like(text) to anon;
 
--- 4) 실시간 켜기 (이미 추가돼 있으면 자동으로 건너뜀)
+-- 4) 실시간 켜기 (이미 켜져 있으면 자동으로 건너뜀)
 do $$ begin
   alter publication supabase_realtime add table public.dajim_entries;
 exception when duplicate_object then null; end $$;
 
+※ 공지(알림)는 category='notice', id='notice::방코드' 행으로 같은 테이블에 저장됩니다.
+   추가 SQL 필요 없음.
 ════════════════════════════════════════════════════════════════════
 -->
 </body>
