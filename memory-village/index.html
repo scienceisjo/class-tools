@@ -359,7 +359,7 @@
       <b>🚶 돌아다니기</b> — 바닥을 터치하면 그곳으로 걸어가요. 화면을 <b>드래그하면 시점이 빙 돌아요</b>(상하 드래그=높낮이). 방향키·WASD, 미니맵 터치도 OK.<br>
       <b>👥 함께 있기</b> — 같은 방(반) 코드로 접속한 친구들이 <b>같은 숲에 실시간으로 보여요</b>. 위로 걸어가면 캐릭터 뒷모습(꼬리)도 보인답니다!<br>
       <b>👀 관람하기</b> — 마음 근처에 가면 말풍선 미리보기가 떠요. 말풍선(또는 Space)을 누르면 크게 보기 + ❤️ 공감.<br>
-      <b>🗺️ 여섯 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(기억에 남는 순간·추억 사진) / 🎪추억광장(기억에 남는 행사) / 📮마음우체국(친구에게 한마디) / 🤝1인1역 본부(점검·스타 추천·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
+      <b>🗺️ 일곱 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(순간·추억 사진) / 🎪추억광장(행사) / 📮마음우체국(친구에게 한마디) / 🎂생일광장(다가오는 생일 게시판·축하 한마디) / 🤝1인1역 본부(점검·스타 추천·🌟숨은 기여 자랑·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
       <b>🏆 1인1역 스타</b> — 추천 글에 ❤️ 공감을 누르는 게 곧 투표! 발표 모드에서 공감 수를 함께 보여줘요.<br>
       <b>🛠️ 교사용</b> — 메뉴 → 교사 대시보드: 학생 명단(이름 선택 입장), 참여 현황판, 입장 알림 공지, 🏆투표 현황, 추억 사진, 답변 검색·삭제, 학생별 모음 인쇄·CSV 내보내기.<br>
       <b>🎥 전자칠판</b> — 메뉴 → 자동 관람 모드를 켜면 카메라가 숲을 천천히 돌며 친구들의 활동을 비춰줘요. 터치하면 해제.<br>
@@ -406,6 +406,7 @@ const ZONES = {
   post:    { label:"마음 우체국", emoji:"📮", color:"#b07cf0", sign:{x:455,z:1420}, spots:{x0:230,x1:700,z0:1090,z1:1320} },
   green:   { label:"도전 온실",   emoji:"🌱", color:"#5cb85c", sign:{x:2150,z:1420},spots:{x0:1960,x1:2340,z0:1110,z1:1290} },
   role:    { label:"1인1역 본부", emoji:"🤝", color:"#2bb0a3", sign:{x:2150,z:980}, spots:{x0:1900,x1:2430,z0:830,z1:945} },
+  bday:    { label:"생일 광장",   emoji:"🎂", color:"#ff8fab", sign:{x:330,z:975},  spots:{x0:200,x1:660,z0:780,z1:950} },
 };
 const CATS = [
   { id:"resolve", emoji:"🍎", label:"나의 다짐",        zone:"tree",    color:"#ef5350", soft:"#fdeceb", prompt:"2학기의 나에게 다짐 한 가지! (예: 수업시간에 더 집중할래)" },
@@ -413,11 +414,15 @@ const CATS = [
   { id:"memory",  emoji:"⭐", label:"기억에 남는 순간", zone:"gallery", color:"#f2b705", soft:"#fff6db", prompt:"1학기, 가장 기억에 남는 순간·장면·경험을 남겨주세요" },
   { id:"event",   emoji:"🎉", label:"기억에 남는 행사", zone:"plaza",   color:"#ff7ab8", soft:"#ffe9f4", prompt:"체육대회, 현장체험학습, 축제… 최고의 행사와 그 이유는?" },
   { id:"friend",  emoji:"💌", label:"친구에게 한마디",  zone:"post",    color:"#b07cf0", soft:"#f3ecfd", prompt:"고마웠던 친구, 응원하고 싶은 친구에게 한마디" },
+  { id:"bday",    emoji:"🎂", label:"생일 축하 한마디", zone:"bday",    color:"#ff5d8f", soft:"#ffe9f0",
+    prompt:"생일인 친구, 방학 중에 생일인 친구에게 축하 한마디! 누구에게 보내는지 이름을 꼭 써요.\n(예: 샤인아 7/15 생일 축하해! 2학기에도 우리 반 행사 부탁해 🎂)" },
   { id:"try",     emoji:"🌱", label:"방학 중 도전하고 싶은 것", zone:"green", color:"#5cb85c", soft:"#e9f7e9", prompt:"이번 방학에 새롭게 도전해보고 싶은 것과 그 이유는? (예: 매일 30분 달리기 — 체력을 키우고 싶어서)" },
   { id:"rolecheck", emoji:"✅", label:"나의 1인1역 점검", zone:"role", color:"#0f9d8f", soft:"#e0f5f2",
     prompt:"1학기 내 1인1역은 무엇이었고, 어떻게 실천했나요? 솔직하게 점검해요.\n(예: 매일 아침 창문을 열어 환기했다 / 내 역할이 할 일이 없어서 ○○의 1인1역을 함께 도왔다 / 자주 깜빡해서 아쉬웠고 2학기엔 알림을 정할 것이다)" },
   { id:"rolestar",  emoji:"🏆", label:"1인1역 스타 추천", zone:"role", color:"#e8a200", soft:"#fff4d6",
     prompt:"1학기 1인1역을 가장 잘한 친구를 추천해요! 누가·무엇을·어떻게 잘했는지 구체적으로.\n(예: ○○ — 우유 당번을 한 번도 빼먹지 않고 조용히 실천했어요)" },
+  { id:"contrib",   emoji:"🌟", label:"숨은 기여 자랑",   zone:"role", color:"#ff9500", soft:"#fff1e0",
+    prompt:"1인1역이 아니어도 우리 반을 위해 내가 한 일을 당당하게 자랑해요!\n(예: 스승의 날과 생일파티 준비를 도맡아 했고, 내 역할이 아닌 급식 알림도 꾸준히 챙겼다 ← 구체적일수록 좋아요!)" },
   { id:"role",      emoji:"🤝", label:"만들고 싶은 1인1역", zone:"role", color:"#2bb0a3", soft:"#e3f6f3",
     prompt:"2학기에 우리 반을 위해 내가 할 수 있는 일·새로 만들고 싶은 1인1역은? 그 이유도 함께!\n(예: 칠판 지킴이 — 수업 전 칠판을 닦아 선생님과 친구들을 돕고 싶다)" },
   { id:"photo",     emoji:"📷", label:"추억 사진", zone:"gallery", color:"#5aa7e8", soft:"#e8f3ff",
@@ -433,6 +438,41 @@ const AVATARS = [
   "😀","😎","🤩","🥳","😺","👻","🤖","👽","🎃","🧙","🧚","🦸","🥷","🧑‍🚀","🧑‍🎨","🧑‍🔬",
   "🍎","🍓","🍔","🍕","🍩","🧁","🍦","🌟","🌈","🔥","🍀","🌸"
 ];
+
+/* ═══ 2학년 3반 1인1역 표 (이름 → 부서·역할) ═══ */
+const ROLES = {
+  "심재인":"학급기획부 · 학급 회장", "조윤현":"학급기획부 · 학급 부회장", "남하은":"학급기획부 · 기획부장",
+  "민태완":"학급기획부 · 출석부 도우미", "이예준":"학급기획부 · 출석부 도우미", "김경민":"학급기획부 · 서류 제출 도우미",
+  "최준우":"학급기획부 · 학급 물품 담당",
+  "이도연":"학력신장부 · 학습 부장", "모수민":"학력신장부 · 평가 알리미", "김인수":"학력신장부 · 영단어 알리미",
+  "장한성":"학력신장부 · 한자 알리미", "박현진":"학력신장부 · 과학 기자", "방호연":"학력신장부 · 경제 기자",
+  "이윤아":"문화체육부 · 뒤 게시판 디자이너", "여나연":"문화체육부 · 앞 게시판 디자이너",
+  "노수연":"문화체육부 · 학급 달력 꾸미기", "김다현":"문화체육부 · 급식 알리미",
+  "김도형":"학생안전부 · 핸드폰 지킴이", "이승헌":"학생안전부 · 멘탈 지킴이",
+  "김래오":"환경봉사부 · 환경봉사부장", "김민서":"환경봉사부 · 책상 줄 지킴이",
+  "김승유":"과학정보부 · 과학정보부장", "이시우":"과학정보부 · IT부장",
+  "신서윤":"사회복지부 · 마음 회복 방송부", "김그린":"사회복지부 · 마음 회복 큐레이터",
+  "홍샤인":"학급행사부 · 학급 행사 기획팀", "최예람":"학급행사부 · 학급 행사 기획팀", "이다빈":"학급행사부 · 추억 지킴이",
+};
+/* ═══ 생일 (월, 일) — 생일포스터 기준, 전출 제외 ═══ */
+const BDAYS = [
+  ["김경민",11,16],["김그린",4,28],["김다현",1,16],["김도형",9,2],["김래오",6,3],["김민서",2,18],
+  ["김승유",9,27],["김인수",7,2],["남하은",4,22],["노수연",9,13],["모수민",8,1],["민태완",6,9],
+  ["박현진",6,17],["방호연",3,3],["신서윤",8,18],["심재인",10,29],["여나연",11,9],["이다빈",12,20],
+  ["이도연",1,13],["이승헌",5,1],["이시우",1,5],["이예준",5,27],["이윤아",11,26],["장한성",3,13],
+  ["조윤현",3,1],["최예람",9,11],["최준우",7,21],["홍샤인",7,15],
+];
+function upcomingBdays(n){
+  const now = new Date();
+  const cur = (now.getMonth()+1)*100 + now.getDate();
+  return BDAYS.map(([name,m,d])=>({ name, m, d, key:m*100+d }))
+    .sort((a,b)=>((a.key<cur ? a.key+1300 : a.key) - (b.key<cur ? b.key+1300 : b.key)))
+    .slice(0, n);
+}
+function todaysBdays(){
+  const now = new Date();
+  return BDAYS.filter(b=> b[1]===now.getMonth()+1 && b[2]===now.getDate()).map(b=>b[0]);
+}
 
 /* ═══════════════ 상태 ═══════════════ */
 const KEY = "dajim-namu-v1";
@@ -650,6 +690,25 @@ addEventListener("pagehide", ()=>{
 /* ═══════════════ 3D 월드 (three.js) ═══════════════ */
 let scene, camera, renderer, groundMesh, markersGroup, playerChar;
 const signMeta = {};        // zone → {canvas, ctx, texture}
+let bdayBoard = null;       // 생일 게시판 {ctx, tex}
+function drawBdayBoard(){
+  if(!bdayBoard) return;
+  const g = bdayBoard.ctx;
+  g.clearRect(0,0,512,380);
+  g.fillStyle = "#2a1e3f"; roundRect(g, 0, 0, 512, 380, 26); g.fill();
+  g.strokeStyle = "#ff8fab"; g.lineWidth = 10; roundRect(g, 5, 5, 502, 370, 24); g.stroke();
+  g.textAlign = "center"; g.textBaseline = "alphabetic";
+  g.fillStyle = "#ffd9e8"; g.font = "700 42px Galmuri11,'Malgun Gothic',sans-serif";
+  g.fillText("🎂 다가오는 생일", 256, 60);
+  const today = todaysBdays();
+  g.font = "700 33px Galmuri11,'Malgun Gothic',sans-serif";
+  upcomingBdays(8).forEach((b,i)=>{
+    const isToday = today.includes(b.name);
+    g.fillStyle = isToday ? "#ffe066" : "#ffffff";
+    g.fillText(`${b.m}.${String(b.d).padStart(2,"0")}  ${b.name}${isToday ? " 🎉오늘!" : ""}`, 256, 108 + i*35);
+  });
+  bdayBoard.tex.needsUpdate = true;
+}
 const texCache = {};        // 이모지 → texture
 let photoTexCache = {};     // entry id → texture
 
@@ -819,6 +878,33 @@ function buildScene(){
   post.position.set(560, 35, 1150); scene.add(post);
   box(44, 52, 40, 0xe8453c, 560, 95, 1150);                        // 우체통
 
+  /* ── 생일 광장 (3단 케이크 + 촛불 + 풍선 + 생일 게시판) ── */
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(84, 84, 6, 20), lam(0xffffff));
+  plate.position.set(330, 3, 700); scene.add(plate);
+  const cake1 = new THREE.Mesh(new THREE.CylinderGeometry(64, 68, 38, 20), lam(0xfff0f5));
+  cake1.position.set(330, 25, 700); scene.add(cake1);
+  const cake2 = new THREE.Mesh(new THREE.CylinderGeometry(46, 50, 30, 20), lam(0xffd1e3));
+  cake2.position.set(330, 59, 700); scene.add(cake2);
+  [[-24,0],[0,-8],[24,4]].forEach(([ox,oz],i)=>{
+    const cd = new THREE.Mesh(new THREE.CylinderGeometry(4,4,24,8), lam([0xffd166,0x74b9ff,0x55efc4][i]));
+    cd.position.set(330+ox, 86, 700+oz); scene.add(cd);
+    const fl = new THREE.Sprite(new THREE.SpriteMaterial({ map:emojiTexture("🔥"), transparent:true }));
+    fl.scale.set(15,15,1); fl.position.set(330+ox, 102, 700+oz); scene.add(fl);
+  });
+  [["🎈",190,120,650],["🎈",470,130,660],["🎁",560,22,760]].forEach(([e,x,y,z])=>{
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:emojiTexture(e), transparent:true }));
+    s.scale.set(44,44,1); s.position.set(x, y, z); scene.add(s);
+  });
+  const bc = makeCanvas(512, 380);
+  bdayBoard = { ctx: bc.getContext("2d"), tex: new THREE.CanvasTexture(bc) };
+  const boardMesh = new THREE.Mesh(new THREE.PlaneGeometry(255, 189),
+    new THREE.MeshBasicMaterial({ map: bdayBoard.tex }));
+  boardMesh.position.set(330, 112, 606); scene.add(boardMesh);
+  const bp1 = new THREE.Mesh(new THREE.CylinderGeometry(5,5,116,8), lam(0x8a6236));
+  bp1.position.set(226, 58, 604); scene.add(bp1);
+  const bp2 = bp1.clone(); bp2.position.x = 434; scene.add(bp2);
+  drawBdayBoard();
+
   /* ── 도전 온실 (유리 온실) ── */
   const glass = new THREE.Mesh(new THREE.BoxGeometry(440, 150, 240),
     new THREE.MeshLambertMaterial({ color:0xbfe6ff, transparent:true, opacity:.32 }));
@@ -895,7 +981,7 @@ function buildScene(){
     scene.add(spr);
     drawSign(k, 0);
   }
-  if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ for(const k in ZONES) drawSign(k, zoneCount(k)); });
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ for(const k in ZONES) drawSign(k, zoneCount(k)); drawBdayBoard(); });
 
   /* 마커 그룹 + 플레이어 캐릭터 */
   markersGroup = new THREE.Group(); scene.add(markersGroup);
@@ -1178,7 +1264,7 @@ function buildMinimap(){
   let html = "";
   const zr = [
     ["gallery",160,160,610,310],["plaza",1900,120,540,340],["post",170,1050,560,330],
-    ["green",1900,1060,520,300],["role",1930,620,470,320],["tree",1020,420,560,540],
+    ["green",1900,1060,520,300],["role",1930,620,470,320],["bday",180,590,500,380],["tree",1020,420,560,540],
   ];
   zr.forEach(([k,x,z,w,h])=>{
     html += `<div class="mz" style="left:${x*sx}px;top:${z*sy}px;width:${w*sx}px;height:${h*sy}px;background:${ZONES[k].color}"></div>`;
@@ -1316,11 +1402,19 @@ function buildCatPicker(){
     el.addEventListener("click", ()=>{ selectedCat = el.dataset.cat; buildCatPicker(); updatePrompt(); });
   });
 }
-function updatePrompt(){ const c = catById(selectedCat); $("#textLabel").textContent = c.label; $("#entryText").placeholder = c.prompt; }
+function updatePrompt(){
+  const c = catById(selectedCat);
+  let label = c.label;
+  if(c.id === "rolecheck" && avatar && ROLES[avatar.name]) label += ` — 내 역할: ${ROLES[avatar.name]}`;
+  $("#textLabel").textContent = label;
+  $("#entryText").placeholder = c.prompt;
+}
 function updateSubmit(){ $("#submitBtn").disabled = $("#entryText").value.trim().length === 0; }
 
 async function submitEntry(){
-  const text = $("#entryText").value.trim(); if(!text) return;
+  let text = $("#entryText").value.trim(); if(!text) return;
+  if(selectedCat === "rolecheck" && avatar && ROLES[avatar.name] && !text.startsWith("["))
+    text = `[${ROLES[avatar.name]}] ` + text;   // 점검 글에 내 역할 자동 표기
   const name = avatar ? (avatar.name||"탐험가") : "탐험가";   // 익명 불가
   const av = avatar ? (avatar.emoji||"") : "";
   const entry = { id:uid(), category:selectedCat, name, text, avatar:av, likes:0, ts:Date.now() };
@@ -1784,6 +1878,8 @@ addEventListener("resize", ()=>{
   }
   if(!avatar) openEnter();
   else showNotice();   // 재방문 학생도 입장 알림
+  const bd = todaysBdays();
+  if(bd.length){ setTimeout(()=>{ toast(`🎂 오늘은 ${bd.join(", ")}의 생일! 모두 축하해 주세요 🎉`); confetti(); }, 2500); }
 })();
 </script>
 
