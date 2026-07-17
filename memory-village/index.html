@@ -102,6 +102,11 @@
     transition:.12s;text-align:center}
   .av:hover{transform:translateY(-2px)}
   .av.on{border-color:#3fae63;background:#eefaef;box-shadow:0 5px 14px rgba(63,174,99,.25)}
+  .namegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:7px}
+  .namebtn{border:2px solid var(--line);background:#fff;border-radius:12px;padding:9px 4px;font-weight:800;
+    font-size:14px;cursor:pointer;text-align:center;font-family:inherit;color:var(--ink);transition:.1s}
+  .namebtn:hover{transform:translateY(-1px)}
+  .namebtn.on{border-color:#3fae63;background:#eefaef;box-shadow:0 4px 10px rgba(63,174,99,.25)}
 
   .cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-bottom:15px}
   .cat{border:2.5px solid var(--line);background:#fff;border-radius:15px;padding:10px 6px;cursor:pointer;
@@ -233,8 +238,8 @@
       우리 반 모두가 함께 보는 공간이에요. 진심을 담아, 서로를 아끼는 글을 남겨주세요 🙂</div>
     <div class="avatars" id="avatarGrid"></div>
     <div class="field">
-      <label>별명 (이름) — 꼭 입력해요</label>
-      <input type="text" id="avatarName" maxlength="8" placeholder="예: 승재, 별빛여우">
+      <label id="nameLabel">이름 — 꼭 선택해요</label>
+      <div id="namePickWrap"></div>
     </div>
     <button class="submit" id="enterBtn">🚪 숲으로 입장하기</button>
   </div>
@@ -309,8 +314,20 @@
         <button class="lf" id="noticeClearBtn" style="color:#c0554a">공지 내리기</button>
       </div>
     </div>
-    <div style="margin-bottom:12px">
-      <button class="lf" id="photoAddBtn" style="border-color:#5aa7e8;color:#2b6cb0">📷 추억 사진 추가 — 별빛 갤러리에 걸려요</button>
+    <div class="noticebox" style="background:#f2fff5;border-color:#a9e5bb">
+      <label style="color:#2c7a3f">👥 학생 명단 — 저장하면 학생은 명단에서 자기 이름을 골라 입장해요</label>
+      <textarea id="rosterText" placeholder="한 줄에 한 명씩 붙여넣기 (번호 있어도 OK)&#10;1 김민준&#10;2 이서연"></textarea>
+      <div class="nbtns">
+        <button class="lf" id="rosterSaveBtn" style="border-color:#3fae63;font-weight:800">💾 명단 저장</button>
+        <button class="lf" id="rosterClearBtn" style="color:#c0554a">명단 삭제 (자유 입력으로)</button>
+      </div>
+      <div id="participation" style="margin-top:10px"></div>
+    </div>
+    <div id="starRank" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="lf" id="photoAddBtn" style="border-color:#5aa7e8;color:#2b6cb0">📷 추억 사진 추가</button>
+      <button class="lf" id="printBtn" style="border-color:#b07cf0;color:#6b3fa0">🖨️ 학생별 모음 (인쇄·PDF)</button>
+      <button class="lf" id="csvBtn" style="border-color:#e8a200;color:#8a6200">📊 엑셀(CSV) 내보내기</button>
       <input type="file" id="photoFile" accept="image/*" hidden>
     </div>
     <input type="text" id="teacherSearch" placeholder="🔍 내용·이름으로 검색" style="margin-bottom:12px">
@@ -325,7 +342,8 @@
     <button class="x" data-close>✕</button>
     <h2>메뉴 ⚙️</h2>
     <div class="menu-list">
-      <button id="mTeacher"><span class="mi">🛠️</span> 교사 대시보드 (공지·사진·답변 관리)</button>
+      <button id="mTeacher"><span class="mi">🛠️</span> 교사 대시보드 (명단·공지·사진·답변 관리)</button>
+      <button id="mTour"><span class="mi">🎥</span> 자동 관람 모드 (전자칠판용)</button>
       <button id="mAvatar"><span class="mi">🦊</span> 캐릭터·별명 바꾸기</button>
       <button id="mRoom"><span class="mi">🚪</span> 방(반) 코드 바꾸기</button>
       <button id="mLink"><span class="mi">🔗</span> 학생 참여 링크 복사</button>
@@ -343,7 +361,8 @@
       <b>👀 관람하기</b> — 마음 근처에 가면 말풍선 미리보기가 떠요. 말풍선(또는 Space)을 누르면 크게 보기 + ❤️ 공감.<br>
       <b>🗺️ 여섯 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(기억에 남는 순간·추억 사진) / 🎪추억광장(기억에 남는 행사) / 📮마음우체국(친구에게 한마디) / 🤝1인1역 본부(점검·스타 추천·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
       <b>🏆 1인1역 스타</b> — 추천 글에 ❤️ 공감을 누르는 게 곧 투표! 발표 모드에서 공감 수를 함께 보여줘요.<br>
-      <b>🛠️ 교사용</b> — 메뉴 → 교사 대시보드: 입장 알림 공지, 추억 사진 추가, 답변 검색·삭제.<br>
+      <b>🛠️ 교사용</b> — 메뉴 → 교사 대시보드: 학생 명단(이름 선택 입장), 참여 현황판, 입장 알림 공지, 🏆투표 현황, 추억 사진, 답변 검색·삭제, 학생별 모음 인쇄·CSV 내보내기.<br>
+      <b>🎥 전자칠판</b> — 메뉴 → 자동 관람 모드를 켜면 카메라가 숲을 천천히 돌며 친구들의 활동을 비춰줘요. 터치하면 해제.<br>
       <b>🚪 반 구분</b> — 링크 끝 <code>?room=2-3</code>. 메뉴의 <b>학생 참여 링크 복사</b> 사용.<br>
       <b>📡 저장</b> — Supabase 연결 시 실시간 공유, 미연결 시 이 기기에만 저장돼요.
     </div>
@@ -426,8 +445,12 @@ let selectedCat = CATS[0].id;
 let filterCat = null, listFilter = null, teacherFilter = null, presentIdx = 0;
 let likedSet = loadLiked();
 let viewingId = null;
+let roster = [];                     // 학생 명단 (교사 대시보드에서 저장)
+let pickedName = "";
+let tourMode = false, tourAngle = 0; // 전자칠판 자동 관람
 
 const NOTICE_ID = () => "notice::" + room;
+const ROSTER_ID = () => "roster::" + room;
 
 const $ = s => document.querySelector(s);
 const rand = () => Math.random();
@@ -438,6 +461,14 @@ function avatarHTML(a, size){
   if(a.startsWith("data:image/"))
     return `<img class="avmini" style="width:${size}px;height:${size}px" src="${esc(a)}" alt="">`;
   return `<span style="font-size:${Math.round(size*.9)}px;line-height:1">${esc(a)}</span>`;
+}
+function parseRoster(text){
+  const seen = new Set(), out = [];
+  String(text||"").split(/[\n,]/).forEach(s=>{
+    const n = s.trim().replace(/^\d+[.)\-\s]*/,"").trim();
+    if(n && !seen.has(n)){ seen.add(n); out.push(n); }
+  });
+  return out;
 }
 function resolveRoom(){
   const u = new URLSearchParams(location.search).get("room");
@@ -462,12 +493,12 @@ function loadPrefs(){
     const d = JSON.parse(localStorage.getItem(KEY) || "{}");
     state.className = d.className || "";
     state.sound = d.sound !== false;
-    if(!online){ state.entries = Array.isArray(d.entries) ? d.entries : []; notice = d.notice || ""; }
+    if(!online){ state.entries = Array.isArray(d.entries) ? d.entries : []; notice = d.notice || ""; roster = Array.isArray(d.roster) ? d.roster : []; }
   }catch(e){}
 }
 function save(){
   const d = { className:state.className, sound:state.sound };
-  if(!online){ d.entries = state.entries; d.notice = notice; }
+  if(!online){ d.entries = state.entries; d.notice = notice; d.roster = roster; }
   try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch(e){}
 }
 
@@ -531,6 +562,7 @@ async function fetchEntries(){
   state.entries = [];
   data.forEach(r=>{
     if(r.category === "notice"){ notice = r.content || ""; }
+    else if(r.category === "roster"){ roster = parseRoster(r.content); }
     else state.entries.push(rowToEntry(r));
   });
   renderAll();
@@ -541,6 +573,7 @@ function subscribe(){
     .on("postgres_changes",{event:"INSERT",schema:"public",table:TABLE,filter:"room=eq."+room}, p=>{
       if(!p.new || p.new.room!==room) return;
       if(p.new.category === "notice"){ notice = p.new.content || ""; onNoticeChanged(); return; }
+      if(p.new.category === "roster"){ roster = parseRoster(p.new.content); onRosterChanged(); return; }
       const e = rowToEntry(p.new);
       if(state.entries.some(x=>x.id===e.id)) return;
       state.entries.push(e); renderAll(e.id); afterAdd(e, false);
@@ -548,6 +581,7 @@ function subscribe(){
     .on("postgres_changes",{event:"UPDATE",schema:"public",table:TABLE,filter:"room=eq."+room}, p=>{
       if(!p.new) return;
       if(p.new.category === "notice"){ notice = p.new.content || ""; onNoticeChanged(); return; }
+      if(p.new.category === "roster"){ roster = parseRoster(p.new.content); onRosterChanged(); return; }
       const e = state.entries.find(x=>x.id===p.new.id);
       if(e){ e.likes = (typeof p.new.likes==="number"?p.new.likes:e.likes); refreshLikeUI(e); }
     })
@@ -555,6 +589,7 @@ function subscribe(){
       const id = p.old && p.old.id;
       if(!id) return;
       if(id === NOTICE_ID()){ notice = ""; return; }
+      if(id === ROSTER_ID()){ roster = []; onRosterChanged(); return; }
       if(state.entries.some(x=>x.id===id)){ state.entries = state.entries.filter(x=>x.id!==id); renderAll(); }
     })
     .subscribe(status=>{ if(status === "SUBSCRIBED") sendPos(true); });
@@ -969,10 +1004,17 @@ function animate(t){
   faceAngle = lerpAngle(faceAngle, faceTarget, 0.25);
   playerChar.rotation.y = faceAngle;
   playerChar.position.set(player.x, hop, player.z);
-  /* 궤도 카메라 (드래그로 camYaw/camH 조절) */
-  camera.position.lerp(new THREE.Vector3(
-    player.x + Math.sin(camYaw)*camD, camH, player.z + Math.cos(camYaw)*camD), 0.16);
-  camera.lookAt(player.x, 30, player.z);
+  /* 카메라: 자동 관람(전자칠판) 또는 궤도 팔로우 */
+  if(tourMode){
+    tourAngle += dt*0.07;
+    camera.position.lerp(new THREE.Vector3(
+      1300 + Math.sin(tourAngle)*1080, 620, 780 + Math.cos(tourAngle)*1080), 0.03);
+    camera.lookAt(1300, 40, 760);
+  } else {
+    camera.position.lerp(new THREE.Vector3(
+      player.x + Math.sin(camYaw)*camD, camH, player.z + Math.cos(camYaw)*camD), 0.16);
+    camera.lookAt(player.x, 30, player.z);
+  }
   /* 친구 캐릭터 보간(멀티플레이) */
   if(walking) sendPos();
   if(wasWalking && !walking) sendPos(true);
@@ -1061,6 +1103,7 @@ addEventListener("keydown", e=>{
   }
   if(e.key==="Escape"){ document.querySelectorAll(".overlay.show").forEach(o=>o.classList.remove("show")); return; }
   if(overlayOpen()) return;
+  if(tourMode) exitTour();
   if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(e.key)) e.preventDefault();
   if(e.key===" "||e.key==="Enter"||e.key==="e"||e.key==="E"){
     const en = state.entries.find(x=>x.id===nearestId);
@@ -1097,6 +1140,7 @@ function initPointerControls(){
   const el = renderer.domElement;
   el.style.touchAction = "none";
   el.addEventListener("pointerdown", ev=>{
+    if(tourMode){ exitTour(); return; }
     if(overlayOpen()) return;
     dragInfo = { x:ev.clientX, y:ev.clientY, moved:false, id:ev.pointerId };
     try{ el.setPointerCapture(ev.pointerId); }catch(e){}
@@ -1158,9 +1202,37 @@ function updateMinimap(){
 let pickedAvatar = (avatar && avatar.emoji) ? avatar.emoji : AVATARS[0];
 function openEnter(){
   if(avatar && avatar.emoji) pickedAvatar = avatar.emoji;
+  pickedName = avatar ? (avatar.name||"") : "";
   renderAvatarGrid();
-  $("#avatarName").value = avatar ? (avatar.name||"") : "";
+  renderNameField();
   showOverlay("#enterOverlay");
+}
+/* 명단이 있으면 이름 선택, 없으면 자유 입력 */
+function renderNameField(){
+  const wrap = $("#namePickWrap");
+  if(roster.length){
+    $("#nameLabel").textContent = "명단에서 내 이름을 선택해요";
+    wrap.innerHTML = `<div class="namegrid">` + roster.map(n=>
+      `<button type="button" class="namebtn ${n===pickedName?"on":""}" data-n="${esc(n)}">${esc(n)}</button>`).join("") + `</div>
+      <div style="text-align:right;margin-top:6px">
+        <button type="button" class="lf" id="freeNameBtn" style="font-size:12px">명단에 없어요 (직접 입력)</button></div>`;
+    wrap.querySelectorAll(".namebtn").forEach(b=> b.addEventListener("click", ()=>{
+      pickedName = b.dataset.n;
+      wrap.querySelectorAll(".namebtn").forEach(x=>x.classList.toggle("on", x.dataset.n===pickedName));
+    }));
+    $("#freeNameBtn").addEventListener("click", ()=>{ pickedName=""; renderFreeName(); });
+  } else renderFreeName();
+}
+function renderFreeName(){
+  $("#nameLabel").textContent = "별명 (이름) — 꼭 입력해요";
+  $("#namePickWrap").innerHTML = `<input type="text" id="avatarName" maxlength="8" placeholder="예: 승재, 별빛여우">`;
+  const inp = $("#avatarName");
+  inp.value = pickedName || "";
+  inp.addEventListener("input", ()=>{ pickedName = inp.value.trim(); });
+}
+function onRosterChanged(){
+  if($("#enterOverlay").classList.contains("show")) renderNameField();
+  if($("#teacherOverlay").classList.contains("show")){ $("#rosterText").value = roster.join("\n"); renderTeacher(); }
 }
 function renderAvatarGrid(){
   $("#avatarGrid").innerHTML = AVATARS.map(a=>
@@ -1173,7 +1245,8 @@ function renderAvatarGrid(){
   });
 }
 $("#enterBtn").addEventListener("click", ()=>{
-  const name = $("#avatarName").value.trim() || "탐험가";
+  const name = (pickedName||"").trim();
+  if(!name){ toast(roster.length ? "명단에서 내 이름을 선택해 주세요!" : "이름을 입력해 주세요!"); return; }
   avatar = { emoji:pickedAvatar, name };
   try{ localStorage.setItem("dajim-avatar", JSON.stringify(avatar)); }catch(e){}
   applyAvatar();
@@ -1357,10 +1430,46 @@ function openTeacher(){
   hideOverlay("#menuOverlay");
   $("#teacherSearch").value = "";
   $("#noticeText").value = notice;
+  $("#rosterText").value = roster.join("\n");
   renderTeacher();
   showOverlay("#teacherOverlay");
 }
+/* 참여 현황판: 명단 기준 제출 여부 (이름 클릭 → 그 학생 답변만) */
+function renderParticipation(){
+  const box = $("#participation");
+  if(!roster.length){ box.innerHTML = ""; return; }
+  const byName = {};
+  state.entries.forEach(e=>{ if(isPhoto(e)) return; const n=(e.name||"").trim(); (byName[n]=byName[n]||[]).push(e); });
+  const joined = roster.filter(n=>byName[n] && byName[n].length);
+  box.innerHTML = `<div style="font-weight:800;font-size:13px;margin-bottom:6px">
+      참여 ${joined.length} / ${roster.length}명
+      <span style="color:#8a9a8e;font-weight:700">· 이름을 누르면 그 학생 답변만 보여요</span></div>
+    <div class="namegrid">` + roster.map(n=>{
+      const k = byName[n] ? byName[n].length : 0;
+      return `<button type="button" class="namebtn pk" data-n="${esc(n)}" style="${k
+        ? "border-color:#3fae63;background:#eefaef"
+        : "border-color:#ffb3a1;background:#fff3f0;color:#c0554a"}">${esc(n)}<br>
+        <span style="font-size:11px;font-weight:700">${k ? k+"개" : "미참여"}</span></button>`;
+    }).join("") + `</div>`;
+  box.querySelectorAll(".namebtn.pk").forEach(b=> b.addEventListener("click", ()=>{
+    $("#teacherSearch").value = b.dataset.n; renderTeacher();
+  }));
+}
+/* 1인1역 스타 투표 현황 (❤️=표) */
+function renderStarRank(){
+  const box = $("#starRank");
+  const stars = state.entries.filter(e=>e.category==="rolestar")
+    .sort((a,b)=>(b.likes||0)-(a.likes||0)).slice(0,8);
+  if(!stars.length){ box.innerHTML = ""; return; }
+  box.innerHTML = `<div class="noticebox" style="background:#fff9e8;border-color:#f0d48a;margin-bottom:0">
+    <label style="color:#8a6200">🏆 1인1역 스타 투표 현황 (❤️ 공감 = 표)</label>` +
+    stars.map((e,i)=>`<div style="font-size:13px;font-weight:700;padding:3px 0">
+      ${["🥇","🥈","🥉"][i]||`${i+1}위`} ❤️${e.likes||0} — ${esc(e.text.slice(0,42))}${e.text.length>42?"…":""}
+      <span style="color:#8a9a8e">(${esc(e.name||"")} 추천)</span></div>`).join("") + `</div>`;
+}
 function renderTeacher(){
+  renderParticipation();
+  renderStarRank();
   const all = `<button class="lf ${!teacherFilter?"on":""}" data-f="">전체 ${state.entries.length}</button>`;
   const rest = CATS.map(c=>{ const n = state.entries.filter(e=>e.category===c.id).length;
     return `<button class="lf ${teacherFilter===c.id?"on":""}" data-f="${c.id}">${c.emoji} ${n}</button>`; }).join("");
@@ -1407,6 +1516,62 @@ function compressPhoto(file, max){
     img.src = url;
   });
 }
+/* 명단 저장/삭제 */
+$("#rosterSaveBtn").addEventListener("click", async ()=>{
+  const names = parseRoster($("#rosterText").value);
+  if(!names.length){ toast("명단을 입력해 주세요 (한 줄에 한 명)"); return; }
+  roster = names;
+  if(online){
+    const { error } = await sb.from(TABLE).upsert({ id:ROSTER_ID(), room, category:"roster", author:"teacher", content:names.join("\n"), x:0, y:0 });
+    if(error){ toast("명단 저장 오류: " + error.message); return; }
+  } else save();
+  renderTeacher();
+  toast(`👥 명단 ${names.length}명 저장! 학생은 이름을 골라 입장해요`);
+});
+$("#rosterClearBtn").addEventListener("click", async ()=>{
+  roster = []; $("#rosterText").value = "";
+  if(online){ await sb.from(TABLE).delete().eq("id", ROSTER_ID()); } else save();
+  renderTeacher(); toast("명단 삭제 — 자유 입력으로 전환했어요");
+});
+/* 학생별 모음 인쇄(PDF) */
+function fmtDate(ts){ const d = new Date(ts||Date.now()); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
+$("#printBtn").addEventListener("click", ()=>{
+  const allNames = [...new Set(state.entries.filter(e=>!isPhoto(e)).map(e=>(e.name||"무명").trim()))];
+  const ordered = roster.length ? roster.filter(n=>allNames.includes(n)).concat(allNames.filter(n=>!roster.includes(n))) : allNames.sort();
+  let html = `<h1>🌲 ${esc(state.className||"이삼한 친구들의 숲")} 기록집</h1>
+    <p class="date">${new Date().toLocaleDateString("ko-KR")} · 마음 ${state.entries.filter(e=>!isPhoto(e)).length}개</p>`;
+  ordered.forEach(n=>{
+    const list = state.entries.filter(e=>!isPhoto(e) && (e.name||"무명").trim()===n);
+    if(!list.length) return;
+    html += `<div class="stu"><h2>${esc(n)} <span>(${list.length}개)</span></h2>`;
+    list.forEach(e=>{ const c = catById(e.category);
+      html += `<div class="ent"><b>${c.emoji} ${c.label}</b> — ${esc(e.text)}${e.likes ? ` <span class="lk">❤️${e.likes}</span>` : ""}</div>`; });
+    html += `</div>`;
+  });
+  const w = window.open("", "_blank");
+  if(!w){ toast("팝업이 차단됐어요 — 팝업 허용 후 다시 눌러주세요"); return; }
+  w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>학생별 모음</title><style>
+    body{font-family:'Malgun Gothic',sans-serif;padding:28px;color:#222;max-width:800px;margin:0 auto}
+    h1{font-size:22px;margin:0 0 4px} .date{color:#777;font-size:13px;margin:0 0 14px}
+    .stu{border:1.5px solid #cde;border-radius:10px;padding:12px 16px;margin:12px 0;page-break-inside:avoid}
+    h2{font-size:16px;margin:0 0 8px} h2 span{color:#888;font-size:12px;font-weight:400}
+    .ent{font-size:13.5px;line-height:1.6;padding:4px 0;border-bottom:1px dashed #eee}
+    .lk{color:#e0506e} @media print{.stu{border-color:#bbb}}
+    </style></head><body>${html}<script>setTimeout(()=>print(),400)<\/script></body></html>`);
+  w.document.close();
+});
+/* CSV 내보내기 (엑셀 호환) */
+$("#csvBtn").addEventListener("click", ()=>{
+  const rows = [["이름","카테고리","내용","공감","작성"]];
+  state.entries.forEach(e=>{ const c = catById(e.category);
+    rows.push([e.name||"", c.label, isPhoto(e) ? "[사진] "+(e.name||"") : e.text, String(e.likes||0), fmtDate(e.ts)]); });
+  const csv = "﻿" + rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const blob = new Blob([csv], { type:"text/csv" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = (state.className||"이삼한친구들의숲").replace(/\s+/g,"_") + "_기록.csv"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  toast("CSV 저장! 엑셀에서 바로 열려요 📊");
+});
 $("#photoAddBtn").addEventListener("click", ()=> $("#photoFile").click());
 $("#photoFile").addEventListener("change", async ev=>{
   const f = ev.target.files[0]; ev.target.value = "";
@@ -1450,6 +1615,16 @@ function renderPresent(){
 function presentMove(d){ const n = state.entries.length; if(!n) return; presentIdx = (presentIdx+d+n)%n; renderPresent(); }
 
 /* ═══════════════ 메뉴 ═══════════════ */
+function startTour(){
+  tourMode = true; tourAngle = camYaw;
+  const f = $(".fab"); if(f) f.style.display = "none";
+  toast("🎥 자동 관람 중 — 화면을 터치하면 해제돼요");
+}
+function exitTour(){
+  if(!tourMode) return;
+  tourMode = false;
+  const f = $(".fab"); if(f) f.style.display = "";
+}
 function renameClass(){ const v = prompt("반 이름을 입력하세요 (예: 2학년 3반)", state.className||""); if(v!==null){ state.className = v.trim(); save(); renderAll(); } }
 function changeRoom(){
   const v = prompt("방(반) 코드를 입력하세요.\n같은 코드를 쓰면 같은 숲을 함께 봅니다.\n예: 2-3", room);
@@ -1554,6 +1729,7 @@ $("#soundBtn").addEventListener("click", ()=>{ state.sound=!state.sound; save();
 $("#menuBtn").addEventListener("click", ()=>{ $("#howtoBox").style.display="none"; showOverlay("#menuOverlay"); });
 
 $("#mTeacher").addEventListener("click", openTeacher);
+$("#mTour").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); startTour(); });
 $("#teacherSearch").addEventListener("input", renderTeacher);
 $("#mAvatar").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); openEnter(); });
 $("#mRoom").addEventListener("click", changeRoom);
