@@ -219,7 +219,7 @@
 
 <div id="minimap"></div>
 <button class="fab" id="addBtn">＋ 남기기</button>
-<div id="ctrlHint">🚶 바닥을 터치하면 그곳으로 걸어가요 · 방향키(WASD)도 OK</div>
+<div id="ctrlHint">🚶 터치=이동 · 손가락 드래그=시점 회전 · 방향키(WASD)도 OK</div>
 <div id="bubble"></div>
 
 <!-- 입장 -->
@@ -338,7 +338,8 @@
       <button id="mReset" class="danger"><span class="mi">🗑️</span> 전체 지우기</button>
     </div>
     <div class="howto" id="howtoBox" style="display:none">
-      <b>🚶 돌아다니기</b> — 바닥을 터치하면 그곳으로 걸어가요. 방향키·WASD, 미니맵 터치도 OK.<br>
+      <b>🚶 돌아다니기</b> — 바닥을 터치하면 그곳으로 걸어가요. 화면을 <b>드래그하면 시점이 빙 돌아요</b>(상하 드래그=높낮이). 방향키·WASD, 미니맵 터치도 OK.<br>
+      <b>👥 함께 있기</b> — 같은 방(반) 코드로 접속한 친구들이 <b>같은 숲에 실시간으로 보여요</b>. 위로 걸어가면 캐릭터 뒷모습(꼬리)도 보인답니다!<br>
       <b>👀 관람하기</b> — 마음 근처에 가면 말풍선 미리보기가 떠요. 말풍선(또는 Space)을 누르면 크게 보기 + ❤️ 공감.<br>
       <b>🗺️ 여섯 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(기억에 남는 순간·추억 사진) / 🎪추억광장(기억에 남는 행사) / 📮마음우체국(친구에게 한마디) / 🤝1인1역 본부(점검·스타 추천·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
       <b>🏆 1인1역 스타</b> — 추천 글에 ❤️ 공감을 누르는 게 곧 투표! 발표 모드에서 공감 수를 함께 보여줘요.<br>
@@ -535,7 +536,8 @@ async function fetchEntries(){
   renderAll();
 }
 function subscribe(){
-  sb.channel("dajim-room-" + room)
+  chan = sb.channel("dajim-room-" + room, { config:{ broadcast:{ self:false } } })
+    .on("broadcast", { event:"pos" }, p=> onPeerMsg(p.payload))
     .on("postgres_changes",{event:"INSERT",schema:"public",table:TABLE,filter:"room=eq."+room}, p=>{
       if(!p.new || p.new.room!==room) return;
       if(p.new.category === "notice"){ notice = p.new.content || ""; onNoticeChanged(); return; }
@@ -555,16 +557,63 @@ function subscribe(){
       if(id === NOTICE_ID()){ notice = ""; return; }
       if(state.entries.some(x=>x.id===id)){ state.entries = state.entries.filter(x=>x.id!==id); renderAll(); }
     })
-    .subscribe();
+    .subscribe(status=>{ if(status === "SUBSCRIBED") sendPos(true); });
 }
 function updateStatus(){
   const d = $("#netDot"), t = $("#netText");
-  if(online){ d.classList.add("on"); t.textContent = "실시간 · 방 " + room; }
+  if(online){ d.classList.add("on"); t.textContent = "실시간 · 방 " + room + (peers.size ? " · 👥" + (peers.size+1) : ""); }
   else { d.classList.remove("on"); t.textContent = "오프라인 (이 기기)"; }
 }
 
+/* ═══════════════ 같은 숲에 함께 있기 (실시간 멀티플레이) ═══════════════ */
+const CLIENT_ID = uid();
+let chan = null;
+const peers = new Map();          // id → { char, e, n, x, z, a, w, lastSeen }
+let lastPosSent = 0, lastPeerPrune = 0, wasWalking = false;
+
+function onPeerMsg(m){
+  if(!m || m.id === CLIENT_ID) return;
+  if(m.t === "bye"){ removePeer(m.id); return; }
+  let p = peers.get(m.id);
+  if(!p){
+    p = { char: makeCharacter(m.e||"🐰", m.n||"친구"), e:m.e, n:m.n, x:m.x, z:m.z, a:m.a||0, w:0, lastSeen:0 };
+    p.char.position.set(m.x, 0, m.z);
+    scene.add(p.char);
+    peers.set(m.id, p);
+    updateStatus();
+    sendPos(true);                // 새 친구에게 내 위치도 알려주기
+  }
+  if(p.e !== m.e || p.n !== m.n){  // 캐릭터·별명이 바뀐 경우 다시 만들기
+    scene.remove(p.char);
+    p.char = makeCharacter(m.e||"🐰", m.n||"친구");
+    p.char.position.set(p.x, 0, p.z);
+    scene.add(p.char);
+    p.e = m.e; p.n = m.n;
+  }
+  p.x = m.x; p.z = m.z; p.a = m.a||0; p.w = m.w?1:0;
+  p.lastSeen = performance.now();
+}
+function removePeer(id){
+  const p = peers.get(id);
+  if(p){ scene.remove(p.char); peers.delete(id); updateStatus(); }
+}
+function sendPos(force){
+  if(!online || !chan || !avatar) return;
+  const now = performance.now();
+  if(!force && now - lastPosSent < 320) return;   // 초당 약 3회로 제한
+  lastPosSent = now;
+  try{
+    chan.send({ type:"broadcast", event:"pos", payload:{
+      id:CLIENT_ID, x:Math.round(player.x), z:Math.round(player.z),
+      a:+faceAngle.toFixed(2), w:walking?1:0, e:avatar.emoji, n:avatar.name } });
+  }catch(e){}
+}
+addEventListener("pagehide", ()=>{
+  try{ chan && chan.send({ type:"broadcast", event:"pos", payload:{ id:CLIENT_ID, t:"bye" } }); }catch(e){}
+});
+
 /* ═══════════════ 3D 월드 (three.js) ═══════════════ */
-let scene, camera, renderer, groundMesh, markersGroup, playerSprite;
+let scene, camera, renderer, groundMesh, markersGroup, playerChar;
 const signMeta = {};        // zone → {canvas, ctx, texture}
 const texCache = {};        // 이모지 → texture
 let photoTexCache = {};     // entry id → texture
@@ -598,19 +647,40 @@ function photoTexture(e){
   img.src = e.text;
   photoTexCache[e.id] = t; return t;
 }
-function playerTexture(av){
-  const c = makeCanvas(256,320), g = c.getContext("2d");
-  g.font = "150px 'Segoe UI Emoji','Apple Color Emoji',serif";
-  g.textAlign="center"; g.textBaseline="middle";
-  g.fillText(av.emoji||"🦊", 128, 120);
-  const name = av.name || "탐험가";
-  g.font = "700 34px Galmuri11,'Malgun Gothic',sans-serif";
-  const tw = g.measureText(name).width + 40;
+function nameTexture(name){
+  const c = makeCanvas(256,64), g = c.getContext("2d");
+  g.font = "700 30px Galmuri11,'Malgun Gothic',sans-serif";
+  const tw = Math.min(240, g.measureText(name).width + 36);
   g.fillStyle = "rgba(255,255,255,.92)";
-  roundRect(g, 128-tw/2, 226, tw, 52, 26); g.fill();
-  g.fillStyle = "#2c5a3f";
-  g.fillText(name, 128, 254);
+  roundRect(g, 128-tw/2, 8, tw, 48, 24); g.fill();
+  g.fillStyle = "#2c5a3f"; g.textAlign="center"; g.textBaseline="middle";
+  g.fillText(name, 128, 34);
   return new THREE.CanvasTexture(c);
+}
+/* 방향이 보이는 3D 캐릭터: 몸통(파스텔) + 앞면 얼굴 + 배 + 꼬리(뒷모습 포인트) + 이름표 */
+const BODY_COLORS = [0xffb3ba,0xffdfba,0xfff3ba,0xbaffc9,0xbae1ff,0xe3baff,0xffc9de,0xc9f0ff,0xd9ffb3,0xffd9b3];
+function bodyColorFor(emoji){
+  let h = 0; for(const ch of (emoji||"🦊")) h = (h*31 + ch.codePointAt(0)) >>> 0;
+  return BODY_COLORS[h % BODY_COLORS.length];
+}
+function makeCharacter(emoji, name){
+  const grp = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.SphereGeometry(30, 18, 14), lam(bodyColorFor(emoji)));
+  body.scale.y = 1.05; body.position.y = 32; grp.add(body);
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(18, 14, 10), lam(0xffffff));
+  belly.position.set(0, 24, 17); belly.scale.set(1, .9, .6); grp.add(belly);
+  const tail = new THREE.Mesh(new THREE.SphereGeometry(9, 10, 8), lam(0xffffff));
+  tail.position.set(0, 22, -28); grp.add(tail);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(46,46),
+    new THREE.MeshBasicMaterial({ map:emojiTexture(emoji||"🦊"), transparent:true }));
+  face.position.set(0, 42, 27); grp.add(face);                     // 앞면에만 → 뒤에서 보면 빵댕이!
+  const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map:nameTexture(name||"탐험가"), transparent:true }));
+  tag.scale.set(96, 24, 1); tag.position.y = 94; grp.add(tag);
+  return grp;
+}
+function lerpAngle(a, b, k){
+  const d = (b - a + Math.PI*3) % (Math.PI*2) - Math.PI;
+  return a + d*k;
 }
 function roundRect(g,x,y,w,h,r){
   g.beginPath();
@@ -792,12 +862,12 @@ function buildScene(){
   }
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ for(const k in ZONES) drawSign(k, zoneCount(k)); });
 
-  /* 마커 그룹 + 플레이어 */
+  /* 마커 그룹 + 플레이어 캐릭터 */
   markersGroup = new THREE.Group(); scene.add(markersGroup);
-  playerSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map:playerTexture(avatar||{emoji:"🦊",name:"탐험가"}), transparent:true }));
-  playerSprite.scale.set(96, 120, 1);
-  playerSprite.position.set(player.x, 62, player.z);
-  scene.add(playerSprite);
+  const av = avatar || { emoji:"🦊", name:"탐험가" };
+  playerChar = makeCharacter(av.emoji, av.name);
+  playerChar.position.set(player.x, 0, player.z);
+  scene.add(playerChar);
 }
 function zoneCount(k){ return state.entries.filter(e=>catById(e.category).zone===k).length; }
 
@@ -847,12 +917,13 @@ function renderLegend(){
 
 /* ═══════════════ 플레이어 / 카메라 / 루프 ═══════════════ */
 const player = { x:1300, z:1180 };
-let walkTarget = null, walking = false, faceRight = false;
+let walkTarget = null, walking = false;
+let faceAngle = 0, faceTarget = 0;                 // 캐릭터가 바라보는 방향
+let camYaw = 0, camH = 440, camD = 560;            // 궤도 카메라 (드래그로 회전)
 const keys = {};
 const SPEED = 330;
 let nearestId = null;
 let lastT = performance.now();
-const rayc = new THREE.Raycaster ? null : null;   // (아래에서 생성)
 let raycaster, pointerV, projV;
 
 function overlayOpen(){ return !!document.querySelector(".overlay.show"); }
@@ -860,16 +931,20 @@ function clampX(x){ return Math.max(70, Math.min(W-70, x)); }
 function clampZ(z){ return Math.max(170, Math.min(H-60, z)); }
 
 function stepPlayer(dt){
-  let dx=0, dz=0;
-  if(keys.ArrowLeft||keys.a) dx -= 1;
-  if(keys.ArrowRight||keys.d) dx += 1;
-  if(keys.ArrowUp||keys.w) dz -= 1;
-  if(keys.ArrowDown||keys.s) dz += 1;
-  if(dx||dz){
+  let ix=0, iz=0;
+  if(keys.ArrowLeft||keys.a) ix -= 1;
+  if(keys.ArrowRight||keys.d) ix += 1;
+  if(keys.ArrowUp||keys.w) iz -= 1;
+  if(keys.ArrowDown||keys.s) iz += 1;
+  if(ix||iz){
     walkTarget = null;
+    /* 카메라 기준 이동: ↑ = 화면 안쪽(카메라 반대 방향) */
+    const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw);
+    const rx = -fz, rz = fx;
+    let dx = fx*(-iz) + rx*ix, dz = fz*(-iz) + rz*ix;
     const m = Math.hypot(dx,dz); dx/=m; dz/=m;
     player.x += dx*SPEED*dt; player.z += dz*SPEED*dt;
-    walking = true; if(Math.abs(dx)>0.1) faceRight = dx>0;
+    walking = true; faceTarget = Math.atan2(dx, dz);
   } else if(walkTarget){
     const tx = walkTarget.x-player.x, tz = walkTarget.z-player.z;
     const d = Math.hypot(tx,tz);
@@ -880,7 +955,7 @@ function stepPlayer(dt){
     } else {
       const step = Math.min(d, SPEED*dt);
       player.x += tx/d*step; player.z += tz/d*step;
-      walking = true; if(Math.abs(tx)>4) faceRight = tx>0;
+      walking = true; faceTarget = Math.atan2(tx, tz);
     }
   } else walking = false;
   player.x = clampX(player.x); player.z = clampZ(player.z);
@@ -889,13 +964,31 @@ function animate(t){
   requestAnimationFrame(animate);
   const dt = Math.min(0.05, (t-lastT)/1000); lastT = t;
   if(!overlayOpen()) stepPlayer(dt);
-  /* 플레이어 스프라이트 */
-  const hop = walking ? Math.abs(Math.sin(t/95))*12 : 0;
-  playerSprite.position.set(player.x, 62+hop, player.z);
-  playerSprite.scale.x = faceRight ? -96 : 96;
-  /* 카메라 팔로우 */
-  camera.position.lerp(new THREE.Vector3(player.x, 440, player.z+560), 0.14);
-  camera.lookAt(player.x, 20, player.z-120);
+  /* 플레이어 캐릭터: 방향 회전 + 통통 */
+  const hop = walking ? Math.abs(Math.sin(t/95))*10 : 0;
+  faceAngle = lerpAngle(faceAngle, faceTarget, 0.25);
+  playerChar.rotation.y = faceAngle;
+  playerChar.position.set(player.x, hop, player.z);
+  /* 궤도 카메라 (드래그로 camYaw/camH 조절) */
+  camera.position.lerp(new THREE.Vector3(
+    player.x + Math.sin(camYaw)*camD, camH, player.z + Math.cos(camYaw)*camD), 0.16);
+  camera.lookAt(player.x, 30, player.z);
+  /* 친구 캐릭터 보간(멀티플레이) */
+  if(walking) sendPos();
+  if(wasWalking && !walking) sendPos(true);
+  wasWalking = walking;
+  peers.forEach(p=>{
+    const g = p.char;
+    g.position.x += (p.x - g.position.x)*0.14;
+    g.position.z += (p.z - g.position.z)*0.14;
+    const mv = p.w || Math.hypot(p.x-g.position.x, p.z-g.position.z) > 3;
+    g.position.y = mv ? Math.abs(Math.sin(t/95))*10 : 0;
+    g.rotation.y = lerpAngle(g.rotation.y, p.a, 0.2);
+  });
+  if(t - lastPeerPrune > 2000){
+    lastPeerPrune = t;
+    peers.forEach((p,id)=>{ if(p.lastSeen && performance.now()-p.lastSeen > 9000) removePeer(id); });
+  }
   /* 마커 둥실 + 등장 팝 */
   const now = t;
   markersGroup.children.forEach(s=>{
@@ -981,11 +1074,11 @@ addEventListener("keyup", e=>{
   const map = {ArrowLeft:"ArrowLeft",ArrowRight:"ArrowRight",ArrowUp:"ArrowUp",ArrowDown:"ArrowDown",a:"a",d:"d",w:"w",s:"s",A:"a",D:"d",W:"w",S:"s"};
   if(map[e.key]) keys[map[e.key]] = false;
 });
-function onPointerDown(ev){
+function handleTap(cx, cy){
   if(overlayOpen()) return;
   const r = renderer.domElement.getBoundingClientRect();
-  pointerV.x = ((ev.clientX-r.left)/r.width)*2-1;
-  pointerV.y = -((ev.clientY-r.top)/r.height)*2+1;
+  pointerV.x = ((cx-r.left)/r.width)*2-1;
+  pointerV.y = -((cy-r.top)/r.height)*2+1;
   raycaster.setFromCamera(pointerV, camera);
   const hits = raycaster.intersectObjects(markersGroup.children, false);
   if(hits.length){
@@ -993,10 +1086,39 @@ function onPointerDown(ev){
     const d = Math.hypot(player.x-u.gx, player.z-u.gz);
     if(d < 200) openView(e);
     else walkTarget = { x:clampX(u.gx), z:clampZ(u.gz+80), openId:e.id };
-    hideCtrlHint(); return;
+    return;
   }
   const gh = raycaster.intersectObject(groundMesh, false)[0];
-  if(gh){ walkTarget = { x:clampX(gh.point.x), z:clampZ(gh.point.z) }; hideCtrlHint(); }
+  if(gh){ walkTarget = { x:clampX(gh.point.x), z:clampZ(gh.point.z) }; }
+}
+/* 탭=이동 · 드래그=시점 회전 */
+let dragInfo = null;
+function initPointerControls(){
+  const el = renderer.domElement;
+  el.style.touchAction = "none";
+  el.addEventListener("pointerdown", ev=>{
+    if(overlayOpen()) return;
+    dragInfo = { x:ev.clientX, y:ev.clientY, moved:false, id:ev.pointerId };
+    try{ el.setPointerCapture(ev.pointerId); }catch(e){}
+  });
+  el.addEventListener("pointermove", ev=>{
+    if(!dragInfo || ev.pointerId!==dragInfo.id) return;
+    const mx = ev.clientX - dragInfo.x, my = ev.clientY - dragInfo.y;
+    if(!dragInfo.moved && Math.hypot(mx,my) > 9) dragInfo.moved = true;
+    if(dragInfo.moved){
+      camYaw -= mx * 0.0055;                                     // 좌우 드래그 = 회전
+      camH = Math.max(240, Math.min(760, camH + my * 1.5));      // 상하 드래그 = 높낮이
+      dragInfo.x = ev.clientX; dragInfo.y = ev.clientY;
+      hideCtrlHint();
+    }
+  });
+  el.addEventListener("pointerup", ev=>{
+    if(!dragInfo || ev.pointerId!==dragInfo.id) return;
+    const wasDrag = dragInfo.moved, cx = ev.clientX, cy = ev.clientY;
+    dragInfo = null;
+    if(!wasDrag){ handleTap(cx, cy); hideCtrlHint(); }
+  });
+  el.addEventListener("pointercancel", ()=>{ dragInfo = null; });
 }
 let hintHidden = false;
 function hideCtrlHint(){
@@ -1060,9 +1182,13 @@ $("#enterBtn").addEventListener("click", ()=>{
   showNotice();   // 입장 시 선생님 알림
 });
 function applyAvatar(){
-  if(!avatar || !playerSprite) return;
-  playerSprite.material.map = playerTexture(avatar);
-  playerSprite.material.needsUpdate = true;
+  if(!avatar || !scene) return;
+  if(playerChar) scene.remove(playerChar);
+  playerChar = makeCharacter(avatar.emoji, avatar.name);
+  playerChar.position.set(player.x, 0, player.z);
+  playerChar.rotation.y = faceAngle;
+  scene.add(playerChar);
+  sendPos(true);   // 바뀐 캐릭터를 친구들에게도 알림
 }
 
 /* ═══════════════ 선생님 알림(공지) ═══════════════ */
@@ -1466,9 +1592,9 @@ addEventListener("resize", ()=>{
   projV = new THREE.Vector3();
   buildScene();
   buildMinimap();
-  renderer.domElement.addEventListener("pointerdown", onPointerDown);
-  camera.position.set(player.x, 440, player.z+560);
-  camera.lookAt(player.x, 20, player.z-120);
+  initPointerControls();
+  camera.position.set(player.x + Math.sin(camYaw)*camD, camH, player.z + Math.cos(camYaw)*camD);
+  camera.lookAt(player.x, 30, player.z);
 
   online = await initSupabase();
   loadPrefs();
