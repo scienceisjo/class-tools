@@ -1,0 +1,19 @@
+{
+  "name": "PDF 만능 도구",
+  "short_name": "PDF 도구",
+  "description": "병합·분할·압축·변환·OCR 등 11가지 PDF 기능. 인터넷 없이, 무료로, 무제한.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f6fb",
+  "theme_color": "#3b6fe0",
+  "lang": "ko",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "education"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
