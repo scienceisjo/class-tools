@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>학급 임원 선거 진행</title>
+<title>학급 임원 선거 진행 · PPT 없이 진행하는 웹앱</title>
+<meta name="description" content="PPT 없이 학급 임원 선거(회장·부회장)를 진행하는 무료 웹앱. 유의사항·규칙·후보자를 입력하면 소견 발표 타이머, 투표 안내, 개표 그래프, 당선자 발표까지 자동으로 진행됩니다. 설치·로그인 없이 브라우저에서 바로, 인터넷 없이도 작동. 제작: 해누리중학교 조승재.">
+<meta name="author" content="해누리중학교 조승재">
+<meta property="og:type" content="website">
+<meta property="og:title" content="학급 임원 선거 — PPT 없이 진행하는 웹앱">
+<meta property="og:description" content="유의사항·규칙·후보자만 입력하면 소견 발표 타이머·투표 안내·개표·당선자 발표까지 자동 진행. 설치 없이 전자칠판에서 바로 쓰세요.">
+<meta property="og:url" content="https://scienceisjo.github.io/class-tools/election/">
+<meta name="theme-color" content="#312e81">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%97%B3%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <style>
   :root{
     --bg1:#0f172a; --bg2:#1e1b4b; --bg3:#312e81;
@@ -712,6 +720,9 @@ function startShow(){
   save();
   const cands = state.cands.filter(c=>c.name);
   if(!state.title && cands.length===0){ alert('선거 제목과 후보자를 먼저 입력해 주세요. (예시 채우기 버튼을 눌러보세요)'); return; }
+  // 내용은 썼는데 이름이 비어 진행 화면에서 빠지는 후보 경고
+  const ghost = state.cands.filter(c=>!c.name && (c.slogan||c.pledge||(c.emoji && c.emoji!=='🙂')));
+  if(ghost.length && !confirm(`이름이 비어 있는 후보 ${ghost.length}명이 있어요.\n이름이 없는 후보는 진행 화면에 나오지 않습니다.\n\n그대로 시작할까요? (취소하면 설정으로 돌아가 이름을 채울 수 있어요)`)) return;
   buildSlides(); cur=0; votes={};
   document.getElementById('setup').style.display='none';
   document.getElementById('show').style.display='block';
