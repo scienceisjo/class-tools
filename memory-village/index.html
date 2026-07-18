@@ -71,7 +71,13 @@
   .fab:hover{transform:translateX(-50%) translateY(-2px)}
   .fab:active{transform:translateX(-50%) scale(.96)}
 
-  #ctrlHint{position:fixed;left:50%;bottom:82px;transform:translateX(-50%);z-index:19;
+  .zonebtn{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);z-index:24;border:none;cursor:pointer;
+    background:rgba(255,255,255,.95);color:#2c5a3f;font-weight:800;font-size:14px;padding:11px 20px;border-radius:999px;
+    box-shadow:0 8px 22px rgba(40,70,45,.3);display:none;align-items:center;gap:7px;max-width:92vw;white-space:nowrap;
+    animation:zpop .25s cubic-bezier(.2,1.4,.4,1)}
+  .zonebtn.show{display:inline-flex}
+  @keyframes zpop{from{transform:translateX(-50%) translateY(10px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+  #ctrlHint{position:fixed;left:50%;bottom:126px;transform:translateX(-50%);z-index:19;
     background:rgba(44,58,46,.82);color:#fff;font-weight:700;font-size:13px;padding:8px 18px;border-radius:999px;
     transition:opacity 1s;pointer-events:none;white-space:nowrap}
 
@@ -234,6 +240,7 @@
 
 <div id="minimap"></div>
 <button class="fab" id="addBtn">＋ 남기기</button>
+<button class="zonebtn" id="zoneBtn"></button>
 <div id="ctrlHint">🚶 터치=이동 · 손가락 드래그=시점 회전 · 방향키(WASD)도 OK</div>
 <div id="bubble"></div>
 
@@ -321,6 +328,15 @@
   </div>
 </div>
 
+<!-- 공간/카테고리 모아보기 -->
+<div class="overlay" id="collectOverlay">
+  <div class="card">
+    <button class="x" data-close>✕</button>
+    <h2 id="collectTitle">모아보기</h2>
+    <div class="items" id="collectItems"></div>
+  </div>
+</div>
+
 <!-- 교사 대시보드 -->
 <div class="overlay" id="teacherOverlay">
   <div class="card">
@@ -387,6 +403,7 @@
       <b>🎂 생일 게시판</b> — 생일 광장의 게시판을 클릭(또는 메뉴 → 우리 반 생일 게시판)하면 우리 반 전체 생일을 월별로 볼 수 있어요.<br>
       <b>👥 함께 있기</b> — 같은 방(반) 코드로 접속한 친구들이 <b>같은 숲에 실시간으로 보여요</b>. 위로 걸어가면 캐릭터 뒷모습(꼬리)도 보인답니다!<br>
       <b>👀 관람하기</b> — 마음 근처에 가면 말풍선 미리보기가 떠요. 말풍선(또는 Space)을 누르면 크게 보기 + ❤️ 공감.<br>
+      <b>📖 모아보기</b> — 어떤 공간에 도착하면 아래에 <b>'이 곳 글 모아보기'</b> 버튼이 떠요(팻말을 눌러도 됨). 위쪽 <b>카테고리(칩)를 누르면</b> 그 종류의 글만 모아 볼 수 있어요.<br>
       <b>🗺️ 일곱 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(순간·추억 사진) / 🎪추억광장(행사) / 📮마음우체국(친구에게 한마디) / 🎂생일광장(다가오는 생일 게시판·축하 한마디) / 🤝1인1역 본부(점검·스타 추천·🌟숨은 기여 자랑·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
       <b>🏆 1인1역 스타</b> — 추천 글에 ❤️ 공감을 누르는 게 곧 투표! 발표 모드에서 공감 수를 함께 보여줘요.<br>
       <b>🛠️ 교사용</b> — 메뉴 → <b>🔒 교사 모드</b>에 비밀번호를 넣으면 관리 메뉴가 열려요. 비번은 <b>서버에서 확인</b>하므로 소스코드를 봐도 못 뚫어요. 학생은 읽기·마음 남기기만 가능(공지·명단·삭제 불가). 전자칠판에서 켰다면 넘기기 전 <b>교사 모드 끄기</b>! (처음 한 번 파일 하단 SECURITY SQL 실행 필요)<br>
@@ -748,6 +765,7 @@ addEventListener("pagehide", ()=>{
 /* ═══════════════ 3D 월드 (three.js) ═══════════════ */
 let scene, camera, renderer, groundMesh, markersGroup, playerChar;
 const signMeta = {};        // zone → {canvas, ctx, texture}
+const signSprites = [];     // 클릭하면 그 공간 글 모아보기
 let bdayBoard = null;       // 생일 게시판 {ctx, tex}
 let bdayBoardMesh = null;   // 3D 게시판 (클릭 → 전체 생일)
 let clouds = [], butterflies = [];
@@ -1070,6 +1088,7 @@ function buildScene(){
     const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true }));
     spr.scale.set(230, 86, 1);
     spr.position.set(z.sign.x, 58, z.sign.z);
+    spr.userData.zone = k; signSprites.push(spr);
     scene.add(spr);
     drawSign(k, 0);
   }
@@ -1117,6 +1136,7 @@ function renderAll(newestId){
   nearestId = null; updateBubbleContent();
   if($("#teacherOverlay").classList.contains("show")) renderTeacher();
   if($("#listOverlay").classList.contains("show")){ renderListFilter(); renderListItems(); }
+  if($("#collectOverlay").classList.contains("show")) refreshCollection();
 }
 function renderLegend(){
   const counts = {}; state.entries.forEach(e=>counts[e.category]=(counts[e.category]||0)+1);
@@ -1124,7 +1144,8 @@ function renderLegend(){
     <span class="chip ${filterCat===c.id?"active":""}" data-cat="${c.id}" style="color:${c.color}">
       ${c.emoji}<span style="color:var(--ink)">${c.label}</span><span class="n">${counts[c.id]||0}</span></span>`).join("");
   document.querySelectorAll("#legend .chip").forEach(ch=>{
-    ch.addEventListener("click", ()=>{ const id=ch.dataset.cat; filterCat=(filterCat===id)?null:id; renderAll(); });
+    ch.title = "이 카테고리 글 모아보기";
+    ch.addEventListener("click", ()=> openCatCollection(ch.dataset.cat));
   });
 }
 
@@ -1231,6 +1252,7 @@ function animate(t){
   updateNearest();
   updateBubblePos();
   updateMinimap();
+  updateZoneButton();
   renderer.render(scene, camera);
 }
 
@@ -1318,6 +1340,8 @@ function handleTap(cx, cy){
   if(bdayBoardMesh && raycaster.intersectObject(bdayBoardMesh, false).length){
     openBdayBoard(); return;
   }
+  const sh = raycaster.intersectObjects(signSprites, false);
+  if(sh.length){ openZoneCollection(sh[0].object.userData.zone); return; }
   const gh = raycaster.intersectObject(groundMesh, false)[0];
   if(gh){ walkTarget = { x:clampX(gh.point.x), z:clampZ(gh.point.z) }; }
 }
@@ -1625,6 +1649,53 @@ $("#likeBtn").addEventListener("click", async ev=>{
 });
 
 /* ═══════════════ 모아보기 ═══════════════ */
+/* ── 공간/카테고리 모아보기 ── */
+const ZONE_REGION = {
+  tree:{x:1300,z:680,r:400}, gallery:{x:465,z:420,r:340}, plaza:{x:2160,z:470,r:350},
+  post:{x:455,z:1200,r:340}, green:{x:2150,z:1250,r:330}, role:{x:2150,z:900,r:300}, bday:{x:400,z:840,r:350},
+};
+function currentZoneOf(x,z){
+  let best=null, bd=1e9;
+  for(const k in ZONE_REGION){ const r=ZONE_REGION[k], d=Math.hypot(x-r.x, z-r.z); if(d<r.r && d<bd){ bd=d; best=k; } }
+  return best;
+}
+function entryCardHTML(e){
+  const c = catById(e.category);
+  const body = isPhoto(e) ? `<img src="${esc(e.text)}" style="max-width:150px;max-height:110px;border-radius:8px;display:block">` : esc(e.text);
+  return `<div class="item" style="border-color:${c.soft}"><span class="ie">${c.emoji}</span>
+    <div class="it"><div class="txt">${body}</div>
+    <div class="meta">${avatarHTML(e.avatar,16)} ${esc(e.name||"익명")} · ${c.label} · ❤️${e.likes||0}</div></div></div>`;
+}
+let collectCtx = null;   // {type:'zone'|'cat', key}
+function refreshCollection(){
+  if(!collectCtx) return;
+  let title, list;
+  if(collectCtx.type==='zone'){
+    const z = ZONES[collectCtx.key];
+    list = state.entries.filter(e=>catById(e.category).zone===collectCtx.key);
+    title = `${z.emoji} ${z.label} · ${list.length}개`;
+  } else {
+    const c = catById(collectCtx.key);
+    list = state.entries.filter(e=>e.category===collectCtx.key);
+    title = `${c.emoji} ${c.label} · ${list.length}개`;
+  }
+  $("#collectTitle").textContent = title;
+  const items = list.slice().reverse();
+  $("#collectItems").innerHTML = items.length ? items.map(entryCardHTML).join("")
+    : `<div class="empty-list">아직 여기엔 글이 없어요 🌿<br><span style="font-size:13px;font-weight:600">＋ 남기기로 첫 글을 남겨보세요</span></div>`;
+}
+function openZoneCollection(k){ collectCtx = {type:'zone', key:k}; refreshCollection(); showOverlay("#collectOverlay"); }
+function openCatCollection(id){ collectCtx = {type:'cat', key:id}; refreshCollection(); showOverlay("#collectOverlay"); }
+/* 현재 공간 표시 버튼 갱신 (매 프레임) */
+function updateZoneButton(){
+  const b = $("#zoneBtn"); if(!b) return;
+  const z = (overlayOpen()||tourMode) ? null : currentZoneOf(player.x, player.z);
+  if(!z){ if(b.classList.contains("show")) b.classList.remove("show"); return; }
+  const zz = ZONES[z], n = state.entries.filter(e=>catById(e.category).zone===z).length;
+  const lbl = `📖 ${zz.emoji} ${zz.label} 글 모아보기 (${n})`;
+  if(b.dataset.lbl !== lbl){ b.textContent = lbl; b.dataset.lbl = lbl; b.dataset.zone = z; }
+  if(!b.classList.contains("show")) b.classList.add("show");
+}
 function openList(){ renderListFilter(); renderListItems(); showOverlay("#listOverlay"); }
 function renderListFilter(){
   const all = `<button class="lf ${!listFilter?"on":""}" data-f="">전체 ${state.entries.length}</button>`;
@@ -2001,6 +2072,7 @@ document.querySelectorAll("[data-close]").forEach(b=> b.addEventListener("click"
 
 /* ═══════════════ 이벤트 연결 ═══════════════ */
 $("#addBtn").addEventListener("click", openAdd);
+$("#zoneBtn").addEventListener("click", ()=>{ if($("#zoneBtn").dataset.zone) openZoneCollection($("#zoneBtn").dataset.zone); });
 $("#submitBtn").addEventListener("click", submitEntry);
 $("#entryText").addEventListener("input", e=>{ $("#charCount").textContent=e.target.value.length; updateSubmit(); });
 $("#entryText").addEventListener("keydown", e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter") submitEntry(); });
