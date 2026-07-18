@@ -165,6 +165,12 @@
   .menu-list button:hover{border-color:#7fce77;background:#f5fdf5}
   .menu-list button.danger{color:#c0554a}
   .menu-list .mi{font-size:18px}
+  .menu-list .teacher-only{display:none}
+  body.tmode .menu-list .teacher-only{display:flex}
+  .tdiv{font-size:12px;font-weight:800;color:#8a9a8e;text-align:center;letter-spacing:1px;
+    margin:4px 0 2px;padding-top:6px;border-top:1.5px dashed var(--line)}
+  #mTeacherMode{border-style:dashed;color:#5f7563;justify-content:center}
+  body.tmode #mTeacherMode{color:#c0554a;border-color:#ffb3a1}
   .howto{font-size:14px;line-height:1.75;color:#4d6a52;background:#eefaef;border-radius:15px;padding:15px 17px;margin-top:10px}
   .howto b{color:#2c3a2e}
   .howto code{background:rgba(0,0,0,.06);padding:1px 6px;border-radius:6px;font-size:.9em}
@@ -352,19 +358,24 @@
     <button class="x" data-close>✕</button>
     <h2>메뉴 ⚙️</h2>
     <div class="menu-list">
-      <button id="mTeacher"><span class="mi">🛠️</span> 교사 대시보드 (명단·공지·사진·답변 관리)</button>
-      <button id="mTour"><span class="mi">🎥</span> 자동 관람 모드 (전자칠판용)</button>
-      <button id="mBday"><span class="mi">🎂</span> 우리 반 생일 게시판</button>
+      <!-- 학생 누구나 -->
       <button id="mAvatar"><span class="mi">🦊</span> 캐릭터·별명 바꾸기</button>
-      <button id="mRoom"><span class="mi">🚪</span> 방(반) 코드 바꾸기</button>
-      <button id="mLink"><span class="mi">🔗</span> 학생 참여 링크 복사</button>
+      <button id="mBday"><span class="mi">🎂</span> 우리 반 생일 게시판</button>
       <button id="mSync"><span class="mi">🔄</span> 새로고침(동기화)</button>
-      <button id="mConnect"><span class="mi">🔌</span> 온라인 연결 (Supabase)</button>
-      <button id="mRename"><span class="mi">✏️</span> 반 이름 바꾸기</button>
-      <button id="mExport"><span class="mi">💾</span> 내보내기 (백업 저장)</button>
-      <button id="mImport"><span class="mi">📂</span> 가져오기 (합치기)</button>
       <button id="mHow"><span class="mi">❓</span> 사용법 보기</button>
-      <button id="mReset" class="danger"><span class="mi">🗑️</span> 전체 지우기</button>
+      <!-- 교사 전용 (잠금) -->
+      <div class="tdiv teacher-only">🔧 선생님 전용</div>
+      <button id="mTeacher" class="teacher-only"><span class="mi">🛠️</span> 교사 대시보드 (명단·공지·사진·답변 관리)</button>
+      <button id="mTour" class="teacher-only"><span class="mi">🎥</span> 자동 관람 모드 (전자칠판용)</button>
+      <button id="mRoom" class="teacher-only"><span class="mi">🚪</span> 방(반) 코드 바꾸기</button>
+      <button id="mLink" class="teacher-only"><span class="mi">🔗</span> 학생 참여 링크 복사</button>
+      <button id="mRename" class="teacher-only"><span class="mi">✏️</span> 반 이름 바꾸기</button>
+      <button id="mConnect" class="teacher-only"><span class="mi">🔌</span> 온라인 연결 (Supabase)</button>
+      <button id="mExport" class="teacher-only"><span class="mi">💾</span> 내보내기 (백업 저장)</button>
+      <button id="mImport" class="teacher-only"><span class="mi">📂</span> 가져오기 (합치기)</button>
+      <button id="mReset" class="danger teacher-only"><span class="mi">🗑️</span> 전체 지우기</button>
+      <!-- 잠금 스위치 -->
+      <button id="mTeacherMode"><span class="mi">🔒</span> 교사 모드 (선생님 전용)</button>
     </div>
     <div class="howto" id="howtoBox" style="display:none">
       <b>🚶 돌아다니기</b> — 바닥을 터치하면 그곳으로 걸어가요. <b>드래그=시점 회전</b>(상하=높낮이), <b>두 손가락/마우스 휠=확대·축소</b>. 방향키·WASD, 미니맵 터치도 OK.<br>
@@ -373,7 +384,7 @@
       <b>👀 관람하기</b> — 마음 근처에 가면 말풍선 미리보기가 떠요. 말풍선(또는 Space)을 누르면 크게 보기 + ❤️ 공감.<br>
       <b>🗺️ 일곱 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(순간·추억 사진) / 🎪추억광장(행사) / 📮마음우체국(친구에게 한마디) / 🎂생일광장(다가오는 생일 게시판·축하 한마디) / 🤝1인1역 본부(점검·스타 추천·🌟숨은 기여 자랑·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
       <b>🏆 1인1역 스타</b> — 추천 글에 ❤️ 공감을 누르는 게 곧 투표! 발표 모드에서 공감 수를 함께 보여줘요.<br>
-      <b>🛠️ 교사용</b> — 메뉴 → 교사 대시보드: 학생 명단(이름 선택 입장), 참여 현황판, 입장 알림 공지, 🏆투표 현황, 추억 사진, 답변 검색·삭제, 학생별 모음 인쇄·CSV 내보내기.<br>
+      <b>🛠️ 교사용</b> — 메뉴 → <b>🔒 교사 모드</b>에 비밀번호를 넣어야 관리 메뉴(대시보드·명단·공지·삭제·전체지우기 등)가 열려요. 학생 화면엔 안 보입니다. 전자칠판에서 켰다면 학생에게 넘기기 전 <b>교사 모드 끄기</b>!<br>
       <b>🎥 전자칠판</b> — 메뉴 → 자동 관람 모드를 켜면 카메라가 숲을 천천히 돌며 친구들의 활동을 비춰줘요. 터치하면 해제.<br>
       <b>🚪 반 구분</b> — 링크 끝 <code>?room=2-3</code>. 메뉴의 <b>학생 참여 링크 복사</b> 사용.<br>
       <b>📡 저장</b> — Supabase 연결 시 실시간 공유, 미연결 시 이 기기에만 저장돼요.
@@ -408,6 +419,9 @@
 const SUPABASE_URL      = "https://vbvtnmnodeoocbbjauap.supabase.co";   // 과학이조선생 프로젝트
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRubW5vZGVvb2NiYmphdWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0OTQ0OTYsImV4cCI6MjA5NTA3MDQ5Nn0.dvuRrt3qw2Tya_QwGbcXrmGPdfDgI4xmgyH8UjU73Nc";
 const TABLE = "dajim_entries";
+/* 교사 모드 비밀번호 — 학생이 대시보드(공지·명단·삭제 등)를 못 건드리게 잠금.
+   ↓ 이 숫자를 원하는 비밀번호로 바꾸면 돼요 (선생님만 알기!) */
+const TEACHER_PIN = "2580";
 
 /* ═══════════════ 월드(3D) / 공간 정의 — 평면 좌표 x:0~2600, z:0~1600 ═══════════════ */
 const W = 2600, H = 1600;
@@ -523,6 +537,7 @@ let viewingId = null;
 let roster = [];                     // 학생 명단 (교사 대시보드에서 저장)
 let pickedName = "";
 let tourMode = false, tourAngle = 0; // 전자칠판 자동 관람
+let teacherUnlocked = false;         // 교사 모드 잠금 해제 여부 (이 기기 기준)
 
 const NOTICE_ID = () => "notice::" + room;
 const ROSTER_ID = () => "roster::" + room;
@@ -1622,7 +1637,31 @@ async function deleteEntry(id){
   if(online){ const { error } = await sb.from(TABLE).delete().eq("id", id); if(error){ toast("삭제 오류: "+error.message); return false; } }
   state.entries = state.entries.filter(x=>x.id!==id); save(); renderAll(); return true;
 }
+/* ── 교사 모드 잠금 ── */
+function applyTeacherMode(){
+  document.body.classList.toggle("tmode", teacherUnlocked);
+  const b = $("#mTeacherMode");
+  if(b) b.innerHTML = teacherUnlocked
+    ? `<span class="mi">🔓</span> 교사 모드 끄기 (학생에게 넘기기 전 꼭!)`
+    : `<span class="mi">🔒</span> 교사 모드 (선생님 전용)`;
+}
+function toggleTeacherMode(){
+  if(teacherUnlocked){
+    teacherUnlocked = false;
+    try{ localStorage.removeItem("dajim-teacher"); }catch(e){}
+    applyTeacherMode(); toast("🔒 교사 모드를 껐어요");
+    return;
+  }
+  const p = prompt("교사 비밀번호를 입력하세요");
+  if(p === null) return;
+  if(p.trim() === TEACHER_PIN){
+    teacherUnlocked = true;
+    try{ localStorage.setItem("dajim-teacher","1"); }catch(e){}
+    applyTeacherMode(); toast("🔓 교사 모드 ON — 관리 메뉴가 열렸어요");
+  } else toast("비밀번호가 달라요 🔒");
+}
 function openTeacher(){
+  if(!teacherUnlocked){ toast("선생님 전용이에요 🔒"); return; }
   hideOverlay("#menuOverlay");
   $("#teacherSearch").value = "";
   $("#noticeText").value = notice;
@@ -1870,6 +1909,7 @@ async function importData(file){
   fr.readAsText(file);
 }
 async function resetAll(){
+  if(!teacherUnlocked){ toast("선생님 전용이에요 🔒"); return; }
   if(!state.entries.length){ toast("이미 비어 있어요"); return; }
   if(confirm("정말 전체를 지울까요? 되돌릴 수 없어요.") && confirm("한 번 더 확인할게요. 이 방의 모든 마음을 지웁니다.")){
     if(online){ const { error } = await sb.from(TABLE).delete().eq("room", room); if(error){ toast("삭제 오류: "+error.message); return; } }
@@ -1924,6 +1964,7 @@ $("#presentBtn").addEventListener("click", openPresent);
 $("#soundBtn").addEventListener("click", ()=>{ state.sound=!state.sound; save(); $("#soundBtn").textContent=state.sound?"🔊":"🔇"; if(state.sound) chime(); });
 $("#menuBtn").addEventListener("click", ()=>{ $("#howtoBox").style.display="none"; showOverlay("#menuOverlay"); });
 
+$("#mTeacherMode").addEventListener("click", toggleTeacherMode);
 $("#mTeacher").addEventListener("click", openTeacher);
 $("#mTour").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); startTour(); });
 $("#mBday").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); openBdayBoard(); });
@@ -1971,6 +2012,8 @@ addEventListener("resize", ()=>{
 
   online = await initSupabase();
   loadPrefs();
+  try{ teacherUnlocked = localStorage.getItem("dajim-teacher")==="1"; }catch(e){}
+  applyTeacherMode();
   renderAll(); updateStatus();
   requestAnimationFrame(t=>{ lastT=t; animate(t); });
 
