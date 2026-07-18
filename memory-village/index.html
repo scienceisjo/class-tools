@@ -499,7 +499,7 @@ const TABLE = "dajim_entries";
 const OFFLINE_PIN = "2580";
 
 /* ═══════════════ 월드(3D) / 공간 정의 — 평면 좌표 x:0~2600, z:0~1600 ═══════════════ */
-const W = 2600, H = 1600;
+const W = 3200, H = 2000;   // 월간 활동 공간 확장 (구 2600×1600)
 const ZONES = {
   tree:    { label:"다짐 나무",   emoji:"🌳", color:"#e8542f", sign:{x:1300,z:1000} },
   gallery: { label:"별빛 갤러리", emoji:"⭐", color:"#f2b705", sign:{x:465,z:545},  spots:{x0:230,x1:700,z0:0,z1:0} },
@@ -969,7 +969,7 @@ function groundPlane(w,d,color,x,z,y,opt){
 function buildScene(){
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xa8e4f8);
-  scene.fog = new THREE.Fog(0xa8e4f8, 1400, 3400);
+  scene.fog = new THREE.Fog(0xa8e4f8, 1700, 4200);
   camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 1, 6000);
   renderer = new THREE.WebGLRenderer({ antialias:true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -988,9 +988,10 @@ function buildScene(){
   gg.fillStyle="#84c75f"; gg.fillRect(0,0,128,128);
   gg.fillStyle="#8fd069"; gg.fillRect(0,0,64,64); gg.fillRect(64,64,64,64);
   const gt = new THREE.CanvasTexture(gc);
-  gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(34, 26);
-  groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(4400,3400), new THREE.MeshLambertMaterial({ map:gt }));
-  groundMesh.rotation.x = -Math.PI/2; groundMesh.position.set(1300, 0, 750);
+  const gW = W+2000, gH = H+1600;
+  gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(Math.round(gW/128), Math.round(gH/128));
+  groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(gW, gH), new THREE.MeshLambertMaterial({ map:gt }));
+  groundMesh.rotation.x = -Math.PI/2; groundMesh.position.set(W/2, 0, H/2);
   scene.add(groundMesh);
 
   /* 흙길 */
@@ -1139,7 +1140,8 @@ function buildScene(){
   });
 
   /* ── 풀숲 (초록 원뿔 다발) ── */
-  const GRASS = [[680,600],[1700,610],[880,1240],[1580,1280],[210,830],[980,420],[1660,900]];
+  const GRASS = [[680,600],[1700,610],[880,1240],[1580,1280],[210,830],[980,420],[1660,900],
+    [2850,700],[2950,1300],[2700,1750],[1500,1800],[900,1780],[2400,1650],[1900,1550],[2600,400]];
   const grassGeo = new THREE.ConeGeometry(15, 40, 5);
   const gTotal = GRASS.length * 10;
   const grassMesh = new THREE.InstancedMesh(grassGeo,
@@ -1154,9 +1156,9 @@ function buildScene(){
   scene.add(grassMesh);
 
   /* ── 꽃 (스프라이트) ── */
-  ["🌼","🌷","🌻","🌺","🍀","🌼","🌷","🌻"].forEach((f,i)=>{
+  ["🌼","🌷","🌻","🌺","🍀","🌼","🌷","🌻","🌸","🌼","🌷","🌻","🌺","🍀","🌸","🌼","🌷","🌻"].forEach((f,i)=>{
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map:emojiTexture(f), transparent:true }));
-    const x = 300+((i*641)%2000), z = 560+((i*389)%520);
+    const x = 220+((i*757)%(W-440)), z = 360+((i*613)%(H-520));
     if(Math.abs(x-1300)<430 && z<1010) return;
     s.scale.set(30,30,1); s.position.set(x, 15, z); scene.add(s);
   });
@@ -1286,10 +1288,10 @@ function animate(t){
   playerChar.position.set(player.x, hop, player.z);
   /* 카메라: 자동 관람(전자칠판) 또는 궤도 팔로우 */
   if(tourMode){
-    tourAngle += dt*0.07;
+    tourAngle += dt*0.06;
     camera.position.lerp(new THREE.Vector3(
-      1300 + Math.sin(tourAngle)*1080, 620, 780 + Math.cos(tourAngle)*1080), 0.03);
-    camera.lookAt(1300, 40, 760);
+      W/2 + Math.sin(tourAngle)*1500, 720, H/2 + Math.cos(tourAngle)*1500), 0.03);
+    camera.lookAt(W/2, 40, H/2);
   } else {
     camera.position.lerp(new THREE.Vector3(
       player.x + Math.sin(camYaw)*camD, camH, player.z + Math.cos(camYaw)*camD), 0.16);
