@@ -255,6 +255,16 @@
   </div>
 </div>
 
+<!-- 우리 반 생일 게시판 -->
+<div class="overlay" id="bdayOverlay">
+  <div class="card">
+    <button class="x" data-close>✕</button>
+    <h2>🎂 우리 반 생일 게시판</h2>
+    <p class="sub">이번 달은 분홍색, 오늘 생일은 🎉</p>
+    <div id="bdayList"></div>
+  </div>
+</div>
+
 <!-- 남기기 -->
 <div class="overlay" id="addOverlay">
   <div class="card">
@@ -344,6 +354,7 @@
     <div class="menu-list">
       <button id="mTeacher"><span class="mi">🛠️</span> 교사 대시보드 (명단·공지·사진·답변 관리)</button>
       <button id="mTour"><span class="mi">🎥</span> 자동 관람 모드 (전자칠판용)</button>
+      <button id="mBday"><span class="mi">🎂</span> 우리 반 생일 게시판</button>
       <button id="mAvatar"><span class="mi">🦊</span> 캐릭터·별명 바꾸기</button>
       <button id="mRoom"><span class="mi">🚪</span> 방(반) 코드 바꾸기</button>
       <button id="mLink"><span class="mi">🔗</span> 학생 참여 링크 복사</button>
@@ -356,7 +367,8 @@
       <button id="mReset" class="danger"><span class="mi">🗑️</span> 전체 지우기</button>
     </div>
     <div class="howto" id="howtoBox" style="display:none">
-      <b>🚶 돌아다니기</b> — 바닥을 터치하면 그곳으로 걸어가요. 화면을 <b>드래그하면 시점이 빙 돌아요</b>(상하 드래그=높낮이). 방향키·WASD, 미니맵 터치도 OK.<br>
+      <b>🚶 돌아다니기</b> — 바닥을 터치하면 그곳으로 걸어가요. <b>드래그=시점 회전</b>(상하=높낮이), <b>두 손가락/마우스 휠=확대·축소</b>. 방향키·WASD, 미니맵 터치도 OK.<br>
+      <b>🎂 생일 게시판</b> — 생일 광장의 게시판을 클릭(또는 메뉴 → 우리 반 생일 게시판)하면 우리 반 전체 생일을 월별로 볼 수 있어요.<br>
       <b>👥 함께 있기</b> — 같은 방(반) 코드로 접속한 친구들이 <b>같은 숲에 실시간으로 보여요</b>. 위로 걸어가면 캐릭터 뒷모습(꼬리)도 보인답니다!<br>
       <b>👀 관람하기</b> — 마음 근처에 가면 말풍선 미리보기가 떠요. 말풍선(또는 Space)을 누르면 크게 보기 + ❤️ 공감.<br>
       <b>🗺️ 일곱 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(순간·추억 사진) / 🎪추억광장(행사) / 📮마음우체국(친구에게 한마디) / 🎂생일광장(다가오는 생일 게시판·축하 한마디) / 🤝1인1역 본부(점검·스타 추천·🌟숨은 기여 자랑·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
@@ -410,12 +422,12 @@ const ZONES = {
 };
 const CATS = [
   { id:"resolve", emoji:"🍎", label:"나의 다짐",        zone:"tree",    color:"#ef5350", soft:"#fdeceb", prompt:"2학기의 나에게 다짐 한 가지! (예: 수업시간에 더 집중할래)" },
-  { id:"class",   emoji:"🌸", label:"우리 반의 모습",   zone:"tree",    color:"#ff8fb1", soft:"#ffeef4", prompt:"2학기 우리 반이 이런 반이면 좋겠어요" },
+  { id:"class",   emoji:"🌸", label:"내가 원하는 우리 반의 모습", zone:"tree", color:"#ff8fb1", soft:"#ffeef4", prompt:"2학기 우리 반이 이런 반이면 좋겠어요" },
   { id:"memory",  emoji:"⭐", label:"기억에 남는 순간", zone:"gallery", color:"#f2b705", soft:"#fff6db", prompt:"1학기, 가장 기억에 남는 순간·장면·경험을 남겨주세요" },
   { id:"event",   emoji:"🎉", label:"기억에 남는 행사", zone:"plaza",   color:"#ff7ab8", soft:"#ffe9f4", prompt:"체육대회, 현장체험학습, 축제… 최고의 행사와 그 이유는?" },
   { id:"friend",  emoji:"💌", label:"친구에게 한마디",  zone:"post",    color:"#b07cf0", soft:"#f3ecfd", prompt:"고마웠던 친구, 응원하고 싶은 친구에게 한마디" },
   { id:"bday",    emoji:"🎂", label:"생일 축하 한마디", zone:"bday",    color:"#ff5d8f", soft:"#ffe9f0",
-    prompt:"생일인 친구, 방학 중에 생일인 친구에게 축하 한마디! 누구에게 보내는지 이름을 꼭 써요.\n(예: 샤인아 7/15 생일 축하해! 2학기에도 우리 반 행사 부탁해 🎂)" },
+    prompt:"생일인 친구, 방학 중에 생일인 친구에게 축하 한마디! 누구에게 보내는지 이름을 꼭 써요." },
   { id:"try",     emoji:"🌱", label:"방학 중 도전하고 싶은 것", zone:"green", color:"#5cb85c", soft:"#e9f7e9", prompt:"이번 방학에 새롭게 도전해보고 싶은 것과 그 이유는? (예: 매일 30분 달리기 — 체력을 키우고 싶어서)" },
   { id:"rolecheck", emoji:"✅", label:"나의 1인1역 점검", zone:"role", color:"#0f9d8f", soft:"#e0f5f2",
     prompt:"1학기 내 1인1역은 무엇이었고, 어떻게 실천했나요? 솔직하게 점검해요.\n(예: 매일 아침 창문을 열어 환기했다 / 내 역할이 할 일이 없어서 ○○의 1인1역을 함께 도왔다 / 자주 깜빡해서 아쉬웠고 2학기엔 알림을 정할 것이다)" },
@@ -472,6 +484,29 @@ function upcomingBdays(n){
 function todaysBdays(){
   const now = new Date();
   return BDAYS.filter(b=> b[1]===now.getMonth()+1 && b[2]===now.getDate()).map(b=>b[0]);
+}
+/* 전체 생일 게시판 (월별) */
+function openBdayBoard(){
+  const now = new Date(), cm = now.getMonth()+1, cd = now.getDate();
+  const byM = {};
+  BDAYS.forEach(([n,m,d])=>{ (byM[m]=byM[m]||[]).push({n,d}); });
+  let html = "";
+  for(let m=1;m<=12;m++){
+    if(!byM[m]) continue;
+    byM[m].sort((a,b)=>a.d-b.d);
+    const cur = m===cm;
+    html += `<div style="border:2px solid ${cur?"#ff8fab":"rgba(60,80,60,.16)"};background:${cur?"#fff0f5":"#fff"};
+        border-radius:14px;padding:10px 14px;margin-bottom:8px">
+      <b style="color:${cur?"#e0506e":"#5f7563"}">${m}월${cur?" ⭐":""}</b>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">` +
+      byM[m].map(({n,d})=>{
+        const today = cur && d===cd;
+        return `<span style="background:${today?"#ffe066":"rgba(0,0,0,.05)"};border-radius:999px;padding:3px 11px;
+          font-size:13px;font-weight:${today?"900":"700"}">${d}일 ${esc(n)}${today?" 🎉":""}</span>`;
+      }).join("") + `</div></div>`;
+  }
+  $("#bdayList").innerHTML = html;
+  showOverlay("#bdayOverlay");
 }
 
 /* ═══════════════ 상태 ═══════════════ */
@@ -691,6 +726,8 @@ addEventListener("pagehide", ()=>{
 let scene, camera, renderer, groundMesh, markersGroup, playerChar;
 const signMeta = {};        // zone → {canvas, ctx, texture}
 let bdayBoard = null;       // 생일 게시판 {ctx, tex}
+let bdayBoardMesh = null;   // 3D 게시판 (클릭 → 전체 생일)
+let clouds = [], butterflies = [];
 function drawBdayBoard(){
   if(!bdayBoard) return;
   const g = bdayBoard.ctx;
@@ -809,22 +846,25 @@ function groundPlane(w,d,color,x,z,y,opt){
 
 function buildScene(){
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x9fd8f5);
-  scene.fog = new THREE.Fog(0x9fd8f5, 1400, 3400);
+  scene.background = new THREE.Color(0xa8e4f8);
+  scene.fog = new THREE.Fog(0xa8e4f8, 1400, 3400);
   camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 1, 6000);
   renderer = new THREE.WebGLRenderer({ antialias:true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setSize(innerWidth, innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;   // 동물의숲풍 부드러운 색감
+  renderer.toneMappingExposure = 1.06;
   $("#game").appendChild(renderer.domElement);
 
-  scene.add(new THREE.AmbientLight(0xffffff, .78));
-  const sun = new THREE.DirectionalLight(0xfff6dd, .65);
+  scene.add(new THREE.AmbientLight(0xffffff, .5));
+  scene.add(new THREE.HemisphereLight(0xcdeeff, 0x79c25e, .6));   // 하늘빛·풀빛 반사광
+  const sun = new THREE.DirectionalLight(0xfff2d0, .8);
   sun.position.set(600, 1200, 400); scene.add(sun);
 
   /* 잔디 (체커 텍스처) */
   const gc = makeCanvas(128,128), gg = gc.getContext("2d");
-  gg.fillStyle="#7cc653"; gg.fillRect(0,0,128,128);
-  gg.fillStyle="#85cf5c"; gg.fillRect(0,0,64,64); gg.fillRect(64,64,64,64);
+  gg.fillStyle="#84c75f"; gg.fillRect(0,0,128,128);
+  gg.fillStyle="#8fd069"; gg.fillRect(0,0,64,64); gg.fillRect(64,64,64,64);
   const gt = new THREE.CanvasTexture(gc);
   gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(34, 26);
   groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(4400,3400), new THREE.MeshLambertMaterial({ map:gt }));
@@ -900,6 +940,7 @@ function buildScene(){
   const boardMesh = new THREE.Mesh(new THREE.PlaneGeometry(255, 189),
     new THREE.MeshBasicMaterial({ map: bdayBoard.tex }));
   boardMesh.position.set(330, 112, 606); scene.add(boardMesh);
+  bdayBoardMesh = boardMesh;   // 클릭하면 전체 생일 게시판
   const bp1 = new THREE.Mesh(new THREE.CylinderGeometry(5,5,116,8), lam(0x8a6236));
   bp1.position.set(226, 58, 604); scene.add(bp1);
   const bp2 = bp1.clone(); bp2.position.x = 434; scene.add(bp2);
@@ -935,17 +976,45 @@ function buildScene(){
   for(let x=60;x<=W-60;x+=112){ spots3.push([x,60],[x+56,150],[x,H-40],[x+56,H-130]); }
   for(let z=260;z<=H-220;z+=112){ spots3.push([50,z],[130,z+56],[W-50,z],[W-130,z+56]); }
   const tGeo = new THREE.CylinderGeometry(9, 13, 64, 6);
-  const fGeo = new THREE.IcosahedronGeometry(55, 0);
-  const tMesh = new THREE.InstancedMesh(tGeo, lam(0x7a5230), spots3.length);
-  const fMesh = new THREE.InstancedMesh(fGeo,
-    new THREE.MeshStandardMaterial({ color:0x4e9e4e, flatShading:true, roughness:1 }), spots3.length);
+  const tMesh = new THREE.InstancedMesh(tGeo, lam(0x8a6236), spots3.length);
+  const fGeo = new THREE.IcosahedronGeometry(55, 1);           // 더 둥근 수관
+  const listA = spots3.filter((_,i)=>i%2===0), listB = spots3.filter((_,i)=>i%2===1);
+  const fA = new THREE.InstancedMesh(fGeo,
+    new THREE.MeshStandardMaterial({ color:0x5fb266, flatShading:true, roughness:1 }), listA.length);
+  const fB = new THREE.InstancedMesh(fGeo,
+    new THREE.MeshStandardMaterial({ color:0x77c672, flatShading:true, roughness:1 }), listB.length);
   const M = new THREE.Matrix4();
-  spots3.forEach(([x,z],i)=>{
-    M.makeTranslation(x, 32, z); tMesh.setMatrixAt(i, M);
+  spots3.forEach(([x,z],i)=>{ M.makeTranslation(x, 32, z); tMesh.setMatrixAt(i, M); });
+  const placeF = (mesh, list)=> list.forEach(([x,z],j)=>{
     const s = 0.85 + ((x*7+z)%40)/100;
-    M.makeScale(s,s,s).setPosition(x, 64+55*s*0.8, z); fMesh.setMatrixAt(i, M);
+    M.makeScale(s,s,s).setPosition(x, 64+44*s, z); mesh.setMatrixAt(j, M);
   });
-  scene.add(tMesh); scene.add(fMesh);
+  placeF(fA, listA); placeF(fB, listB);
+  scene.add(tMesh); scene.add(fA); scene.add(fB);
+  /* 나무 열매 (동물의숲st 과일나무) */
+  const fruitSpots = [];
+  spots3.forEach(([x,z],i)=>{ if(i%3===0) fruitSpots.push([x-20, 116, z+30],[x+22, 106, z+34]); });
+  const fruitMesh = new THREE.InstancedMesh(new THREE.SphereGeometry(7, 8, 8), lam(0xe8453c), fruitSpots.length);
+  fruitSpots.forEach(([x,y,z],j)=>{ M.makeTranslation(x,y,z); fruitMesh.setMatrixAt(j,M); });
+  scene.add(fruitMesh);
+  /* 뭉게구름 */
+  for(let i=0;i<4;i++){
+    const c = new THREE.Group();
+    [[0,0,0,46],[38,6,8,34],[-40,4,-6,32],[10,14,-10,30]].forEach(([ox,oy,oz,r])=>{
+      const s = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 10), lam(0xffffff));
+      s.position.set(ox,oy,oz); c.add(s);
+    });
+    c.position.set(300+i*600, 520+(i%2)*70, 200+(i%3)*500);
+    c.userData.sp = 8+i*3;
+    scene.add(c); clouds.push(c);
+  }
+  /* 나비·새 */
+  ["🦋","🐝","🦋","🐦"].forEach((e,i)=>{
+    const b = new THREE.Sprite(new THREE.SpriteMaterial({ map:emojiTexture(e), transparent:true }));
+    b.scale.set(26,26,1);
+    b.userData = { cx:500+i*550, cz:520+(i%2)*580, r:120+i*45, sp:.3+.13*i, ph:i*1.7 };
+    scene.add(b); butterflies.push(b);
+  });
 
   /* ── 풀숲 (초록 원뿔 다발) ── */
   const GRASS = [[680,600],[1700,610],[880,1240],[1580,1280],[210,830],[980,420],[1660,900]];
@@ -1117,6 +1186,12 @@ function animate(t){
     lastPeerPrune = t;
     peers.forEach((p,id)=>{ if(p.lastSeen && performance.now()-p.lastSeen > 9000) removePeer(id); });
   }
+  /* 구름 흐르기 + 나비·새 날기 */
+  clouds.forEach(c=>{ c.position.x += c.userData.sp*dt; if(c.position.x > W+300) c.position.x = -300; });
+  butterflies.forEach(b=>{
+    const u = b.userData, a = t/1000*u.sp + u.ph;
+    b.position.set(u.cx + Math.cos(a)*u.r, 62 + Math.sin(t/400+u.ph)*18, u.cz + Math.sin(a)*u.r);
+  });
   /* 마커 둥실 + 등장 팝 */
   const now = t;
   markersGroup.children.forEach(s=>{
@@ -1217,38 +1292,65 @@ function handleTap(cx, cy){
     else walkTarget = { x:clampX(u.gx), z:clampZ(u.gz+80), openId:e.id };
     return;
   }
+  if(bdayBoardMesh && raycaster.intersectObject(bdayBoardMesh, false).length){
+    openBdayBoard(); return;
+  }
   const gh = raycaster.intersectObject(groundMesh, false)[0];
   if(gh){ walkTarget = { x:clampX(gh.point.x), z:clampZ(gh.point.z) }; }
 }
-/* 탭=이동 · 드래그=시점 회전 */
+/* 탭=이동 · 드래그=시점 회전 · 두 손가락/휠=확대·축소 */
 let dragInfo = null;
 function initPointerControls(){
   const el = renderer.domElement;
   el.style.touchAction = "none";
+  const ptrs = new Map();
+  let pinchD = 0;
   el.addEventListener("pointerdown", ev=>{
     if(tourMode){ exitTour(); return; }
     if(overlayOpen()) return;
-    dragInfo = { x:ev.clientX, y:ev.clientY, moved:false, id:ev.pointerId };
+    ptrs.set(ev.pointerId, { x:ev.clientX, y:ev.clientY });
     try{ el.setPointerCapture(ev.pointerId); }catch(e){}
+    if(ptrs.size === 2){
+      const [a,b] = [...ptrs.values()];
+      pinchD = Math.hypot(a.x-b.x, a.y-b.y);
+      dragInfo = null;                                            // 핀치 중엔 탭·회전 취소
+    } else if(ptrs.size === 1){
+      dragInfo = { x:ev.clientX, y:ev.clientY, moved:false, id:ev.pointerId };
+    }
   });
   el.addEventListener("pointermove", ev=>{
+    const p = ptrs.get(ev.pointerId);
+    if(p){ p.x = ev.clientX; p.y = ev.clientY; }
+    if(ptrs.size === 2){                                          // 핀치 줌
+      const [a,b] = [...ptrs.values()];
+      const d = Math.hypot(a.x-b.x, a.y-b.y);
+      if(pinchD) camD = Math.max(260, Math.min(1200, camD - (d - pinchD) * 1.4));
+      pinchD = d; hideCtrlHint();
+      return;
+    }
     if(!dragInfo || ev.pointerId!==dragInfo.id) return;
     const mx = ev.clientX - dragInfo.x, my = ev.clientY - dragInfo.y;
     if(!dragInfo.moved && Math.hypot(mx,my) > 9) dragInfo.moved = true;
     if(dragInfo.moved){
-      camYaw -= mx * 0.0055;                                     // 좌우 드래그 = 회전
-      camH = Math.max(240, Math.min(760, camH + my * 1.5));      // 상하 드래그 = 높낮이
+      camYaw -= mx * 0.0055;                                      // 좌우 드래그 = 회전
+      camH = Math.max(240, Math.min(760, camH + my * 1.5));       // 상하 드래그 = 높낮이
       dragInfo.x = ev.clientX; dragInfo.y = ev.clientY;
       hideCtrlHint();
     }
   });
   el.addEventListener("pointerup", ev=>{
+    ptrs.delete(ev.pointerId);
+    if(ptrs.size < 2) pinchD = 0;
     if(!dragInfo || ev.pointerId!==dragInfo.id) return;
     const wasDrag = dragInfo.moved, cx = ev.clientX, cy = ev.clientY;
     dragInfo = null;
     if(!wasDrag){ handleTap(cx, cy); hideCtrlHint(); }
   });
-  el.addEventListener("pointercancel", ()=>{ dragInfo = null; });
+  el.addEventListener("pointercancel", ev=>{ ptrs.delete(ev.pointerId); dragInfo = null; pinchD = 0; });
+  el.addEventListener("wheel", ev=>{                              // 마우스 휠 줌
+    ev.preventDefault();
+    camD = Math.max(260, Math.min(1200, camD + ev.deltaY * 0.6));
+  }, { passive:false });
 }
 let hintHidden = false;
 function hideCtrlHint(){
@@ -1824,6 +1926,7 @@ $("#menuBtn").addEventListener("click", ()=>{ $("#howtoBox").style.display="none
 
 $("#mTeacher").addEventListener("click", openTeacher);
 $("#mTour").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); startTour(); });
+$("#mBday").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); openBdayBoard(); });
 $("#teacherSearch").addEventListener("input", renderTeacher);
 $("#mAvatar").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); openEnter(); });
 $("#mRoom").addEventListener("click", changeRoom);
