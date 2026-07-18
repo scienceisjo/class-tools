@@ -9,6 +9,10 @@
 <meta property="og:title" content="학교생활만족도조사">
 <meta property="og:description" content="2학기를 앞두고 학교생활 만족도를 조사합니다. 1분이면 끝나요!">
 <meta property="og:type" content="website">
+<!-- 헤더용 귀여운 손글씨체 (나눔손글씨 펜) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <!--
   ┌──────────────────────────────────────────────────────────────────────┐
   │  💌 다현이 송별 롤링페이퍼 (Supabase 실시간)                             │
@@ -136,6 +140,15 @@
   /* ═══════════════ BOARD (전시) ═══════════════ */
   #board .board-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:6px}
   #board .board-head .grow{flex:1;min-width:200px}
+  /* 전시 헤더: 귀여운 손글씨체(나눔손글씨 펜) — 손글씨는 작게 보여서 크기 키움 */
+  #bTitle{font-family:'Nanum Pen Script','Malgun Gothic',cursive;font-size:clamp(34px,6vw,62px);
+    font-weight:400;letter-spacing:0;line-height:1.2}
+
+  /* 참여한 사람 목록 */
+  .wholist{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:6px}
+  .wchip{background:#fff;border:2px solid #ffd6e0;color:#7a5a68;font-weight:800;font-size:15px;
+    padding:8px 15px;border-radius:999px;box-shadow:0 3px 8px rgba(120,90,110,.1)}
+  .wchip.anon{background:#f4eef8;border-color:#e6d6f2;color:#8a7a95}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap}
   .tbtn{border:none;background:rgba(255,255,255,.82);border-radius:13px;padding:11px 15px;font-weight:800;
     font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(120,90,110,.12);transition:.15s;color:#6a5a6f;
@@ -233,7 +246,8 @@
   .pdfpage .pdf-cover{position:absolute;inset:0;background-position:center;background-repeat:no-repeat}
   .pdfpage .pdf-col{position:absolute;border:7px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.22);object-fit:cover}
   .pdfpage .pdf-inner{position:absolute;inset:0;padding:48px 42px;display:flex;flex-direction:column}
-  .pdfpage .pdf-head{font-size:32px;font-weight:900;color:#e8557a;margin-bottom:20px;text-align:center}
+  .pdfpage .pdf-head{font-family:'Nanum Pen Script','Malgun Gothic',cursive;font-size:46px;font-weight:400;
+    color:#e8557a;margin-bottom:20px;text-align:center;line-height:1.25}
   /* 아래 크기들은 .pdf-notes 의 font-size 기준(em) — 편지가 많으면 JS가 이 값만 줄여서 통째로 축소 */
   .pdfpage .pdf-notes{flex:1;font-size:15.5px;overflow:hidden}
   .pdfpage .pdf-note{break-inside:avoid;border-radius:15px;padding:1.03em 1.03em .9em;margin:0 0 .97em;
@@ -344,10 +358,11 @@
   <div class="board-head">
     <div class="grow">
       <h1 class="heart-title" id="bTitle">💐 다현아 새 학교에 가서도! 주변을 밝게하는 멋진 학생이길 바랄게</h1>
-      <p class="sub">반 친구들이 한 자 한 자 남긴 마음이야. 새 학교에서도 늘 응원할게 💗</p>
+      <p class="sub">너를 아끼는 사람들이 한 자 한 자 눌러 담은 마음이야. 새 학교에서도 늘 응원할게 💗</p>
     </div>
     <div class="toolbar">
       <button class="tbtn" id="designBtn">🎨 디자인</button>
+      <button class="tbtn" id="whoBtn">🙌 참여한 사람</button>
       <button class="tbtn" id="pdfBtn">📄 PDF 저장</button>
       <button class="tbtn" id="slideBtn">🎞️ 슬라이드쇼</button>
       <button class="tbtn" id="printBtn">🖨️ 인쇄</button>
@@ -591,6 +606,7 @@ function buildBoard(){
   $("#board").classList.remove("hidden");
   $("#bTitle").innerHTML = "💐 "+esc(RECIPIENT)+"아 새 학교에 가서도! 주변을 밝게하는 멋진 학생이길 바랄게";
   $("#designBtn").onclick=()=>$("#designPanel").classList.toggle("hidden");
+  $("#whoBtn").onclick=openWhoList;
   $("#pdfBtn").onclick=exportPDF;
   $("#slideBtn").onclick=()=>startSlideshow();
   $("#printBtn").onclick=()=>window.print();
@@ -599,6 +615,26 @@ function buildBoard(){
   buildDesign();
   applyDesign();
   renderBoard();
+}
+function openWhoList(){
+  const named=[], seen=new Set(); let anon=0;
+  messages.forEach(m=>{ const n=(m.name||"").trim(); if(!n) anon++; else if(!seen.has(n)){ seen.add(n); named.push(n); } });
+  let html = `<button class="x" id="mClose">×</button>
+    <div style="text-align:center">
+      <div style="font-size:44px;line-height:1">🙌</div>
+      <h2 style="margin:.3em 0;font-size:23px">함께 마음을 남긴 사람들</h2>
+      <p style="color:var(--muted);font-weight:700;margin:.2em 0 1.1em;font-size:15px">이름 남긴 <b>${named.length}</b>명${anon?` · 익명 <b>${anon}</b>통`:``} · 편지 <b>${messages.length}</b>통</p>
+    </div>
+    <div class="wholist">`;
+  if(!named.length && !anon) html += `<span class="hintline">아직 아무도 안 썼어요</span>`;
+  named.forEach(n=> html += `<span class="wchip">${esc(n)}</span>`);
+  if(anon) html += `<span class="wchip anon">🙈 이름 없이 남긴 친구 ${anon}</span>`;
+  html += `</div>`;
+  $("#sheet").innerHTML=html; $("#sheet").style.background="#fffdf7";
+  $("#navPrev").style.display=$("#navNext").style.display="none";
+  $("#slidePos").style.display="none";
+  $("#mClose").onclick=closeModal;
+  $("#modal").classList.add("show");
 }
 function renderBoard(newId){
   const wrap=$("#notes");
@@ -720,7 +756,8 @@ function saveDesign(){ try{ localStorage.setItem("fw-design-"+room, JSON.stringi
   catch(e){ toast("사진 용량이 커서 저장은 안 됐어요. 지금 화면·PDF엔 그대로 나와요."); } }
 
 function collagePos(i){
-  const gx=[16,50,84,30,70,50,18,82,64,36], gy=[19,14,22,52,50,82,78,74,33,63];
+  // 앞 순서일수록 화면 구석구석 퍼지게(2~4장이 한쪽에 안 몰리도록)
+  const gx=[22,80,78,20,50,62,14,86,40,64], gy=[27,72,25,73,49,86,58,42,15,64];
   return { x:gx[i%gx.length], y:gy[i%gy.length], rot:rot("p"+i) };
 }
 function fileToScaledDataURL(file, max, q){
@@ -878,6 +915,7 @@ async function exportPDF(){
   try{
     if(!window.html2canvas) await loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
     if(!window.jspdf)      await loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js");
+    if(document.fonts&&document.fonts.load){ try{ await document.fonts.load("40px 'Nanum Pen Script'"); await document.fonts.ready; }catch(e){} }  // 헤더 손글씨체가 PDF에도 나오게
     const LPP=Math.max(1, design.lpp);
     // 1) 개수로만 자르지 않고, 실제로 들어가는지 재보고 담는다 → 긴 편지가 잘리지 않음
     //    설정한 개수(LPP)를 최대한 지키되, 안 들어가면 한 통씩 줄여 다음 장으로 넘김
