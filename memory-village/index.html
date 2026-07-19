@@ -182,6 +182,21 @@
   .item .meta{color:#8a9a8e;font-size:12px;margin-top:3px}
   .item .del{border:none;background:rgba(0,0,0,.05);width:29px;height:29px;border-radius:9px;cursor:pointer;font-size:13px;color:#c0554a}
   .empty-list{text-align:center;color:#8a9a8e;padding:38px 0;font-weight:700}
+  /* 게시판(공간 모아보기) 필터 + 카드 */
+  .col-filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;position:sticky;top:0}
+  .col-sel{border:2px solid var(--line);background:#fff;border-radius:11px;padding:8px 10px;font-size:13px;
+    font-weight:700;font-family:inherit;color:var(--ink);cursor:pointer;max-width:46%}
+  .col-sort{border:2px solid var(--line);background:#fff;border-radius:11px;padding:8px 12px;font-size:13px;
+    font-weight:800;cursor:pointer;color:#3a5a3f}
+  #collectItems .item{flex-direction:column;align-items:stretch;gap:9px}
+  .card-actions{display:flex;gap:7px;justify-content:flex-end;align-items:center}
+  .likemini{border:2px solid #ffc2ce;background:#fff;border-radius:999px;padding:6px 14px;font-weight:800;
+    font-size:13px;color:#e0506e;cursor:pointer}
+  .likemini.on{background:#ffe3e9;border-color:#ff8fa8;cursor:default}
+  .cardbtn{border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-weight:700;
+    font-size:13px;cursor:pointer;color:#3a5a3f}
+  .cardbtn.del{color:#c0554a;border-color:#ffb3a1}
+  #collectItems .item img{cursor:zoom-in}
 
   .menu-list{display:grid;gap:7px}
   .menu-list button{display:flex;align-items:center;gap:11px;text-align:left;border:2px solid var(--line);
@@ -266,7 +281,7 @@
 <div id="minimap"></div>
 <button class="fab" id="addBtn">＋ 남기기</button>
 <button class="zonebtn" id="zoneBtn"></button>
-<div id="ctrlHint">🚶 터치=이동 · 손가락 드래그=시점 회전 · 방향키(WASD)도 OK</div>
+<div id="ctrlHint">🚶 터치=이동 · 🗺️ 미니맵 탭=순간이동 · 팻말/마음 누르면 그 공간 글 전체보기</div>
 <div id="bubble"></div>
 
 <!-- 입장 -->
@@ -294,11 +309,11 @@
     <div style="font-size:46px">🗺️</div>
     <h2>이렇게 즐겨요!</h2>
     <div class="tut-list">
-      <div>🚶 <b>바닥을 터치</b>하면 그곳으로 걸어가요</div>
-      <div>🖐️ <b>화면 드래그</b>로 시점을 돌리고, <b>두 손가락(마우스 휠)</b>으로 확대·축소해요</div>
-      <div>❤️ 친구 글 <b>가까이 가면</b> 말풍선이 떠요. 누르면 크게 보고 <b>공감</b>할 수 있어요</div>
-      <div>📖 <b>공간에 도착</b>하거나 <b>위쪽 카테고리</b>를 누르면 글을 모아볼 수 있어요</div>
-      <div>＋ 아래 <b>남기기</b>로 내 마음을 남겨요 (내 글은 나중에 <b>수정·삭제</b> 가능!)</div>
+      <div>🚶 <b>바닥을 터치</b>하면 그곳으로 걸어가요 · 화면 <b>드래그=시점 회전</b>, <b>두 손가락/휠=확대·축소</b></div>
+      <div>🗺️ <b>미니맵(오른쪽 아래)을 톡</b> 누르면 그 공간으로 <b>순간이동</b>해요 (걷기 귀찮을 때!)</div>
+      <div>📖 공간(게시판)에 가거나 <b>팻말·마음을 누르면</b> → 그곳 글이 <b>한 번에 전부</b> 보여요</div>
+      <div>👤📅 게시판에서 <b>올린 사람·날짜</b>로 골라 읽고, ❤️ <b>공감</b>도 바로 눌러요</div>
+      <div>＋ 아래 <b>남기기</b>로 내 마음을 남겨요 (내 글은 <b>수정·삭제</b> 가능!)</div>
     </div>
     <button class="submit" id="tutOkBtn">알겠어요! 시작하기 🌲</button>
   </div>
@@ -380,6 +395,8 @@
   <div class="card">
     <button class="x" data-close>✕</button>
     <h2 id="collectTitle">모아보기</h2>
+    <p class="sub" id="collectSub" style="margin-bottom:10px"></p>
+    <div class="col-filters" id="collectFilters"></div>
     <div class="items" id="collectItems"></div>
   </div>
 </div>
@@ -449,7 +466,7 @@
       <b>🚶 돌아다니기</b> — 바닥을 터치하면 그곳으로 걸어가요. <b>드래그=시점 회전</b>(상하=높낮이), <b>두 손가락/마우스 휠=확대·축소</b>. 방향키·WASD, 미니맵 터치도 OK.<br>
       <b>🎂 생일 게시판</b> — 생일 광장의 게시판을 클릭(또는 메뉴 → 우리 반 생일 게시판)하면 우리 반 전체 생일을 월별로 볼 수 있어요.<br>
       <b>👥 함께 있기</b> — 같은 방(반) 코드로 접속한 친구들이 <b>같은 숲에 실시간으로 보여요</b>. 위로 걸어가면 캐릭터 뒷모습(꼬리)도 보인답니다!<br>
-      <b>👀 관람하기</b> — 마음 근처에 가면 말풍선 미리보기가 떠요. 말풍선(또는 Space)을 누르면 크게 보기 + ❤️ 공감.<br>
+      <b>👀 관람하기</b> — 공간(게시판)에 가거나 팻말·마음을 누르면 그곳 글이 한 번에 모여요. 게시판에서 올린 사람·날짜로 골라 읽고 ❤️ 공감.<br>
       <b>📖 모아보기</b> — 어떤 공간에 도착하면 아래에 <b>'이 곳 글 모아보기'</b> 버튼이 떠요(팻말을 눌러도 됨). 위쪽 <b>카테고리(칩)를 누르면</b> 그 종류의 글만 모아 볼 수 있어요.<br>
       <b>🗺️ 일곱 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(순간·추억 사진) / 🎪추억광장(행사) / 📮마음우체국(친구에게 한마디) / 🎂생일광장(다가오는 생일 게시판·축하 한마디) / 🤝1인1역 본부(점검·스타 추천·🌟숨은 기여 자랑·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
       <b>🏆 1인1역 스타</b> — 추천 글에 ❤️ 공감을 누르는 게 곧 투표! 발표 모드에서 공감 수를 함께 보여줘요.<br>
@@ -1216,7 +1233,7 @@ function renderAll(newestId){
   for(const k in ZONES) drawSign(k, zoneCount(k));
   renderLegend();
   $("#soundBtn").textContent = state.sound ? "🔊" : "🔇";
-  nearestId = null; updateBubbleContent();
+  nearestId = null; { const bb=$("#bubble"); if(bb) bb.style.display="none"; }
   if($("#teacherOverlay").classList.contains("show")) renderTeacher();
   if($("#listOverlay").classList.contains("show")){ renderListFilter(); renderListItems(); }
   if($("#collectOverlay").classList.contains("show")) refreshCollection();
@@ -1329,11 +1346,8 @@ function animate(t){
       k = 0.2 + 0.8 * (1 - Math.pow(1-k, 3));
       if(k >= 0.999){ delete s.userData.pop; k = 1; }
     }
-    const hl = (s.userData.entry.id === nearestId) ? 1.18 : 1;
-    s.scale.set(s.userData.size[0]*k*hl, s.userData.size[1]*k*hl, 1);
+    s.scale.set(s.userData.size[0]*k, s.userData.size[1]*k, 1);
   });
-  updateNearest();
-  updateBubblePos();
   updateMinimap();
   updateZoneButton();
   renderer.render(scene, camera);
@@ -1395,8 +1409,8 @@ addEventListener("keydown", e=>{
   if(tourMode) exitTour();
   if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(e.key)) e.preventDefault();
   if(e.key===" "||e.key==="Enter"||e.key==="e"||e.key==="E"){
-    const en = state.entries.find(x=>x.id===nearestId);
-    if(en) openView(en);
+    const z = currentZoneOf(player.x, player.z);   // 스페이스 = 지금 있는 공간 게시판 열기
+    if(z) openZoneCollection(z);
     return;
   }
   const map = {ArrowLeft:"ArrowLeft",ArrowRight:"ArrowRight",ArrowUp:"ArrowUp",ArrowDown:"ArrowDown",a:"a",d:"d",w:"w",s:"s",A:"a",D:"d",W:"w",S:"s"};
@@ -1413,12 +1427,8 @@ function handleTap(cx, cy){
   pointerV.y = -((cy-r.top)/r.height)*2+1;
   raycaster.setFromCamera(pointerV, camera);
   const hits = raycaster.intersectObjects(markersGroup.children, false);
-  if(hits.length){
-    const u = hits[0].object.userData, e = u.entry;
-    const d = Math.hypot(player.x-u.gx, player.z-u.gz);
-    if(d < 200) openView(e);
-    else walkTarget = { x:clampX(u.gx), z:clampZ(u.gz+80), openId:e.id };
-    return;
+  if(hits.length){                                           // 마커 클릭 → 그 공간 게시판 전체 열기
+    openZoneCollection(catById(hits[0].object.userData.entry.category).zone); return;
   }
   if(bdayBoardMesh && raycaster.intersectObject(bdayBoardMesh, false).length){
     openBdayBoard(); return;
@@ -1505,7 +1515,10 @@ function buildMinimap(){
   mm.innerHTML = html;
   mm.addEventListener("click", ev=>{
     const r = mm.getBoundingClientRect();
-    walkTarget = { x:clampX((ev.clientX-r.left)/r.width*W), z:clampZ((ev.clientY-r.top)/r.height*H) };
+    const wx = clampX((ev.clientX-r.left)/r.width*W), wz = clampZ((ev.clientY-r.top)/r.height*H);
+    player.x = wx; player.z = wz; walkTarget = null;   // 순간이동(바로가기)
+    const z = currentZoneOf(wx, wz);
+    if(z) openZoneCollection(z);                       // 그 공간 게시판 바로 열기
     hideCtrlHint();
   });
 }
@@ -1746,32 +1759,46 @@ function openView(e){
   showOverlay("#viewOverlay");
 }
 function refreshLikeUI(e){
-  if(viewingId !== e.id){ updateBubbleContent(); return; }
+  if(viewingId !== e.id) return;
   $("#likeCount").textContent = e.likes || 0;
   const btn = $("#likeBtn");
   const liked = likedSet.has(e.id);
   btn.classList.toggle("liked", liked);
   btn.disabled = liked;
-  updateBubbleContent();
 }
-$("#likeBtn").addEventListener("click", async ev=>{
-  const e = state.entries.find(x=>x.id===viewingId);
-  if(!e || likedSet.has(e.id)) return;
-  likedSet.add(e.id); saveLiked();
+/* 공감 (상세뷰·게시판 카드 공용) */
+async function likeEntry(id, btnEl){
+  const e = state.entries.find(x=>x.id===id);
+  if(!e || likedSet.has(id)) return;
+  likedSet.add(id); saveLiked();
   e.likes = (e.likes||0) + 1;
-  refreshLikeUI(e);
-  const h = document.createElement("div");
-  h.className = "heart-fly"; h.textContent = "❤️";
-  h.style.left = ev.clientX+"px"; h.style.top = ev.clientY+"px";
+  if(btnEl){ btnEl.textContent = `❤️ ${e.likes}`; btnEl.classList.add("on"); btnEl.disabled = true; }
+  if(viewingId === id) refreshLikeUI(e);
+  const h = document.createElement("div"); h.className="heart-fly"; h.textContent="❤️";
+  const bx = btnEl ? btnEl.getBoundingClientRect() : null;
+  h.style.left = (bx ? bx.left+bx.width/2 : innerWidth/2)+"px";
+  h.style.top  = (bx ? bx.top : innerHeight/2)+"px";
   document.body.appendChild(h); setTimeout(()=>h.remove(), 1050);
   if(online){
-    const { error } = await sb.rpc("dajim_like", { entry_id: e.id });
-    if(error){
-      const { error: e2 } = await sb.from(TABLE).update({ likes: e.likes }).eq("id", e.id);
-      if(e2) toast("공감이 이 기기에만 저장됐어요 (SQL 업데이트 필요)");
-    }
+    const { error } = await sb.rpc("dajim_like", { entry_id: id });
+    if(error){ const { error:e2 } = await sb.from(TABLE).update({ likes: e.likes }).eq("id", id); if(e2) toast("공감이 이 기기에만 저장됐어요"); }
   } else save();
-});
+}
+/* 내 글 삭제 (상세뷰·게시판 카드 공용) */
+async function deleteMine(id){
+  const e = state.entries.find(x=>x.id===id); if(!e) return;
+  if(!confirm("내 글을 삭제할까요?")) return;
+  if(online){
+    const { data, error } = await sb.rpc("dajim_owner_delete", { p_id:id, p_token:mine[id]||"" });
+    if(error){ toast(/does not exist|could not find/i.test(error.message) ? "삭제 기능은 SECURITY SQL 실행 후 켜져요" : "삭제 오류: "+error.message); return; }
+    if(data!==true){ toast("이 글은 삭제할 수 없어요"); return; }
+  }
+  delete mine[id]; saveMine();
+  state.entries = state.entries.filter(x=>x.id!==id); if(!online) save();
+  if(viewingId===id) hideOverlay("#viewOverlay");
+  renderAll(); toast("삭제했어요 🗑");
+}
+$("#likeBtn").addEventListener("click", ()=> likeEntry(viewingId, null));
 
 /* ═══════════════ 모아보기 ═══════════════ */
 /* ── 공간/카테고리 모아보기 ── */
@@ -1784,33 +1811,71 @@ function currentZoneOf(x,z){
   for(const k in ZONE_REGION){ const r=ZONE_REGION[k], d=Math.hypot(x-r.x, z-r.z); if(d<r.r && d<bd){ bd=d; best=k; } }
   return best;
 }
+function dateKey(ts){ const d=new Date(ts||Date.now()); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function dateLabel(k){ const p=String(k).split("-"); return `${+p[1]}/${+p[2]}`; }
 function entryCardHTML(e){
   const c = catById(e.category);
-  const body = isPhoto(e) ? `<img src="${esc(e.text)}" style="max-width:150px;max-height:110px;border-radius:8px;display:block">` : esc(e.text);
-  return `<div class="item" style="border-color:${c.soft}"><span class="ie">${c.emoji}</span>
-    <div class="it"><div class="txt">${body}</div>
-    <div class="meta">${avatarHTML(e.avatar,16)} ${esc(e.name||"익명")} · ${c.label} · ❤️${e.likes||0}</div></div></div>`;
+  const liked = likedSet.has(e.id), isMine = !!mine[e.id];
+  const body = isPhoto(e)
+    ? `<img data-photo="${e.id}" src="${esc(e.text)}" style="max-width:100%;max-height:210px;border-radius:10px;display:block">`
+    : `<div class="txt">${esc(e.text)}</div>`;
+  return `<div class="item" style="border-color:${c.soft}">
+    <div style="display:flex;gap:11px;align-items:flex-start">
+      <span class="ie">${c.emoji}</span>
+      <div class="it">${body}
+        <div class="meta">${avatarHTML(e.avatar,16)} <b>${esc(e.name||"익명")}</b> · ${dateLabel(dateKey(e.ts))} · ${c.label}</div>
+      </div>
+    </div>
+    <div class="card-actions">
+      <button class="likemini ${liked?"on":""}" data-like="${e.id}" ${liked?"disabled":""}>❤️ ${e.likes||0}</button>
+      ${isMine ? `<button class="cardbtn" data-edit="${e.id}">✏️ 수정</button><button class="cardbtn del" data-del="${e.id}">🗑</button>` : ""}
+    </div>
+  </div>`;
 }
 let collectCtx = null;   // {type:'zone'|'cat', key}
+let colName = "", colDate = "", colSort = "recent";
+function collectBaseList(){
+  if(!collectCtx) return [];
+  if(collectCtx.type==="zone") return state.entries.filter(e=>catById(e.category).zone===collectCtx.key);
+  return state.entries.filter(e=>e.category===collectCtx.key);
+}
 function refreshCollection(){
   if(!collectCtx) return;
-  let title, list;
-  if(collectCtx.type==='zone'){
-    const z = ZONES[collectCtx.key];
-    list = state.entries.filter(e=>catById(e.category).zone===collectCtx.key);
-    title = `${z.emoji} ${z.label} · ${list.length}개`;
-  } else {
-    const c = catById(collectCtx.key);
-    list = state.entries.filter(e=>e.category===collectCtx.key);
-    title = `${c.emoji} ${c.label} · ${list.length}개`;
-  }
-  $("#collectTitle").textContent = title;
-  const items = list.slice().reverse();
-  $("#collectItems").innerHTML = items.length ? items.map(entryCardHTML).join("")
-    : `<div class="empty-list">아직 여기엔 글이 없어요 🌿<br><span style="font-size:13px;font-weight:600">＋ 남기기로 첫 글을 남겨보세요</span></div>`;
+  const base = collectBaseList();
+  if(collectCtx.type==="zone"){ const z=ZONES[collectCtx.key]; $("#collectTitle").textContent = `${z.emoji} ${z.label}`; }
+  else { const c=catById(collectCtx.key); $("#collectTitle").textContent = `${c.emoji} ${c.label}`; }
+  $("#collectSub").textContent = `총 ${base.length}개 · 사람·날짜로 골라 볼 수 있어요`;
+  // 필터 옵션
+  const names = [...new Set(base.map(e=>e.name||"익명"))];
+  const dates = [...new Set(base.map(e=>dateKey(e.ts)))].sort().reverse();
+  if(colName && !names.includes(colName)) colName = "";
+  if(colDate && !dates.includes(colDate)) colDate = "";
+  $("#collectFilters").innerHTML = `
+    <select id="colNameSel" class="col-sel"><option value="">👤 올린 사람 전체</option>${
+      names.map(n=>`<option value="${esc(n)}" ${n===colName?"selected":""}>${esc(n)}</option>`).join("")}</select>
+    <select id="colDateSel" class="col-sel"><option value="">📅 날짜 전체</option>${
+      dates.map(d=>`<option value="${d}" ${d===colDate?"selected":""}>${dateLabel(d)}</option>`).join("")}</select>
+    <button class="col-sort" id="colSortBtn">${colSort==="likes"?"❤️ 공감순":"🆕 최신순"}</button>`;
+  $("#colNameSel").addEventListener("change", e=>{ colName=e.target.value; refreshCollection(); });
+  $("#colDateSel").addEventListener("change", e=>{ colDate=e.target.value; refreshCollection(); });
+  $("#colSortBtn").addEventListener("click", ()=>{ colSort = colSort==="likes"?"recent":"likes"; refreshCollection(); });
+  // 목록
+  let list = base.slice();
+  if(colName) list = list.filter(e=>(e.name||"익명")===colName);
+  if(colDate) list = list.filter(e=>dateKey(e.ts)===colDate);
+  list.sort(colSort==="likes" ? (a,b)=>((b.likes||0)-(a.likes||0))||((b.ts||0)-(a.ts||0)) : (a,b)=>(b.ts||0)-(a.ts||0));
+  $("#collectItems").innerHTML = list.length ? list.map(entryCardHTML).join("")
+    : `<div class="empty-list">${base.length ? "필터에 맞는 글이 없어요" : "아직 여기엔 글이 없어요 🌿"}</div>`;
+  wireCollectCards();
 }
-function openZoneCollection(k){ collectCtx = {type:'zone', key:k}; refreshCollection(); showOverlay("#collectOverlay"); }
-function openCatCollection(id){ collectCtx = {type:'cat', key:id}; refreshCollection(); showOverlay("#collectOverlay"); }
+function wireCollectCards(){
+  document.querySelectorAll("#collectItems [data-like]").forEach(b=> b.addEventListener("click", ()=> likeEntry(b.dataset.like, b)));
+  document.querySelectorAll("#collectItems [data-edit]").forEach(b=> b.addEventListener("click", ()=>{ const e=state.entries.find(x=>x.id===b.dataset.edit); if(e) openAdd(e); }));
+  document.querySelectorAll("#collectItems [data-del]").forEach(b=> b.addEventListener("click", ()=> deleteMine(b.dataset.del)));
+  document.querySelectorAll("#collectItems [data-photo]").forEach(b=> b.addEventListener("click", ()=>{ const e=state.entries.find(x=>x.id===b.dataset.photo); if(e) openView(e); }));
+}
+function openZoneCollection(k){ collectCtx = {type:"zone", key:k}; colName=""; colDate=""; refreshCollection(); showOverlay("#collectOverlay"); }
+function openCatCollection(id){ collectCtx = {type:"cat", key:id}; colName=""; colDate=""; refreshCollection(); showOverlay("#collectOverlay"); }
 /* 현재 공간 표시 버튼 갱신 (매 프레임) */
 function updateZoneButton(){
   const b = $("#zoneBtn"); if(!b) return;
@@ -2222,18 +2287,7 @@ document.querySelectorAll("[data-close]").forEach(b=> b.addEventListener("click"
 $("#addBtn").addEventListener("click", ()=> openAdd());
 $("#zoneBtn").addEventListener("click", ()=>{ if($("#zoneBtn").dataset.zone) openZoneCollection($("#zoneBtn").dataset.zone); });
 $("#editMineBtn").addEventListener("click", ()=>{ const e=state.entries.find(x=>x.id===viewingId); if(e){ hideOverlay("#viewOverlay"); openAdd(e); } });
-$("#delMineBtn").addEventListener("click", async ()=>{
-  const e = state.entries.find(x=>x.id===viewingId); if(!e) return;
-  if(!confirm("내 글을 삭제할까요?")) return;
-  if(online){
-    const { data, error } = await sb.rpc("dajim_owner_delete", { p_id:e.id, p_token:mine[e.id]||"" });
-    if(error){ toast(/does not exist|could not find/i.test(error.message) ? "삭제 기능은 SECURITY SQL 실행 후 켜져요" : "삭제 오류: "+error.message); return; }
-    if(data!==true){ toast("이 글은 삭제할 수 없어요"); return; }
-  }
-  delete mine[e.id]; saveMine();
-  state.entries = state.entries.filter(x=>x.id!==e.id); if(!online) save();
-  renderAll(); hideOverlay("#viewOverlay"); toast("삭제했어요 🗑");
-});
+$("#delMineBtn").addEventListener("click", ()=> deleteMine(viewingId));
 $("#submitBtn").addEventListener("click", submitEntry);
 $("#entryText").addEventListener("input", e=>{ $("#charCount").textContent=e.target.value.length; updateSubmit(); });
 $("#entryText").addEventListener("keydown", e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter") submitEntry(); });
