@@ -468,7 +468,7 @@
       <b>👥 함께 있기</b> — 같은 방(반) 코드로 접속한 친구들이 <b>같은 숲에 실시간으로 보여요</b>. 위로 걸어가면 캐릭터 뒷모습(꼬리)도 보인답니다!<br>
       <b>👀 관람하기</b> — 공간(게시판)에 가거나 팻말·마음을 누르면 그곳 글이 한 번에 모여요. 게시판에서 올린 사람·날짜로 골라 읽고 ❤️ 공감.<br>
       <b>📖 모아보기</b> — 어떤 공간에 도착하면 아래에 <b>'이 곳 글 모아보기'</b> 버튼이 떠요(팻말을 눌러도 됨). 위쪽 <b>카테고리(칩)를 누르면</b> 그 종류의 글만 모아 볼 수 있어요.<br>
-      <b>🗺️ 일곱 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(순간·추억 사진) / 🎪추억광장(행사) / 📮마음우체국(친구에게 한마디) / 🎂생일광장(다가오는 생일 게시판·축하 한마디) / 🤝1인1역 본부(점검·스타 추천·🌟숨은 기여 자랑·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
+      <b>🗺️ 일곱 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(순간·추억 사진) / 🎪추억광장(행사) / 📮마음우체국(친구에게 한마디) / 🎂생일광장(다가오는 생일 게시판·축하 한마디) / 🤝1인1역 스테이션(점검·스타 추천·🌟숨은 기여 자랑·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
       <b>🏆 1인1역 스타</b> — 추천 글에 ❤️ 공감을 누르는 게 곧 투표! 발표 모드에서 공감 수를 함께 보여줘요.<br>
       <b>🛠️ 교사용</b> — 메뉴 → <b>🔒 교사 모드</b>에 비밀번호를 넣으면 관리 메뉴가 열려요. 비번은 <b>서버에서 확인</b>하므로 소스코드를 봐도 못 뚫어요. 학생은 읽기·마음 남기기만 가능(공지·명단·삭제 불가). 전자칠판에서 켰다면 넘기기 전 <b>교사 모드 끄기</b>! (처음 한 번 파일 하단 SECURITY SQL 실행 필요)<br>
       <b>🎥 전자칠판</b> — 메뉴 → 자동 관람 모드를 켜면 카메라가 숲을 천천히 돌며 친구들의 활동을 비춰줘요. 터치하면 해제.<br>
@@ -523,7 +523,7 @@ const ZONES = {
   plaza:   { label:"추억 광장",   emoji:"🎪", color:"#ff8fb1", sign:{x:2150,z:565}, spots:{x0:1930,x1:2390,z0:210,z1:450} },
   post:    { label:"마음 우체국", emoji:"📮", color:"#b07cf0", sign:{x:455,z:1420}, spots:{x0:230,x1:700,z0:1090,z1:1320} },
   green:   { label:"도전 온실",   emoji:"🌱", color:"#5cb85c", sign:{x:2150,z:1420},spots:{x0:1960,x1:2340,z0:1110,z1:1290} },
-  role:    { label:"1인1역 본부", emoji:"🤝", color:"#2bb0a3", sign:{x:2150,z:980}, spots:{x0:1900,x1:2430,z0:830,z1:945} },
+  role:    { label:"1인1역 스테이션", emoji:"🤝", color:"#2bb0a3", sign:{x:2150,z:980}, spots:{x0:1900,x1:2430,z0:830,z1:945} },
   bday:    { label:"생일 광장",   emoji:"🎂", color:"#ff8fab", sign:{x:330,z:975},  spots:{x0:200,x1:660,z0:780,z1:950} },
 };
 const CATS = [
@@ -1035,10 +1035,16 @@ function buildScene(){
     s.position.set(x,y,z); scene.add(s);
   });
 
-  /* ── 별빛 갤러리 (밤하늘 벽) ── */
-  box(640, 300, 26, 0x232a4d, 465, 152, 300);
-  box(668, 22, 40, 0x8a6236, 465, 306, 300);
-  box(668, 22, 40, 0x8a6236, 465, 8, 300);
+  /* 소품 이모지 스프라이트 헬퍼 */
+  const prop = (e,x,y,z,sc)=>{ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture(e),transparent:true})); s.scale.set(sc,sc,1); s.position.set(x,y,z); scene.add(s); return s; };
+
+  /* ── 별빛 갤러리 (밤하늘 전시벽 + 금빛 액자틀 + 별 조명) ── */
+  box(640, 300, 26, 0x2a2f5a, 465, 152, 300);                  // 전시벽(짙은 남색)
+  box(676, 30, 48, 0xd0a760, 465, 310, 300);                   // 위 금빛 틀
+  box(676, 30, 48, 0xd0a760, 465, 4, 300);                     // 아래 금빛 틀
+  box(30, 336, 48, 0xd0a760, 130, 152, 300);                   // 좌 틀
+  box(30, 336, 48, 0xd0a760, 800, 152, 300);                   // 우 틀
+  [220,340,465,590,710].forEach(x=> prop("⭐", x, 300, 318, 34));   // 상단 별 조명
 
   /* ── 추억 광장 (서커스 텐트) ── */
   const tentBase = new THREE.Mesh(new THREE.CylinderGeometry(110, 118, 70, 12), lam(0xfff1f5));
@@ -1048,6 +1054,7 @@ function buildScene(){
   const flag = new THREE.Mesh(new THREE.ConeGeometry(14, 30, 6), lam(0xffd166));
   flag.position.set(2330, 205, 230); scene.add(flag);
   groundPlane(430, 250, 0xf7e9c8, 2160, 330, 1.5);
+  prop("🎉", 2210, 150, 300, 48); prop("🎊", 2450, 150, 320, 46); prop("🎈", 2330, 250, 340, 40);   // 축제 소품
 
   /* ── 마음 우체국 ── */
   box(210, 150, 160, 0xfdf3dc, 300, 75, 1170);
@@ -1057,6 +1064,7 @@ function buildScene(){
   const post = new THREE.Mesh(new THREE.CylinderGeometry(6,6,70,8), lam(0x666));
   post.position.set(560, 35, 1150); scene.add(post);
   box(44, 52, 40, 0xe8453c, 560, 95, 1150);                        // 우체통
+  prop("💌", 250, 190, 1090, 38); prop("✉️", 420, 220, 1240, 32); prop("✉️", 150, 160, 1180, 30);   // 날아다니는 편지
 
   /* ── 생일 광장 (3단 케이크 + 촛불 + 풍선 + 생일 게시판) ── */
   const plate = new THREE.Mesh(new THREE.CylinderGeometry(84, 84, 6, 20), lam(0xffffff));
@@ -1086,30 +1094,42 @@ function buildScene(){
   const bp2 = bp1.clone(); bp2.position.x = 434; scene.add(bp2);
   drawBdayBoard();
 
-  /* ── 도전 온실 (유리 온실) ── */
-  const glass = new THREE.Mesh(new THREE.BoxGeometry(440, 150, 240),
-    new THREE.MeshLambertMaterial({ color:0xbfe6ff, transparent:true, opacity:.32 }));
-  glass.position.set(2150, 76, 1200); scene.add(glass);
-  const gRoof = new THREE.Mesh(new THREE.CylinderGeometry(120,120,440,3,1,false,0,Math.PI),
-    new THREE.MeshLambertMaterial({ color:0xd4f0ff, transparent:true, opacity:.34 }));
-  gRoof.rotation.z = Math.PI/2; gRoof.position.set(2150, 150, 1200); scene.add(gRoof);
-  const frame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(440,150,240)),
-    new THREE.LineBasicMaterial({ color:0x5f8f60 }));
-  frame.position.copy(glass.position); scene.add(frame);
+  /* ── 도전 온실 (화단 + 유리벽 + 아치 유리지붕 + 초록 골조 + 새싹) ── */
+  box(474, 28, 274, 0x6a9e5a, 2150, 14, 1200);                 // 흙 화단 베이스
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(430, 140, 230),
+    new THREE.MeshLambertMaterial({ color:0xd8f2ff, transparent:true, opacity:.2 }));
+  glass.position.set(2150, 98, 1200); scene.add(glass);
+  const gRoof = new THREE.Mesh(new THREE.CylinderGeometry(118,118,430,3,1,false,0,Math.PI),
+    new THREE.MeshLambertMaterial({ color:0xe6f8ff, transparent:true, opacity:.26 }));
+  gRoof.rotation.z = Math.PI/2; gRoof.position.set(2150, 166, 1200); scene.add(gRoof);
+  const gframe = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(430,140,230)),
+    new THREE.LineBasicMaterial({ color:0x4f8a52, linewidth:2 }));
+  gframe.position.copy(glass.position); scene.add(gframe);
+  box(10, 140, 10, 0x4f8a52, 2150, 98, 1200);                  // 중앙 골조 기둥
+  box(66, 118, 6, 0xcdeccd, 2150, 74, 1316);                   // 유리문
+  [[-130,1155],[-40,1245],[65,1175],[145,1250]].forEach(([ox,z])=>{   // 안에서 자라는 새싹 화분
+    const pt = new THREE.Mesh(new THREE.CylinderGeometry(13,9,16,8), lam(0xcf7a4a)); pt.position.set(2150+ox,34,z); scene.add(pt);
+    const sp = new THREE.Mesh(new THREE.ConeGeometry(9,26,6), mat3d(0x5cc85c)); sp.position.set(2150+ox,57,z); scene.add(sp);
+  });
 
-  /* ── 1인1역 본부 (센터풍 건물) ── */
-  box(300, 110, 160, 0xfdf3dc, 2150, 55, 715);
-  box(340, 34, 200, 0x2bb0a3, 2150, 127, 715);
-  box(56, 66, 12, 0x8a6236, 2150, 33, 797);
-  box(46, 40, 8, 0xbfe6ff, 2062, 70, 797);
-  box(46, 40, 8, 0xbfe6ff, 2238, 70, 797);
+  /* ── 1인1역 스테이션 (아늑한 오두막 + 피라미드 지붕 + 역할 소품) ── */
+  box(300, 122, 176, 0xffe6bf, 2150, 61, 715);                 // 벽(따뜻한 크림)
+  const rRoof = new THREE.Mesh(new THREE.ConeGeometry(238, 96, 4), lam(0x2bb0a3));
+  rRoof.rotation.y = Math.PI/4; rRoof.position.set(2150, 170, 715); scene.add(rRoof);   // 삼각 지붕
+  const rTop = new THREE.Mesh(new THREE.SphereGeometry(12,10,8), lam(0xffd166));
+  rTop.position.set(2150, 222, 715); scene.add(rTop);                                    // 지붕 꼭대기 방울
+  box(60, 82, 10, 0x9a6a3c, 2150, 41, 805);                    // 문
+  const rw1 = new THREE.Mesh(new THREE.CircleGeometry(20,18), lam(0xbfe6ff)); rw1.position.set(2066, 84, 804); scene.add(rw1);  // 둥근 창
+  const rw2 = rw1.clone(); rw2.position.x = 2234; scene.add(rw2);
+  prop("🧹", 2018, 46, 815, 48); prop("🧺", 2286, 44, 815, 46);   // 역할 소품(청소·정리)
   const hqc = makeCanvas(512,128), hg = hqc.getContext("2d");
-  hg.fillStyle="#fff"; hg.font="700 56px Galmuri11,'Malgun Gothic',sans-serif";
-  hg.textAlign="center"; hg.textBaseline="middle"; hg.fillText("🤝 1인1역 본부", 256, 66);
+  hg.fillStyle="#2bb0a3"; roundRect(hg, 6, 20, 500, 88, 22); hg.fill();
+  hg.fillStyle="#fff"; hg.font="700 52px Galmuri11,'Malgun Gothic',sans-serif";
+  hg.textAlign="center"; hg.textBaseline="middle"; hg.fillText("🤝 1인1역 스테이션", 256, 66);
   const hqTex = new THREE.CanvasTexture(hqc);
-  const hqSign = new THREE.Mesh(new THREE.PlaneGeometry(240,60),
+  const hqSign = new THREE.Mesh(new THREE.PlaneGeometry(250,63),
     new THREE.MeshBasicMaterial({ map:hqTex, transparent:true }));
-  hqSign.position.set(2150, 127, 816); scene.add(hqSign);
+  hqSign.position.set(2150, 132, 806); scene.add(hqSign);
 
   /* ── 테두리 숲 (인스턴스 나무) ── */
   const spots3 = [];
