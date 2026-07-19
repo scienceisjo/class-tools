@@ -1038,6 +1038,35 @@ function buildScene(){
   /* 소품 이모지 스프라이트 헬퍼 */
   const prop = (e,x,y,z,sc)=>{ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture(e),transparent:true})); s.scale.set(sc,sc,1); s.position.set(x,y,z); scene.add(s); return s; };
 
+  /* ── 다짐 나무 앞 광장 (환영 배너·꽃밭·벤치·랜턴·돗자리) ── */
+  const wc = makeCanvas(560,130), wg = wc.getContext("2d");
+  wg.fillStyle="#e0662f"; roundRect(wg, 8, 22, 544, 86, 24); wg.fill();
+  wg.fillStyle="#fff"; wg.font="700 48px Galmuri11,'Malgun Gothic',sans-serif";
+  wg.textAlign="center"; wg.textBaseline="middle"; wg.fillText("🌳 우리 반 다짐 나무", 280, 66);
+  const banner = new THREE.Mesh(new THREE.PlaneGeometry(320,74),
+    new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(wc), transparent:true }));
+  banner.position.set(1300, 152, 990); scene.add(banner);
+  box(320,14,14, 0x9a6a3c, 1300, 150, 990);                    // 배너 상단 가로대
+  box(12,150,12, 0x9a6a3c, 1150, 75, 990); box(12,150,12, 0x9a6a3c, 1450, 75, 990);   // 배너 기둥
+  // 꽃밭 화단 (양옆)
+  [[1120,1050],[1480,1050]].forEach(([X,Z])=>{
+    box(180,16,64, 0x8a5a3c, X, 8, Z);
+    ["🌷","🌻","🌼","🌸"].forEach((f,i)=> prop(f, X-60+i*40, 34, Z, 30));
+  });
+  // 벤치 2개 (나무를 향해 앉는 방향)
+  [[1050,1150],[1550,1150]].forEach(([X,Z])=>{
+    box(84,10,28, 0x9a6a3c, X, 22, Z); box(84,26,7, 0x9a6a3c, X, 38, Z+12);
+    box(8,20,8, 0x7a5230, X-34,10,Z-9); box(8,20,8, 0x7a5230, X+34,10,Z-9);
+  });
+  // 랜턴 기둥 (입구 양옆)
+  [[1180,1250],[1420,1250]].forEach(([X,Z])=>{
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(4,4,86,8), lam(0x5a4634)); pole.position.set(X,43,Z); scene.add(pole);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(12,12,10), new THREE.MeshBasicMaterial({ color:0xffe9a0 })); lamp.position.set(X,92,Z); scene.add(lamp);
+  });
+  // 돗자리 + 피크닉 (한쪽 구석)
+  groundPlane(120, 96, 0xff9a9a, 1560, 1290, 2);
+  prop("🧺", 1560, 30, 1290, 40); prop("🍎", 1528, 22, 1305, 24); prop("🥤", 1595, 24, 1300, 24);
+
   /* ── 별빛 갤러리 (밤하늘 전시벽 + 금빛 액자틀 + 별 조명) ── */
   box(640, 300, 26, 0x2a2f5a, 465, 152, 300);                  // 전시벽(짙은 남색)
   box(676, 30, 48, 0xd0a760, 465, 310, 300);                   // 위 금빛 틀
