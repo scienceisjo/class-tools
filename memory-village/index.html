@@ -273,6 +273,7 @@
   <div class="toolbar">
     <button class="tbtn wide" id="presentBtn">📺 발표</button>
     <button class="tbtn wide" id="listBtn">📋 모아보기</button>
+    <button class="tbtn" id="musicBtn" title="배경음악">🎵</button>
     <button class="tbtn" id="soundBtn">🔊</button>
     <button class="tbtn" id="menuBtn">⋯</button>
   </div>
@@ -501,6 +502,7 @@
   </div>
 </div>
 
+<audio id="bgm" loop preload="none"></audio>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -510,6 +512,9 @@
 const SUPABASE_URL      = "https://vbvtnmnodeoocbbjauap.supabase.co";   // 과학이조선생 프로젝트
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRubW5vZGVvb2NiYmphdWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0OTQ0OTYsImV4cCI6MjA5NTA3MDQ5Nn0.dvuRrt3qw2Tya_QwGbcXrmGPdfDgI4xmgyH8UjU73Nc";
 const TABLE = "dajim_entries";
+/* 배경음악(BGM): 이 이름의 오디오 파일을 memory-village 폴더에 넣으면 재생돼요.
+   ⚠️ 저작권 있는 곡(동물의숲 등)은 넣지 마세요 — 자유이용/직접제작 음원만! */
+const BGM_SRC = "bgm.mp3";
 /* 실제 교사 비밀번호는 소스가 아니라 서버(Supabase 함수)에 저장돼요 → 소스 봐도 못 뚫음.
    비번 바꾸기: 파일 맨 아래 'SECURITY SQL'의 dajim_teacher_pin() 함수 안 값을 바꿔 Run.
    아래 값은 '인터넷 미연결(로컬 단독)'일 때만 쓰는 임시 비번이라 학생 배포와 무관해요. */
@@ -1064,8 +1069,38 @@ function buildScene(){
     const lamp = new THREE.Mesh(new THREE.SphereGeometry(12,12,10), new THREE.MeshBasicMaterial({ color:0xffe9a0 })); lamp.position.set(X,92,Z); scene.add(lamp);
   });
   // 돗자리 + 피크닉 (한쪽 구석)
-  groundPlane(120, 96, 0xff9a9a, 1560, 1290, 2);
-  prop("🧺", 1560, 30, 1290, 40); prop("🍎", 1528, 22, 1305, 24); prop("🥤", 1595, 24, 1300, 24);
+  groundPlane(120, 96, 0xff9a9a, 1620, 1300, 2);
+  prop("🧺", 1620, 30, 1300, 40); prop("🍎", 1588, 22, 1315, 24); prop("🥤", 1655, 24, 1310, 24);
+
+  // ⛲ 분수 (광장 중앙)
+  const basin = new THREE.Mesh(new THREE.CylinderGeometry(52, 58, 22, 20), lam(0xc4c9d0)); basin.position.set(1300, 11, 1030); scene.add(basin);
+  const fwater = new THREE.Mesh(new THREE.CylinderGeometry(45, 45, 8, 20), new THREE.MeshLambertMaterial({ color:0x6fc3f0, transparent:true, opacity:.9 })); fwater.position.set(1300, 22, 1030); scene.add(fwater);
+  const fpillar = new THREE.Mesh(new THREE.CylinderGeometry(8, 10, 40, 12), lam(0xd2d6dc)); fpillar.position.set(1300, 40, 1030); scene.add(fpillar);
+  const fbowl = new THREE.Mesh(new THREE.CylinderGeometry(20, 6, 8, 16), lam(0xc4c9d0)); fbowl.position.set(1300, 62, 1030); scene.add(fbowl);
+  prop("💧", 1300, 82, 1030, 26);
+
+  // 🪧 안내 표지판 (각 공간 방향)
+  const signPlank = (txt, color)=>{
+    const c = makeCanvas(320, 80), g = c.getContext("2d");
+    g.fillStyle = color; roundRect(g, 4, 8, 312, 64, 16); g.fill();
+    g.fillStyle = "#fff"; g.font = "700 38px Galmuri11,'Malgun Gothic',sans-serif";
+    g.textAlign="center"; g.textBaseline="middle"; g.fillText(txt, 160, 42);
+    return new THREE.CanvasTexture(c);
+  };
+  const spX = 1030, spZ = 1140;
+  const spPost = new THREE.Mesh(new THREE.CylinderGeometry(5,5,190,8), lam(0x7a5230)); spPost.position.set(spX, 95, spZ); scene.add(spPost);
+  [["⭐ 별빛갤러리","#f2b705",-1],["🎪 추억광장","#ff7ab8",1],["📮 마음우체국","#b07cf0",-1],["🤝 1인1역","#2bb0a3",1],["🌱 도전온실","#5cb85c",-1],["🎂 생일광장","#ff8fab",1]].forEach(([txt,color,dir],i)=>{
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(100,25), new THREE.MeshBasicMaterial({ map:signPlank(txt,color), transparent:true }));
+    pl.position.set(spX + dir*44, 168 - i*24, spZ+3); pl.rotation.y = dir*0.22; scene.add(pl);
+  });
+
+  // 🔥 모닥불 (통나무·돌 테두리·불꽃·통나무 의자)
+  const cfX = 1560, cfZ = 1130;
+  for(let a=0;a<3;a++){ const log = new THREE.Mesh(new THREE.CylinderGeometry(6,6,46,8), lam(0x8a5a2c)); log.rotation.z = Math.PI/2; log.rotation.y = a*Math.PI/3; log.position.set(cfX, 8, cfZ); scene.add(log); }
+  for(let a=0;a<8;a++){ const st = new THREE.Mesh(new THREE.SphereGeometry(6,8,6), lam(0x9aa0a6)); st.position.set(cfX+Math.cos(a/8*6.28)*30, 4, cfZ+Math.sin(a/8*6.28)*30); st.scale.y = .6; scene.add(st); }
+  [[-72,4],[62,44],[34,-60]].forEach(([ox,oz])=>{ const seat = new THREE.Mesh(new THREE.CylinderGeometry(14,14,20,10), lam(0x9a6a3c)); seat.position.set(cfX+ox,10,cfZ+oz); scene.add(seat); });
+  prop("🔥", cfX, 34, cfZ, 52);
+  const fireLight = new THREE.PointLight(0xff8030, 0.9, 340); fireLight.position.set(cfX, 46, cfZ); scene.add(fireLight);
 
   /* ── 별빛 갤러리 (밤하늘 전시벽 + 금빛 액자틀 + 별 조명) ── */
   box(640, 300, 26, 0x2a2f5a, 465, 152, 300);                  // 전시벽(짙은 남색)
@@ -1647,6 +1682,7 @@ $("#enterBtn").addEventListener("click", ()=>{
   applyAvatar();
   hideOverlay("#enterOverlay");
   chime();
+  startBgm();        // 입장(사용자 클릭) 시 배경음악 시작
   maybeTutorial();   // 첫 방문이면 조작법 → 이후 선생님 알림
 });
 function maybeTutorial(){
@@ -2345,6 +2381,24 @@ $("#classNameBtn").addEventListener("click", renameClass);
 $("#listBtn").addEventListener("click", openList);
 $("#presentBtn").addEventListener("click", openPresent);
 $("#soundBtn").addEventListener("click", ()=>{ state.sound=!state.sound; save(); $("#soundBtn").textContent=state.sound?"🔊":"🔇"; if(state.sound) chime(); });
+/* ── 배경음악 ── */
+let bgmOn = true;
+try{ bgmOn = localStorage.getItem("dajim-bgm") !== "0"; }catch(e){}
+const bgmEl = $("#bgm"); bgmEl.volume = 0.38;
+function updateMusicBtn(){ const b=$("#musicBtn"); b.textContent = bgmOn ? "🎵" : "🔈"; b.style.opacity = bgmOn ? "1" : ".5"; }
+function startBgm(){
+  if(!bgmOn) return;
+  if(!bgmEl.src) bgmEl.src = BGM_SRC;
+  bgmEl.play().catch(()=>{});   // 파일 없음/차단이면 조용히 무시
+}
+$("#musicBtn").addEventListener("click", ()=>{
+  bgmOn = !bgmOn;
+  try{ localStorage.setItem("dajim-bgm", bgmOn ? "1" : "0"); }catch(e){}
+  updateMusicBtn();
+  if(bgmOn){ startBgm(); if(bgmEl.paused) toast("🎵 배경음악 파일(bgm.mp3)이 있으면 재생돼요"); }
+  else bgmEl.pause();
+});
+updateMusicBtn();
 $("#menuBtn").addEventListener("click", ()=>{ $("#howtoBox").style.display="none"; showOverlay("#menuOverlay"); });
 
 $("#mTeacherMode").addEventListener("click", toggleTeacherMode);
