@@ -337,7 +337,7 @@
       <div class="short-hint hidden" id="shortHint">✏️ 1학기 동안 함께한 친구에게, 조금만 더 길게 응원의 말을 써주면 어떨까요? 💗</div>
     </div>
     <div class="field">
-      <label>이름 또는 별명 <span style="color:var(--muted);font-weight:600">(비워도 돼요)</span></label>
+      <label>이름 또는 별명 <span style="color:var(--rose)">*</span> <span style="color:var(--muted);font-weight:600">(누가 썼는지 꼭 남겨주세요)</span></label>
       <input class="txt" id="name" maxlength="30" placeholder="예) 2년 연속 담임선생님 승재쌤, 3반 서윤이">
     </div>
     <button class="btn btn-primary btn-block" id="send" style="margin-top:20px">💗 마음 보내기</button>
@@ -615,6 +615,8 @@ function resetShortHint(){ shortNudged=false; const h=$("#shortHint"); if(h) h.c
 async function submitMessage(){
   const text=$("#msg").value.trim();
   if(!text){ toast("하고 싶은 말을 적어주세요 🌱"); $("#msg").focus(); return; }
+  const name=$("#name").value.trim();
+  if(!name){ toast("이름 또는 별명을 꼭 남겨주세요 🙂"); $("#name").focus(); return; }
   // 너무 짧으면 한 번만 부드럽게 권함 (강제 아님 — 한 번 더 누르면 그대로 전송)
   if(text.length<MIN_NICE_LEN && !shortNudged){
     shortNudged=true;
@@ -624,7 +626,7 @@ async function submitMessage(){
     return;
   }
   const btn=$("#send"); btn.disabled=true; btn.textContent="보내는 중…";
-  const m={ id:uid(), name:$("#name").value.trim(), text, color:sel.color, sticker:sel.sticker, video:"" };
+  const m={ id:uid(), name, text, color:sel.color, sticker:sel.sticker, video:"" };
   try{
     if(online){ const {error}=await sb.from(TABLE).insert(msgToRow(m)); if(error) throw error; }
     else { lsAdd({...msgToRow(m),created_at:new Date().toISOString()}); }
