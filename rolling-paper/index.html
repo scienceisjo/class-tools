@@ -118,6 +118,14 @@
   input.txt:focus,textarea.txt:focus{outline:none;border-color:var(--rose)}
   textarea.txt{min-height:130px;line-height:1.6}
   .counter{text-align:right;font-size:12px;color:var(--muted);margin-top:4px}
+  .prompt-hint{background:linear-gradient(#fff6fb,#f3f0ff);border:1px solid #efe4f7;border-radius:14px;
+    padding:12px 14px;margin-bottom:10px}
+  .prompt-hint>b{display:block;font-size:13.5px;color:#8a6fd0;margin-bottom:8px}
+  .prompt-hint ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .prompt-hint li{font-size:13.5px;color:#6a5a6f;font-weight:600;padding-left:20px;position:relative;line-height:1.45}
+  .prompt-hint li::before{content:"✎";position:absolute;left:0;color:var(--rose)}
+  .short-hint{margin-top:8px;background:#fff3d6;border:1px solid #f0d9a0;color:#8a6a2a;border-radius:12px;
+    padding:10px 13px;font-size:13.5px;font-weight:700;line-height:1.5;animation:pop .3s ease both}
   .disclose summary{cursor:pointer;font-weight:800;color:var(--lav);font-size:14px;list-style:none;
     display:inline-flex;align-items:center;gap:6px;padding:6px 0}
   .disclose summary::-webkit-details-marker{display:none}
@@ -320,8 +328,13 @@
     </div>
     <div class="field">
       <label>다현이에게 하고 싶은 말 <span style="color:var(--rose)">*</span></label>
+      <div class="prompt-hint">
+        <b>💡 뭘 쓸지 고민된다면, 이런 걸 담아보세요</b>
+        <ul id="promptList"></ul>
+      </div>
       <textarea class="txt" id="msg" maxlength="600" placeholder="예) 다현아, 급식 먹을 때 항상 웃겨줘서 고마웠어. 새 학교에서도 너답게 반짝반짝 빛나길!"></textarea>
       <div class="counter"><span id="msgCount">0</span> / 600</div>
+      <div class="short-hint hidden" id="shortHint">✏️ 1학기 동안 함께한 친구에게, 조금만 더 길게 응원의 말을 써주면 어떨까요? 💗</div>
     </div>
     <div class="field">
       <label>이름 또는 별명 <span style="color:var(--muted);font-weight:600">(비워도 돼요)</span></label>
@@ -441,6 +454,16 @@ const DEFAULT_ROOM = "dahyun";      // ?room= 으로 덮어쓰기 가능
 
 const COLORS = ["#fff3b8","#ffd6e0","#d5ecff","#d9f6e6","#ece0ff","#ffe1c2","#e8f0c8","#ffd9d0"];
 const STICKERS = ["💌","🌸","⭐","🍀","🌈","💖","🌻","🎈","✨","🐣","🫶","🌙"];
+
+/* 학생이 뭘 쓸지 막막하지 않게 보여줄 글감 예시 (자유롭게 편집) */
+const WRITE_PROMPTS = [
+  "너와 함께해서 가장 기억에 남는 순간",
+  "너의 좋은 점 한 가지",
+  "새 학교에서 꼭 기억했으면 하는 말",
+  "나중에 다시 만나면 함께 하고 싶은 것",
+  "마지막으로 하고 싶은 한마디"
+];
+const MIN_NICE_LEN = 20;   // 이보다 짧으면 '조금 더 길게' 한 번 부드럽게 권함(강제 아님)
 
 /* 탭 제목: 학생 작성 화면은 위장(DECOY), 선생님 허브·전시는 진짜 제목 */
 const DECOY_TITLE = "학교생활만족도조사";
@@ -569,11 +592,16 @@ function buildWrite(){
   $("#stickers").innerHTML = STICKERS.map((s,i)=>`<button class="stick ${i===0?'sel':''}" data-s="${s}">${s}</button>`).join("");
   $("#stickers").onclick = e=>{ const b=e.target.closest(".stick"); if(!b) return;
     sel.sticker=b.dataset.s; document.querySelectorAll("#stickers .stick").forEach(x=>x.classList.toggle("sel",x===b)); };
-  // 글자수
-  const ta=$("#msg"); ta.oninput=()=>$("#msgCount").textContent=ta.value.length;
+  // 글감 예시
+  $("#promptList").innerHTML = WRITE_PROMPTS.map(p=>`<li>${esc(p)}</li>`).join("");
+  // 글자수 + '조금 더 길게' 안내 리셋
+  const ta=$("#msg"); ta.oninput=()=>{
+    $("#msgCount").textContent=ta.value.length;
+    if(ta.value.trim().length>=MIN_NICE_LEN) resetShortHint();
+  };
   // 보내기
   $("#send").onclick=submitMessage;
-  $("#writeAgain").onclick=()=>{ $("#thanks").classList.remove("show"); ta.value=""; $("#name").value=""; $("#msgCount").textContent="0"; window.scrollTo({top:0,behavior:"smooth"}); };
+  $("#writeAgain").onclick=()=>{ $("#thanks").classList.remove("show"); ta.value=""; $("#name").value=""; $("#msgCount").textContent="0"; resetShortHint(); window.scrollTo({top:0,behavior:"smooth"}); };
   // 반전 공개 팝업 (들어오자마자)
   $("#revealTitle").textContent = REVEAL_TITLE;
   $("#revealMsg").innerHTML = REVEAL_MSG;
@@ -582,9 +610,19 @@ function buildWrite(){
   $("#reveal").classList.add("show");
   setTimeout(burst, 250);
 }
+let shortNudged=false;
+function resetShortHint(){ shortNudged=false; const h=$("#shortHint"); if(h) h.classList.add("hidden"); const b=$("#send"); if(b&&!b.disabled) b.textContent="💗 마음 보내기"; }
 async function submitMessage(){
   const text=$("#msg").value.trim();
   if(!text){ toast("하고 싶은 말을 적어주세요 🌱"); $("#msg").focus(); return; }
+  // 너무 짧으면 한 번만 부드럽게 권함 (강제 아님 — 한 번 더 누르면 그대로 전송)
+  if(text.length<MIN_NICE_LEN && !shortNudged){
+    shortNudged=true;
+    $("#shortHint").classList.remove("hidden");
+    $("#send").textContent="이대로 보낼래요 💗";
+    $("#msg").focus();
+    return;
+  }
   const btn=$("#send"); btn.disabled=true; btn.textContent="보내는 중…";
   const m={ id:uid(), name:$("#name").value.trim(), text, color:sel.color, sticker:sel.sticker, video:"" };
   try{
@@ -599,6 +637,7 @@ async function submitMessage(){
   $("#thanks").classList.add("show");
   burst();
   btn.disabled=false; btn.textContent="💗 마음 보내기";
+  resetShortHint();
 }
 
 /* ═══════════════ 전시(롤링페이퍼) ═══════════════ */
