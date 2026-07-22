@@ -93,6 +93,9 @@
   .hub-steps li{display:flex;gap:12px;align-items:flex-start;font-size:15px;line-height:1.5;color:#5a4a5f}
   .hub-steps .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--rose);color:#fff;
     font-weight:900;display:grid;place-items:center;font-size:14px}
+  .student-chip{display:inline-block;background:#fff;border:1.5px solid #ffd6e0;color:#c14a6e;font-weight:800;
+    text-decoration:none;padding:4px 12px;border-radius:999px;margin:3px 4px 0 0;font-size:13.5px;transition:.14s}
+  .student-chip:hover{background:#ffd6e0;transform:translateY(-1px)}
   .netpill{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.75);
     padding:6px 13px;border-radius:999px;font-weight:800;font-size:13px;color:#6a5a6f;margin-top:12px}
   .netpill .led{width:9px;height:9px;border-radius:50%;background:#c3b8c8}
@@ -285,10 +288,20 @@
 
 <!-- ═══════════════ 선생님용 허브 ═══════════════ -->
 <div id="hub" class="wrap hidden">
-  <h1 class="heart-title">💌 다현이 롤링페이퍼 · 선생님용</h1>
-  <p class="sub">아래 <b>학생 작성 링크·QR</b>을 반 친구들에게 몰래 공유하세요. 다 모이면 <b>전시 화면</b>을 다현이에게 보여주면 돼요.</p>
+  <h1 class="heart-title">💌 롤링페이퍼 · 선생님용</h1>
+  <p class="sub">학생 이름을 넣어 <b>그 학생만의 롤링페이퍼</b>를 만드세요. 작성 링크·QR을 반 친구들에게 몰래 공유하면 돼요.</p>
   <span class="netpill" id="hubNet"><span class="led"></span><span id="hubNetText">연결 확인 중…</span></span>
 
+  <div class="card" style="margin-top:18px">
+    <h2 style="margin:0 0 10px;font-size:20px">➕ 새 롤링페이퍼 만들기</h2>
+    <div class="linkrow">
+      <input class="txt" id="newName" placeholder="학생 이름 (예: 서윤, 지우, 다현)" maxlength="20">
+      <button class="btn btn-primary" id="createBtn">만들기 →</button>
+    </div>
+    <div id="studentList" class="hintline" style="margin-top:12px"></div>
+  </div>
+
+  <h2 style="margin:26px 0 6px;font-size:19px">📮 지금 화면: <span id="activeName" style="color:var(--rose-d)"></span> 롤링페이퍼</h2>
   <div class="hub-grid">
     <div class="card">
       <h2 style="margin:0 0 4px;font-size:20px">① 학생들에게 뿌릴 작성 링크</h2>
@@ -298,13 +311,12 @@
         <button class="btn btn-primary" id="copyWrite">복사</button>
       </div>
       <ol class="hub-steps">
-        <li><span class="num">1</span><span>맨 처음 한 번만: 이 파일 맨 아래 <b>SETUP SQL</b>을 Supabase에 붙여넣고 Run (표 만들기)</span></li>
-        <li><span class="num">2</span><span>이 페이지를 <b>깃허브 Pages 등에 올려</b> 인터넷 주소로 만들기</span></li>
-        <li><span class="num">3</span><span>옆 QR 또는 위 링크를 <b>학급 단톡/전자칠판</b>으로 공유</span></li>
+        <li><span class="num">1</span><span>맨 처음 한 번만: 파일 맨 아래 <b>SETUP SQL</b>을 Supabase에 붙여넣고 Run (표 만들기 · 학생마다 다시 안 해도 됨)</span></li>
+        <li><span class="num">2</span><span>위 QR/링크를 <b>학급 단톡·전자칠판</b>으로 공유</span></li>
       </ol>
       <div style="margin-top:18px">
         <button class="btn btn-lav btn-block" id="openBoard">② 모인 마음 전시 화면 열기 →</button>
-        <p class="hintline" style="text-align:center">다현이에게 보여줄 롤링페이퍼예요. (전시 링크는 학생에게 주지 마세요)</p>
+        <p class="hintline" style="text-align:center" id="boardHint">전시 링크는 학생에게 주지 마세요.</p>
       </div>
     </div>
 
@@ -331,7 +343,7 @@
       <div class="stickers" id="stickers"></div>
     </div>
     <div class="field">
-      <label>다현이에게 하고 싶은 말 <span style="color:var(--rose)">*</span></label>
+      <label id="msgLabel">하고 싶은 말 <span style="color:var(--rose)">*</span></label>
       <div class="prompt-hint">
         <b>💡 뭘 쓸지 고민된다면, 이런 걸 담아보세요</b>
         <ul id="promptList"></ul>
@@ -463,8 +475,8 @@
 const SUPABASE_URL      = "https://vbvtnmnodeoocbbjauap.supabase.co";   // 과학이조선생 프로젝트
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRubW5vZGVvb2NiYmphdWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0OTQ0OTYsImV4cCI6MjA5NTA3MDQ5Nn0.dvuRrt3qw2Tya_QwGbcXrmGPdfDgI4xmgyH8UjU73Nc";
 const TABLE     = "farewell_messages";
-const RECIPIENT = "다현";           // 받는 친구 이름 (다른 학생 송별에도 재사용 가능)
-const DEFAULT_ROOM = "dahyun";      // ?room= 으로 덮어쓰기 가능
+const DEFAULT_ROOM = "dahyun";      // 기본 방 (레거시 '다현' 링크 호환)
+const DEFAULT_NAME = "다현";        // ?to= 없을 때 기본 이름
 
 const COLORS = ["#fff3b8","#ffd6e0","#d5ecff","#d9f6e6","#ece0ff","#ffe1c2","#e8f0c8","#ffd9d0"];
 const STICKERS = ["💌","🌸","⭐","🍀","🌈","💖","🌻","🎈","✨","🐣","🫶","🌙"];
@@ -479,21 +491,24 @@ const WRITE_PROMPTS = [
 ];
 const MIN_NICE_LEN = 20;   // 이보다 짧으면 '조금 더 길게' 한 번 부드럽게 권함(강제 아님)
 
+/* 이 롤링페이퍼가 '누구' 것인지 결정 (?to=이름 → 저장된 이름 → 기본값) */
+let mode = resolveMode();
+let room = resolveRoom();
+let RECIPIENT = resolveRecipient();
+
 /* 탭 제목: 학생 작성 화면은 위장(DECOY), 선생님 허브·전시는 진짜 제목 */
 const DECOY_TITLE = "학교생활만족도조사";
-const REAL_TITLE  = RECIPIENT+"이에게 💌 우리 반 롤링페이퍼";
+const REAL_TITLE  = nameCall(RECIPIENT)+"에게 💌 우리 반 롤링페이퍼";
 
 /* 작성 화면 들어오면 뜨는 '반전 공개' 팝업 (학교생활만족도조사인 줄 알고 들어온 학생에게) */
 const REVEAL_TITLE = "잠깐, 얘들아! 🎉";
 const REVEAL_MSG =
-  "이건 <u>학교생활만족도조사가 아닙니다!!</u><br><b>"+RECIPIENT+"이 이별편지입니다!!</b> 💌<br><br>" +
-  "여기에 마음을 써주면 롤링페이퍼가 만들어져. 선생님의 소중한 제자이자 여러분과 1학기 동안 함께한 <b>"+RECIPIENT+"이</b>가, " +
+  "이건 <u>학교생활만족도조사가 아닙니다!!</u><br><b>"+nameCall(RECIPIENT)+" 이별편지입니다!!</b> 💌<br><br>" +
+  "여기에 마음을 써주면 롤링페이퍼가 만들어져. 선생님의 소중한 제자이자 여러분과 1학기 동안 함께한 <b>"+nameCall(RECIPIENT)+"</b>가, " +
   "새로운 환경에서도 잘 적응할 수 있도록 <b>응원의 말</b>을 전해줄래? 🌱";
 
 /* ═══════════════ 상태 ═══════════════ */
 let sb=null, online=false;
-let mode = resolveMode();
-let room = resolveRoom();
 let messages = [];
 let sel = { color:COLORS[0], sticker:STICKERS[0] };
 let modalList = [], modalIdx = 0, slideTimer = null;
@@ -502,6 +517,11 @@ const $  = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const uid = () => Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
 
+/* 한글 조사 자동 처리 (이름 받침에 따라) */
+function hasBatchim(s){ if(!s) return false; const c=s.charCodeAt(s.length-1); if(c<0xAC00||c>0xD7A3) return true; return (c-0xAC00)%28!==0; }
+function voc(name){ return name + (hasBatchim(name)?"아":"야"); }    // 다현아 / 지우야
+function nameCall(name){ return name + (hasBatchim(name)?"이":""); }  // 다현이 / 지우
+
 function resolveMode(){
   const m = (new URLSearchParams(location.search).get("mode")||"").toLowerCase();
   return (m==="write"||m==="board") ? m : "hub";
@@ -509,13 +529,18 @@ function resolveMode(){
 function resolveRoom(){
   return (new URLSearchParams(location.search).get("room")||DEFAULT_ROOM).trim() || DEFAULT_ROOM;
 }
+function resolveRecipient(){
+  const p=new URLSearchParams(location.search).get("to");
+  if(p && p.trim()){ try{ localStorage.setItem("fw-name-"+room, p.trim()); }catch(e){} return p.trim(); }
+  return (localStorage.getItem("fw-name-"+room) || DEFAULT_NAME).trim() || DEFAULT_NAME;
+}
 function getConfig(){
   const url=SUPABASE_URL||localStorage.getItem("fw-sb-url")||"";
   const key=SUPABASE_ANON_KEY||localStorage.getItem("fw-sb-key")||"";
   return (url&&key)?{url:url.trim(),key:key.trim()}:null;
 }
 function baseUrl(){ return location.origin==="null" ? location.href.split("?")[0] : location.origin+location.pathname; }
-function linkFor(m){ const p=new URLSearchParams(); p.set("mode",m); if(room!==DEFAULT_ROOM)p.set("room",room); return baseUrl()+"?"+p.toString(); }
+function linkFor(m){ const p=new URLSearchParams(); if(m==="write"||m==="board") p.set("mode",m); p.set("room",room); p.set("to",RECIPIENT); return baseUrl()+"?"+p.toString(); }
 
 function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2600); }
 
@@ -596,7 +621,9 @@ function rot(id){ let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))&255; retu
 /* ═══════════════ 학생 작성 화면 ═══════════════ */
 function buildWrite(){
   $("#write").classList.remove("hidden");
-  $("#wTitle").textContent = "전학을 가는 "+RECIPIENT+"이에게 해 줄 말이 있다면 써주세요 💌";
+  $("#wTitle").textContent = "전학을 가는 "+nameCall(RECIPIENT)+"에게 해 줄 말이 있다면 써주세요 💌";
+  $("#msgLabel").innerHTML = esc(nameCall(RECIPIENT))+"에게 하고 싶은 말 <span style=\"color:var(--rose)\">*</span>";
+  $("#msg").placeholder = "예) "+voc(RECIPIENT)+", 급식 먹을 때 항상 웃겨줘서 고마웠어. 새 학교에서도 너답게 반짝반짝 빛나길!";
   document.querySelectorAll('.sub b').forEach(()=>{}); // (문구는 정적)
   // 색깔
   $("#swatches").innerHTML = COLORS.map((c,i)=>`<div class="swatch ${i===0?'sel':''}" data-c="${c}" style="background:${c}"></div>`).join("");
@@ -619,7 +646,7 @@ function buildWrite(){
   // 반전 공개 팝업 (들어오자마자)
   $("#revealTitle").textContent = REVEAL_TITLE;
   $("#revealMsg").innerHTML = REVEAL_MSG;
-  $("#revealClose").textContent = RECIPIENT+"이에게 편지 쓰러 가기 ✏️";
+  $("#revealClose").textContent = nameCall(RECIPIENT)+"에게 편지 쓰러 가기 ✏️";
   $("#revealClose").onclick=()=>$("#reveal").classList.remove("show");
   $("#reveal").classList.add("show");
   setTimeout(burst, 250);
@@ -659,7 +686,7 @@ async function submitMessage(){
 /* ═══════════════ 전시(롤링페이퍼) ═══════════════ */
 function buildBoard(){
   $("#board").classList.remove("hidden");
-  $("#bTitle").innerHTML = "💐 "+esc(RECIPIENT)+"아 새 학교에 가서도! 주변을 밝게하는 멋진 학생이길 바랄게";
+  $("#bTitle").innerHTML = "💐 "+esc(voc(RECIPIENT))+" 새 학교에 가서도! 주변을 밝게하는 멋진 학생이길 바랄게";
   $("#designBtn").onclick=()=>$("#designPanel").classList.toggle("hidden");
   $("#whoBtn").onclick=openWhoList;
   $("#pdfBtn").onclick=exportPDF;
@@ -774,8 +801,29 @@ function burst(){
 }
 
 /* ═══════════════ 허브 (선생님용) ═══════════════ */
+function studentList(){ try{ return JSON.parse(localStorage.getItem("fw-students")||"[]"); }catch(e){ return []; } }
+function saveStudent(r,name){ try{ const a=studentList().filter(s=>s.room!==r); a.unshift({room:r,name}); localStorage.setItem("fw-students",JSON.stringify(a.slice(0,60))); localStorage.setItem("fw-name-"+r,name); }catch(e){} }
+function gotoStudent(r,name){ const p=new URLSearchParams(); p.set("room",r); p.set("to",name); location.href=baseUrl()+"?"+p.toString(); }
+function createStudent(){
+  const name=$("#newName").value.trim();
+  if(!name){ toast("학생 이름을 입력하세요 🙂"); $("#newName").focus(); return; }
+  const r="r"+Math.random().toString(36).slice(2,8);
+  saveStudent(r,name); gotoStudent(r,name);
+}
+function renderStudentList(){
+  const el=$("#studentList"), arr=studentList();
+  if(!arr.length){ el.innerHTML='<span style="opacity:.7">만든 롤링페이퍼가 여기 목록으로 쌓여요.</span>'; return; }
+  el.innerHTML='<b>이전에 만든 것:</b> '+arr.map(s=>`<a href="#" class="student-chip" data-room="${esc(s.room)}" data-name="${esc(s.name)}">${esc(s.name)}</a>`).join(" ");
+  el.querySelectorAll(".student-chip").forEach(a=>a.onclick=e=>{ e.preventDefault(); gotoStudent(a.dataset.room,a.dataset.name); });
+}
 async function buildHub(){
   $("#hub").classList.remove("hidden");
+  saveStudent(room, RECIPIENT);                 // 현재 학생을 목록에 저장
+  $("#activeName").textContent = RECIPIENT;
+  $("#boardHint").textContent = nameCall(RECIPIENT)+"에게 보여줄 롤링페이퍼예요. (전시 링크는 학생에게 주지 마세요)";
+  $("#createBtn").onclick=createStudent;
+  $("#newName").onkeydown=e=>{ if(e.key==="Enter") createStudent(); };
+  renderStudentList();
   const wl=linkFor("write");
   $("#writeLink").value=wl;
   $("#copyWrite").onclick=()=>{ navigator.clipboard?.writeText(wl); toast("작성 링크를 복사했어요 📋"); };
@@ -786,7 +834,7 @@ async function buildHub(){
     const qr=window.qrcode(0,"M"); qr.addData(wl); qr.make();
     const dataUrl=qr.createDataURL(6,2);
     const t=$("#qrTarget"); t.innerHTML=""; const img=new Image(); img.src=dataUrl; img.alt="작성 QR"; t.appendChild(img);
-    $("#dlQr").onclick=()=>{ const a=document.createElement("a"); a.href=dataUrl; a.download="다현이_롤링페이퍼_QR.gif"; a.click(); };
+    $("#dlQr").onclick=()=>{ const a=document.createElement("a"); a.href=dataUrl; a.download=RECIPIENT+"_롤링페이퍼_QR.gif"; a.click(); };
   }catch(e){
     $("#qrTarget").innerHTML='<div style="color:var(--muted);font-weight:700;line-height:1.5">QR 생성을 못 했어요.<br>위 링크를 복사해 쓰세요.</div>';
     $("#dlQr").style.display="none";
@@ -858,13 +906,13 @@ function renderBoardVideo(){
   if(design.boardVideo && design.boardVideo.trim()){
     card.classList.remove("hidden");
     card.innerHTML = `<div class="bv-inner"><span class="bv-ico">🎬</span>
-      <div class="bv-txt"><b>${esc(RECIPIENT)}이에게 보내는 영상 편지</b><span>우리 반이 함께 준비했어 · 눌러서 재생</span></div>
+      <div class="bv-txt"><b>${esc(nameCall(RECIPIENT))}에게 보내는 영상 편지</b><span>우리 반이 함께 준비했어 · 눌러서 재생</span></div>
       <span class="bv-play">▶</span></div>`;
     card.onclick=openBoardVideo;
   } else { card.classList.add("hidden"); card.innerHTML=""; card.onclick=null; }
 }
 function openBoardVideo(){
-  const m={ sticker:"🎬", text:RECIPIENT+"이에게 보내는 영상 편지 💌", name:"우리 반", color:"#ffe1ec", video:design.boardVideo };
+  const m={ sticker:"🎬", text:nameCall(RECIPIENT)+"에게 보내는 영상 편지 💌", name:"우리 반", color:"#ffe1ec", video:design.boardVideo };
   modalList=[m]; modalIdx=0;
   $("#navPrev").style.display=$("#navNext").style.display="none";
   $("#slidePos").style.display="none";
@@ -933,7 +981,7 @@ function buildPdfPage(list, idx, total, photoList){
   page.appendChild(base);
   const cols = design.lpp<=3 ? 1 : (design.lpp<=8 ? 2 : 3);
   const inner=document.createElement("div"); inner.className="pdf-inner";
-  let h = idx===0 ? `<div class="pdf-head">💐 ${esc(RECIPIENT)}아 새 학교에 가서도! 주변을 밝게하는 멋진 학생이길 바랄게</div>` : "";
+  let h = idx===0 ? `<div class="pdf-head">💐 ${esc(voc(RECIPIENT))} 새 학교에 가서도! 주변을 밝게하는 멋진 학생이길 바랄게</div>` : "";
   h += `<div class="pdf-notes" style="column-count:${cols};column-gap:15px">`;
   // 편지 흐름 속에 사진을 사이사이 끼워 넣음 (편지·편지·사진·편지·편지·편지·사진 …)
   interleaveItems(list, photoList).forEach(it=>{
