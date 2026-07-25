@@ -58,6 +58,9 @@
   .netdot.on .led{background:#2ec26b;box-shadow:0 0 0 3px rgba(46,194,107,.3);animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(46,194,107,.3)}50%{box-shadow:0 0 0 6px rgba(46,194,107,.08)}}
   .legend{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  body.legend-off .legend{display:none}
+  #legendToggle{margin-left:auto}
+  body.legend-off #legendToggle{margin-left:auto;opacity:.75}
   .chip{display:inline-flex;align-items:center;gap:5px;cursor:pointer;user-select:none;
     background:rgba(255,255,255,.8);border:2px solid transparent;padding:4px 10px;border-radius:999px;
     font-weight:800;font-size:12px;box-shadow:0 3px 8px rgba(40,70,45,.12)}
@@ -198,6 +201,22 @@
   .stamp-item .d{color:#8a9a8e;font-size:12px;margin-top:4px}
   .tagchip{display:inline-block;background:#eefaef;border:1.5px solid #cdeccd;border-radius:999px;
     padding:1px 9px;font-size:11.5px;font-weight:800;color:#2c7a3f;margin-right:6px}
+  /* 🏆 명예의 전당 */
+  .podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin:8px 0 16px}
+  .pod{flex:1;max-width:110px;text-align:center;border-radius:14px 14px 0 0;padding:10px 6px 12px;
+    background:linear-gradient(180deg,#fff6e0,#ffe9c9);border:2.5px solid #f0c987;border-bottom:none}
+  .pod.p1{height:132px;background:linear-gradient(180deg,#fff3c4,#ffd977);border-color:#e8b93d}
+  .pod.p2{height:110px}
+  .pod.p3{height:96px}
+  .pod .m{font-size:26px}
+  .pod .nm{font-weight:900;font-size:14px;color:#6a4a10;margin-top:2px;word-break:keep-all}
+  .pod .ct{font-size:12px;font-weight:800;color:#9a7a3a}
+  .rankrow{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--line);
+    border-radius:14px;padding:9px 13px}
+  .rankrow.me{border-color:#f0a93d;background:#fff8ea}
+  .rankrow .no{font-weight:900;color:#8a9a8e;min-width:26px}
+  .rankrow .nm{flex:1;font-weight:800;font-size:14px}
+  .rankrow .tg{font-size:12px;font-weight:800;color:#8a5a12}
   /* 게시판(공간 모아보기) 필터 + 카드 */
   .col-filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;position:sticky;top:0}
   .col-sel{border:2px solid var(--line);background:#fff;border-radius:11px;padding:8px 10px;font-size:13px;
@@ -264,7 +283,7 @@
   @keyframes hfly{0%{transform:translateY(0) scale(.6);opacity:1}100%{transform:translateY(-90px) scale(1.4);opacity:0}}
 
   @media (max-width:700px){
-    .legend{display:none}
+    .legend{width:100%;margin-left:0;order:9}
     .tbtn.wide{padding:0 10px;font-size:12px}
     #minimap{width:126px;height:78px}
   }
@@ -285,6 +304,7 @@
   <h1>🌲 이삼한 친구들의 숲</h1>
   <button class="classname" id="classNameBtn">반 이름 ✎</button>
   <span class="netdot" id="netDot"><span class="led"></span><span id="netText">오프라인</span></span>
+  <button class="tbtn wide" id="legendToggle" title="카테고리 펼치기/접기">🏷️ 카테고리</button>
   <div class="legend" id="legend"></div>
   <div class="toolbar">
     <button class="tbtn wide" id="presentBtn">📺 발표</button>
@@ -415,7 +435,21 @@
     <h2>🏅 내 칭찬 도장판</h2>
     <div id="stampHead" class="stamp-head"></div>
     <div id="stampGrid" class="stamp-grid"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="lf" id="stampRankBtn" style="border-color:#f0c987;color:#8a5a12;font-weight:800">🏆 명예의 전당 보기</button>
+    </div>
     <div id="stampList" class="items" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- 🏆 명예의 전당 (칭찬 도장 랭킹) -->
+<div class="overlay" id="rankOverlay">
+  <div class="card">
+    <button class="x" data-close>✕</button>
+    <h2>🏆 명예의 전당</h2>
+    <p class="sub">칭찬 도장을 모은 우리 반 친구들 💪</p>
+    <div id="rankPodium" class="podium"></div>
+    <div id="rankList" class="items"></div>
   </div>
 </div>
 
@@ -491,6 +525,7 @@
     <div class="menu-list">
       <!-- 학생 누구나 -->
       <button id="mAvatar"><span class="mi">🦊</span> 캐릭터·별명 바꾸기</button>
+      <button id="mRank"><span class="mi">🏆</span> 명예의 전당 (칭찬 도장 랭킹)</button>
       <button id="mBday"><span class="mi">🎂</span> 우리 반 생일 게시판</button>
       <button id="mSync"><span class="mi">🔄</span> 새로고침(동기화)</button>
       <button id="mHow"><span class="mi">❓</span> 사용법 보기</button>
@@ -514,7 +549,8 @@
       <b>👥 함께 있기</b> — 같은 방(반) 코드로 접속한 친구들이 <b>같은 숲에 실시간으로 보여요</b>. 위로 걸어가면 캐릭터 뒷모습(꼬리)도 보인답니다!<br>
       <b>👀 관람하기</b> — 공간(게시판)에 가거나 팻말·마음을 누르면 그곳 글이 한 번에 모여요. 게시판에서 올린 사람·날짜로 골라 읽고 ❤️ 공감.<br>
       <b>📖 모아보기</b> — 어떤 공간에 도착하면 아래에 <b>'이 곳 글 모아보기'</b> 버튼이 떠요(팻말을 눌러도 됨). 위쪽 <b>카테고리(칩)를 누르면</b> 그 종류의 글만 모아 볼 수 있어요.<br>
-      <b>🗺️ 일곱 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(순간·추억 사진) / 🎪추억광장(행사) / 📮마음우체국(친구에게 한마디) / 🎂생일광장(다가오는 생일 게시판·축하 한마디) / 🤝1인1역 스테이션(점검·스타 추천·🌟숨은 기여 자랑·만들고 싶은 역할) / 🌱도전온실(방학 중 도전)<br>
+      <b>🗺️ 아홉 공간</b> — 🌳다짐나무(다짐·우리 반 모습) / ⭐별빛갤러리(순간·추억 사진) / 🎪추억광장(행사) / 📮마음우체국(친구에게 한마디) / 🎂생일광장(다가오는 생일 게시판·축하 한마디) / 🤝1인1역 스테이션(점검·스타 추천·🌟숨은 기여 자랑·만들고 싶은 역할) / 🌱도전온실(방학 중 도전) / 💡건의함(우리 반에 건의해요) / 🏆명예의 전당(칭찬 도장 랭킹)<br>
+      <b>🏅 칭찬 도장</b> — 선생님께 칭찬받으면 도장이 쌓이고 캐릭터가 <b>벌크업</b>해요(🐣헬린이→👑전설의 헬짱). 상단 🏅 버튼으로 내 도장판, 🏆 명예의 전당에서 우리 반 랭킹을 봅니다.<br>
       <b>🏆 1인1역 스타</b> — 추천 글에 ❤️ 공감을 누르는 게 곧 투표! 발표 모드에서 공감 수를 함께 보여줘요.<br>
       <b>🛠️ 교사용</b> — 메뉴 → <b>🔒 교사 모드</b>에 비밀번호를 넣으면 관리 메뉴가 열려요. 비번은 <b>서버에서 확인</b>하므로 소스코드를 봐도 못 뚫어요. 학생은 읽기·마음 남기기만 가능(공지·명단·삭제 불가). 전자칠판에서 켰다면 넘기기 전 <b>교사 모드 끄기</b>! (처음 한 번 파일 하단 SECURITY SQL 실행 필요)<br>
       <b>🎥 전자칠판</b> — 메뉴 → 자동 관람 모드를 켜면 카메라가 숲을 천천히 돌며 친구들의 활동을 비춰줘요. 터치하면 해제.<br>
@@ -575,6 +611,8 @@ const ZONES = {
   green:   { label:"도전 온실",   emoji:"🌱", color:"#5cb85c", sign:{x:2150,z:1420},spots:{x0:1960,x1:2340,z0:1110,z1:1290} },
   role:    { label:"1인1역 스테이션", emoji:"🤝", color:"#2bb0a3", sign:{x:2150,z:980}, spots:{x0:1900,x1:2430,z0:830,z1:945} },
   bday:    { label:"생일 광장",   emoji:"🎂", color:"#ff8fab", sign:{x:330,z:975},  spots:{x0:200,x1:660,z0:780,z1:950} },
+  suggest: { label:"우리 반 건의함", emoji:"💡", color:"#4aa3df", sign:{x:2830,z:1330}, spots:{x0:2650,x1:3020,z0:1150,z1:1270} },
+  hall:    { label:"명예의 전당", emoji:"🏆", color:"#e8a200", sign:{x:2830,z:640},  spots:{x0:2700,x1:2960,z0:470,z1:560}, special:"rank" },
 };
 const CATS = [
   { id:"resolve", emoji:"🍎", label:"나의 다짐",        zone:"tree",    color:"#ef5350", soft:"#fdeceb", prompt:"2학기의 나에게 다짐 한 가지! (예: 수업시간에 더 집중할래)" },
@@ -593,6 +631,8 @@ const CATS = [
     prompt:"1인1역이 아니어도 우리 반을 위해 내가 한 일을 당당하게 자랑해요!\n(예: 스승의 날과 생일파티 준비를 도맡아 했고, 내 역할이 아닌 급식 알림도 꾸준히 챙겼다 ← 구체적일수록 좋아요!)" },
   { id:"role",      emoji:"🤝", label:"만들고 싶은 1인1역", zone:"role", color:"#2bb0a3", soft:"#e3f6f3",
     prompt:"2학기에 우리 반을 위해 내가 할 수 있는 일·새로 만들고 싶은 1인1역은? 그 이유도 함께!\n(예: 칠판 지킴이 — 수업 전 칠판을 닦아 선생님과 친구들을 돕고 싶다)" },
+  { id:"suggest",   emoji:"💡", label:"우리 반에 건의해요", zone:"suggest", color:"#2f8fd0", soft:"#e6f3fc",
+    prompt:"우리 반이 더 좋아지려면? 건의·아이디어를 자유롭게 남겨주세요.\n(예: 사물함 정리 시간을 금요일마다 5분씩 갖자 / 학급 문고에 만화책도 두면 좋겠다)" },
   { id:"photo",     emoji:"📷", label:"추억 사진", zone:"gallery", color:"#5aa7e8", soft:"#e8f3ff",
     hidden:true, prompt:"" },   // 교사 대시보드에서만 추가/삭제
 ];
@@ -714,9 +754,18 @@ function parseRoster(text){
   });
   return out;
 }
+/* 방(반) 결정 — 기본은 항상 'default'.
+   ?room= 이 있냐 없냐로 글 목록이 갈리던 문제 때문에, 교사가 의도적으로 바꾸기 전엔 고정.
+   (여러 반을 쓰려면 메뉴 → 방 코드 바꾸기로 명시 전환) */
 function resolveRoom(){
   const u = new URLSearchParams(location.search).get("room");
-  if(u){ localStorage.setItem("dajim-room", u.trim()); return u.trim(); }
+  if(u && u.trim()){
+    const v = u.trim();
+    if(v === "default" || localStorage.getItem("dajim-room-ok") === v){
+      localStorage.setItem("dajim-room", v); return v;
+    }
+    return (localStorage.getItem("dajim-room") || "default").trim();   // 링크의 임의 room 무시
+  }
   return (localStorage.getItem("dajim-room") || "default").trim();
 }
 function getConfig(){
@@ -1272,6 +1321,39 @@ function buildScene(){
     new THREE.MeshBasicMaterial({ map:hqTex, transparent:true }));
   hqSign.position.set(2150, 132, 806); scene.add(hqSign);
 
+  /* ── 🏆 명예의 전당 (대리석 신전 + 기둥 + 트로피) ── */
+  const hX = 2830, hZ = 520;
+  box(320, 22, 190, 0xf0ead8, hX, 11, hZ);                    // 계단 기단
+  box(280, 16, 160, 0xfaf6ea, hX, 26, hZ);
+  [-110,-55,0,55,110].forEach(ox=>{                            // 기둥 5개
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(13,13,110,12), mat3d(0xfaf6ea));
+    col.position.set(hX+ox, 89, hZ-56); scene.add(col);
+  });
+  box(300, 24, 180, 0xf5eedd, hX, 156, hZ);                    // 상인방
+  const hRoof = new THREE.Mesh(new THREE.ConeGeometry(190, 70, 4), lam(0xe8a200));
+  hRoof.rotation.y = Math.PI/4; hRoof.position.set(hX, 200, hZ); scene.add(hRoof);
+  box(180, 96, 20, 0x3a4a6a, hX, 90, hZ+62);                   // 뒷벽(명패 배경)
+  prop("🏆", hX, 258, hZ, 62);                                  // 지붕 위 트로피
+  prop("🥇", hX-92, 66, hZ+74, 40); prop("🥈", hX, 60, hZ+78, 34); prop("🥉", hX+92, 60, hZ+74, 34);
+  const hc = makeCanvas(512,128), hgc = hc.getContext("2d");
+  hgc.fillStyle="#e8a200"; roundRect(hgc, 6, 20, 500, 88, 22); hgc.fill();
+  hgc.fillStyle="#fff"; hgc.font="700 50px Galmuri11,'Malgun Gothic',sans-serif";
+  hgc.textAlign="center"; hgc.textBaseline="middle"; hgc.fillText("🏆 명예의 전당", 256, 66);
+  const hallSign = new THREE.Mesh(new THREE.PlaneGeometry(250,63),
+    new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(hc), transparent:true }));
+  hallSign.position.set(hX, 150, hZ+73); scene.add(hallSign);
+
+  /* ── 💡 우리 반 건의함 (아이디어 부스 + 투입구) ── */
+  const sX = 2830, sZ = 1220;
+  box(180, 130, 130, 0x4aa3df, sX, 65, sZ);                    // 부스 몸통
+  const sRoof = new THREE.Mesh(new THREE.ConeGeometry(150, 60, 4), lam(0x2f8fd0));
+  sRoof.rotation.y = Math.PI/4; sRoof.position.set(sX, 160, sZ); scene.add(sRoof);
+  box(96, 16, 8, 0xf7fbff, sX, 96, sZ+66);                     // 투입구
+  box(60, 46, 8, 0xdff0fb, sX, 52, sZ+66);                     // 안내판
+  const sPost = new THREE.Mesh(new THREE.CylinderGeometry(6,6,60,8), lam(0x7a5230));
+  sPost.position.set(sX-120, 30, sZ+40); scene.add(sPost);
+  prop("💡", sX, 210, sZ, 52); prop("✏️", sX+112, 40, sZ+40, 36); prop("📝", sX-120, 68, sZ+40, 34);
+
   /* ── 테두리 숲 (인스턴스 나무) ── */
   const spots3 = [];
   for(let x=60;x<=W-60;x+=112){ spots3.push([x,60],[x+56,150],[x,H-40],[x+56,H-130]); }
@@ -1668,6 +1750,7 @@ function buildMinimap(){
   const zr = [
     ["gallery",160,160,610,310],["plaza",1900,120,540,340],["post",170,1050,560,330],
     ["green",1900,1060,520,300],["role",1930,620,470,320],["bday",180,590,500,380],["tree",1020,420,560,540],
+    ["hall",2680,420,320,290],["suggest",2680,1120,320,290],
   ];
   zr.forEach(([k,x,z,w,h])=>{
     html += `<div class="mz" style="left:${x*sx}px;top:${z*sy}px;width:${w*sx}px;height:${h*sy}px;background:${ZONES[k].color}"></div>`;
@@ -1967,6 +2050,7 @@ $("#likeBtn").addEventListener("click", ()=> likeEntry(viewingId, null));
 const ZONE_REGION = {
   tree:{x:1300,z:680,r:400}, gallery:{x:465,z:420,r:340}, plaza:{x:2160,z:470,r:350},
   post:{x:455,z:1200,r:340}, green:{x:2150,z:1250,r:330}, role:{x:2150,z:900,r:300}, bday:{x:400,z:840,r:350},
+  suggest:{x:2830,z:1290,r:300}, hall:{x:2830,z:610,r:300},
 };
 function currentZoneOf(x,z){
   let best=null, bd=1e9;
@@ -2036,7 +2120,10 @@ function wireCollectCards(){
   document.querySelectorAll("#collectItems [data-del]").forEach(b=> b.addEventListener("click", ()=> deleteMine(b.dataset.del)));
   document.querySelectorAll("#collectItems [data-photo]").forEach(b=> b.addEventListener("click", ()=>{ const e=state.entries.find(x=>x.id===b.dataset.photo); if(e) openView(e); }));
 }
-function openZoneCollection(k){ collectCtx = {type:"zone", key:k}; colName=""; colDate=""; refreshCollection(); showOverlay("#collectOverlay"); }
+function openZoneCollection(k){
+  if(ZONES[k] && ZONES[k].special === "rank"){ openStampRank(); return; }   // 🏆 명예의 전당은 랭킹으로
+  collectCtx = {type:"zone", key:k}; colName=""; colDate=""; refreshCollection(); showOverlay("#collectOverlay");
+}
 function openCatCollection(id){ collectCtx = {type:"cat", key:id}; colName=""; colDate=""; refreshCollection(); showOverlay("#collectOverlay"); }
 /* 현재 공간 표시 버튼 갱신 (매 프레임) */
 function updateZoneButton(){
@@ -2044,7 +2131,7 @@ function updateZoneButton(){
   const z = (overlayOpen()||tourMode) ? null : currentZoneOf(player.x, player.z);
   if(!z){ if(b.classList.contains("show")) b.classList.remove("show"); return; }
   const zz = ZONES[z], n = state.entries.filter(e=>catById(e.category).zone===z).length;
-  const lbl = `📖 ${zz.emoji} ${zz.label} 글 모아보기 (${n})`;
+  const lbl = zz.special==="rank" ? `🏆 ${zz.label} 보기` : `📖 ${zz.emoji} ${zz.label} 글 모아보기 (${n})`;
   if(b.dataset.lbl !== lbl){ b.textContent = lbl; b.dataset.lbl = lbl; b.dataset.zone = z; }
   if(!b.classList.contains("show")) b.classList.add("show");
 }
@@ -2171,6 +2258,37 @@ async function openMyStamps(){
       <div class="d">${dateLabel(dateKey(new Date(s.created_at).getTime()))}</div>
     </div>`).join("")
     : `<div class="empty-list">아직 도장이 없어요 🌱<br><span style="font-size:13px;font-weight:600">선생님께 칭찬받으면 캐릭터가 자라요!</span></div>`;
+}
+/* 🏆 명예의 전당 — 칭찬 도장 랭킹 */
+async function openStampRank(){
+  await loadStampCounts();
+  const names = roster.length ? roster : Object.keys(stampCounts);
+  const list = names.map(n=>({ n, c: stampCounts[n]||0 }))
+    .filter(x=>x.c>0).sort((a,b)=> b.c-a.c || a.n.localeCompare(b.n));
+  const me = avatar ? avatar.name : "";
+  if(!list.length){
+    $("#rankPodium").innerHTML = "";
+    $("#rankList").innerHTML = `<div class="empty-list">아직 칭찬 도장이 없어요 🌱<br>
+      <span style="font-size:13px;font-weight:600">첫 도장의 주인공은 누구일까요?</span></div>`;
+    showOverlay("#rankOverlay"); return;
+  }
+  const medal = ["🥇","🥈","🥉"];
+  const top = list.slice(0,3);
+  const order = [top[1], top[0], top[2]].filter(Boolean);          // 2·1·3 순으로 시상대
+  $("#rankPodium").innerHTML = order.map(x=>{
+    const rank = list.indexOf(x), t = tierOf(x.c);
+    return `<div class="pod p${rank+1}"><div class="m">${medal[rank]}</div>
+      <div class="nm">${esc(x.n)}</div><div class="ct">${t.icon} ${x.c}개</div></div>`;
+  }).join("");
+  $("#rankList").innerHTML = list.map((x,i)=>{
+    const t = tierOf(x.c);
+    return `<div class="rankrow ${x.n===me?"me":""}">
+      <span class="no">${i<3?medal[i]:(i+1)}</span>
+      <span class="nm">${esc(x.n)}${x.n===me?" (나)":""}</span>
+      <span class="tg">${t.icon} ${t.label}</span>
+      <b style="color:#e0662f">${x.c}</b></div>`;
+  }).join("");
+  showOverlay("#rankOverlay");
 }
 function updateStampBadge(){
   const b = $("#stampBtn"); if(!b) return;
@@ -2457,7 +2575,22 @@ $("#stampPrintBtn").addEventListener("click", async ()=>{
     </style></head><body>${html}<script>setTimeout(()=>print(),400)<\/script></body></html>`);
   w.document.close();
 });
+/* 🏷️ 상단 카테고리 접기/펼치기 (기본: 접힘) */
+let legendOn = false;
+try{ legendOn = localStorage.getItem("dajim-legend") === "1"; }catch(e){}
+function applyLegend(){
+  document.body.classList.toggle("legend-off", !legendOn);
+  const b = $("#legendToggle");
+  if(b) b.textContent = legendOn ? "🏷️ 카테고리 ▲" : "🏷️ 카테고리 ▼";
+}
+$("#legendToggle").addEventListener("click", ()=>{
+  legendOn = !legendOn;
+  try{ localStorage.setItem("dajim-legend", legendOn ? "1" : "0"); }catch(e){}
+  applyLegend();
+});
+applyLegend();
 $("#stampBtn").addEventListener("click", openMyStamps);
+$("#stampRankBtn").addEventListener("click", ()=>{ hideOverlay("#stampOverlay"); openStampRank(); });
 $("#photoAddBtn").addEventListener("click", ()=> $("#photoFile").click());
 $("#photoFile").addEventListener("change", async ev=>{
   const f = ev.target.files[0]; ev.target.value = "";
@@ -2536,16 +2669,20 @@ function exitTour(){
 }
 function renameClass(){ const v = prompt("반 이름을 입력하세요 (예: 2학년 3반)", state.className||""); if(v!==null){ state.className = v.trim(); save(); renderAll(); } }
 function changeRoom(){
-  const v = prompt("방(반) 코드를 입력하세요.\n같은 코드를 쓰면 같은 숲을 함께 봅니다.\n예: 2-3", room);
+  const v = prompt("방(반) 코드를 입력하세요.\n같은 코드를 쓰면 같은 숲을 함께 봅니다.\n(기본은 default — 우리 반 글이 모두 여기 있어요)", room);
   if(v!==null && v.trim()){
-    localStorage.setItem("dajim-room", v.trim());
-    const p = new URLSearchParams(location.search); p.set("room", v.trim());
+    const nv = v.trim();
+    localStorage.setItem("dajim-room", nv);
+    localStorage.setItem("dajim-room-ok", nv);   // 교사가 의도적으로 바꾼 방은 링크로도 허용
+    const p = new URLSearchParams(location.search); p.set("room", nv);
     location.search = p.toString();
   }
 }
 async function copyLink(){
-  const p = new URLSearchParams(location.search); p.set("room", room);
-  const link = location.origin + location.pathname + "?" + p.toString();
+  const p = new URLSearchParams(location.search);
+  if(room === "default") p.delete("room"); else p.set("room", room);
+  const qs = p.toString();
+  const link = location.origin + location.pathname + (qs ? "?" + qs : "");
   try{ await navigator.clipboard.writeText(link); toast("참여 링크를 복사했어요 🔗"); }
   catch(e){ prompt("이 링크를 복사해서 학생에게 나눠주세요:", link); }
 }
@@ -2662,6 +2799,7 @@ $("#menuBtn").addEventListener("click", ()=>{ $("#howtoBox").style.display="none
 $("#mTeacherMode").addEventListener("click", toggleTeacherMode);
 $("#mTeacher").addEventListener("click", openTeacher);
 $("#mTour").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); startTour(); });
+$("#mRank").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); openStampRank(); });
 $("#mBday").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); openBdayBoard(); });
 $("#teacherSearch").addEventListener("input", renderTeacher);
 $("#mAvatar").addEventListener("click", ()=>{ hideOverlay("#menuOverlay"); openEnter(); });
