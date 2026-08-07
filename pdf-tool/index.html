@@ -65,6 +65,13 @@
     display:flex; align-items:center; gap:10px; padding:10px 12px;
     border:1px solid var(--line); border-radius:10px; background:#fafbff;
   }
+  .item.dragging{opacity:.55; box-shadow:0 8px 22px rgba(59,111,224,.25); border-color:var(--brand); background:#eef3ff}
+  .item.dragover-top{box-shadow:inset 0 3px 0 var(--brand)}
+  .item.dragover-bot{box-shadow:inset 0 -3px 0 var(--brand)}
+  .drag-handle{flex:none; width:26px; height:36px; display:flex; align-items:center; justify-content:center;
+    color:#9aa4b2; font-size:17px; cursor:grab; touch-action:none; user-select:none; border-radius:6px}
+  .drag-handle:hover{color:var(--brand); background:#eef1f6}
+  .drag-handle:active{cursor:grabbing}
   .item .name{flex:1; min-width:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .item .meta{color:var(--sub); font-size:12px; white-space:nowrap}
   .item button{
@@ -989,6 +996,56 @@ async function firstPageThumb(file){
     return url;
   }catch(e){ return null; }
 }
+// 목록 드래그 재배치 (마우스·터치 공용). 각 행에 .drag-handle과 data-idx가 있어야 함.
+// 드래그 중에는 DOM 노드만 옮기고, 놓을 때 DOM 순서대로 배열을 재구성해 한 번만 다시 그림.
+function enableDragReorder(listId, getArr, setArr, rerender){
+  const list = document.getElementById(listId);
+  if(!list || list._dragBound) return;
+  list._dragBound = true;
+  let dragRow = null, handleEl = null, pid = null;
+  const rows = ()=>[...list.querySelectorAll(".item")];
+  const clearMarks = ()=>rows().forEach(r=>r.classList.remove("dragover-top","dragover-bot"));
+  function onMove(e){
+    if(!dragRow) return;
+    e.preventDefault();
+    const others = rows().filter(r=>r!==dragRow);
+    let before = null;
+    for(const r of others){
+      const rc = r.getBoundingClientRect();
+      if(e.clientY < rc.top + rc.height/2){ before = r; break; }
+    }
+    if(before){ if(before.previousElementSibling!==dragRow) list.insertBefore(dragRow, before); }
+    else { if(list.lastElementChild!==dragRow) list.appendChild(dragRow); }
+  }
+  function onUp(){
+    if(!dragRow) return;
+    dragRow.classList.remove("dragging");
+    try{ handleEl.releasePointerCapture(pid); }catch(_){ }
+    handleEl.removeEventListener("pointermove", onMove);
+    handleEl.removeEventListener("pointerup", onUp);
+    handleEl.removeEventListener("pointercancel", onUp);
+    const order = rows().map(r=>parseInt(r.dataset.idx,10));
+    const arr = getArr();
+    setArr(order.map(i=>arr[i]));
+    dragRow = null; handleEl = null;
+    clearMarks();
+    rerender();
+  }
+  list.addEventListener("pointerdown", e=>{
+    const h = e.target.closest(".drag-handle");
+    if(!h) return;
+    const row = h.closest(".item");
+    if(!row) return;
+    e.preventDefault();
+    dragRow = row; handleEl = h; pid = e.pointerId;
+    row.classList.add("dragging");
+    try{ h.setPointerCapture(pid); }catch(_){ }
+    h.addEventListener("pointermove", onMove);
+    h.addEventListener("pointerup", onUp);
+    h.addEventListener("pointercancel", onUp);
+  });
+}
+
 setupDrop("drop-merge","file-merge", files=>{ mergeFiles.push(...files); renderMerge(); });
 function renderMerge(){
   const list = document.getElementById("list-merge");
@@ -998,11 +1055,17 @@ function renderMerge(){
     clr.className = "minibtn"; clr.style.alignSelf = "flex-start"; clr.textContent = "🗑 모두 지우기";
     clr.onclick = ()=>{ mergeFiles=[]; renderMerge(); document.getElementById("results-merge").innerHTML=""; setStatus("status-merge",""); };
     list.appendChild(clr);
+    const hint = document.createElement("div");
+    hint.className = "hint"; hint.style.margin = "2px 0";
+    hint.textContent = "⠿ 손잡이를 잡고 위아래로 드래그하면 순서를 바꿀 수 있어요. (▲▼ 버튼도 사용 가능)";
+    list.appendChild(hint);
   }
   mergeFiles.forEach((f,i)=>{
     const row = document.createElement("div");
     row.className = "item";
+    row.dataset.idx = i;
     row.innerHTML = `
+      <span class="drag-handle" title="드래그해서 순서 변경">⠿</span>
       <span class="meta">${i+1}</span>
       <img class="imgprev mthumb" alt="">
       <span class="name">${f.name}</span>
@@ -1019,6 +1082,7 @@ function renderMerge(){
   document.getElementById("btn-merge").disabled = mergeFiles.length < 2;
   const mh = mergeFiles.length===1 ? "병합하려면 파일을 1개 더 올려주세요. (2개 이상 필요)" : "";
   setStatus("status-merge", mh, mh ? "err" : "");
+  enableDragReorder("list-merge", ()=>mergeFiles, a=>{ mergeFiles=a; }, renderMerge);
 }
 document.getElementById("btn-merge").onclick = async ()=>{
   if(mergeFiles.length < 2){ setStatus("status-merge","병합하려면 2개 이상의 파일이 필요해요.","err"); return; }
@@ -1448,10 +1512,18 @@ function renderImg2Pdf(){
     clr.className = "minibtn"; clr.style.alignSelf = "flex-start"; clr.textContent = "🗑 모두 지우기";
     clr.onclick = ()=>{ imgFiles=[]; renderImg2Pdf(); document.getElementById("results-img2pdf").innerHTML=""; setStatus("status-img2pdf",""); };
     list.appendChild(clr);
+    const hint = document.createElement("div");
+    hint.className = "hint"; hint.style.margin = "2px 0";
+    hint.textContent = "⠿ 손잡이를 잡고 위아래로 드래그하면 순서를 바꿀 수 있어요. (▲▼ 버튼도 사용 가능)";
+    list.appendChild(hint);
   }
   imgFiles.forEach((f,i)=>{
     const row = document.createElement("div");
     row.className = "item";
+    row.dataset.idx = i;
+    const handle = document.createElement("span");
+    handle.className = "drag-handle"; handle.title = "드래그해서 순서 변경"; handle.textContent = "⠿";
+    row.appendChild(handle);
     const prev = document.createElement("img");
     prev.className = "imgprev";
     prev.src = URL.createObjectURL(f);
@@ -1480,6 +1552,7 @@ function renderImg2Pdf(){
   document.getElementById("btn-img2pdf").disabled = !imgFiles.length;
   document.getElementById("img2pdf-preview-box").style.display = imgFiles.length ? "block":"none";
   if(imgFiles.length) renderImg2pdfPreview();
+  enableDragReorder("list-img2pdf", ()=>imgFiles, a=>{ imgFiles=a; }, renderImg2Pdf);
 }
 // 이미지→PDF 미리보기: 선택한 용지·여백에 첫 이미지가 놓이는 모습
 async function renderImg2pdfPreview(){
@@ -2442,11 +2515,11 @@ const MANUAL = [
   { title:"🔗 병합 — 여러 PDF를 하나로 합치기",
     one:"흩어져 있는 여러 PDF를 한 개의 PDF로 이어 붙일 때 써요.",
     steps:["위 상자를 클릭하거나, 합칠 PDF들을 상자로 끌어다 놓아요. (여러 개 한꺼번에 가능)",
-      "각 줄의 ▲ ▼ 버튼으로 순서를 정해요. 이 순서대로 합쳐져요.",
+      "왼쪽 <b>⠿ 손잡이를 잡고 위아래로 드래그</b>하거나 ▲ ▼ 버튼으로 순서를 정해요. 이 순서대로 합쳐져요.",
       "빼고 싶은 파일은 그 줄의 ✕ 로 지워요.",
       "'PDF 병합하기'를 누르면 '병합된_PDF.pdf'가 저장돼요."],
     tips:["파일이 <b>2개 이상</b>이어야 병합돼요. 1개면 버튼이 꺼져 있어요.",
-      "각 파일 첫 페이지 미리보기가 함께 보여서 순서 정하기 쉬워요."] },
+      "각 파일 첫 페이지 미리보기가 함께 보여서 순서 정하기 쉬워요. 손잡이 드래그는 휴대폰·태블릿에서도 돼요."] },
   { title:"✂️ 분할 — PDF를 나누기",
     one:"한 PDF에서 필요한 쪽만 빼거나, 여러 조각으로 잘라 나눌 때 써요.",
     steps:["PDF 1개를 올리면 페이지 미리보기(썸네일)가 쭉 나와요.",
@@ -2468,10 +2541,10 @@ const MANUAL = [
   { title:"🖼️ 이미지→PDF — 사진·그림을 PDF로",
     one:"사진·그림(JPG·PNG 등) 여러 장을 한 개의 PDF로 묶을 때 써요.",
     steps:["이미지들을 올려요. (여러 장 가능)",
-      "▲ ▼ 로 순서를 정하고, 필요 없는 건 ✕ 로 지워요.",
+      "왼쪽 <b>⠿ 손잡이를 잡고 위아래로 드래그</b>하거나 ▲ ▼ 로 순서를 정하고, 필요 없는 건 ✕ 로 지워요.",
       "'용지 크기'(A4 세로 추천/가로/이미지 그대로)와 '여백'을 골라요.",
       "'PDF 만들기'를 누르면 '이미지_변환.pdf'가 저장돼요."],
-    tips:["이미지 1장이 PDF 1쪽이 돼요. 비율은 안 찌그러지고 가운데로 배치돼요.",
+    tips:["이미지 1장이 PDF 1쪽이 돼요. 비율은 안 찌그러지고 가운데로 배치돼요. 순서는 손잡이 드래그로 편하게 바꿔요(터치도 됨).",
       "아이폰 사진(HEIC)은 사진 앱에서 'JPEG로 저장' 후 넣어주세요."] },
   { title:"📷 PDF→이미지 — PDF를 그림 파일로",
     one:"PDF 각 페이지를 PNG·JPG 그림으로 저장해 발표·문서에 붙여넣을 때 써요.",
