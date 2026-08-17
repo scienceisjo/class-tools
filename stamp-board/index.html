@@ -133,6 +133,14 @@ main{flex:1;padding:14px 0 90px}
 .stu-c{position:absolute;top:-5px;right:-4px;background:var(--ok-d);color:#fff;font-size:10px;font-weight:900;
   min-width:19px;height:19px;border-radius:999px;display:grid;place-items:center;padding:0 5px}
 .stu-c.zero{background:var(--mute)}
+/* 🌳 질문과수원 연계 — 학생의 최근 질문 */
+.qhint{background:#F2FAF3;border:2px solid rgba(92,184,110,.35);border-radius:14px;padding:11px 13px;margin-top:11px}
+.qhint-h{font-size:11.5px;font-weight:900;color:var(--ok-d);margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.qh-item{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed rgba(92,184,110,.3)}
+.qh-item:last-child{border-bottom:none}
+.qh-t{flex:1;font-size:var(--fs-xxs);font-weight:700;line-height:1.5;word-break:keep-all}
+.qh-d{font-size:10px;color:var(--mute);font-weight:800;margin-top:2px}
+.qh-b{flex-shrink:0;padding:5px 9px;border-radius:8px;background:var(--ok-d);color:#fff;font-size:10.5px;font-weight:900}
 
 /* ── 우리 반 기지 ── */
 .base-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:9px}
@@ -2370,7 +2378,7 @@ function renderGive(){
   h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">① 누구를 칭찬할까요?</h3>' +
        '<span class="chip sm" onclick="toggleSort()">' + (S.sortCold===false?'번호순':'오래된 순') + ' ↕</span></div>';
   h += '<div class="sub" style="margin-bottom:10px">여러 명을 한 번에 고를 수 있어요</div>';
-  h += '<div class="stu-grid" id="stuGrid"></div></div>';
+  h += '<div class="stu-grid" id="stuGrid"></div><div id="qHint"></div></div>';
 
   // 역량
   h += '<div class="card"><h3 style="font-size:var(--fs-s)">② 어떤 모습이었나요?</h3>' +
@@ -2459,7 +2467,53 @@ function renderStuGrid(){
   }
   el.innerHTML = h;
 }
-function togSt(id){ if(S.selSt[id]) delete S.selSt[id]; else S.selSt[id]=1; renderStuGrid(); }
+function togSt(id){ if(S.selSt[id]) delete S.selSt[id]; else S.selSt[id]=1; renderStuGrid(); loadRecentQs(); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   🌳 질문과수원 연계 — 고른 학생이 최근에 심은 질문을 근거로 보여준다.
+   조용해서 눈에 잘 안 띄는 학생도 질문에는 흔적을 남기므로,
+   교사가 놓친 학생의 관찰 근거를 질문 기록이 대신 채워 준다(관찰 편향 완화).
+   ══════════════════════════════════════════════════════════════════════════ */
+var _qCache = {};
+async function loadRecentQs(){
+  var el = $('qHint'); if(!el) return;
+  var ids = Object.keys(S.selSt);
+  if(ids.length !== 1){ el.innerHTML=''; return; }   // 한 명일 때만
+  var id = ids[0];
+  if(_qCache[id]){ renderQHint(id); return; }
+  el.innerHTML = '<div class="qhint"><div class="qhint-h">🌳 질문과수원에서 불러오는 중...</div></div>';
+  try{
+    var r = await sb.from('questions').select('id,text,question_date,starred,resolved')
+              .eq('user_id', id).order('question_date',{ascending:false}).limit(3);
+    _qCache[id] = (r.error ? [] : (r.data||[]));
+  }catch(e){ _qCache[id] = []; }
+  renderQHint(id);
+}
+function renderQHint(id){
+  var el = $('qHint'); if(!el) return;
+  var list = _qCache[id] || [];
+  if(!list.length){ el.innerHTML=''; return; }
+  var h = '<div class="qhint"><div class="qhint-h">🌳 이 학생이 최근에 심은 질문</div>';
+  for(var i=0;i<list.length;i++){
+    var q = list[i];
+    h += '<div class="qh-item"><div class="qh-t">' + (q.starred?'⭐ ':'') + esc(q.text) +
+         '<div class="qh-d">' + esc(q.question_date||'') + '</div></div>' +
+         '<button class="qh-b" onclick="useQ(' + i + ')">근거로</button></div>';
+  }
+  h += '</div>';
+  el.innerHTML = h;
+}
+function useQ(i){
+  var ids = Object.keys(S.selSt); if(ids.length!==1) return;
+  var q = (_qCache[ids[0]]||[])[i]; if(!q) return;
+  var txt = String(q.text||'').replace(/s+/g,' ').trim();
+  if(txt.length > 120) txt = txt.slice(0,120) + '…';
+  var ta = $('behIn');
+  ta.value = '「' + txt + '」라는 질문을 제기하고 ';
+  ta.focus();
+  if(!S.selCat){ pickCat('inquiry'); }
+  toast('질문을 근거로 깔았어요 — 뒤를 이어 적어주세요');
+}
 function renderCatChips(){
   var el=$('catChips'); if(!el) return;
   var h='', i;
@@ -2505,7 +2559,7 @@ async function saveObs(){
     }
     var r = await sb.from('observations').insert(rows);
     if(r.error){ toast('저장에 실패했어요'); console.error(r.error); return; }
-    S.selSt={}; $('behIn').value='';
+    S.selSt={}; $('behIn').value=''; _qCache={};
     await loadTeacherObs();
     renderGive();
     toast('🏅 ' + rows.length + '명에게 도장을 찍었어요!');
