@@ -141,6 +141,12 @@ main{flex:1;padding:14px 0 90px}
 .qh-t{flex:1;font-size:var(--fs-xxs);font-weight:700;line-height:1.5;word-break:keep-all}
 .qh-d{font-size:10px;color:var(--mute);font-weight:800;margin-top:2px}
 .qh-b{flex-shrink:0;padding:5px 9px;border-radius:8px;background:var(--ok-d);color:#fff;font-size:10.5px;font-weight:900}
+/* 💡 이럴 때 도장을 받아요 */
+.how{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1.5px dashed var(--line)}
+.how:last-child{border-bottom:none}
+.how-ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:17px;flex-shrink:0;background:var(--ac-l)}
+.how-t{flex:1;font-size:var(--fs-xs);font-weight:800;line-height:1.5;word-break:keep-all}
+.how-s{font-size:10.5px;color:var(--mute);font-weight:700;margin-top:2px}
 
 /* ── 우리 반 기지 ── */
 .base-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:9px}
@@ -307,11 +313,20 @@ var REWARDS = [
   {code:'snack',  ic:'🍬', name:'간식',                cost:1},
   {code:'point1', ic:'⭐', name:'상점 1점',            cost:2},
   {code:'point2', ic:'⭐', name:'상점 2점',            cost:3},
-  {code:'point5', ic:'🌟', name:'상점 5점',            cost:5},
-  {code:'seat',   ic:'💺', name:'자리 선택권 (1주)',   cost:8},
-  {code:'helper', ic:'🥼', name:'실험 조교 1일',       cost:10},
-  {code:'music',  ic:'🎵', name:'정리시간 음악 신청권', cost:12}
+  {code:'point5', ic:'🌟', name:'상점 5점',            cost:5}
 ];
+/* 💡 학생에게 보여줄 «이럴 때 도장을 받아요» 안내 */
+var HOW_TO_EARN = [
+  {ic:'🙋', t:'질문에 대답을 잘했을 때',        s:'손 들고 자기 생각을 말해보세요'},
+  {ic:'🎯', t:'«이거 대답하면 도장!» 이라고 할 때', s:'선생님이 예고한 문제를 맞히면 바로 도장'},
+  {ic:'❓', t:'좋은 질문을 했을 때',            s:'정답이 하나가 아닌 질문일수록 좋아요'},
+  {ic:'🌳', t:'질문나무에 질문을 올렸을 때',     s:'선생님이 ⭐를 누르면 도장이 함께 찍혀요'},
+  {ic:'🪑', t:'수업 시작 전에 모두 앉아 있을 때', s:'우리 반 전체가 다 같이 받아요'},
+  {ic:'🤝', t:'친구를 도와줬을 때',             s:'답을 알려주지 말고 방법을 알려주기'},
+  {ic:'🧹', t:'실험 뒷정리를 잘했을 때',         s:'안전 수칙을 지키는 것도 포함이에요'},
+  {ic:'🔬', t:'실험·관찰을 끈기 있게 했을 때',   s:'결과가 이상하면 다시 해보는 그 모습!'}
+];
+
 var HONORS = [
   {need:15, ic:'🍿', name:'우리 반 간식데이 제안권', desc:'반 전체가 함께 누리는 보상이에요'},
   {need:20, ic:'🏛️', name:'과학실 명예의 전당',      desc:'내 캐릭터가 과학실에 전시돼요'}
@@ -1960,7 +1975,8 @@ var S = {
   role:null, user:null, profile:null, teacher:null,
   obs:[], bal:{earned:0,spent:0,balance:0}, sp:{theme:'creature',branch:null,nickname:null},
   rewards:[], mates:[], classTotal:0,
-  session:null, students:[], selSt:{}, selCat:null, teaObs:[], coupons:[]
+  session:null, students:[], selSt:{}, selCat:null, teaObs:[], coupons:[],
+  classes:[], selClass:null, plans:[], selPlan:null
 };
 function $(id){ return document.getElementById(id); }
 function esc(s){ var d=document.createElement('div'); d.textContent = (s==null?'':s); return d.innerHTML; }
@@ -1980,9 +1996,9 @@ function goScr(id){
   window.scrollTo(0,0);
 }
 function branchOf(id){ for(var i=0;i<BRANCHES.length;i++) if(BRANCHES[i].id===id) return BRANCHES[i]; return BRANCHES[0]; }
-function catName(id){ var m={inquiry:'탐구 설계·수행',analysis:'자료 해석·추론',concept:'개념 이해·적용',
+function catName(id){ var m={general:'칭찬',inquiry:'탐구 설계·수행',analysis:'자료 해석·추론',concept:'개념 이해·적용',
   communicate:'과학적 의사소통',collaborate:'협업·기여',responsible:'책임 있는 참여'}; return m[id]||id; }
-function stuName(id){ var m={inquiry:'🔬 탐구왕',analysis:'📊 해석가',concept:'💡 연결고리',
+function stuName(id){ var m={general:'💐 칭찬',inquiry:'🔬 탐구왕',analysis:'📊 해석가',concept:'💡 연결고리',
   communicate:'🗣️ 설명가',collaborate:'🤝 함께하기',responsible:'🛡️ 믿음직'}; return m[id]||id; }
 function daysAgo(d){
   if(!d) return null;
@@ -2039,7 +2055,8 @@ async function doLogout(){
   await sb.auth.signOut();
   S = {role:null,user:null,profile:null,teacher:null,obs:[],bal:{earned:0,spent:0,balance:0},
        sp:{theme:'creature',branch:null,nickname:null},rewards:[],mates:[],classTotal:0,
-       session:null,students:[],selSt:{},selCat:null,teaObs:[],coupons:[]};
+       session:null,students:[],selSt:{},selCat:null,teaObs:[],coupons:[],
+       classes:[],selClass:null,plans:[],selPlan:null};
   goScr('s-login');
 }
 
@@ -2135,6 +2152,17 @@ function renderBoard(){
     if(S.obs.length>5) h += '<button class="chip sm" style="margin-top:10px" onclick="stuTab(\'log\')">전체 ' + S.obs.length + '개 보기 →</button>';
   }
   h += '</div>';
+
+  /* 💡 이럴 때 도장을 받아요 */
+  h += '<div class="card"><div class="hd"><h3>💡 이럴 때 도장을 받아요</h3></div>';
+  h += '<div class="sub" style="margin-bottom:6px">선생님이 수업에서 이런 모습을 보면 도장을 찍어주세요!</div>';
+  for(i=0;i<HOW_TO_EARN.length;i++){
+    var w = HOW_TO_EARN[i];
+    h += '<div class="how"><div class="how-ic">' + w.ic + '</div>' +
+         '<div class="how-t">' + esc(w.t) + '<div class="how-s">' + esc(w.s) + '</div></div></div>';
+  }
+  h += '</div>';
+
   $('p-board').innerHTML = h;
 }
 function stampRow(o){
@@ -2330,11 +2358,9 @@ async function bootTeacher(){
   $('teaName').textContent = (S.teacher.name||'선생님') + ' 선생님';
   showLoad();
   try{
-    var d = await sb.from('lesson_sessions').select('*')
-              .eq('teacher_id', S.user.id).eq('session_date', new Date().toISOString().slice(0,10))
-              .order('id',{ascending:false}).limit(1);
-    S.session = (d.data && d.data[0]) || null;
     await loadTeacherObs();
+    await loadClasses();
+    await loadPlans();
     goScr('s-tea'); teaTab('give');
   } finally { hideLoad(); }
 }
@@ -2356,110 +2382,127 @@ function teaTab(k){
   window.scrollTo(0,0);
 }
 
-/* 세션 */
+/* ══════════════════════════════════════════════════════════════════════════
+   ⚡ 도장 주기 — 반 선택 → 학생 선택 → (선택)차시·역량·행동 → 도장
+   차시·역량·행동은 전부 선택 사항이다. 아무것도 안 고르면 그냥 «칭찬 도장»이 찍힌다.
+   ══════════════════════════════════════════════════════════════════════════ */
 function renderGive(){
-  if(!S.session){ renderSessionStart(); return; }
-  var todayCnt = S.teaObs.filter(function(o){
-    return o.observed_on===new Date().toISOString().slice(0,10) && o.lesson_note===S.session.lesson_note;
-  }).length;
-
+  var today = new Date().toISOString().slice(0,10);
+  var todayCnt = S.teaObs.filter(function(o){ return o.observed_on === today; }).length;
   var h = '';
-  h += '<div class="card" style="background:#FFF8F1;border-color:var(--ac-l)">';
-  h += '<div class="hd"><div><h3 style="font-size:var(--fs-s)">📚 ' + esc(S.session.lesson_note) + '</h3>' +
-       '<div class="sub">' + S.session.class_no + '반 · ' + esc(S.session.session_date) + '</div></div>' +
-       '<button class="chip sm" onclick="endSession()">수업 바꾸기</button></div>';
-  h += '<div style="display:flex;align-items:center;gap:10px;margin-top:8px">' +
-       '<div style="font-size:var(--fs-l);font-weight:900;color:' + (todayCnt>=3?'var(--ok-d)':'var(--ac-d)') + '">' + todayCnt + ' / 3</div>' +
-       '<div style="font-size:var(--fs-xxs);font-weight:700;color:var(--ink2);line-height:1.5">오늘 기록한 학생 수<br>' +
-       (todayCnt>=3?'👏 오늘 목표를 채웠어요!':'한 차시 3명이면 충분해요') + '</div></div>';
-  h += '</div>';
 
-  // 학생 선택
-  h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">① 누구를 칭찬할까요?</h3>' +
-       '<span class="chip sm" onclick="toggleSort()">' + (S.sortCold===false?'번호순':'오래된 순') + ' ↕</span></div>';
-  h += '<div class="sub" style="margin-bottom:10px">여러 명을 한 번에 고를 수 있어요</div>';
+  /* ① 반 */
+  h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">① 어느 반인가요?</h3>' +
+       '<span class="chip sm" style="background:#EAF7EC;border-color:var(--ok);color:var(--ok-d)">오늘 ' + todayCnt + '개</span></div>' +
+       '<div class="chips" id="classChips"></div></div>';
+
+  if(!S.selClass){
+    h += '<div class="card"><div class="empty"><div class="e">👆</div><p>반을 먼저 골라주세요</p></div></div>';
+    $('p-give').innerHTML = h; renderClassChips(); return;
+  }
+
+  /* ② 학생 */
+  h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">② 누구에게 줄까요?</h3>' +
+       '<span style="display:flex;gap:5px"><button class="chip sm" onclick="selAll(1)">전체 선택</button>' +
+       '<button class="chip sm" onclick="selAll(0)">전체 해제</button></span></div>';
+  h += '<div class="sub" style="margin-bottom:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+       '<b id="selCnt" style="color:var(--ac-d)">0명</b> 선택됨' +
+       '<span class="chip sm" onclick="toggleSort()">' + (S.sortCold===false ? '번호순' : '오래 안 받은 순') + ' ↕</span></div>';
   h += '<div class="stu-grid" id="stuGrid"></div><div id="qHint"></div></div>';
 
-  // 역량
-  h += '<div class="card"><h3 style="font-size:var(--fs-s)">② 어떤 모습이었나요?</h3>' +
+  /* ③ 차시 (선택) */
+  h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">③ 차시 ' +
+       '<span style="font-weight:600;color:var(--mute);font-size:.78em">선택 안 해도 돼요</span></h3>' +
+       '<button class="chip sm" onclick="openPlans()">📚 차시 관리</button></div>' +
+       '<div class="chips" id="planChips"></div></div>';
+
+  /* ④ 역량 (선택) */
+  h += '<div class="card"><h3 style="font-size:var(--fs-s)">④ 어떤 모습이었나요? ' +
+       '<span style="font-weight:600;color:var(--mute);font-size:.78em">선택 안 해도 돼요</span></h3>' +
        '<div class="chips" style="margin-top:10px" id="catChips"></div></div>';
 
-  // 행동
-  h += '<div class="card"><h3 style="font-size:var(--fs-s)">③ 무엇을 하는 것을 보았나요?</h3>' +
-       '<div class="sub">평가가 아니라 <b>행동</b>을 적어주세요 — 이 문장이 세특 근거가 됩니다</div>' +
+  /* ⑤ 행동 (선택) + 저장 */
+  h += '<div class="card"><h3 style="font-size:var(--fs-s)">⑤ 무엇을 보았나요? ' +
+       '<span style="font-weight:600;color:var(--mute);font-size:.78em">선택 안 해도 돼요</span></h3>' +
+       '<div class="sub">적어두면 <b>그대로 세특 근거</b>가 됩니다</div>' +
        '<div class="chips" style="margin:10px 0" id="behChips"></div>' +
        '<textarea class="inp" id="behIn" rows="2" placeholder="예: 측정값이 예상과 달라 연결 상태를 다시 확인하고 재측정함"></textarea>' +
-       '<button class="btn g" style="margin-top:12px" onclick="saveObs()">🏅 도장 찍기</button></div>';
+       '<button class="btn g" style="margin-top:12px" onclick="saveObs()">🏅 도장 찍기</button>' +
+       '<div class="sub" style="margin-top:8px;text-align:center">아무것도 안 골라도 «💐 칭찬 도장»으로 찍혀요</div></div>';
 
   $('p-give').innerHTML = h;
-  renderStuGrid(); renderCatChips(); renderBehChips();
-  loadStudents();
+  renderClassChips(); renderStuGrid(); renderPlanChips(); renderCatChips(); renderBehChips(); updateSelCnt();
 }
-function renderSessionStart(){
-  var recent = {}, i;
-  for(i=0;i<S.teaObs.length;i++){ if(S.teaObs[i].lesson_note) recent[S.teaObs[i].lesson_note]=1; }
-  var rk = Object.keys(recent).slice(0,6);
-  var h = '<div class="card"><h3>🕘 오늘 수업 시작</h3>' +
-          '<div class="sub">활동 이름을 한 번만 적으면, 오늘 찍는 도장에 자동으로 붙어요</div>';
-  h += '<label class="fl">반</label><input class="inp" id="seC" type="number" inputmode="numeric" placeholder="예: 3">';
-  h += '<label class="fl">오늘 활동</label><input class="inp" id="seN" placeholder="예: 전기 회로 실험">';
-  if(rk.length){
-    h += '<div class="chips" style="margin-top:9px">';
-    for(i=0;i<rk.length;i++) h += '<button class="chip sm" onclick="document.getElementById(\'seN\').value=this.textContent">' + esc(rk[i]) + '</button>';
-    h += '</div>';
+
+/* ── 반 ────────────────────────────────────────────────────────────────── */
+async function loadClasses(){
+  var r = await sb.from('profiles').select('grade,class_no').not('class_no','is',null);
+  var seen = {}, out = [], k;
+  (r.data||[]).forEach(function(p){
+    k = (p.grade||0) + '-' + p.class_no;
+    if(!seen[k]){ seen[k] = 1; out.push({grade:p.grade||0, cls:p.class_no}); }
+  });
+  out.sort(function(x,y){ return (x.grade-y.grade) || (x.cls-y.cls); });
+  S.classes = out;
+}
+function renderClassChips(){
+  var el = $('classChips'); if(!el) return;
+  if(!S.classes.length){ el.innerHTML = '<span class="sub">학생 명단을 불러오지 못했어요</span>'; return; }
+  var h = '', i, c, on;
+  for(i=0;i<S.classes.length;i++){
+    c = S.classes[i];
+    on = S.selClass && S.selClass.grade===c.grade && S.selClass.cls===c.cls;
+    h += '<button class="chip' + (on?' on':'') + '"' + (on?' style="background:var(--ac)"':'') +
+         ' onclick="pickClass(' + c.grade + ',' + c.cls + ')">' + c.grade + '-' + c.cls + '</button>';
   }
-  h += '<button class="btn" style="margin-top:14px" onclick="startSession()">시작하기</button></div>';
-  $('p-give').innerHTML = h;
+  el.innerHTML = h;
 }
-async function startSession(){
-  var c = $('seC').value.trim(), n = $('seN').value.trim();
-  if(!c || !n){ toast('반과 활동 이름을 입력해주세요'); return; }
+async function pickClass(g,c){
+  S.selClass = {grade:g, cls:c};
+  S.selSt = {}; _qCache = {};
   showLoad();
-  try{
-    var r = await sb.from('lesson_sessions').insert({
-      school_year:nowYear(), semester:nowSem(), class_no:Number(c), lesson_note:n
-    }).select().single();
-    if(r.error){ toast('시작에 실패했어요'); console.error(r.error); return; }
-    S.session = r.data; S.selSt={}; S.selCat=null;
-    renderGive();
-  } finally { hideLoad(); }
+  try{ await loadStudents(); } finally { hideLoad(); }
+  renderGive();
 }
-function endSession(){ S.session=null; S.selSt={}; renderGive(); }
 
+/* ── 학생 ──────────────────────────────────────────────────────────────── */
 async function loadStudents(){
-  if(!S.session) return;
+  if(!S.selClass){ S.students = []; return; }
   var p = await sb.from('profiles').select('id,name,grade,class_no,number')
-            .eq('class_no', S.session.class_no).order('number');
+            .eq('grade', S.selClass.grade).eq('class_no', S.selClass.cls).order('number');
   S.students = p.data || [];
-  var last = {}, cnt = {}, i;
+  var last = {}, cnt = {}, i, o;
   for(i=0;i<S.teaObs.length;i++){
-    var o=S.teaObs[i];
-    cnt[o.student_id]=(cnt[o.student_id]||0)+1;
-    if(!last[o.student_id] || o.observed_on>last[o.student_id]) last[o.student_id]=o.observed_on;
+    o = S.teaObs[i];
+    cnt[o.student_id] = (cnt[o.student_id]||0) + 1;
+    if(!last[o.student_id] || o.observed_on > last[o.student_id]) last[o.student_id] = o.observed_on;
   }
   for(i=0;i<S.students.length;i++){
     S.students[i]._last = last[S.students[i].id] || null;
     S.students[i]._cnt  = cnt[S.students[i].id] || 0;
   }
-  renderStuGrid();
 }
 function toggleSort(){ S.sortCold = (S.sortCold===false); renderGive(); }
-function renderStuGrid(){
-  var el = $('stuGrid'); if(!el) return;
+function sortedStudents(){
   var list = S.students.slice();
   if(S.sortCold !== false){
-    list.sort(function(a,b){
-      var da = a._last ? daysAgo(a._last) : 9999, db = b._last ? daysAgo(b._last) : 9999;
-      return db - da;
+    list.sort(function(x,y){
+      var dx = x._last ? daysAgo(x._last) : 9999, dy = y._last ? daysAgo(y._last) : 9999;
+      return dy - dx;
     });
   } else {
-    list.sort(function(a,b){ return (a.number||0)-(b.number||0); });
+    list.sort(function(x,y){ return (x.number||0) - (y.number||0); });
   }
-  if(!list.length){ el.innerHTML = '<div class="empty" style="grid-column:1/-1"><p>이 반 학생을 불러오지 못했어요</p></div>'; return; }
-  var h='', i;
+  return list;
+}
+function renderStuGrid(){
+  var el = $('stuGrid'); if(!el) return;
+  var list = sortedStudents();
+  if(!list.length){ el.innerHTML = '<div class="empty" style="grid-column:1/-1"><p>이 반 학생이 없어요</p></div>'; return; }
+  var h = '', i, s, d, mt;
   for(i=0;i<list.length;i++){
-    var s=list[i], d=s._last?daysAgo(s._last):null;
-    var mt = d===null ? '한 번도 없음' : (d===0 ? '오늘' : d + '일 전');
+    s = list[i]; d = s._last ? daysAgo(s._last) : null;
+    mt = d===null ? '처음' : (d===0 ? '오늘' : d + '일 전');
     h += '<button class="stu' + (S.selSt[s.id]?' sel':'') + '" onclick="togSt(\'' + s.id + '\')">' +
          '<span class="stu-c' + (s._cnt?'':' zero') + '">' + s._cnt + '</span>' +
          '<div class="stu-n">' + esc((s.number?s.number+'. ':'') + (s.name||'')) + '</div>' +
@@ -2467,7 +2510,7 @@ function renderStuGrid(){
   }
   el.innerHTML = h;
 }
-function togSt(id){ if(S.selSt[id]) delete S.selSt[id]; else S.selSt[id]=1; renderStuGrid(); loadRecentQs(); }
+function togSt(id){ if(S.selSt[id]) delete S.selSt[id]; else S.selSt[id]=1; renderStuGrid(); updateSelCnt(); loadRecentQs(); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    🌳 질문과수원 연계 — 고른 학생이 최근에 심은 질문을 근거로 보여준다.
@@ -2514,53 +2557,157 @@ function useQ(i){
   if(!S.selCat){ pickCat('inquiry'); }
   toast('질문을 근거로 깔았어요 — 뒤를 이어 적어주세요');
 }
-function renderCatChips(){
-  var el=$('catChips'); if(!el) return;
-  var h='', i;
-  for(i=0;i<BRANCHES.length;i++){
-    var b=BRANCHES[i], on=S.selCat===b.id;
-    h += '<button class="chip' + (on?' on':'') + '" ' + (on?'style="background:'+b.c+'"':'') +
-         ' onclick="pickCat(\'' + b.id + '\')">' + b.icon + ' ' + esc(catName(b.id)) + '</button>';
+function selAll(on){
+  S.selSt = {};
+  if(on){ for(var i=0;i<S.students.length;i++) S.selSt[S.students[i].id] = 1; }
+  renderStuGrid(); updateSelCnt(); loadRecentQs();
+}
+function updateSelCnt(){
+  var el = $('selCnt'); if(!el) return;
+  var n = Object.keys(S.selSt).length;
+  el.textContent = n + '명';
+  el.style.color = n ? 'var(--ac-d)' : 'var(--mute)';
+}
+
+/* ── 차시 ──────────────────────────────────────────────────────────────── */
+async function loadPlans(){
+  try{
+    var r = await sb.from('lesson_plans').select('*').order('sort_order').order('id',{ascending:false});
+    S.plans = r.error ? [] : (r.data||[]);
+  }catch(e){ S.plans = []; }
+}
+function planTitle(id){
+  for(var i=0;i<S.plans.length;i++) if(S.plans[i].id===id) return S.plans[i].title;
+  return null;
+}
+function renderPlanChips(){
+  var el = $('planChips'); if(!el) return;
+  if(!S.plans.length){
+    el.innerHTML = '<span class="sub">등록한 차시가 없어요. <b>📚 차시 관리</b>에서 미리 넣어두면 여기서 고를 수 있어요.</span>';
+    return;
+  }
+  var h = '<button class="chip sm' + (!S.selPlan?' on':'') + '"' + (!S.selPlan?' style="background:var(--mute)"':'') +
+          ' onclick="pickPlan(null)">선택 안 함</button>', i, p, on;
+  for(i=0;i<S.plans.length;i++){
+    p = S.plans[i]; on = S.selPlan===p.id;
+    h += '<button class="chip sm' + (on?' on':'') + '"' + (on?' style="background:var(--ac)"':'') +
+         ' onclick="pickPlan(' + p.id + ')">' + esc(p.title) + '</button>';
   }
   el.innerHTML = h;
 }
-function pickCat(id){ S.selCat=id; renderCatChips(); renderBehChips(); }
+function pickPlan(id){ S.selPlan = id; renderPlanChips(); }
+function openPlans(){
+  var h = '<h3 style="font-size:var(--fs-m);font-weight:900">📚 차시 관리</h3>' +
+          '<div class="sub" style="font-size:var(--fs-xxs);color:var(--ink2);margin-top:4px">' +
+          '수업 차시명을 미리 넣어두면, 도장 줄 때 골라 쓸 수 있어요.</div>' +
+          '<div style="display:flex;gap:6px;margin-top:14px">' +
+          '<input class="inp" id="planIn" maxlength="60" placeholder="예: 3단원 2차시 전기 회로">' +
+          '<button class="btn" style="width:auto;padding:11px 18px" onclick="addPlan()">추가</button></div>' +
+          '<div id="planList" style="margin-top:14px"></div>' +
+          '<button class="btn ghost" style="margin-top:12px" onclick="closeMdl()">닫기</button>';
+  $('mdlIn').innerHTML = h; $('mdl').classList.add('show');
+  var inp = $('planIn');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') addPlan(); });
+  renderPlanList();
+}
+function renderPlanList(){
+  var el = $('planList'); if(!el) return;
+  if(!S.plans.length){ el.innerHTML = '<div class="empty"><div class="e">📚</div><p>아직 등록한 차시가 없어요</p></div>'; return; }
+  var h = '', i, p;
+  for(i=0;i<S.plans.length;i++){
+    p = S.plans[i];
+    h += '<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1.5px dashed var(--line)">' +
+         '<span style="flex:1;font-size:var(--fs-xs);font-weight:800">' + esc(p.title) + '</span>' +
+         '<button class="chip sm" onclick="delPlan(' + p.id + ')">삭제</button></div>';
+  }
+  el.innerHTML = h;
+}
+async function addPlan(){
+  var v = (($('planIn') && $('planIn').value) || '').trim();
+  if(!v){ toast('차시명을 입력해주세요'); return; }
+  showLoad();
+  try{
+    var r = await sb.from('lesson_plans').insert({ title:v, sort_order:S.plans.length }).select().single();
+    if(r.error){
+      toast(/relation|does not exist|schema cache/i.test(r.error.message||'')
+            ? '차시 기능 준비가 안 됐어요 (4_차시명_추가.sql 실행 필요)' : '추가에 실패했어요');
+      console.error(r.error); return;
+    }
+    $('planIn').value = '';
+    await loadPlans(); renderPlanList(); renderPlanChips();
+    toast('차시를 추가했어요');
+  } finally { hideLoad(); }
+}
+async function delPlan(id){
+  if(!confirm('이 차시를 목록에서 지울까요?\n\n이미 찍은 도장의 기록은 그대로 남습니다.')) return;
+  showLoad();
+  try{
+    await sb.from('lesson_plans').delete().eq('id', id);
+    if(S.selPlan===id) S.selPlan = null;
+    await loadPlans(); renderPlanList(); renderPlanChips();
+  } finally { hideLoad(); }
+}
+
+/* ── 역량 · 행동 (선택 사항) ───────────────────────────────────────────── */
+function renderCatChips(){
+  var el = $('catChips'); if(!el) return;
+  var h = '<button class="chip' + (!S.selCat?' on':'') + '"' + (!S.selCat?' style="background:var(--mute)"':'') +
+          ' onclick="pickCat(null)">💐 그냥 칭찬</button>', i, bb, on;
+  for(i=0;i<BRANCHES.length;i++){
+    bb = BRANCHES[i]; on = S.selCat===bb.id;
+    h += '<button class="chip' + (on?' on':'') + '"' + (on?' style="background:'+bb.c+'"':'') +
+         ' onclick="pickCat(\'' + bb.id + '\')">' + bb.icon + ' ' + esc(catName(bb.id)) + '</button>';
+  }
+  el.innerHTML = h;
+}
+function pickCat(id){ S.selCat = id; renderCatChips(); renderBehChips(); }
 function renderBehChips(){
-  var el=$('behChips'); if(!el) return;
-  if(!S.selCat){ el.innerHTML = '<span style="font-size:var(--fs-xxs);color:var(--mute);font-weight:700">위에서 역량을 먼저 골라주세요</span>'; return; }
-  var a=BEHAVIOR_CHIPS[S.selCat]||[], h='', i;
-  for(i=0;i<a.length;i++) h += '<button class="chip sm" onclick="putBeh(this)">' + esc(a[i]) + '</button>';
+  var el = $('behChips'); if(!el) return;
+  if(!S.selCat){
+    el.innerHTML = '<span style="font-size:var(--fs-xxs);color:var(--mute);font-weight:700">' +
+                   '역량을 고르면 자주 쓰는 문장이 여기 나와요 (안 골라도 직접 적을 수 있어요)</span>';
+    return;
+  }
+  var arr = BEHAVIOR_CHIPS[S.selCat] || [], h = '', i;
+  for(i=0;i<arr.length;i++) h += '<button class="chip sm" onclick="putBeh(this)">' + esc(arr[i]) + '</button>';
   el.innerHTML = h;
 }
 function putBeh(btn){
-  var t=$('behIn'), v=btn.textContent;
-  t.value = (t.value.trim() ? t.value.trim() + ' ' : '') + v + ' — ';
-  t.focus();
+  var ta = $('behIn'), v = btn.textContent;
+  ta.value = (ta.value.trim() ? ta.value.trim() + ' ' : '') + v + ' — ';
+  ta.focus();
 }
+
+/* ── 저장 ──────────────────────────────────────────────────────────────── */
 async function saveObs(){
   var ids = Object.keys(S.selSt);
   if(!ids.length){ toast('학생을 먼저 골라주세요'); return; }
-  if(!S.selCat){ toast('역량을 골라주세요'); return; }
-  var beh = ($('behIn').value||'').trim().replace(/[\s—-]+$/,'');
-  if(beh.length < 2){ toast('무엇을 보았는지 적어주세요'); return; }
+
+  var cat = S.selCat || 'general';
+  var plan = S.selPlan ? planTitle(S.selPlan) : null;
+  var beh = (($('behIn') && $('behIn').value) || '').trim().replace(/[\s\u2014-]+$/,'');
+  if(beh.length < 2) beh = plan ? (plan + ' 수업에서 칭찬받음') : '수업에서 칭찬받음';
+
+  if(ids.length > 5 && !confirm(ids.length + '명에게 도장을 찍을까요?')) return;
 
   showLoad();
   try{
-    var rows=[], i, byId={};
-    for(i=0;i<S.students.length;i++) byId[S.students[i].id]=S.students[i];
+    var rows = [], i, byId = {}, s;
+    for(i=0;i<S.students.length;i++) byId[S.students[i].id] = S.students[i];
+    var today = new Date().toISOString().slice(0,10);
     for(i=0;i<ids.length;i++){
-      var s=byId[ids[i]]||{};
+      s = byId[ids[i]] || {};
       rows.push({
         student_id: ids[i], school_year: nowYear(), semester: nowSem(),
-        class_no_snap: s.class_no || S.session.class_no, number_snap: s.number || null,
-        category: S.selCat, behavior: beh,
-        lesson_note: S.session.lesson_note, observed_on: S.session.session_date
+        class_no_snap: s.class_no || (S.selClass && S.selClass.cls) || null,
+        number_snap: s.number || null,
+        category: cat, behavior: beh, lesson_note: plan, observed_on: today
       });
     }
     var r = await sb.from('observations').insert(rows);
     if(r.error){ toast('저장에 실패했어요'); console.error(r.error); return; }
-    S.selSt={}; $('behIn').value=''; _qCache={};
-    await loadTeacherObs();
+    S.selSt = {}; if($('behIn')) $('behIn').value = ''; _qCache = {};
+    await loadTeacherObs(); await loadStudents();
     renderGive();
     toast('🏅 ' + rows.length + '명에게 도장을 찍었어요!');
   } finally { hideLoad(); }
