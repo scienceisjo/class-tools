@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>선생님께 말하기 — 해누리중학교</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--bg:#f4f7fc;--card:#fff;--line:#e3e8f4;--txt:#1d2742;--sub:#6c7894;
+    --accent:#3b6ef5;--green:#0ea371;--warn:#d97706;--red:#ef3b46;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--txt);line-height:1.55;
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+  .wrap{max-width:520px;margin:0 auto;padding:18px 16px 60px}
+  header{text-align:center;padding:14px 0 18px}
+  header h1{font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px}
+  header p{color:var(--sub);font-size:14px;margin-top:6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 16px;margin-bottom:14px}
+  label{display:block;font-size:13px;font-weight:800;color:var(--sub);margin-bottom:6px}
+  input,textarea,select{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:11px;
+    font-size:16px;font-family:inherit;background:#fff;color:var(--txt)}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
+  textarea{min-height:130px;resize:vertical}
+  .field{margin-bottom:14px}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  .cats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .cat{padding:12px 8px;border:1.5px solid var(--line);border-radius:12px;background:#fff;
+    font-size:14px;font-weight:700;color:var(--sub);cursor:pointer;font-family:inherit;text-align:center}
+  .cat.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .cat.on[data-c="고민·상담"]{background:var(--warn);border-color:var(--warn)}
+  .cat.on[data-c="도움 요청"]{background:var(--red);border-color:var(--red)}
+  .btn{width:100%;padding:16px;border:none;border-radius:13px;background:var(--accent);color:#fff;
+    font-size:17px;font-weight:800;font-family:inherit;cursor:pointer}
+  .btn:disabled{opacity:.5}
+  .anon{display:flex;align-items:center;gap:9px;padding:12px 14px;background:#f8fafc;
+    border:1.5px solid var(--line);border-radius:11px;cursor:pointer}
+  .anon input{width:20px;height:20px;flex:0 0 auto;accent-color:var(--accent)}
+  .anon span{font-size:14px;font-weight:700}
+  .anon small{display:block;color:var(--sub);font-weight:600;font-size:12px}
+  .note{font-size:12.5px;color:var(--sub);margin-top:10px;line-height:1.5}
+  .urgent{display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;
+    border-radius:11px;padding:12px 14px;font-size:13.5px;font-weight:700;margin-bottom:14px;line-height:1.5}
+  .urgent.show{display:block}
+  #done{display:none;text-align:center;padding:40px 20px}
+  #done .em{font-size:60px;display:block;margin-bottom:14px}
+  #done h2{font-size:22px;margin-bottom:8px}
+  #done p{color:var(--sub);font-size:15px;margin-bottom:24px}
+  .again{background:#fff;border:1.5px solid var(--line);color:var(--sub);padding:13px 22px;
+    border-radius:11px;font-weight:700;font-family:inherit;font-size:15px;cursor:pointer}
+  .err{color:var(--red);font-size:13.5px;font-weight:700;margin-top:10px;display:none}
+  .err.show{display:block}
+  footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="form">
+    <header>
+      <h1>📮 선생님께 말하기</h1>
+      <p>하고 싶은 말, 질문, 건의를 보내세요.<br>선생님만 볼 수 있고 <b>전자칠판에는 안 나와요.</b></p>
+    </header>
+
+    <div class="card">
+      <label>무슨 이야기인가요?</label>
+      <div class="cats" id="cats">
+        <button class="cat on" data-c="하고 싶은 말" onclick="pick('하고 싶은 말')">💬 하고 싶은 말</button>
+        <button class="cat" data-c="질문"        onclick="pick('질문')">❓ 질문</button>
+        <button class="cat" data-c="건의"        onclick="pick('건의')">🙋 건의</button>
+        <button class="cat" data-c="고민·상담"   onclick="pick('고민·상담')">😟 고민·상담</button>
+        <button class="cat" data-c="도움 요청"   onclick="pick('도움 요청')" style="grid-column:1/3">🚨 도움이 필요해요</button>
+      </div>
+
+      <div class="urgent" id="urgentNote">
+        ⚠️ 지금 <b>많이 급하거나 위험한 상황</b>이면 이 쪽지 말고 <b>가까운 선생님께 직접 말하거나 교무실로 오세요.</b>
+        선생님이 쪽지를 바로 못 볼 수도 있어요.
+      </div>
+
+      <div class="field">
+        <label>하고 싶은 말</label>
+        <textarea id="body" placeholder="편하게 적어주세요. (최대 1000자)" maxlength="1000"></textarea>
+      </div>
+
+      <div class="field">
+        <label>받는 선생님 (모르면 비워도 돼요)</label>
+        <input id="teacher" placeholder="예: 조승재 선생님">
+      </div>
+
+      <div class="row field">
+        <div>
+          <label>학년</label>
+          <select id="grade"><option value="">선택</option><option>1</option><option>2</option><option>3</option></select>
+        </div>
+        <div>
+          <label>반</label>
+          <input id="classno" type="number" inputmode="numeric" placeholder="예: 3">
+        </div>
+        <div>
+          <label>이름</label>
+          <input id="name" placeholder="예: 김OO">
+        </div>
+      </div>
+
+      <label class="anon" for="anon">
+        <input type="checkbox" id="anon" onchange="toggleAnon()">
+        <span>익명으로 보내기
+          <small>이름·학년·반을 숨겨요. 답을 받기 어려울 수 있어요.</small></span>
+      </label>
+
+      <div class="note">
+        📌 보낸 쪽지는 <b>선생님 화면에서만</b> 보여요. 다른 학생은 볼 수 없어요.<br>
+        📌 장난·욕설은 보내지 말아주세요.
+      </div>
+    </div>
+
+    <button class="btn" id="send" onclick="send()">📮 보내기</button>
+    <div class="err" id="err"></div>
+
+    <footer>해누리중학교 · 선생님께 말하기</footer>
+  </div>
+
+  <div id="done">
+    <span class="em">✅</span>
+    <h2>잘 보냈어요!</h2>
+    <p>선생님이 확인하면 답을 줄 거예요.<br>급한 일이면 교무실로 직접 와주세요.</p>
+    <button class="again" onclick="location.reload()">하나 더 보내기</button>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://hmzklbrksfdhzsgwzfyg.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtemtsYnJrc2ZkaHpzZ3d6ZnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTY4NDcsImV4cCI6MjA5NTA5Mjg0N30.LuTEeJyu-mtkNzUTNaA8IigmdtWPWXS2ucVgXDeevPA';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = id => document.getElementById(id);
+
+// ?class=2-3 로 열면 학년·반 자동 입력 (전자칠판 QR용)
+const cm = new URLSearchParams(location.search).get('class');
+if(cm && /^\d+-\d+$/.test(cm)){ const [g,c]=cm.split('-'); $('grade').value=g; $('classno').value=c; }
+
+let curCat = '하고 싶은 말';
+function pick(c){
+  curCat = c;
+  document.querySelectorAll('.cat').forEach(b=>b.classList.toggle('on', b.dataset.c===c));
+  $('urgentNote').classList.toggle('show', c==='도움 요청' || c==='고민·상담');
+}
+function toggleAnon(){
+  const on = $('anon').checked;
+  ['name','grade','classno'].forEach(id=>{ $(id).disabled = on; if(on) $(id).style.opacity=.45; else $(id).style.opacity=1; });
+}
+
+async function send(){
+  const body = $('body').value.trim();
+  const err = $('err'); err.classList.remove('show');
+  if(body.length < 2){ err.textContent='하고 싶은 말을 적어주세요.'; err.classList.add('show'); return; }
+  const anon = $('anon').checked;
+  $('send').disabled = true; $('send').textContent = '보내는 중…';
+  const rec = {
+    category: curCat, body,
+    to_teacher: $('teacher').value.trim() || null,
+    is_anonymous: anon,
+    student_name: anon ? null : ($('name').value.trim() || null),
+    grade:    anon ? null : ($('grade').value ? Number($('grade').value) : null),
+    class_no: anon ? null : ($('classno').value ? Number($('classno').value) : null)
+  };
+  const { error } = await sb.from('messages').insert(rec);
+  if(error){
+    $('send').disabled=false; $('send').textContent='📮 보내기';
+    err.textContent='보내지 못했어요: '+error.message; err.classList.add('show'); return;
+  }
+  $('form').style.display='none'; $('done').style.display='block';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>

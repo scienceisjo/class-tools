@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공지 관리 — 해누리중학교</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--bg:#f4f6fb;--card:#fff;--line:#e3e8f3;--txt:#1c2540;--sub:#7d8aa8;
+    --accent:#4a72ff;--green:#1eb87f;--red:#ff4d5e;--gold:#f5a623;--purple:#8b6cff;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:'Pretendard','Malgun Gothic',system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:980px;margin:0 auto;padding:20px 16px 80px}
+
+  /* 로그인 */
+  #login{max-width:380px;margin:8vh auto;background:var(--card);border:1px solid var(--line);
+    border-radius:18px;padding:32px 28px;box-shadow:0 8px 30px rgba(30,40,80,.08)}
+  #login h1{font-size:22px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  #login p{color:var(--sub);font-size:14px;margin-bottom:22px}
+  input,select,textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;
+    font-size:15px;font-family:inherit;background:#fff;color:var(--txt);margin-bottom:12px}
+  textarea{resize:vertical;min-height:80px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  button{cursor:pointer;border:none;font-family:inherit;font-weight:700;border-radius:10px;transition:.15s}
+  .btn{background:var(--accent);color:#fff;padding:12px 18px;font-size:15px;width:100%}
+  .btn:hover{filter:brightness(1.05)}.btn:disabled{opacity:.5;cursor:default}
+  .err{color:var(--red);font-size:13px;margin-top:8px;display:none}.err.show{display:block}
+  .authtabs{display:flex;gap:6px;margin-bottom:16px}
+  .atab{flex:1;background:#fff;border:1.5px solid var(--line);color:var(--sub);padding:9px;font-size:14px;border-radius:9px}
+  .atab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  /* 둘러보기(읽기전용): 입력/수정 요소 숨김 */
+  body.readonly .panel > .card:first-child{display:none}
+  body.readonly .card.wform{display:none}
+  body.readonly .del{display:none}
+  .robanner{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;font-weight:700;
+    padding:10px 14px;border-radius:10px;margin-bottom:14px;display:none}
+  body.readonly .robanner{display:block}
+
+  /* 헤더 */
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  header h1{font-size:20px;display:flex;align-items:center;gap:8px}
+  header .who{font-size:13px;color:var(--sub)}
+  .ghost{background:#fff;border:1.5px solid var(--line);color:var(--sub);padding:8px 14px;font-size:13px}
+  .preview-link{font-size:13px;color:var(--accent);text-decoration:none;font-weight:700;margin-right:10px}
+
+  /* 탭 */
+  .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+  .tab{background:#fff;border:1.5px solid var(--line);color:var(--sub);padding:9px 16px;font-size:14px;border-radius:99px}
+  .tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .badge{display:inline-block;background:var(--red);color:#fff;font-size:11px;font-weight:900;
+    padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle}
+  .msg{border:1.5px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;background:#fff}
+  .msg.unread{border-color:#fecaca;background:#fffbfb}
+  .msg .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .msg .who{font-weight:800;font-size:15px}
+  .msg .anon{color:var(--sub);font-weight:700}
+  .msg .when{color:var(--sub);font-size:12px;margin-left:auto}
+  .msg .body{font-size:15px;line-height:1.6;white-space:pre-wrap;word-break:break-word;
+    background:#f8fafc;border-radius:9px;padding:12px;margin-bottom:10px}
+  .msg .acts{display:flex;gap:8px}
+  .msg .acts button{padding:8px 14px;font-size:13px;border-radius:9px;border:1.5px solid var(--line);
+    background:#fff;color:var(--sub);font-weight:700}
+  .msg .acts .ok{background:#e7f9f0;color:var(--green);border-color:#bbf0d8}
+  .ctag{font-size:11.5px;font-weight:900;padding:3px 9px;border-radius:6px;color:#fff}
+  .panel{display:none}.panel.on{display:block}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+  .card h2{font-size:15px;margin-bottom:14px;color:var(--sub);font-weight:800;letter-spacing:.3px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:120px}
+  label{font-size:12px;color:var(--sub);font-weight:700;display:block;margin-bottom:4px}
+  .field{margin-bottom:12px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{padding:7px 14px;border:1.5px solid var(--line);border-radius:99px;font-size:13px;font-weight:700;color:var(--sub);background:#fff}
+  .chip.on{color:#fff;border-color:transparent}
+  .chip.on[data-c="긴급"]{background:var(--red)}.chip.on[data-c="교과"]{background:var(--purple)}
+  .chip.on[data-c="학년"]{background:var(--accent)}.chip.on[data-c="일반"]{background:var(--green)}
+
+  /* 목록 */
+  .item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:none}
+  .item .tag{flex:0 0 auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;color:#fff;margin-top:2px}
+  .tag-긴급{background:var(--red)}.tag-교과{background:var(--purple)}.tag-학년{background:var(--accent)}.tag-일반{background:var(--green)}
+  .item .main{flex:1;min-width:0}
+  .item .t{font-weight:700;font-size:15px}
+  .item .b{color:var(--sub);font-size:13px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item .meta{font-size:11px;color:var(--sub);margin-top:3px}
+  .item .del{background:#fff0f1;color:var(--red);padding:6px 12px;font-size:12px;flex:0 0 auto}
+  .empty{color:var(--sub);font-size:14px;padding:14px 0;text-align:center}
+  .pin{color:var(--gold);font-weight:800;font-size:11px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--txt);color:#fff;
+    padding:11px 22px;border-radius:99px;font-size:14px;font-weight:700;opacity:0;transition:.3s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+  .hint{font-size:12px;color:var(--sub);margin-top:-6px;margin-bottom:10px}
+  .privacy{font-size:12.5px;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;
+    border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.45}
+  .privacy b{color:#7c2d12}
+  .guide{font-size:12.5px;color:#7c2d12;background:#fef2f2;border:1px solid #fecaca;
+    border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.5}
+  .guide b{color:#b91c1c}
+</style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<div id="login">
+  <h1>📺 공지 관리</h1>
+  <p>해누리중학교 전자칠판 공지 시스템<br><b>공지 전용 계정</b>으로 로그인하세요.</p>
+
+  <div class="authtabs">
+    <button class="atab on" id="atab-login" onclick="authTab('login')">로그인</button>
+    <button class="atab" id="atab-signup" onclick="authTab('signup')">가입</button>
+  </div>
+
+  <!-- 로그인 -->
+  <div id="loginForm">
+    <input id="email" type="email" placeholder="이메일" autocomplete="username">
+    <input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password">
+    <button class="btn" id="loginBtn" onclick="doLogin()">로그인</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+
+  <!-- 가입 -->
+  <div id="signupForm" style="display:none">
+    <input id="sgName" placeholder="이름 (예: 김OO)">
+    <input id="sgSubject" placeholder="담당 과목 (선택) — 교과 공지에 자동 입력">
+    <input id="sgEmail" type="email" placeholder="이메일">
+    <input id="sgPw" type="password" placeholder="비밀번호 (6자 이상)">
+    <input id="sgCode" placeholder="가입 코드 (학교에서 받은 코드)">
+    <button class="btn" id="sgBtn" onclick="doSignup()">가입하기</button>
+    <div class="err" id="sgErr"></div>
+    <p style="margin-top:12px;font-size:12px;color:var(--sub)">※ 질문나무와 <b>별개</b>의 공지 전용 계정입니다.</p>
+  </div>
+
+  <button class="ghost" style="width:100%;margin-top:14px;padding:11px" onclick="enterGuest()">👀 둘러보기 (읽기 전용)</button>
+</div>
+
+<!-- 대시보드 -->
+<div class="wrap" id="dash" style="display:none">
+  <header>
+    <h1>📺 공지 관리</h1>
+    <div>
+      <a class="preview-link" id="dispLink" href="#" target="_blank">🖥️ 디스플레이 미리보기</a>
+      <span class="who" id="whoami"></span>
+      <button class="ghost" onclick="doLogout()">로그아웃</button>
+    </div>
+  </header>
+
+  <div class="robanner">👀 둘러보기 모드 — 내용을 볼 수만 있습니다. 작성·수정하려면 <b>로그아웃 후 로그인</b>하세요.</div>
+
+  <div class="tabs">
+    <button class="tab" data-p="msg" onclick="tab('msg')">📬 받은 쪽지<span class="badge" id="msgBadge" style="display:none">0</span></button>
+    <button class="tab on" data-p="notice" onclick="tab('notice')">📢 공지사항</button>
+    <button class="tab" data-p="sched" onclick="tab('sched')">📅 주요일정</button>
+    <button class="tab" data-p="ttc" onclick="tab('ttc')">🔄 시간표 변경</button>
+    <button class="tab" data-p="dday" onclick="tab('dday')">🎯 디데이</button>
+    <button class="tab" data-p="assess" onclick="tab('assess')">📋 평가일정</button>
+    <button class="tab" data-p="call" onclick="tab('call')">📣 학생 호출</button>
+    <button class="tab" data-p="clean" onclick="tab('clean')">🧹 청소당번</button>
+    <button class="tab" data-p="role" onclick="tab('role')">🙋 1인1역</button>
+    <button class="tab" data-p="lost" onclick="tab('lost')">🔍 분실물</button>
+    <button class="tab" data-p="cfg" onclick="tab('cfg')">⚙️ 설정</button>
+  </div>
+
+  <!-- 받은 쪽지 -->
+  <div class="panel" id="p-msg">
+    <div class="card">
+      <h2>학생이 보낸 쪽지</h2>
+      <div class="privacy">🔒 이 쪽지는 <b>선생님만</b> 볼 수 있습니다. 전자칠판이나 학생 화면에는 절대 표시되지 않습니다.</div>
+      <div class="hint">학생은 전자칠판 왼쪽 아래 <b>📮 QR</b>을 휴대폰으로 찍어서 보냅니다. 주소: <code id="msgUrl">notice_message.html</code></div>
+      <div class="chips" id="msgFilter">
+        <button class="chip on" data-f="unread" onclick="msgTab('unread')">🔴 안 읽음</button>
+        <button class="chip" data-f="all"  onclick="msgTab('all')">전체</button>
+        <button class="chip" data-f="done" onclick="msgTab('done')">✅ 처리됨</button>
+        <button class="chip" style="margin-left:auto" onclick="loadMsgs()">🔄 새로고침</button>
+      </div>
+      <div id="msgList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 공지 -->
+  <div class="panel on" id="p-notice">
+    <div class="card">
+      <h2>새 공지 작성</h2>
+      <div class="guide">🚫 <b>게시 금지</b> — 전자칠판은 누구나 봅니다. <b>성적·석차, 징계·벌점, 개인 연락처/주소, 가정형편·지원대상, 건강·진료 정보, 동의 없는 학생 사진</b>은 올리지 마세요.</div>
+      <div class="chips" id="catChips">
+        <button class="chip on" data-c="일반" onclick="pickCat('일반')">📣 일반</button>
+        <button class="chip" data-c="긴급" onclick="pickCat('긴급')">🚨 긴급</button>
+        <button class="chip" data-c="교과" onclick="pickCat('교과')">📚 교과별</button>
+        <button class="chip" data-c="학년" onclick="pickCat('학년')">🎓 학년</button>
+      </div>
+      <div class="field"><label>제목</label><input id="nTitle" placeholder="공지 제목"></div>
+      <div class="field"><label>내용 (선택)</label><textarea id="nBody" placeholder="자세한 내용"></textarea></div>
+      <div class="field"><label>🔗 링크 URL (선택) — 입력하면 화면에 <b>QR코드</b>가 표시됩니다</label><input id="nLink" type="url" placeholder="예: https://forms.gle/... (신청서·설문)"></div>
+      <div class="row">
+        <div class="field" id="nSubjWrap" style="display:none"><label>교과명</label><input id="nSubj" placeholder="예: 수학"></div>
+        <div class="field"><label>대상 학년</label>
+          <select id="nGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>노출 종료일 (비우면 무기한)</label><input id="nEnd" type="date"></div>
+      </div>
+      <div class="field"><label><input type="checkbox" id="nPin" style="width:auto;margin-right:6px">📌 상단 고정</label></div>
+      <button class="btn" id="nSave" onclick="saveNotice()">공지 등록</button>
+    </div>
+    <div class="card">
+      <h2>등록된 공지</h2>
+      <div id="noticeList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 일정 -->
+  <div class="panel" id="p-sched">
+    <div class="card">
+      <h2>새 일정 추가</h2>
+      <div class="field"><label>일정명</label><input id="sTitle" placeholder="예: 1학기 기말고사"></div>
+      <div class="row">
+        <div class="field"><label>시작일</label><input id="sStart" type="date"></div>
+        <div class="field"><label>종료일 (선택)</label><input id="sEnd" type="date"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>장소 (선택)</label><input id="sLoc" placeholder="예: 강당"></div>
+        <div class="field"><label>아이콘</label><input id="sIcon" value="📌" maxlength="2"></div>
+      </div>
+      <button class="btn" id="sSave" onclick="saveSched()">일정 추가</button>
+    </div>
+    <div class="card"><h2>등록된 일정</h2><div id="schedList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 시간표 변경 -->
+  <div class="panel" id="p-ttc">
+    <div class="card">
+      <h2>시간표 변경 추가</h2>
+      <div class="hint">전자칠판에는 <b>해당 날짜 당일</b>에만 표시됩니다.</div>
+      <div class="row">
+        <div class="field"><label>날짜</label><input id="cDate" type="date"></div>
+        <div class="field"><label>학년</label><select id="cGrade"><option value="">전체</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="cClass" type="number" placeholder="예: 3"></div>
+        <div class="field"><label>교시</label><input id="cPeriod" type="number" placeholder="예: 4"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>원래 과목</label><input id="cBefore" placeholder="예: 국어"></div>
+        <div class="field"><label>변경 과목</label><input id="cAfter" placeholder="예: 체육"></div>
+      </div>
+      <div class="field"><label>비고 (선택)</label><input id="cNote" placeholder="예: 교실 변경, 운동장"></div>
+      <button class="btn" id="cSave" onclick="saveTTC()">변경사항 추가</button>
+    </div>
+    <div class="card wform">
+      <h2>📍 수업 장소 안내</h2>
+      <div class="hint">"오늘 체육 어디서 해요?" — 등록하면 전자칠판에 <b>📍장소</b>로 표시됩니다. 해당 날짜에만 보입니다.</div>
+      <div class="row">
+        <div class="field"><label>날짜</label><input id="lcDate" type="date"></div>
+        <div class="field"><label>학년</label><select id="lcGrade"><option value="">전체</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="lcClass" type="number" placeholder="전체"></div>
+        <div class="field"><label>교시 (선택)</label><input id="lcPeriod" type="number" placeholder="예: 3"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>과목</label><input id="lcSubject" value="체육"></div>
+        <div class="field" style="flex:2"><label>장소</label><input id="lcLoc" placeholder="아래에서 고르거나 직접 입력"></div>
+      </div>
+      <div class="chips">
+        <button class="chip" onclick="$('lcLoc').value='운동장'">🏃 운동장</button>
+        <button class="chip" onclick="$('lcLoc').value='체육관'">🏀 체육관</button>
+        <button class="chip" onclick="$('lcLoc').value='강당'">🎤 강당</button>
+        <button class="chip" onclick="$('lcLoc').value='시청각실'">🎬 시청각실</button>
+        <button class="chip" onclick="$('lcLoc').value='도서관'">📚 도서관</button>
+        <button class="chip" onclick="$('lcLoc').value='과학실'">🔬 과학실</button>
+        <button class="chip" onclick="$('lcLoc').value='음악실'">🎵 음악실</button>
+        <button class="chip" onclick="$('lcLoc').value='미술실'">🎨 미술실</button>
+      </div>
+      <div class="field"><label>비고 (선택)</label><input id="lcNote" placeholder="예: 비 와서 실내수업, 체육복 지참"></div>
+      <button class="btn" id="lcSave" onclick="saveLoc()">📍 장소 등록</button>
+    </div>
+    <div class="card"><h2>등록된 변경사항</h2><div id="ttcList"><div class="empty">불러오는 중…</div></div></div>
+    <div class="card"><h2>등록된 장소 안내</h2><div id="locList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 디데이 -->
+  <div class="panel" id="p-dday">
+    <div class="card">
+      <h2>디데이 추가</h2>
+      <div class="hint">전자칠판 상단에 <b>D-15</b> 처럼 남은 일수가 표시됩니다. 지난 날짜는 자동으로 사라집니다.</div>
+      <div class="field"><label>이름</label><input id="dTitle" placeholder="예: 1학기 기말고사"></div>
+      <div class="row">
+        <div class="field"><label>날짜</label><input id="dDate" type="date"></div>
+        <div class="field"><label>유형</label>
+          <select id="dType" onchange="ddayIcon()"><option>시험</option><option>평가</option><option>방학</option><option>기타</option></select></div>
+        <div class="field"><label>아이콘</label><input id="dIcon" value="📝" maxlength="2"></div>
+      </div>
+      <button class="btn" id="dSave" onclick="saveDday()">디데이 추가</button>
+    </div>
+    <div class="card"><h2>등록된 디데이</h2><div id="ddayList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 평가일정 -->
+  <div class="panel" id="p-assess">
+    <div class="card">
+      <h2>평가일정 추가</h2>
+      <div class="hint">전자칠판 좌측 <b>다가오는 평가</b> 칸에 표시됩니다. 지난 평가는 자동으로 사라집니다.</div>
+      <div class="row">
+        <div class="field"><label>과목</label><input id="aSubject" placeholder="예: 수학"></div>
+        <div class="field"><label>유형</label>
+          <select id="aType"><option>수행평가</option><option>지필평가</option><option>기타</option></select></div>
+        <div class="field"><label>대상 학년</label>
+          <select id="aGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>평가일</label><input id="aDate" type="date"></div>
+      </div>
+      <div class="field"><label>평가명</label><input id="aTitle" placeholder="예: 함수 단원 수행평가"></div>
+      <div class="field"><label>시험범위 / 비고 (선택)</label><input id="aScope" placeholder="예: 교과서 3단원, 계산기 지참"></div>
+      <button class="btn" id="aSave" onclick="saveAssess()">평가일정 추가</button>
+    </div>
+    <div class="card"><h2>등록된 평가일정</h2><div id="assessList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 학생 호출 -->
+  <div class="panel" id="p-call">
+    <div class="card">
+      <h2>학생 호출하기</h2>
+      <div class="hint">호출하면 전자칠판 상단 <b>📣 호출</b> 띠에 즉시 표시됩니다. 학생이 직접 확인하고 찾아옵니다.</div>
+      <div class="privacy">🔒 <b>개인정보 보호</b> — 화면에는 <b>이름·반·장소</b>만 표시되고 <b>사유는 표시되지 않습니다</b>. 그래도 상담·징계·건강 등 민감한 내용은 적지 마세요.</div>
+      <div class="row">
+        <div class="field"><label>학년</label>
+          <select id="kGrade" onchange="loadClasses()"><option value="">선택</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label>
+          <select id="kClass" onchange="loadStudents()"><option value="">선택</option></select></div>
+        <div class="field"><label>학생 (DB에서 선택)</label>
+          <select id="kStudent"><option value="">학년·반 먼저 선택</option></select></div>
+      </div>
+      <div class="hint" id="kStuHint">학년·반을 고르면 학생 명단을 불러옵니다. 명단에 없으면 아래에 직접 입력하세요.</div>
+      <div class="row">
+        <div class="field"><label>이름 직접 입력 (선택)</label><input id="kName" placeholder="명단에 없을 때만"></div>
+        <div class="field"><label>오라는 곳</label><input id="kLoc" value="교무실"></div>
+        <div class="field"><label>사유 (교사 확인용·화면 비표시)</label><input id="kReason" placeholder="내부 메모 (선택)"></div>
+      </div>
+      <button class="btn" id="kSave" onclick="saveCall()">📣 호출하기</button>
+    </div>
+    <div class="card"><h2>현재 호출 중</h2><div id="callList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 청소당번 -->
+  <div class="panel" id="p-clean">
+    <div class="card">
+      <h2>청소당번 추가</h2>
+      <div class="hint">그 반의 <b>교실 전자칠판</b>(<code>?class=학년-반</code>)에 표시됩니다. 매주 갱신해 주세요.</div>
+      <div class="row">
+        <div class="field"><label>학년</label><select id="clGrade"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="clClass" type="number" placeholder="예: 3"></div>
+        <div class="field"><label>구역</label><input id="clArea" placeholder="예: 교실 앞 / 복도 / 칠판"></div>
+        <div class="field"><label>담당</label><input id="clMembers" placeholder="예: 1모둠 / 김OO·이OO"></div>
+      </div>
+      <button class="btn" id="clSave" onclick="saveClean()">당번 추가</button>
+    </div>
+    <div class="card">
+      <h2>등록된 청소당번</h2>
+      <div class="hint">반별로 보려면 위에서 학년·반을 고른 뒤 <button class="ghost" style="padding:3px 10px" onclick="loadClean()">새로고침</button></div>
+      <div id="cleanList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 1인1역 -->
+  <div class="panel" id="p-role">
+    <div class="card">
+      <h2>1인1역 추가</h2>
+      <div class="hint">그 반의 <b>교실 전자칠판</b>(<code>?class=학년-반</code>) 청소당번 칸에서 <b>🙋 1인1역</b> 버튼을 누르면 보입니다.</div>
+      <div class="row">
+        <div class="field"><label>학년</label><select id="roGrade"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="roClass" type="number" placeholder="예: 3"></div>
+        <div class="field"><label>아이콘</label><input id="roIcon" value="🙋" maxlength="2"></div>
+        <div class="field"><label>역할</label><input id="roRole" placeholder="예: 우유당번"></div>
+        <div class="field"><label>담당 학생</label><input id="roMember" placeholder="예: 김OO"></div>
+      </div>
+      <div class="hint">자주 쓰는 역할 (누르면 역할·아이콘 자동 입력)</div>
+      <div class="chips">
+        <button class="chip" onclick="preRole('🥛','우유당번')">🥛 우유당번</button>
+        <button class="chip" onclick="preRole('💡','전기·에어컨')">💡 전기·에어컨</button>
+        <button class="chip" onclick="preRole('📋','알림장')">📋 알림장</button>
+        <button class="chip" onclick="preRole('🪟','창문·환기')">🪟 창문·환기</button>
+        <button class="chip" onclick="preRole('♻️','재활용')">♻️ 재활용</button>
+        <button class="chip" onclick="preRole('🧴','칠판지우개')">🧴 칠판지우개</button>
+        <button class="chip" onclick="preRole('📚','학습부장')">📚 학습부장</button>
+        <button class="chip" onclick="preRole('🍚','급식도우미')">🍚 급식도우미</button>
+        <button class="chip" onclick="preRole('🖥️','TV·컴퓨터')">🖥️ TV·컴퓨터</button>
+        <button class="chip" onclick="preRole('🌱','화분')">🌱 화분</button>
+      </div>
+      <button class="btn" id="roSave" onclick="saveRole()">1인1역 추가</button>
+    </div>
+    <div class="card">
+      <h2>등록된 1인1역</h2>
+      <div class="hint">반별로 보려면 위에서 학년·반을 고른 뒤 <button class="ghost" style="padding:3px 10px" onclick="loadRoles()">새로고침</button></div>
+      <div id="roleList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 분실물 -->
+  <div class="panel" id="p-lost">
+    <div class="card">
+      <h2>분실물(습득물) 등록</h2>
+      <div class="hint">전교 전자칠판 공지에 함께 표시됩니다. 사진은 선택입니다.</div>
+      <div class="row">
+        <div class="field"><label>물건</label><input id="loName" placeholder="예: 검정 우산"></div>
+        <div class="field"><label>발견 장소 (선택)</label><input id="loFound" placeholder="예: 3층 복도"></div>
+        <div class="field"><label>찾아가는 곳</label><input id="loKeep" value="교무실"></div>
+      </div>
+      <div class="field"><label>사진 (선택)</label><input id="loPhoto" type="file" accept="image/*"></div>
+      <button class="btn" id="loSave" onclick="saveLost()">분실물 등록</button>
+    </div>
+    <div class="card"><h2>보관 중인 분실물</h2><div id="lostList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 설정 -->
+  <div class="panel" id="p-cfg">
+    <div class="card">
+      <h2>디스플레이 설정</h2>
+      <div class="field"><label>학교명</label><input id="cfgSchool"></div>
+      <div class="field"><label>공지 카드 전환 간격 (초)</label><input id="cfgSlide" type="number" min="4"></div>
+      <div class="row">
+        <div class="field"><label>NEIS 교육청코드</label><input id="cfgAtpt"></div>
+        <div class="field"><label>NEIS 학교코드</label><input id="cfgSchoolCode"></div>
+      </div>
+      <div class="field"><label>🔑 공지 관리자 가입 코드 — 이 코드를 아는 사람만 가입 가능</label><input id="cfgCode" placeholder="예: haenuri2026"></div>
+      <button class="btn" id="cfgSave" onclick="saveCfg()">설정 저장</button>
+      <div class="hint" style="margin-top:12px">현재 설정: 해누리중학교 / 서울특별시교육청(B10) / 학교코드 7130256</div>
+    </div>
+
+    <div class="card">
+      <h2>🖥️ 전자칠판 주소</h2>
+      <div class="hint"><b>중앙(전교용)</b> 보드: 그냥 <code>notice.html</code> 을 띄우세요.</div>
+      <div class="hint"><b>교실별</b> 보드: 주소 뒤에 <code>?class=학년-반</code> 을 붙이면 그 반 정보(시간표 변경·호출)가 우선 표시됩니다.</div>
+      <div class="row" style="align-items:flex-end">
+        <div class="field"><label>학년</label><select id="urlGrade" onchange="makeUrl()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="urlClass" type="number" value="1" oninput="makeUrl()"></div>
+        <div class="field" style="flex:2"><label>이 교실 보드 주소</label><input id="urlOut" readonly onclick="this.select()"></div>
+      </div>
+      <div class="hint">예) 2학년 3반 교실 → <code>notice.html?class=2-3</code> · 미리보기는 <code>?demo=1</code></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL  = 'https://hmzklbrksfdhzsgwzfyg.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtemtsYnJrc2ZkaHpzZ3d6ZnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTY4NDcsImV4cCI6MjA5NTA5Mjg0N30.LuTEeJyu-mtkNzUTNaA8IigmdtWPWXS2ucVgXDeevPA';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = id => document.getElementById(id);
+let me = null, myName = '', myAdmin = null, READONLY = false;
+
+/* ── 인증 (공지 전용 계정 — 질문나무와 별개) ── */
+function authTab(t){
+  $('atab-login').classList.toggle('on', t==='login');
+  $('atab-signup').classList.toggle('on', t==='signup');
+  $('loginForm').style.display  = t==='login'  ? 'block':'none';
+  $('signupForm').style.display = t==='signup' ? 'block':'none';
+}
+
+async function doLogin(){
+  const email=$('email').value.trim(), pw=$('pw').value;
+  const err=$('loginErr'); err.classList.remove('show');
+  if(!email||!pw){ err.textContent='이메일과 비밀번호를 입력하세요'; err.classList.add('show'); return; }
+  $('loginBtn').disabled=true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:pw });
+  if(error){ $('loginBtn').disabled=false; err.textContent='로그인 실패: '+error.message; err.classList.add('show'); return; }
+  // 공지 전용 계정인지 확인 — 질문나무 계정으로는 들어올 수 없음
+  const { data:adm } = await sb.from('notice_admins').select('name,subject').eq('auth_id', data.user.id).maybeSingle();
+  $('loginBtn').disabled=false;
+  if(!adm){ await sb.auth.signOut();
+    err.textContent='공지 관리 권한이 없는 계정입니다. ‘가입’ 탭에서 공지 전용 계정을 만들어 주세요.';
+    err.classList.add('show'); return; }
+  me=data.user; myAdmin=adm; myName=adm.name||email.split('@')[0]; READONLY=false;
+  enterDash();
+}
+
+async function doSignup(){
+  const name=$('sgName').value.trim(), email=$('sgEmail').value.trim(), pw=$('sgPw').value;
+  const code=$('sgCode').value.trim(), subject=$('sgSubject').value.trim()||null;
+  const err=$('sgErr'); err.classList.remove('show');
+  if(!name){ err.textContent='이름을 입력하세요'; err.classList.add('show'); return; }
+  if(!email||pw.length<6){ err.textContent='이메일과 6자 이상 비밀번호를 입력하세요'; err.classList.add('show'); return; }
+  // 가입 코드 확인 (설정의 admin_code)
+  const { data:cfg } = await sb.from('display_config').select('value').eq('key','admin_code').maybeSingle();
+  const need = cfg?.value || '';
+  if(need && code!==need){ err.textContent='가입 코드가 올바르지 않습니다. 학교 담당자에게 문의하세요.'; err.classList.add('show'); return; }
+  $('sgBtn').disabled=true;
+  const { data, error } = await sb.auth.signUp({ email, password:pw });
+  if(error){ $('sgBtn').disabled=false; err.textContent='가입 실패: '+error.message; err.classList.add('show'); return; }
+  const uid=data.user?.id;
+  if(!uid){ $('sgBtn').disabled=false; err.textContent='이메일 인증이 필요합니다. 메일 확인 후 로그인하세요.'; err.classList.add('show'); authTab('login'); return; }
+  const { error:insErr } = await sb.from('notice_admins').insert({ auth_id:uid, name, subject });
+  $('sgBtn').disabled=false;
+  if(insErr){ err.textContent='계정은 만들어졌지만 프로필 저장 실패: '+insErr.message; err.classList.add('show'); return; }
+  me=data.user; myAdmin={name,subject}; myName=name; READONLY=false;
+  enterDash();
+}
+
+function enterGuest(){ READONLY=true; me=null; myName='둘러보기'; enterDash(); }
+
+async function doLogout(){ if(!READONLY){ try{ await sb.auth.signOut(); }catch(e){} } location.reload(); }
+
+async function checkSession(){
+  const { data } = await sb.auth.getSession();
+  if(data.session){
+    const { data:adm } = await sb.from('notice_admins').select('name,subject').eq('auth_id', data.session.user.id).maybeSingle();
+    if(adm){ me=data.session.user; myAdmin=adm; myName=adm.name; READONLY=false; enterDash(); }
+  }
+}
+
+function enterDash(){
+  $('login').style.display='none'; $('dash').style.display='block';
+  document.body.classList.toggle('readonly', READONLY);
+  $('whoami').textContent = READONLY ? '👀 둘러보기' : (myName+' 선생님');
+  loadNotices(); loadScheds(); loadTTCs(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadCfg(); makeUrl();
+  loadMsgs(false); refreshMsgBadge(); msgUrlHint();
+  if(!READONLY) subscribeMsgs();
+}
+
+/* ── 탭 ── */
+function tab(p){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.p===p));
+  document.querySelectorAll('.panel').forEach(el=>el.classList.toggle('on',el.id==='p-'+p));
+  if(p==='msg') loadMsgs(true);   // 쪽지 탭을 연 순간 읽음 처리
+}
+
+/* ── 공지 ── */
+let curCat='일반';
+function pickCat(c){ curCat=c;
+  document.querySelectorAll('#catChips .chip').forEach(ch=>ch.classList.toggle('on',ch.dataset.c===c));
+  $('nSubjWrap').style.display = c==='교과' ? 'block' : 'none';
+  // 교과 선택 시 담당 과목 자동 입력 (가입 때 입력한 과목)
+  if(c==='교과' && !$('nSubj').value && myAdmin?.subject) $('nSubj').value = myAdmin.subject;
+}
+async function saveNotice(){
+  const title=$('nTitle').value.trim();
+  if(!title){ toast('제목을 입력하세요'); return; }
+  $('nSave').disabled=true;
+  const rec={ category:curCat, title, body:$('nBody').value.trim()||null,
+    grade:$('nGrade').value?Number($('nGrade').value):null,
+    subject:curCat==='교과'?($('nSubj').value.trim()||null):null,
+    link:$('nLink').value.trim()||null,
+    pinned:$('nPin').checked, end_at:$('nEnd').value||null,
+    author_id:me.id, author_name:myName };
+  const { error } = await sb.from('notices').insert(rec);
+  $('nSave').disabled=false;
+  if(error){ toast('등록 실패: '+error.message); return; }
+  $('nTitle').value='';$('nBody').value='';$('nSubj').value='';$('nEnd').value='';$('nLink').value='';$('nPin').checked=false;
+  toast('✅ 공지 등록됨'); loadNotices();
+}
+async function loadNotices(){
+  const { data } = await sb.from('notices').select('*').order('pinned',{ascending:false}).order('created_at',{ascending:false});
+  const box=$('noticeList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 공지가 없습니다</div>'; return; }
+  box.innerHTML = data.map(n=>{
+    const cat = n.category==='교과'&&n.subject?`교과·${esc(n.subject)}`:n.category;
+    const exp = n.end_at?` · ~${n.end_at}`:'';
+    return `<div class="item"><span class="tag tag-${n.category}">${esc(cat)}</span>
+      <div class="main"><div class="t">${n.pinned?'<span class="pin">📌 </span>':''}${esc(n.title)}${n.grade?` <span class="meta">[${n.grade}학년]</span>`:''}</div>
+      ${n.body?`<div class="b">${esc(n.body)}</div>`:''}
+      <div class="meta">${esc(n.author_name||'')} · ${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
+      <button class="del" onclick="del('notices',${n.id},loadNotices)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 일정 ── */
+async function saveSched(){
+  const title=$('sTitle').value.trim(), start=$('sStart').value;
+  if(!title||!start){ toast('일정명과 시작일을 입력하세요'); return; }
+  $('sSave').disabled=true;
+  const { error } = await sb.from('schedules').insert({ title, start_date:start,
+    end_date:$('sEnd').value||null, location:$('sLoc').value.trim()||null,
+    icon:$('sIcon').value||'📌', author_id:me.id });
+  $('sSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('sTitle').value='';$('sStart').value='';$('sEnd').value='';$('sLoc').value='';
+  toast('✅ 일정 추가됨'); loadScheds();
+}
+async function loadScheds(){
+  const { data } = await sb.from('schedules').select('*').order('start_date',{ascending:true});
+  const box=$('schedList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 일정이 없습니다</div>'; return; }
+  box.innerHTML = data.map(s=>{
+    const range = s.end_date&&s.end_date!==s.start_date?` ~ ${s.end_date}`:'';
+    return `<div class="item"><span class="tag" style="background:#f5a623">${s.icon||'📌'}</span>
+      <div class="main"><div class="t">${esc(s.title)}</div>
+      <div class="meta">${s.start_date}${range}${s.location?' · @'+esc(s.location):''}</div></div>
+      <button class="del" onclick="del('schedules',${s.id},loadScheds)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 시간표 변경 ── */
+async function saveTTC(){
+  const date=$('cDate').value;
+  if(!date){ toast('날짜를 선택하세요'); return; }
+  if(!$('cBefore').value.trim()&&!$('cAfter').value.trim()){ toast('변경 내용을 입력하세요'); return; }
+  $('cSave').disabled=true;
+  const { error } = await sb.from('timetable_changes').insert({ change_date:date,
+    grade:$('cGrade').value?Number($('cGrade').value):null,
+    class_no:$('cClass').value?Number($('cClass').value):null,
+    period:$('cPeriod').value?Number($('cPeriod').value):null,
+    before_subj:$('cBefore').value.trim()||null, after_subj:$('cAfter').value.trim()||null,
+    note:$('cNote').value.trim()||null, author_id:me.id });
+  $('cSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  ['cClass','cPeriod','cBefore','cAfter','cNote'].forEach(i=>$(i).value='');
+  toast('✅ 변경사항 추가됨'); loadTTCs();
+}
+async function loadTTCs(){
+  const today=new Date().toISOString().slice(0,10);
+  const { data } = await sb.from('timetable_changes').select('*').gte('change_date',today)
+    .order('change_date').order('grade').order('period');
+  const box=$('ttcList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">예정된 변경사항이 없습니다</div>'; return; }
+  box.innerHTML = data.map(c=>{
+    const who=`${c.grade?c.grade+'학년 ':''}${c.class_no?c.class_no+'반 ':''}${c.period?c.period+'교시':''}`.trim();
+    return `<div class="item"><span class="tag" style="background:#4a72ff">${c.change_date.slice(5)}</span>
+      <div class="main"><div class="t">${esc(c.before_subj||'')} → ${esc(c.after_subj||'')}</div>
+      <div class="meta">${who||'전체'}${c.note?' · '+esc(c.note):''}</div></div>
+      <button class="del" onclick="del('timetable_changes',${c.id},loadTTCs)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 디데이 ── */
+const DDAY_ICON = { '시험':'📝','평가':'📊','방학':'🏖️','기타':'🎯' };
+function ddayIcon(){ $('dIcon').value = DDAY_ICON[$('dType').value] || '🎯'; }
+async function saveDday(){
+  const title=$('dTitle').value.trim(), date=$('dDate').value;
+  if(!title||!date){ toast('이름과 날짜를 입력하세요'); return; }
+  $('dSave').disabled=true;
+  const { error } = await sb.from('ddays').insert({ title, target_date:date,
+    type:$('dType').value, icon:$('dIcon').value||'🎯', author_id:me.id });
+  $('dSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('dTitle').value='';
+  toast('✅ 디데이 추가됨'); loadDdays();
+}
+async function loadDdays(){
+  const { data } = await sb.from('ddays').select('*').order('target_date',{ascending:true});
+  const box=$('ddayList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 디데이가 없습니다</div>'; return; }
+  const t=new Date(); t.setHours(0,0,0,0);
+  box.innerHTML = data.map(x=>{
+    const n=Math.round((new Date(x.target_date+'T00:00')-t)/86400000);
+    const dtxt = n<0?`D+${-n} (지남)`:(n===0?'D-DAY':`D-${n}`);
+    return `<div class="item"><span class="tag" style="background:#8b6cff">${x.icon||'🎯'} ${esc(x.type)}</span>
+      <div class="main"><div class="t">${esc(x.title)} <span class="meta">${dtxt}</span></div>
+      <div class="meta">${x.target_date}</div></div>
+      <button class="del" onclick="del('ddays',${x.id},loadDdays)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 평가일정 ── */
+async function saveAssess(){
+  const subject=$('aSubject').value.trim(), title=$('aTitle').value.trim(), date=$('aDate').value;
+  if(!subject||!title||!date){ toast('과목·평가명·평가일을 입력하세요'); return; }
+  $('aSave').disabled=true;
+  const { error } = await sb.from('assessments').insert({ subject, title, assess_date:date,
+    assess_type:$('aType').value, grade:$('aGrade').value?Number($('aGrade').value):null,
+    scope:$('aScope').value.trim()||null, author_id:me.id });
+  $('aSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('aTitle').value='';$('aScope').value='';
+  toast('✅ 평가일정 추가됨'); loadAssess();
+}
+async function loadAssess(){
+  const today=new Date().toISOString().slice(0,10);
+  const { data } = await sb.from('assessments').select('*').gte('assess_date',today)
+    .order('assess_date',{ascending:true});
+  const box=$('assessList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">예정된 평가가 없습니다</div>'; return; }
+  box.innerHTML = data.map(a=>{
+    const g=a.grade?`${a.grade}학년 `:'';
+    const color=a.assess_type==='지필평가'?'#ef3b46':(a.assess_type==='수행평가'?'#d97706':'#3b6ef5');
+    return `<div class="item"><span class="tag" style="background:${color}">${esc(a.assess_type)}</span>
+      <div class="main"><div class="t">${g}${esc(a.subject)} · ${esc(a.title)}</div>
+      <div class="meta">${a.assess_date}${a.scope?' · 📖 '+esc(a.scope):''}</div></div>
+      <button class="del" onclick="del('assessments',${a.id},loadAssess)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 학생 호출 ── */
+async function loadClasses(){
+  const g = $('kGrade').value;
+  const cls = $('kClass'); const stu = $('kStudent');
+  cls.innerHTML='<option value="">선택</option>'; stu.innerHTML='<option value="">반 먼저 선택</option>';
+  if(!g) return;
+  // 학생 DB(profiles)에서 해당 학년의 반 목록 조회
+  const { data } = await sb.from('profiles').select('class_no').eq('grade', Number(g));
+  let classes = [...new Set((data||[]).map(r=>r.class_no).filter(v=>v!=null))].sort((a,b)=>a-b);
+  if(!classes.length) classes = Array.from({length:12},(_,i)=>i+1); // 명단 없으면 1~12반
+  cls.innerHTML = '<option value="">선택</option>' + classes.map(c=>`<option value="${c}">${c}반</option>`).join('');
+}
+async function loadStudents(){
+  const g=$('kGrade').value, c=$('kClass').value, stu=$('kStudent');
+  stu.innerHTML='<option value="">선택</option>';
+  if(!g||!c) return;
+  const { data } = await sb.from('profiles').select('id,name,number')
+    .eq('grade',Number(g)).eq('class_no',Number(c)).order('number',{ascending:true});
+  if(!data||!data.length){ stu.innerHTML='<option value="">명단 없음 — 직접 입력</option>';
+    $('kStuHint').textContent='이 반의 학생 명단이 DB에 없습니다. 아래 "이름 직접 입력"을 사용하세요.'; return; }
+  $('kStuHint').textContent='명단에서 학생을 선택하세요. (없으면 아래에 직접 입력)';
+  stu.innerHTML='<option value="">선택</option>'+data.map(s=>
+    `<option value="${s.id}" data-name="${esc(s.name||'')}">${s.number?s.number+'번 ':''}${esc(s.name||'(이름없음)')}</option>`).join('');
+}
+async function saveCall(){
+  const g=$('kGrade').value, c=$('kClass').value;
+  const opt=$('kStudent').selectedOptions[0];
+  const pickedId = $('kStudent').value || null;
+  const pickedName = opt?opt.getAttribute('data-name'):'';
+  const name = (pickedName || $('kName').value.trim());
+  if(!name){ toast('학생을 선택하거나 이름을 입력하세요'); return; }
+  $('kSave').disabled=true;
+  const { error } = await sb.from('calls').insert({ student_name:name,
+    grade:g?Number(g):null, class_no:c?Number(c):null, student_id:pickedId,
+    teacher_name:myName, location:$('kLoc').value.trim()||'교무실',
+    reason:$('kReason').value.trim()||null, author_id:me.id });
+  $('kSave').disabled=false;
+  if(error){ toast('호출 실패: '+error.message); return; }
+  $('kName').value=''; $('kReason').value='';
+  toast('📣 호출했어요'); loadCalls();
+}
+async function loadCalls(){
+  const { data } = await sb.from('calls').select('*').eq('status','active').order('created_at',{ascending:false});
+  const box=$('callList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">현재 호출 중인 학생이 없습니다</div>'; return; }
+  box.innerHTML = data.map(c=>{
+    const cls=`${c.grade??'?'}-${c.class_no??'?'}`;
+    const t=new Date(c.created_at);
+    return `<div class="item"><span class="tag" style="background:#b45309">${cls}</span>
+      <div class="main"><div class="t">${esc(c.student_name)} <span class="meta">← ${esc(c.teacher_name)} 선생님 · ${esc(c.location||'교무실')}</span></div>
+      <div class="meta">${c.reason?esc(c.reason)+' · ':''}${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')} 호출</div></div>
+      <button class="del" style="background:#e7f9f0;color:#0ea371" onclick="doneCall(${c.id})">✅ 완료</button></div>`;
+  }).join('');
+}
+async function doneCall(id){
+  const { error } = await sb.from('calls').update({ status:'done', done_at:new Date().toISOString() }).eq('id',id);
+  if(error){ toast('실패: '+error.message); return; }
+  toast('완료 처리됨'); loadCalls();
+}
+
+/* ── 📍 수업 장소 안내 ── */
+async function saveLoc(){
+  const date=$('lcDate').value, subject=$('lcSubject').value.trim(), loc=$('lcLoc').value.trim();
+  if(!date||!subject||!loc){ toast('날짜·과목·장소를 입력하세요'); return; }
+  $('lcSave').disabled=true;
+  const { error } = await sb.from('class_locations').insert({ loc_date:date,
+    grade:$('lcGrade').value?Number($('lcGrade').value):null,
+    class_no:$('lcClass').value?Number($('lcClass').value):null,
+    period:$('lcPeriod').value?Number($('lcPeriod').value):null,
+    subject, location:loc, note:$('lcNote').value.trim()||null, author_id:me.id });
+  $('lcSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('lcNote').value='';
+  toast('📍 장소 등록됨'); loadLocs();
+}
+async function loadLocs(){
+  const today=new Date().toISOString().slice(0,10);
+  const { data } = await sb.from('class_locations').select('*').gte('loc_date',today)
+    .order('loc_date').order('grade').order('period');
+  const box=$('locList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 장소 안내가 없습니다</div>'; return; }
+  box.innerHTML=data.map(l=>{
+    const who=`${l.grade?l.grade+'학년 ':''}${l.class_no?l.class_no+'반 ':''}${l.period?l.period+'교시':''}`.trim();
+    return `<div class="item"><span class="tag" style="background:#0ea371">${l.loc_date.slice(5)}</span>
+      <div class="main"><div class="t">${esc(l.subject)} → 📍 ${esc(l.location)}</div>
+      <div class="meta">${who||'전체'}${l.note?' · '+esc(l.note):''}</div></div>
+      <button class="del" onclick="del('class_locations',${l.id},loadLocs)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 청소당번 ── */
+async function saveClean(){
+  const g=$('clGrade').value, c=$('clClass').value, area=$('clArea').value.trim(), mem=$('clMembers').value.trim();
+  if(!g||!c||!area||!mem){ toast('학년·반·구역·담당을 모두 입력하세요'); return; }
+  $('clSave').disabled=true;
+  const { error } = await sb.from('cleaning_duties').insert({ grade:Number(g), class_no:Number(c), area, members:mem, author_id:me.id });
+  $('clSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('clArea').value='';$('clMembers').value='';
+  toast('✅ 당번 추가됨'); loadClean();
+}
+async function loadClean(){
+  const g=$('clGrade').value, c=$('clClass').value;
+  let qy = sb.from('cleaning_duties').select('*');
+  if(g && c) qy = qy.eq('grade',Number(g)).eq('class_no',Number(c));
+  const { data } = await qy.order('grade',{ascending:true}).order('class_no',{ascending:true}).order('sort_order',{ascending:true}).order('id',{ascending:true});
+  const box=$('cleanList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 당번이 없습니다</div>'; return; }
+  box.innerHTML=data.map(c=>`<div class="item"><span class="tag" style="background:#3b6ef5">${c.grade}-${c.class_no}</span>
+    <div class="main"><div class="t">${esc(c.area)}</div><div class="meta">${esc(c.members)}</div></div>
+    <button class="del" onclick="del('cleaning_duties',${c.id},loadClean)">삭제</button></div>`).join('');
+}
+
+/* ── 📬 받은 쪽지 (학생 → 선생님) ── */
+const MSG_COLOR = {'하고 싶은 말':'#3b6ef5','질문':'#7c5cff','건의':'#0ea371','고민·상담':'#d97706','도움 요청':'#ef3b46'};
+const MSG_ICON  = {'하고 싶은 말':'💬','질문':'❓','건의':'🙋','고민·상담':'😟','도움 요청':'🚨'};
+let msgFilterMode = 'unread';
+function msgTab(f){
+  msgFilterMode=f;
+  document.querySelectorAll('#msgFilter .chip[data-f]').forEach(c=>c.classList.toggle('on',c.dataset.f===f));
+  loadMsgs(true);
+}
+// 배지만 갱신 (읽음 처리 안 함)
+async function refreshMsgBadge(){
+  const { count, error } = await sb.from('messages').select('*',{count:'exact',head:true}).eq('status','unread');
+  const b=$('msgBadge'); if(!b) return;
+  if(!error && count>0){ b.textContent=count; b.style.display='inline-block'; } else b.style.display='none';
+}
+// markRead=true 는 쪽지 탭을 실제로 열었을 때만
+async function loadMsgs(markRead){
+  let qy = sb.from('messages').select('*');
+  if(msgFilterMode==='unread') qy = qy.in('status',['unread','read']);
+  else if(msgFilterMode==='done') qy = qy.eq('status','done');
+  const { data, error } = await qy.order('created_at',{ascending:false}).limit(100);
+  const box=$('msgList');
+  if(error){ box.innerHTML='<div class="empty">쪽지를 불러오지 못했습니다 — SQL을 실행했는지 확인하세요</div>'; return; }
+  await refreshMsgBadge();
+
+  if(!data||!data.length){ box.innerHTML='<div class="empty">받은 쪽지가 없습니다</div>'; return; }
+  box.innerHTML = data.map(m=>{
+    const who = m.is_anonymous ? '<span class="anon">🕶️ 익명</span>'
+      : `${m.grade?m.grade+'-':''}${m.class_no??''} ${esc(m.student_name||'이름 없음')}`;
+    const to = m.to_teacher ? ` → ${esc(m.to_teacher)}` : '';
+    const d = new Date(m.created_at);
+    const when = `${d.getMonth()+1}.${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="msg ${m.status==='unread'?'unread':''}">
+      <div class="top">
+        <span class="ctag" style="background:${MSG_COLOR[m.category]||'#6c7894'}">${MSG_ICON[m.category]||'💬'} ${esc(m.category)}</span>
+        <span class="who">${who}</span><span class="anon">${to}</span>
+        ${m.status==='unread'?'<span class="ctag" style="background:#ef3b46">NEW</span>':''}
+        <span class="when">${when}</span>
+      </div>
+      <div class="body">${esc(m.body)}</div>
+      <div class="acts">
+        ${m.status!=='done'?`<button class="ok" onclick="msgDone(${m.id})">✅ 처리 완료</button>`:''}
+        <button onclick="msgDel(${m.id})">🗑️ 삭제</button>
+      </div></div>`;
+  }).join('');
+  // 쪽지 탭을 실제로 열었을 때만 'unread' → 'read'
+  if(markRead && !READONLY){
+    const unreadIds = data.filter(m=>m.status==='unread').map(m=>m.id);
+    if(unreadIds.length){
+      await sb.from('messages').update({status:'read', read_at:new Date().toISOString()}).in('id',unreadIds);
+      refreshMsgBadge();
+    }
+  }
+}
+async function msgDone(id){
+  const { error } = await sb.from('messages').update({status:'done'}).eq('id',id);
+  if(error){ toast('실패: '+error.message); return; }
+  toast('✅ 처리 완료'); loadMsgs(false);
+}
+async function msgDel(id){
+  if(!confirm('이 쪽지를 삭제할까요?')) return;
+  const { error } = await sb.from('messages').delete().eq('id',id);
+  if(error){ toast('실패: '+error.message); return; }
+  toast('🗑️ 삭제됨'); loadMsgs(false);
+}
+// 새 쪽지 실시간 알림
+function subscribeMsgs(){
+  sb.channel('msg-live').on('postgres_changes',
+    {event:'INSERT',schema:'public',table:'messages'}, ()=>{
+      toast('📬 새 쪽지가 왔어요!'); refreshMsgBadge();
+      if(document.getElementById('p-msg').classList.contains('on')) loadMsgs(true);
+    }).subscribe();
+}
+
+/* ── 🙋 1인1역 ── */
+function preRole(icon, role){ $('roIcon').value=icon; $('roRole').value=role; $('roMember').focus(); }
+async function saveRole(){
+  const g=$('roGrade').value, c=$('roClass').value, role=$('roRole').value.trim(), mem=$('roMember').value.trim();
+  if(!g||!c||!role||!mem){ toast('학년·반·역할·담당을 모두 입력하세요'); return; }
+  $('roSave').disabled=true;
+  const { error } = await sb.from('class_roles').insert({ grade:Number(g), class_no:Number(c),
+    role, member:mem, icon:$('roIcon').value||'🙋', author_id:me.id });
+  $('roSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('roRole').value='';$('roMember').value='';$('roIcon').value='🙋';
+  toast('✅ 1인1역 추가됨'); loadRoles();
+}
+async function loadRoles(){
+  const g=$('roGrade').value, c=$('roClass').value;
+  let qy = sb.from('class_roles').select('*');
+  if(g && c) qy = qy.eq('grade',Number(g)).eq('class_no',Number(c));
+  const { data } = await qy.order('grade',{ascending:true}).order('class_no',{ascending:true}).order('sort_order',{ascending:true}).order('id',{ascending:true});
+  const box=$('roleList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 1인1역이 없습니다</div>'; return; }
+  box.innerHTML=data.map(r=>`<div class="item"><span class="tag" style="background:#7c5cff">${r.grade}-${r.class_no}</span>
+    <div class="main"><div class="t">${r.icon||'🙋'} ${esc(r.role)}</div><div class="meta">${esc(r.member)}</div></div>
+    <button class="del" onclick="del('class_roles',${r.id},loadRoles)">삭제</button></div>`).join('');
+}
+
+/* ── 분실물 ── */
+async function uploadLostPhoto(file){
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  const path=`lost/${Date.now()}_${Math.random().toString(36).slice(2,6)}.${ext}`;
+  const { data, error }=await sb.storage.from('attachments').upload(path,file,{cacheControl:'3600',upsert:false});
+  if(error){ console.error('업로드 실패:',error.message); return null; }
+  return sb.storage.from('attachments').getPublicUrl(data.path).data.publicUrl;
+}
+async function saveLost(){
+  const name=$('loName').value.trim();
+  if(!name){ toast('물건 이름을 입력하세요'); return; }
+  $('loSave').disabled=true;
+  let photo=null; const f=$('loPhoto').files[0];
+  if(f){ toast('사진 업로드 중…'); photo=await uploadLostPhoto(f);
+    if(photo===null && f){ /* 업로드 실패해도 텍스트는 등록 */ } }
+  const { error }=await sb.from('lost_items').insert({ item_name:name,
+    found_place:$('loFound').value.trim()||null, keep_place:$('loKeep').value.trim()||'교무실',
+    photo_url:photo, author_id:me.id });
+  $('loSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('loName').value='';$('loFound').value='';$('loPhoto').value='';
+  toast('✅ 분실물 등록됨'); loadLost();
+}
+async function loadLost(){
+  const { data }=await sb.from('lost_items').select('*').eq('status','active').order('created_at',{ascending:false});
+  const box=$('lostList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">보관 중인 분실물이 없습니다</div>'; return; }
+  box.innerHTML=data.map(it=>`<div class="item">${it.photo_url?`<img src="${esc(it.photo_url)}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex:0 0 auto">`:'<span class="tag" style="background:#b45309">🔍</span>'}
+    <div class="main"><div class="t">${esc(it.item_name)}</div><div class="meta">${it.found_place?'발견: '+esc(it.found_place)+' · ':''}보관: ${esc(it.keep_place||'교무실')}</div></div>
+    <button class="del" style="background:#e7f9f0;color:#0ea371" onclick="returnLost(${it.id})">✅ 찾아감</button></div>`).join('');
+}
+async function returnLost(id){
+  const { error }=await sb.from('lost_items').update({status:'returned'}).eq('id',id);
+  if(error){ toast('실패: '+error.message); return; }
+  toast('찾아감 처리됨'); loadLost();
+}
+
+/* 같은 폴더의 형제 페이지 주소 (로컬 원본명 / 배포 짧은명 자동 판별) */
+function siblingPage(kind){
+  const base = location.href.split('?')[0].split('#')[0];
+  const dir  = base.replace(/[^/]*$/,'');
+  const file = base.slice(dir.length) || 'index.html';
+  const map = /^notice_/.test(file)
+    ? {display:'notice_display.html', admin:'notice_admin.html', message:'notice_message.html'}
+    : {display:'index.html',          admin:'admin.html',        message:'message.html'};
+  return dir + map[kind];
+}
+
+/* 학생용 쪽지 페이지 주소 안내 */
+function msgUrlHint(){
+  const el=$('msgUrl'); if(el) el.textContent=siblingPage('message');
+  const dl=$('dispLink'); if(dl) dl.href=siblingPage('display');
+}
+
+/* ── 교실별 보드 주소 생성 ── */
+function makeUrl(){
+  const g=$('urlGrade').value, c=$('urlClass').value||'1';
+  $('urlOut').value=`${siblingPage('display')}?class=${g}-${c}`;
+}
+
+/* ── 설정 ── */
+async function loadCfg(){
+  const { data } = await sb.from('display_config').select('*');
+  const m={}; (data||[]).forEach(r=>m[r.key]=r.value);
+  $('cfgSchool').value=m.school_name||''; $('cfgSlide').value=m.slide_seconds||'12';
+  $('cfgAtpt').value=m.neis_atpt||''; $('cfgSchoolCode').value=m.neis_school||'';
+  $('cfgCode').value=m.admin_code||'';
+}
+async function saveCfg(){
+  $('cfgSave').disabled=true;
+  const rows=[{key:'school_name',value:$('cfgSchool').value},{key:'slide_seconds',value:$('cfgSlide').value},
+    {key:'neis_atpt',value:$('cfgAtpt').value},{key:'neis_school',value:$('cfgSchoolCode').value},
+    {key:'admin_code',value:$('cfgCode').value}];
+  const { error } = await sb.from('display_config').upsert(rows);
+  $('cfgSave').disabled=false;
+  toast(error?('실패: '+error.message):'✅ 설정 저장됨');
+}
+
+/* ── 공통 ── */
+async function del(table,id,reload){
+  if(!confirm('삭제할까요?')) return;
+  const { error } = await sb.from(table).delete().eq('id',id);
+  if(error){ toast('삭제 실패: '+error.message); return; }
+  toast('🗑️ 삭제됨'); reload();
+}
+function esc(s){ return (s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtDate(iso){ if(!iso)return''; const d=new Date(iso); return `${d.getMonth()+1}.${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+let toastT; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+
+// 기본 날짜 = 오늘
+const today=new Date().toISOString().slice(0,10);
+$('cDate').value=today; $('sStart').value=today; $('dDate').value=today; $('aDate').value=today; $('lcDate').value=today;
+$('pw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+checkSession();
+</script>
+</body>
+</html>

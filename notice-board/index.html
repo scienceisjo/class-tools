@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>해누리중학교 공지</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#f4f7fc; --panel:#ffffff; --panel2:#eef2fa; --line:#e3e8f4;
+    --txt:#1d2742; --sub:#6c7894; --accent:#3b6ef5; --gold:#d97706;
+    --urgent:#ef3b46; --green:#0ea371; --pink:#e84d92; --purple:#7c5cff;
+    --shadow:0 2px 12px rgba(30,44,90,.06);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;}
+  body{display:flex;flex-direction:column}
+
+  /* ── 상단바 ── */
+  header{display:flex;align-items:center;justify-content:space-between;
+    padding:1.1vw 1.8vw;background:#fff;
+    border-bottom:1px solid var(--line);box-shadow:var(--shadow);flex:0 0 auto}
+  .brand{display:flex;align-items:center;gap:.9vw}
+  .brand .logo{font-size:2.6vw}
+  .brand h1{font-size:2.2vw;font-weight:800;letter-spacing:-.5px}
+  .hright{display:flex;align-items:center;gap:1.4vw}
+  .clock{text-align:right;line-height:1.1}
+  .clock .time{font-size:2.8vw;font-weight:800;font-variant-numeric:tabular-nums}
+  .clock .date{font-size:1.25vw;color:var(--sub);font-weight:600}
+  .wx{display:flex;align-items:center;gap:.5vw;font-size:1.5vw;font-weight:700}
+  .wx .ico{font-size:2vw}
+  .aqi{display:flex;align-items:center;gap:.35vw;font-size:1.25vw;font-weight:700}
+  .aqi b{font-weight:900}
+  .rain{display:flex;align-items:center;font-size:1.25vw;font-weight:800;color:var(--accent)}
+  #mealList sup.alg{font-size:.72vw;color:var(--sub);font-weight:700;margin-left:.2vw}
+  .locpin{color:var(--green);font-weight:800}
+  .classbadge{display:inline-flex;align-items:center;background:var(--accent);color:#fff;
+    font-size:1.5vw;font-weight:800;padding:.2vw 1vw;border-radius:.6vw;letter-spacing:.5px}
+  .period{display:flex;align-items:center;gap:.4vw;font-size:1.4vw;font-weight:700;color:var(--green)}
+  .period b{font-weight:800;color:var(--txt)}
+
+  /* ── 긴급 배너 ── */
+  #urgentBar{flex:0 0 auto;display:none;align-items:center;gap:1vw;
+    background:linear-gradient(90deg,#ff2d40,#ff5a3c);padding:.9vw 1.8vw;
+    font-size:1.9vw;font-weight:800;overflow:hidden;white-space:nowrap}
+  #urgentBar.show{display:flex}
+  #urgentBar .tag{background:#fff;color:var(--urgent);padding:.15vw 1vw;border-radius:99px;
+    font-size:1.4vw;font-weight:900;flex:0 0 auto;letter-spacing:1px}
+  #urgentText{display:inline-block;animation:marquee 22s linear infinite}
+  @keyframes marquee{0%{transform:translateX(8vw)}100%{transform:translateX(-100%)}}
+
+  /* ── 호출 띠 ── */
+  #callBar{flex:0 0 auto;display:flex;align-items:center;gap:1vw;padding:.6vw 1.8vw;
+    background:linear-gradient(90deg,#eaf1ff,#f1f6ff);border-bottom:2px solid #d3e2ff}
+  #callBar.has{background:linear-gradient(90deg,#fff1d6,#ffe7c2);border-bottom-color:#ffce85}
+  #callBar .clabel{display:flex;align-items:center;gap:.4vw;font-size:1.45vw;font-weight:800;color:var(--accent);flex:0 0 auto}
+  #callBar.has .clabel{color:#b45309}
+  #callFilter{font-size:1.15vw;font-weight:700;padding:.35vw .9vw;border-radius:.5vw;
+    border:1.5px solid var(--line);background:#fff;color:var(--txt);flex:0 0 auto}
+  #callList{flex:1 1 auto;display:flex;gap:1vw;overflow:hidden;align-items:center}
+  .callitem{display:flex;align-items:center;gap:.5vw;font-size:1.35vw;font-weight:700;flex:0 0 auto;
+    background:#fff;border:1.5px solid #ffce85;border-radius:99px;padding:.3vw 1.1vw}
+  .callitem .cls{background:#b45309;color:#fff;font-size:1.05vw;font-weight:800;padding:.12vw .65vw;border-radius:99px}
+  .callitem .stu{color:#9a3412;font-weight:800}
+  .callitem .arr{color:var(--sub);font-weight:600}
+  .callitem .loc{color:var(--accent);font-weight:800}
+  #callEmpty{font-size:1.25vw;color:var(--sub);font-weight:600}
+
+  /* ── 디데이 띠 ── */
+  #ddayBar{flex:0 0 auto;display:flex;gap:.9vw;padding:.75vw 1.8vw 0;align-items:stretch;overflow:hidden}
+  #ddayBar:empty{display:none}
+  .dday{display:flex;align-items:center;gap:.8vw;background:#fff;box-shadow:var(--shadow);
+    border:1px solid var(--line);border-radius:.8vw;padding:.55vw 1.2vw;flex:0 0 auto}
+  .dday .ic{font-size:1.9vw}
+  .dday .lab{font-size:1.05vw;font-weight:700;color:var(--sub);line-height:1.15}
+  .dday .lab b{display:block;font-size:1.25vw;color:var(--txt);font-weight:800}
+  .dday .cnt{font-size:2.1vw;font-weight:900;font-variant-numeric:tabular-nums;margin-left:.3vw}
+  .dday.t-시험 .cnt{color:var(--urgent)} .dday.t-평가 .cnt{color:var(--gold)}
+  .dday.t-방학 .cnt{color:var(--green)} .dday.t-기타 .cnt{color:var(--accent)}
+  .dday.today{border-color:var(--gold);background:linear-gradient(90deg,#fff6e8,#fffdf8)}
+  .dday.today .cnt{color:var(--gold)}
+
+  /* ── 본문 그리드 ── */
+  main{flex:1 1 auto;display:grid;grid-template-columns:30% 1fr;
+    grid-template-rows:1fr 1fr;gap:1vw;padding:1vw 1.8vw 1.4vw;min-height:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:1vw;box-shadow:var(--shadow);
+    padding:1.1vw 1.3vw;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .card h2{font-size:1.5vw;font-weight:800;display:flex;align-items:center;gap:.6vw;
+    margin-bottom:.7vw;flex:0 0 auto}
+  .card h2 .em{font-size:1.7vw}
+  .card .body{flex:1 1 auto;min-height:0;overflow:hidden}
+
+  #meal{grid-column:1;grid-row:1}    /* 좌측 위: 급식 */
+  #assess{grid-column:1;grid-row:2}  /* 좌측 아래: 평가일정 */
+
+  /* 급식 */
+  #mealDay{font-size:1.1vw;color:var(--gold);font-weight:800;margin-bottom:.45vw}
+  #mealList{list-style:none;display:flex;flex-direction:column;gap:.4vw}
+  #mealList li{font-size:1.35vw;font-weight:600;line-height:1.2;
+    padding-left:1.3vw;position:relative}
+  #mealList li::before{content:'•';position:absolute;left:0;color:var(--green);font-weight:900}
+  #mealKcal{margin-top:.55vw;font-size:1vw;color:var(--sub);font-weight:600}
+  .empty{color:var(--sub);font-size:1.25vw;font-weight:600;padding:.8vw 0}
+
+  /* 평가일정 */
+  .assessrow{display:flex;align-items:flex-start;gap:.6vw;padding:.5vw 0;border-bottom:1px solid var(--line);font-size:1.2vw;line-height:1.25}
+  .assessrow:last-child{border-bottom:none}
+  .assessrow .d{flex:0 0 auto;font-weight:800;color:var(--gold);min-width:4.3vw}
+  .assessrow .ty{flex:0 0 auto;font-size:.85vw;font-weight:800;padding:.1vw .5vw;border-radius:.4vw;margin-right:.2vw}
+  .ty-지필평가{background:rgba(239,59,70,.14);color:var(--urgent)}
+  .ty-수행평가{background:rgba(217,119,6,.16);color:var(--gold)}
+  .ty-기타{background:rgba(59,110,245,.14);color:var(--accent)}
+  .assessrow .sub{font-weight:800}
+  .assessrow .sc{color:var(--sub);font-weight:600;font-size:.95vw;display:block}
+
+  /* 공지 카드 영역 (우상단, 큰 비중) */
+  #noticeCard{grid-column:2;grid-row:1/2}
+  #noticeStage{position:relative;flex:1 1 auto;min-height:0}
+  .slide{position:absolute;inset:0;opacity:0;transition:opacity .6s;
+    display:flex;flex-direction:row;align-items:center;gap:1.6vw;pointer-events:none}
+  .slide.active{opacity:1}
+  .slide .stext{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .slide .rightmedia{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:.4vw}
+  .slide .rightmedia img{width:13vw;height:13vw;object-fit:contain;background:#fff;
+    border:1.5px solid var(--line);border-radius:.7vw;padding:.4vw}
+  .slide .rightmedia span{font-size:1.05vw;font-weight:800;color:var(--accent)}
+  .cat-lost{background:rgba(245,158,11,.18);color:#b45309}
+  .slide .cat{display:inline-flex;align-self:flex-start;align-items:center;gap:.4vw;
+    font-size:1.2vw;font-weight:800;padding:.25vw 1vw;border-radius:99px;margin-bottom:.9vw}
+  .cat-교과{background:rgba(169,139,255,.2);color:var(--purple)}
+  .cat-학년{background:rgba(91,140,255,.2);color:var(--accent)}
+  .cat-일반{background:rgba(55,211,155,.2);color:var(--green)}
+  .cat-긴급{background:rgba(255,77,94,.2);color:var(--urgent)}
+  .slide .stitle{font-size:2.5vw;font-weight:800;line-height:1.2;margin-bottom:.7vw}
+  .slide .sbody{font-size:1.6vw;color:#41506e;line-height:1.4;font-weight:500;
+    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .slide .meta{margin-top:1vw;font-size:1.1vw;color:var(--sub);font-weight:600}
+  #dots{display:flex;gap:.5vw;justify-content:center;margin-top:.6vw;flex:0 0 auto}
+  #dots i{width:.7vw;height:.7vw;border-radius:99px;background:var(--line);transition:.3s}
+  #dots i.on{background:var(--accent);width:2vw}
+
+  /* 하단 우측: 일정 + 시간표변경 나란히 */
+  #bottomRow{grid-column:2;grid-row:2/3;display:grid;grid-template-columns:1fr 1fr;gap:1vw;min-height:0}
+  #cleanCard{display:none}
+  body.cmode #bottomRow{grid-template-columns:1fr 1fr 1fr}
+  body.cmode #cleanCard{display:flex}
+  .cleanrow{display:flex;align-items:flex-start;gap:.7vw;padding:.5vw 0;border-bottom:1px solid var(--line);font-size:1.2vw;line-height:1.3}
+  .cleanrow:last-child{border-bottom:none}
+  .cleanrow .ar{flex:0 0 auto;font-weight:800;color:var(--accent);min-width:6vw}
+  .cleanrow .mb{font-weight:600}
+  /* 청소당번 ↔ 1인1역 토글 (전자칠판 터치) */
+  .toggleh{display:flex;gap:.5vw;margin-bottom:.7vw;flex:0 0 auto}
+  .tgl{font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:var(--panel2);
+    color:var(--sub);font-size:1.15vw;font-weight:800;padding:.3vw 1vw;border-radius:99px;transition:.15s}
+  .tgl.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .rolerow{display:flex;align-items:center;gap:.7vw;padding:.5vw 0;border-bottom:1px solid var(--line);font-size:1.2vw;line-height:1.3}
+  .rolerow:last-child{border-bottom:none}
+  .rolerow .rn{flex:0 0 auto;font-weight:800;color:var(--purple);min-width:6.5vw}
+  .rolerow .rm{font-weight:600}
+  .listrow{display:flex;align-items:flex-start;gap:.7vw;padding:.55vw 0;border-bottom:1px solid var(--line);
+    font-size:1.25vw;line-height:1.3}
+  .listrow:last-child{border-bottom:none}
+  .listrow .d{flex:0 0 auto;font-weight:800;color:var(--gold);min-width:4.5vw}
+  .listrow .t{font-weight:600}
+  .listrow .loc{color:var(--sub);font-weight:600;margin-left:.4vw;font-size:1vw}
+  .ttc .chg{font-weight:800}
+  .ttc .arrow{color:var(--accent);margin:0 .3vw}
+  .ttc .who{color:var(--sub);font-weight:700;min-width:5vw;flex:0 0 auto}
+
+  /* 📮 선생님께 말하기 QR (좌하단 고정) */
+  #msgQR{position:fixed;left:1.8vw;bottom:1.4vw;z-index:40;display:flex;align-items:center;gap:.6vw;
+    background:var(--panel);border:1.5px solid var(--line);border-radius:.8vw;padding:.5vw .8vw;
+    box-shadow:var(--shadow)}
+  #msgQR img{width:5.2vw;height:5.2vw;display:block;background:#fff;border-radius:.3vw}
+  #msgQR .lab{font-size:1.05vw;font-weight:800;color:var(--accent);line-height:1.25}
+  #assess .body{padding-bottom:7.5vw}   /* QR 가림 방지 */
+
+  /* 연결 끊김 표시 */
+  #offline{position:fixed;bottom:1vw;right:1.4vw;background:var(--urgent);color:#fff;
+    padding:.4vw 1vw;border-radius:99px;font-size:1vw;font-weight:700;display:none;z-index:50}
+  #offline.show{display:block}
+  .scroller{animation:vscroll 30s linear infinite}
+  @keyframes vscroll{0%,10%{transform:translateY(0)}90%,100%{transform:translateY(calc(-100% + 12vw))}}
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="logo">🏫</span><h1 id="schoolName">해누리중학교</h1>
+      <span class="classbadge" id="classBadge" style="display:none"></span>
+    </div>
+    <div class="hright">
+      <span class="period" id="periodChip" style="display:none"></span>
+      <span class="aqi" id="aqi" style="display:none"></span>
+      <span class="rain" id="rain" style="display:none"></span>
+      <span class="wx" id="wx" style="display:none"><span class="ico" id="wxIco">☀️</span><span id="wxTemp">--°</span></span>
+      <div class="clock"><div class="time" id="time">--:--</div><div class="date" id="date">----</div></div>
+    </div>
+  </header>
+
+  <div id="urgentBar"><span class="tag">긴급</span><span style="overflow:hidden;flex:1"><span id="urgentText"></span></span></div>
+
+  <div id="callBar">
+    <span class="clabel">📣 호출</span>
+    <select id="callFilter" onchange="renderCalls()"><option value="">전체 반</option></select>
+    <div id="callList"></div>
+  </div>
+
+  <div id="ddayBar"></div>
+
+  <main>
+    <!-- 급식 (좌측 세로) -->
+    <section class="card" id="meal">
+      <h2><span class="em">🍚</span>오늘 급식</h2>
+      <div class="body">
+        <div id="mealDay"></div>
+        <ul id="mealList"></ul>
+        <div id="mealKcal"></div>
+      </div>
+    </section>
+
+    <!-- 평가일정 (좌측 아래) -->
+    <section class="card" id="assess">
+      <h2><span class="em">📋</span>다가오는 평가</h2>
+      <div class="body" id="assessBox"></div>
+    </section>
+
+    <!-- 공지 카드 (우상단) -->
+    <section class="card" id="noticeCard">
+      <h2><span class="em">📢</span>공지사항</h2>
+      <div class="body"><div id="noticeStage"></div></div>
+      <div id="dots"></div>
+    </section>
+
+    <!-- 하단: 일정 + 시간표변경 -->
+    <div id="bottomRow">
+      <section class="card">
+        <h2><span class="em">📅</span>주요일정</h2>
+        <div class="body" id="schedBox"></div>
+      </section>
+      <section class="card">
+        <h2 id="ttcTitle"><span class="em">🔄</span>수업 변경·장소</h2>
+        <div class="body" id="ttcBox"></div>
+      </section>
+      <section class="card" id="cleanCard">
+        <h2 class="toggleh">
+          <button class="tgl on" id="tgl-clean" onclick="switchDuty('clean')">🧹 청소당번</button>
+          <button class="tgl"    id="tgl-role"  onclick="switchDuty('role')">🙋 1인1역</button>
+        </h2>
+        <div class="body" id="cleanBox"></div>
+        <div class="body" id="roleBox" style="display:none"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="msgQR">
+    <img id="msgQRimg" alt="QR">
+    <div class="lab">📮 선생님께<br>말하기</div>
+  </div>
+
+  <div id="offline">⚠️ 연결 끊김 — 마지막 정보 표시중</div>
+
+<script>
+const SUPABASE_URL  = 'https://hmzklbrksfdhzsgwzfyg.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtemtsYnJrc2ZkaHpzZ3d6ZnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTY4NDcsImV4cCI6MjA5NTA5Mjg0N30.LuTEeJyu-mtkNzUTNaA8IigmdtWPWXS2ucVgXDeevPA';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let CFG = { school_name:'해누리중학교', slide_seconds:12, neis_atpt:'B10', neis_school:'7130256', weather_lat:'37.4989', weather_lon:'127.1180' };
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+const todayStr = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+
+/* ── 교실별 모드 (?class=2-3) — 특정 교실 전자칠판용 ── */
+const _cm = new URLSearchParams(location.search).get('class');
+const CLASS_MODE = (_cm && /^\d+-\d+$/.test(_cm)) ? _cm : null;
+const CM_GRADE = CLASS_MODE ? Number(CLASS_MODE.split('-')[0]) : null;
+const CM_CLASS = CLASS_MODE ? Number(CLASS_MODE.split('-')[1]) : null;
+let _callDefaulted = false;
+/* 같은 폴더의 형제 페이지 주소 만들기 (로컬 원본명 / 배포 짧은명 자동 판별) */
+function siblingPage(kind){
+  const base = location.href.split('?')[0].split('#')[0];
+  const dir  = base.replace(/[^/]*$/,'');
+  const file = base.slice(dir.length) || 'index.html';
+  const map = /^notice_/.test(file)
+    ? {display:'notice_display.html', admin:'notice_admin.html', message:'notice_message.html'}
+    : {display:'index.html',          admin:'admin.html',        message:'message.html'};
+  return dir + map[kind];
+}
+
+/* 📮 선생님께 말하기 QR */
+function buildMsgQR(){
+  const url = siblingPage('message') + (CLASS_MODE ? `?class=${CLASS_MODE}` : '');
+  $('msgQRimg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=1&data=${encodeURIComponent(url)}`;
+}
+
+function applyClassMode(){
+  if(!CLASS_MODE) return;
+  document.body.classList.add('cmode');  // 청소당번 칸 표시 + 3열 레이아웃
+  const b=$('classBadge'); b.textContent = `${CM_GRADE}학년 ${CM_CLASS}반`; b.style.display='inline-flex';
+}
+async function loadCleaning(){
+  if(!CLASS_MODE) return;
+  const { data } = await sb.from('cleaning_duties').select('*')
+    .eq('grade',CM_GRADE).eq('class_no',CM_CLASS).order('sort_order',{ascending:true}).order('id',{ascending:true});
+  const box=$('cleanBox');
+  if(!data || !data.length){ box.innerHTML='<div class="empty">등록된 당번이 없습니다</div>'; return; }
+  box.innerHTML = data.map(c=>`<div class="cleanrow"><span class="ar">${esc(c.area)}</span><span class="mb">${esc(c.members)}</span></div>`).join('');
+}
+
+/* ── 🙋 1인1역 (교실 보드, 청소당번과 토글) ── */
+async function loadRoles(){
+  if(!CLASS_MODE) return;
+  const { data } = await sb.from('class_roles').select('*')
+    .eq('grade',CM_GRADE).eq('class_no',CM_CLASS).order('sort_order',{ascending:true}).order('id',{ascending:true});
+  const box=$('roleBox');
+  if(!data || !data.length){ box.innerHTML='<div class="empty">등록된 1인1역이 없습니다</div>'; return; }
+  box.innerHTML = data.map(r=>`<div class="rolerow"><span class="rn">${r.icon||'🙋'} ${esc(r.role)}</span><span class="rm">${esc(r.member)}</span></div>`).join('');
+}
+function switchDuty(which){
+  const isRole = which==='role';
+  $('cleanBox').style.display = isRole?'none':'block';
+  $('roleBox').style.display  = isRole?'block':'none';
+  $('tgl-clean').classList.toggle('on', !isRole);
+  $('tgl-role').classList.toggle('on', isRole);
+}
+
+/* ── 현재 교시 / 쉬는시간 (헤더 표시) ── */
+// 필요시 시간만 학교에 맞게 수정하세요.
+const BELL = [
+  {label:'1교시', s:'08:50', e:'09:40'}, {label:'2교시', s:'09:50', e:'10:40'},
+  {label:'3교시', s:'10:50', e:'11:40'}, {label:'4교시', s:'11:50', e:'12:40'},
+  {label:'점심시간', s:'12:40', e:'13:40'}, {label:'5교시', s:'13:40', e:'14:30'},
+  {label:'6교시', s:'14:40', e:'15:30'}, {label:'7교시', s:'15:40', e:'16:30'},
+];
+const _toMin = t => { const [a,b]=t.split(':').map(Number); return a*60+b; };
+function updatePeriod(){
+  const el=$('periodChip'); const now=new Date(); const dow=now.getDay();
+  if(dow===0 || dow===6){ el.style.display='none'; return; } // 주말 숨김
+  const m=now.getHours()*60+now.getMinutes();
+  let cur=null, nxt=null;
+  for(const p of BELL){ if(m>=_toMin(p.s) && m<_toMin(p.e)){ cur=p; break; } }
+  if(!cur){ for(const p of BELL){ if(m<_toMin(p.s)){ nxt=p; break; } } }
+  if(cur){ el.style.display='flex';
+    el.innerHTML = cur.label==='점심시간' ? `🍴 점심시간 <b>~${cur.e}</b>` : `🔔 ${cur.label} <b>~${cur.e}</b>`;
+  } else if(nxt){ el.style.display='flex'; el.innerHTML = `☕ 쉬는시간 <b>${nxt.label} ${nxt.s}</b>`;
+  } else { el.style.display='none'; } // 등교 전 / 하교 후
+}
+
+/* ── 시계 ── */
+const DOW = ['일','월','화','수','목','금','토'];
+function tick(){
+  const d = new Date();
+  $('time').textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  $('date').textContent = `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} (${DOW[d.getDay()]})`;
+}
+setInterval(tick, 1000); tick();
+
+/* ── 설정 로드 ── */
+async function loadConfig(){
+  const { data } = await sb.from('display_config').select('key,value');
+  if(data) data.forEach(r => CFG[r.key] = r.value);
+  $('schoolName').textContent = CFG.school_name || '해누리중학교';
+  document.title = (CFG.school_name||'학교') + ' 공지';
+}
+
+/* ── 공지 로드 + 슬라이드 ── */
+let slideTimer=null, slideIdx=0, slides=[], noticeCards=[], lostItems=[];
+async function loadNotices(){
+  const t = todayStr();
+  const { data, error } = await sb.from('notices').select('*')
+    .lte('start_at', t)
+    .or(`end_at.is.null,end_at.gte.${t}`)
+    .order('pinned',{ascending:false}).order('created_at',{ascending:false});
+  if(error){ markOffline(true); return; }
+  markOffline(false);
+  const list = data || [];
+
+  // 긴급공지 → 상단 배너
+  const urgent = list.filter(n => n.category==='긴급');
+  if(urgent.length){
+    $('urgentBar').classList.add('show');
+    $('urgentText').textContent = urgent.map(n => n.title + (n.body?` — ${n.body}`:'')).join('     ◆     ');
+  } else $('urgentBar').classList.remove('show');
+
+  // 카드 슬라이드 = 긴급 외 공지 (긴급도 카드에 한 번 더 노출)
+  const cards = list.filter(n => n.category!=='긴급');
+  noticeCards = cards.length ? cards : list;
+  rebuildStage();
+}
+
+/* 분실물 (전교 보드 — 공지 카드에 함께 순환) */
+async function loadLost(){
+  const { data } = await sb.from('lost_items').select('*').eq('status','active')
+    .order('created_at',{ascending:false}).limit(8);
+  lostItems = data || [];
+  rebuildStage();
+}
+
+function noticeSlideHtml(n){
+  const catLabel = n.category==='교과' ? (n.subject||'교과') : n.category;
+  const gradeTxt = n.grade ? `${n.grade}학년` : '전교';
+  const icon = n.category==='교과'?'📚':(n.category==='학년'?'🎓':'📣');
+  let media='', cls='slide';
+  if(n.link){ const q=encodeURIComponent(n.link); cls+=' has-media';
+    media=`<div class="rightmedia"><img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=2&data=${q}" alt="QR"><span>📱 휴대폰으로 스캔</span></div>`; }
+  return `<div class="${cls}"><div class="stext">
+    <span class="cat cat-${n.category}">${icon} ${esc(catLabel)} · ${gradeTxt}</span>
+    <div class="stitle">${esc(n.title)}</div>
+    ${n.body?`<div class="sbody">${esc(n.body)}</div>`:''}
+    <div class="meta">${n.author_name?('— '+esc(n.author_name)+' 선생님'):''} ${fmtDate(n.created_at)}</div>
+    </div>${media}</div>`;
+}
+function lostSlideHtml(it){
+  const media = it.photo_url ? `<div class="rightmedia"><img src="${esc(it.photo_url)}" alt="분실물"></div>` : '';
+  return `<div class="slide${it.photo_url?' has-media':''}"><div class="stext">
+    <span class="cat cat-lost">🔍 분실물</span>
+    <div class="stitle">${esc(it.item_name)}</div>
+    <div class="sbody">${it.found_place?`발견 장소: ${esc(it.found_place)}<br>`:''}📍 <b>${esc(it.keep_place||'교무실')}</b> 에서 찾아가세요</div>
+    </div>${media}</div>`;
+}
+function rebuildStage(){
+  const stage = $('noticeStage'); const dots = $('dots');
+  const htmls = [...noticeCards.map(noticeSlideHtml), ...lostItems.map(lostSlideHtml)];
+  stage.innerHTML=''; dots.innerHTML=''; slides=[]; slideIdx=0;
+  if(!htmls.length){
+    stage.innerHTML = '<div class="empty">등록된 공지가 없습니다 🌤️</div>';
+    if(slideTimer) clearInterval(slideTimer); return;
+  }
+  htmls.forEach((h,i)=>{
+    const wrap = document.createElement('div'); wrap.innerHTML = h;
+    const slide = wrap.firstElementChild; if(i===0) slide.classList.add('active');
+    stage.appendChild(slide); slides.push(slide);
+    const dot=document.createElement('i'); if(i===0)dot.className='on'; dots.appendChild(dot);
+  });
+  if(slideTimer) clearInterval(slideTimer);
+  if(slides.length>1) slideTimer = setInterval(nextSlide, (Number(CFG.slide_seconds)||12)*1000);
+}
+function nextSlide(){
+  if(!slides.length) return;
+  slides[slideIdx].classList.remove('active'); $('dots').children[slideIdx].className='';
+  slideIdx = (slideIdx+1)%slides.length;
+  slides[slideIdx].classList.add('active'); $('dots').children[slideIdx].className='on';
+}
+
+/* ── 호출 (학생 호출) ── */
+let callData = [];
+function classKey(c){ return `${c.grade??'?'}-${c.class_no??'?'}`; }
+async function loadCalls(){
+  const since = new Date(Date.now()-4*3600*1000).toISOString(); // 최근 4시간 내 활성 호출
+  const { data, error } = await sb.from('calls').select('*').eq('status','active')
+    .gte('created_at', since).order('created_at',{ascending:false});
+  if(error) return;
+  callData = data || [];
+  buildCallFilter(); renderCalls();
+}
+function buildCallFilter(){
+  const sel = $('callFilter'); const prev = sel.value;
+  const classes = [...new Set(callData.map(classKey))].filter(c=>!c.includes('?'));
+  if(CLASS_MODE && !classes.includes(CLASS_MODE)) classes.push(CLASS_MODE); // 교실 모드: 우리 반 항상 포함
+  classes.sort();
+  sel.innerHTML = '<option value="">전체 반</option>' + classes.map(c=>`<option value="${c}">${c}반</option>`).join('');
+  if(CLASS_MODE && !_callDefaulted){ sel.value = CLASS_MODE; _callDefaulted = true; } // 우리 반으로 기본 필터
+  else if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
+}
+function renderCalls(){
+  const bar=$('callBar'), list=$('callList'), f=$('callFilter').value;
+  bar.classList.toggle('has', callData.length>0);
+  const items = callData.filter(c => !f || classKey(c)===f);
+  if(!items.length){
+    list.innerHTML = `<span id="callEmpty">${callData.length? '선택한 반에 호출이 없습니다' : '현재 호출 없음'}</span>`;
+    return;
+  }
+  // ⚠️ 개인정보 보호: 호출 '사유'는 화면에 표시하지 않습니다 (관리자에서만 확인)
+  list.innerHTML = items.map(c=>`<div class="callitem">
+    <span class="cls">${classKey(c)}</span>
+    <span class="stu">${esc(c.student_name)}</span><span class="arr">←</span>
+    <span>${esc(c.teacher_name)} 선생님</span><span class="arr">·</span>
+    <span class="loc">${esc(c.location||'교무실')} 오세요</span></div>`).join('');
+}
+
+/* ── 디데이 ── */
+function ddayNum(target){
+  const t = new Date(); t.setHours(0,0,0,0);
+  const d = new Date(target+'T00:00');
+  return Math.round((d - t)/86400000);
+}
+async function loadDdays(){
+  const t = todayStr();
+  const { data } = await sb.from('ddays').select('*').gte('target_date', t)
+    .order('target_date',{ascending:true}).limit(6);
+  const bar = $('ddayBar');
+  if(!data || !data.length){ bar.innerHTML=''; return; }
+  bar.innerHTML = data.map(x=>{
+    const n = ddayNum(x.target_date);
+    const cnt = n===0 ? 'D-DAY' : `D-${n}`;
+    const dd = new Date(x.target_date+'T00:00');
+    const dstr = `${dd.getMonth()+1}/${dd.getDate()}(${DOW[dd.getDay()]})`;
+    return `<div class="dday t-${x.type||'기타'} ${n===0?'today':''}">
+      <span class="ic">${x.icon||'🎯'}</span>
+      <span class="lab">${esc(x.title)}<b>${dstr}</b></span>
+      <span class="cnt">${cnt}</span></div>`;
+  }).join('');
+}
+
+/* ── 주요일정 (교사 입력 + NEIS 학사일정 자동 병합) ── */
+let schedData=[], neisSched=[];
+async function loadSchedules(){
+  const t = todayStr();
+  const { data } = await sb.from('schedules').select('*')
+    .or(`end_date.gte.${t},and(end_date.is.null,start_date.gte.${t})`)
+    .order('start_date',{ascending:true}).limit(8);
+  schedData = data || []; renderSchedules();
+}
+// NEIS 학사일정 — 방학·고사·공휴일 등 자동 (같은 이름 연속일은 기간으로 묶음)
+async function loadSchoolSched(){
+  try{
+    const toD=new Date(); toD.setDate(toD.getDate()+45);
+    const url=`https://open.neis.go.kr/hub/SchoolSchedule?Type=json&pIndex=1&pSize=100`
+      +`&ATPT_OFCDC_SC_CODE=${CFG.neis_atpt}&SD_SCHUL_CODE=${CFG.neis_school}`
+      +`&AA_FROM_YMD=${ymd(new Date())}&AA_TO_YMD=${ymd(toD)}`;
+    const r=await fetch(url); const j=await r.json();
+    const rows=(j?.SchoolSchedule?.[1]?.row||[])
+      .filter(x=>x.EVENT_NM && !/토요휴업일/.test(x.EVENT_NM));
+    const grp={};
+    rows.forEach(x=>{
+      const d=`${x.AA_YMD.slice(0,4)}-${x.AA_YMD.slice(4,6)}-${x.AA_YMD.slice(6,8)}`;
+      if(!grp[x.EVENT_NM]) grp[x.EVENT_NM]={title:x.EVENT_NM,start_date:d,end_date:d,
+        icon:x.SBTR_DD_SC_NM==='휴업일'?'🏖️':'🏫'};
+      else{ if(d<grp[x.EVENT_NM].start_date) grp[x.EVENT_NM].start_date=d;
+            if(d>grp[x.EVENT_NM].end_date)   grp[x.EVENT_NM].end_date=d; }
+    });
+    neisSched=Object.values(grp);
+  }catch(e){ neisSched=[]; }
+  renderSchedules();
+}
+function renderSchedules(){
+  const box = $('schedBox'); if(!box) return;
+  const names=new Set(schedData.map(s=>s.title));
+  const all=[...schedData, ...neisSched.filter(n=>!names.has(n.title))]
+    .sort((a,b)=>a.start_date.localeCompare(b.start_date)).slice(0,8);
+  if(!all.length){ box.innerHTML='<div class="empty">예정된 일정이 없습니다</div>'; return; }
+  box.innerHTML = all.map(s=>{
+    const d = new Date(s.start_date+'T00:00');
+    const dd = `${d.getMonth()+1}/${d.getDate()}(${DOW[d.getDay()]})`;
+    const range = s.end_date && s.end_date!==s.start_date ? `~${(new Date(s.end_date+'T00:00')).getMonth()+1}/${(new Date(s.end_date+'T00:00')).getDate()}` : '';
+    return `<div class="listrow"><span class="d">${s.icon||'📌'} ${dd}${range}</span>
+      <span class="t">${esc(s.title)}${s.location?`<span class="loc">@${esc(s.location)}</span>`:''}</span></div>`;
+  }).join('');
+}
+
+/* ── 평가일정 ── */
+async function loadAssessments(){
+  const t = todayStr();
+  const { data } = await sb.from('assessments').select('*').gte('assess_date', t)
+    .order('assess_date',{ascending:true}).limit(7);
+  const box = $('assessBox');
+  if(!data || !data.length){ box.innerHTML='<div class="empty">예정된 평가가 없습니다</div>'; return; }
+  box.innerHTML = data.map(a=>{
+    const d = new Date(a.assess_date+'T00:00');
+    const dd = `${d.getMonth()+1}/${d.getDate()}(${DOW[d.getDay()]})`;
+    const g = a.grade ? `${a.grade}학년 ` : '';
+    return `<div class="assessrow"><span class="d">${dd}</span>
+      <span class="t"><span class="ty ty-${a.assess_type}">${esc(a.assess_type)}</span>
+      <span class="sub">${g}${esc(a.subject)}</span> ${esc(a.title)}
+      ${a.scope?`<span class="sc">📖 ${esc(a.scope)}</span>`:''}</span></div>`;
+  }).join('');
+}
+
+/* ── 시간표 변경 + 📍수업 장소 + (교실모드) NEIS 오늘 시간표 ── */
+let ttcRows=[], locRows=[], neisTT=null;
+
+async function loadTTC(){
+  const { data } = await sb.from('timetable_changes').select('*')
+    .eq('change_date', todayStr()).order('grade').order('class_no').order('period');
+  ttcRows = data || []; renderTTC();
+}
+async function loadLocations(){
+  const { data } = await sb.from('class_locations').select('*')
+    .eq('loc_date', todayStr()).order('grade').order('class_no').order('period');
+  locRows = data || []; renderTTC();
+}
+// NEIS 시간표 (교실 모드 전용) — 그 반의 오늘 교시별 과목 자동
+async function loadTimetableNEIS(){
+  if(!CLASS_MODE) return;
+  try{
+    const url=`https://open.neis.go.kr/hub/misTimetable?Type=json&pIndex=1&pSize=30`
+      +`&ATPT_OFCDC_SC_CODE=${CFG.neis_atpt}&SD_SCHUL_CODE=${CFG.neis_school}`
+      +`&GRADE=${CM_GRADE}&CLASS_NM=${CM_CLASS}&ALL_TI_YMD=${ymd(new Date())}`;
+    const r=await fetch(url); const j=await r.json();
+    neisTT = j?.misTimetable?.[1]?.row || null;
+  }catch(e){ neisTT=null; }
+  renderTTC();
+}
+const _mine = x => x.grade==null || (x.grade===CM_GRADE && (x.class_no==null || x.class_no===CM_CLASS));
+function renderTTC(){
+  const box=$('ttcBox'); if(!box) return;
+  if(CLASS_MODE){
+    // ── 교실 보드: 오늘 시간표 전체 + 변경·장소 오버레이 ──
+    $('ttcTitle').innerHTML='<span class="em">📖</span>오늘 시간표';
+    const myChg=ttcRows.filter(_mine), myLoc=locRows.filter(_mine);
+    const periods={};
+    (neisTT||[]).forEach(r=>{ const p=Number(r.PERIO); if(p && !periods[p]) periods[p]=r.ITRT_CNTNT||''; });
+    const pNums=Object.keys(periods).map(Number).sort((a,b)=>a-b);
+    if(!pNums.length && !myChg.length && !myLoc.length){
+      box.innerHTML='<div class="empty">오늘 시간표 정보가 없습니다</div>'; return; }
+    const extra=[];
+    let html = pNums.map(p=>{
+      const chg=myChg.find(c=>c.period===p), loc=myLoc.find(l=>l.period===p);
+      let subj = chg
+        ? `<s style="opacity:.45">${esc(chg.before_subj||periods[p])}</s><span class="arrow">→</span><span class="chg" style="color:var(--urgent)">${esc(chg.after_subj||'')}</span>`
+        : esc(periods[p]);
+      return `<div class="listrow ttc"><span class="who">${p}교시</span><span class="t">${subj}`
+        +`${loc?` <span class="locpin">📍${esc(loc.location)}</span>`:''}`
+        +`${chg&&chg.note?` <span class="loc">(${esc(chg.note)})</span>`:''}</span></div>`;
+    }).join('');
+    myChg.filter(c=>!c.period || !pNums.includes(c.period)).forEach(c=>extra.push(
+      `<div class="listrow ttc"><span class="who">${c.period?c.period+'교시':'변경'}</span><span class="t"><span class="chg">${esc(c.before_subj||'')}</span><span class="arrow">→</span><span class="chg">${esc(c.after_subj||'')}</span>${c.note?` <span class="loc">(${esc(c.note)})</span>`:''}</span></div>`));
+    myLoc.filter(l=>!l.period || !pNums.includes(l.period)).forEach(l=>extra.push(
+      `<div class="listrow ttc"><span class="who">${l.period?l.period+'교시':esc(l.subject)}</span><span class="t">${l.period?esc(l.subject)+' ':''}<span class="locpin">📍${esc(l.location)}</span>${l.note?` <span class="loc">(${esc(l.note)})</span>`:''}</span></div>`));
+    box.innerHTML = html + extra.join('');
+  } else {
+    // ── 중앙 보드: 오늘 변경 + 장소 안내 목록 ──
+    $('ttcTitle').innerHTML='<span class="em">🔄</span>수업 변경·장소';
+    const who = x => `${x.grade?x.grade+'-':''}${x.class_no??''}${x.period?` ${x.period}교시`:''}`.trim();
+    const rows=[
+      ...ttcRows.map(c=>`<div class="listrow ttc"><span class="who">${who(c)||'전체'}</span>
+        <span class="t"><span class="chg">${esc(c.before_subj||'')}</span><span class="arrow">→</span><span class="chg">${esc(c.after_subj||'')}</span>
+        ${c.note?`<span class="loc">(${esc(c.note)})</span>`:''}</span></div>`),
+      ...locRows.map(l=>`<div class="listrow ttc"><span class="who">${who(l)||'전체'}</span>
+        <span class="t">${esc(l.subject)} <span class="locpin">📍${esc(l.location)}</span>
+        ${l.note?`<span class="loc">(${esc(l.note)})</span>`:''}</span></div>`)
+    ];
+    box.innerHTML = rows.length ? rows.join('') : '<div class="empty">오늘 변경사항 없음 ✅</div>';
+  }
+}
+
+/* ── 급식 (NEIS 직접 호출) ── */
+async function loadMeal(){
+  const today = new Date();
+  // 오늘부터 7일 범위에서 가장 이른 중식 1건 (주말/휴일이면 다음 급식일)
+  const from = ymd(today);
+  const toD = new Date(today); toD.setDate(toD.getDate()+7);
+  const url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&pIndex=1&pSize=30`
+    + `&ATPT_OFCDC_SC_CODE=${CFG.neis_atpt}&SD_SCHUL_CODE=${CFG.neis_school}`
+    + `&MLSV_FROM_YMD=${from}&MLSV_TO_YMD=${ymd(toD)}&MMEAL_SC_CODE=2`;
+  try{
+    const r = await fetch(url); const j = await r.json();
+    const rows = j?.mealServiceDietInfo?.[1]?.row;
+    if(!rows || !rows.length){ showNoMeal(); return; }
+    rows.sort((a,b)=>a.MLSV_YMD.localeCompare(b.MLSV_YMD));
+    const m = rows[0];
+    const dayStr = m.MLSV_YMD;
+    const dObj = new Date(`${dayStr.slice(0,4)}-${dayStr.slice(4,6)}-${dayStr.slice(6,8)}T00:00`);
+    const isToday = dayStr === from;
+    $('mealDay').textContent = isToday ? '오늘 중식' :
+      `${dObj.getMonth()+1}/${dObj.getDate()}(${DOW[dObj.getDay()]}) 중식`;
+    // 알레르기 번호는 지우지 않고 작게 표시 (표시 의무 정보)
+    const dishes = m.DDISH_NM.split('<br/>').map(s=>s.trim()).filter(Boolean).map(s=>{
+      const mm = s.match(/^(.*?)\s*\(([\d.]+)\)$/);
+      return mm ? {name:mm[1].trim(), alg:mm[2].split('.').filter(Boolean).join('·')} : {name:s, alg:''};
+    });
+    $('mealList').innerHTML = dishes.map(d=>`<li>${esc(d.name)}${d.alg?`<sup class="alg">${d.alg}</sup>`:''}</li>`).join('');
+    const hasAlg = dishes.some(d=>d.alg);
+    $('mealKcal').textContent = (m.CAL_INFO ? `열량 ${m.CAL_INFO}` : '') + (hasAlg ? ' · 숫자는 알레르기 유발식품 번호' : '');
+  }catch(e){ showNoMeal(); }
+}
+function showNoMeal(){
+  $('mealDay').textContent=''; $('mealKcal').textContent='';
+  $('mealList').innerHTML = '<div class="empty">예정된 급식 정보가 없습니다</div>';
+}
+
+/* ── 날씨 (open-meteo, 무료/무키) ── */
+const WX_ICON = c => c===0?'☀️':c<=2?'🌤️':c<=3?'☁️':(c>=51&&c<=67)?'🌧️':(c>=71&&c<=77)?'🌨️':(c>=80&&c<=82)?'🌦️':(c>=95)?'⛈️':'🌥️';
+async function loadWeather(){
+  try{
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CFG.weather_lat}&longitude=${CFG.weather_lon}&current=temperature_2m,weather_code&daily=precipitation_probability_max&forecast_days=1&timezone=Asia%2FSeoul`;
+    const r = await fetch(url); const j = await r.json();
+    const c = j?.current;
+    if(c){ $('wxTemp').textContent = Math.round(c.temperature_2m)+'°';
+      $('wxIco').textContent = WX_ICON(c.weather_code); $('wx').style.display='flex'; }
+    // ☔ 오늘 강수확률 40% 이상이면 우산 배지
+    const pp = j?.daily?.precipitation_probability_max?.[0];
+    if(pp!=null && pp>=40){ $('rain').style.display='flex'; $('rain').textContent=`☔ ${pp}%`; }
+    else $('rain').style.display='none';
+  }catch(e){ /* 날씨는 선택사항 — 실패시 숨김 */ }
+}
+
+/* ── 😷 미세먼지 (open-meteo air quality, 무료·무키) ── */
+const AQ_LV=[['좋음','#0ea371','😊'],['보통','#3b6ef5','🙂'],['나쁨','#d97706','😷'],['매우나쁨','#ef3b46','🚨']];
+async function loadAir(){
+  try{
+    const url=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${CFG.weather_lat}&longitude=${CFG.weather_lon}&current=pm10,pm2_5&timezone=Asia%2FSeoul`;
+    const r=await fetch(url); const j=await r.json(); const c=j?.current;
+    if(!c || c.pm2_5==null) return;
+    // 한국 기준: PM2.5 15/35/75 · PM10 30/80/150 — 둘 중 나쁜 쪽
+    const g25=c.pm2_5<=15?0:c.pm2_5<=35?1:c.pm2_5<=75?2:3;
+    const g10=c.pm10 ==null?0:c.pm10<=30?0:c.pm10<=80?1:c.pm10<=150?2:3;
+    const [lab,col,em]=AQ_LV[Math.max(g25,g10)];
+    const el=$('aqi'); el.style.display='flex'; el.style.color=col;
+    el.innerHTML=`${em} 미세먼지 <b>${lab}</b>`;
+  }catch(e){ /* 실패시 숨김 */ }
+}
+
+/* ── 유틸 ── */
+function esc(s){ return (s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtDate(iso){ if(!iso)return''; const d=new Date(iso); return `${d.getMonth()+1}.${d.getDate()}`; }
+function markOffline(on){ $('offline').classList.toggle('show', on); }
+
+/* ── 번인 방지: 본문을 주기적으로 미세 이동 ── */
+let bp=0; setInterval(()=>{ bp=(bp+1)%4; const o=[[0,0],[2,1],[0,2],[-2,1]][bp];
+  document.querySelector('main').style.transform=`translate(${o[0]}px,${o[1]}px)`; }, 40000);
+
+/* ── 실시간 구독 ── */
+function subscribe(){
+  sb.channel('notice-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'notices'}, loadNotices)
+    .on('postgres_changes',{event:'*',schema:'public',table:'schedules'}, loadSchedules)
+    .on('postgres_changes',{event:'*',schema:'public',table:'timetable_changes'}, loadTTC)
+    .on('postgres_changes',{event:'*',schema:'public',table:'ddays'}, loadDdays)
+    .on('postgres_changes',{event:'*',schema:'public',table:'assessments'}, loadAssessments)
+    .on('postgres_changes',{event:'*',schema:'public',table:'calls'}, loadCalls)
+    .on('postgres_changes',{event:'*',schema:'public',table:'lost_items'}, loadLost)
+    .on('postgres_changes',{event:'*',schema:'public',table:'cleaning_duties'}, loadCleaning)
+    .on('postgres_changes',{event:'*',schema:'public',table:'class_roles'}, loadRoles)
+    .on('postgres_changes',{event:'*',schema:'public',table:'class_locations'}, loadLocations)
+    .on('postgres_changes',{event:'*',schema:'public',table:'display_config'}, ()=>{loadConfig();})
+    .subscribe();
+}
+
+/* ── 데모 모드 (?demo=1) : 샘플 데이터로 미리보기. DB/실시간 없이 화면 확인용 ── */
+const DEMO = /[?&]demo/.test(location.search);
+function ymdPlus(n){ const d=new Date(); d.setDate(d.getDate()+n); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function renderDemo(){
+  // 급식 + 날씨 (정적 샘플)
+  $('mealDay').textContent = '오늘 중식';
+  $('mealList').innerHTML = [['카레야채볶음밥','5·6'],['유부장국','5·6'],['어묵볶음','1·5·6'],['깍두기','9'],['요거트','2'],['자두','']].map(d=>`<li>${d[0]}${d[1]?`<sup class="alg">${d[1]}</sup>`:''}</li>`).join('');
+  $('mealKcal').textContent = '열량 705.7 Kcal';
+  $('wxTemp').textContent='27°'; $('wxIco').textContent='⛅'; $('wx').style.display='flex';
+  $('periodChip').style.display='flex'; $('periodChip').innerHTML='🔔 3교시 <b>~11:40</b>';
+  const aq=$('aqi'); aq.style.display='flex'; aq.style.color='#d97706'; aq.innerHTML='😷 미세먼지 <b>나쁨</b>';
+  $('rain').style.display='flex'; $('rain').textContent='☔ 60%';
+  // 긴급
+  $('urgentBar').classList.add('show');
+  $('urgentText').textContent = '오후 2시 단축수업 — 6교시 종례 후 하교합니다.';
+  // 호출
+  callData = [
+    {grade:2,class_no:3,student_name:'홍길동',teacher_name:'김영희',location:'교무실',reason:'상담'},
+    {grade:1,class_no:2,student_name:'이순신',teacher_name:'박철수',location:'과학실',reason:null}
+  ];
+  buildCallFilter(); renderCalls();
+  // 디데이
+  $('ddayBar').innerHTML = [
+    {t:'1학기 기말고사',d:11,ty:'시험',ic:'📝'},{t:'수행평가(과학)',d:3,ty:'평가',ic:'📊'},
+    {t:'여름방학',d:23,ty:'방학',ic:'🏖️'}
+  ].map(x=>{ const dd=new Date(ymdPlus(x.d)+'T00:00');
+    return `<div class="dday t-${x.ty}"><span class="ic">${x.ic}</span><span class="lab">${x.t}<b>${dd.getMonth()+1}/${dd.getDate()}(${DOW[dd.getDay()]})</b></span><span class="cnt">D-${x.d}</span></div>`;}).join('');
+  // 공지 (교과/학년/일반 + QR) + 분실물 — 함께 순환
+  noticeCards = [
+    {category:'일반',grade:null,title:'독서골든벨 참가 신청',body:'아래 QR로 신청서를 작성하세요. (마감 금요일)',link:'https://example.com/form',author_name:'도서관',created_at:new Date().toISOString()},
+    {category:'학년',grade:1,title:'1학년 현장체험학습 동의서 제출',body:'금요일까지 담임 선생님께 제출해 주세요.',author_name:'박철수',created_at:new Date().toISOString()}
+  ];
+  lostItems = [
+    {item_name:'검정 우산',found_place:'3층 복도',keep_place:'교무실',photo_url:null}
+  ];
+  rebuildStage();
+  // 청소당번 (교실 모드일 때만 보임)
+  $('cleanBox').innerHTML = [
+    {area:'교실 앞',members:'1모둠'},{area:'복도·계단',members:'2모둠'},{area:'칠판·교탁',members:'김OO·이OO'}
+  ].map(c=>`<div class="cleanrow"><span class="ar">${c.area}</span><span class="mb">${c.members}</span></div>`).join('');
+  // 1인1역 (토글로 전환)
+  $('roleBox').innerHTML = [
+    {icon:'🥛',role:'우유당번',member:'김OO'},{icon:'💡',role:'전기·에어컨',member:'이OO'},
+    {icon:'📋',role:'알림장',member:'박OO'},{icon:'🪟',role:'창문·환기',member:'최OO'},
+    {icon:'♻️',role:'재활용',member:'정OO'}
+  ].map(r=>`<div class="rolerow"><span class="rn">${r.icon} ${r.role}</span><span class="rm">${r.member}</span></div>`).join('');
+  // 주요일정
+  $('schedBox').innerHTML = [
+    {ic:'📝',d:11,t:'1학기 기말고사',loc:''},{ic:'🎒',d:5,t:'1학년 현장체험학습',loc:'서울대공원'},{ic:'🏖️',d:23,t:'여름방학식',loc:'강당'}
+  ].map(s=>{const dd=new Date(ymdPlus(s.d)+'T00:00');return `<div class="listrow"><span class="d">${s.ic} ${dd.getMonth()+1}/${dd.getDate()}(${DOW[dd.getDay()]})</span><span class="t">${s.t}${s.loc?`<span class="loc">@${s.loc}</span>`:''}</span></div>`;}).join('');
+  // 시간표 변경
+  if(CLASS_MODE){
+    // 교실 보드 데모: NEIS 시간표 + 변경 + 📍장소
+    $('ttcTitle').innerHTML='<span class="em">📖</span>오늘 시간표';
+    $('ttcBox').innerHTML =
+      `<div class="listrow ttc"><span class="who">1교시</span><span class="t">과학</span></div>`
+      +`<div class="listrow ttc"><span class="who">2교시</span><span class="t">한문</span></div>`
+      +`<div class="listrow ttc"><span class="who">3교시</span><span class="t">체육 <span class="locpin">📍체육관</span> <span class="loc">(미세먼지)</span></span></div>`
+      +`<div class="listrow ttc"><span class="who">4교시</span><span class="t"><s style="opacity:.45">국어</s><span class="arrow">→</span><span class="chg" style="color:var(--urgent)">수학</span></span></div>`
+      +`<div class="listrow ttc"><span class="who">5교시</span><span class="t">영어</span></div>`;
+  } else {
+    $('ttcTitle').innerHTML='<span class="em">🔄</span>수업 변경·장소';
+    $('ttcBox').innerHTML = `<div class="listrow ttc"><span class="who">2-3 4교시</span><span class="t"><span class="chg">국어</span><span class="arrow">→</span><span class="chg">수학</span></span></div>`
+      +`<div class="listrow ttc"><span class="who">2학년 3교시</span><span class="t">체육 <span class="locpin">📍체육관</span> <span class="loc">(미세먼지)</span></span></div>`;
+  }
+  // 평가일정
+  $('assessBox').innerHTML = [
+    {d:3,ty:'수행평가',g:2,sub:'과학',ti:'광합성 단원 수행평가',sc:'교과서 4단원'},
+    {d:11,ty:'지필평가',g:null,sub:'수학',ti:'1학기 기말고사',sc:'함수~통계'}
+  ].map(a=>{const dd=new Date(ymdPlus(a.d)+'T00:00');return `<div class="assessrow"><span class="d">${dd.getMonth()+1}/${dd.getDate()}(${DOW[dd.getDay()]})</span><span class="t"><span class="ty ty-${a.ty}">${a.ty}</span><span class="sub">${a.g?a.g+'학년 ':''}${a.sub}</span> ${a.ti}<span class="sc">📖 ${a.sc}</span></span></div>`;}).join('');
+}
+
+/* ── 부팅 + 주기적 새로고침 ── */
+async function boot(){
+  applyClassMode(); updatePeriod(); buildMsgQR();
+  if(DEMO){ renderDemo(); return; } // 데모: 정적 샘플만 (네트워크/실시간 없음)
+  await loadConfig();
+  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadMeal(), loadWeather(), loadAir()]);
+  subscribe();
+}
+boot();
+setInterval(updatePeriod, 20000); // 현재 교시 표시 갱신
+if(!DEMO){
+  setInterval(loadCalls, 30000); // 호출은 30초마다 (실시간 보조)
+  setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
+  setInterval(loadMeal, 3600000);          // 급식 1시간마다
+  setInterval(loadTimetableNEIS, 3600000); // NEIS 시간표 1시간마다
+  setInterval(loadSchoolSched, 21600000);  // 학사일정 6시간마다
+  setInterval(()=>{ loadWeather(); loadAir(); }, 1800000); // 날씨·미세먼지 30분마다
+  // 자정 지나면 날짜 바뀌므로 급식/일정/디데이/평가/시간표 갱신
+  setInterval(()=>{ const d=new Date(); if(d.getHours()===0 && d.getMinutes()<3){ loadMeal(); loadSchedules(); loadSchoolSched(); loadTTC(); loadLocations(); loadTimetableNEIS(); loadDdays(); loadAssessments(); } }, 120000);
+}
+</script>
+</body>
+</html>
