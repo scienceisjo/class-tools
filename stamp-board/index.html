@@ -2576,9 +2576,20 @@ async function loadPlans(){
     S.plans = r.error ? [] : (r.data||[]);
   }catch(e){ S.plans = []; }
 }
+var PLAN_SEP = ' · ';   /* 차시명 구분자: 공백+가운뎃점+공백 */
 function planTitle(id){
   for(var i=0;i<S.plans.length;i++) if(S.plans[i].id===id) return S.plans[i].title;
   return null;
+}
+/* 차시명은 «현상형 제목 · 개념» 형태다. 화면 칩에는 제목을 통째로 보여주되,
+   생기부 누가기록에는 개념만 남긴다 — «지지직의 정체 수업에서 칭찬받음»보다
+   «마찰 전기와 전기력 수업에서 칭찬받음»이 기록으로 읽힌다.
+   구분자는 공백을 낀 가운뎃점이라, «전압·저항»처럼 붙여 쓴 것과 섞이지 않는다. */
+function planConcept(id){
+  var s = planTitle(id);
+  if(!s) return null;
+  var p = s.split(PLAN_SEP);
+  return (p.length > 1 ? p.slice(1).join(PLAN_SEP).trim() : s.trim()) || s;
 }
 function renderPlanChips(){
   var el = $('planChips'); if(!el) return;
@@ -2684,9 +2695,9 @@ async function saveObs(){
   if(!ids.length){ toast('학생을 먼저 골라주세요'); return; }
 
   var cat = S.selCat || 'general';
-  var plan = S.selPlan ? planTitle(S.selPlan) : null;
+  var note = S.selPlan ? planConcept(S.selPlan) : null;   /* 기록에 남길 개념 부분 */
   var beh = (($('behIn') && $('behIn').value) || '').trim().replace(/[\s\u2014-]+$/,'');
-  if(beh.length < 2) beh = plan ? (plan + ' 수업에서 칭찬받음') : '수업에서 칭찬받음';
+  if(beh.length < 2) beh = note ? (note + ' 수업에서 칭찬받음') : '수업에서 칭찬받음';
 
   if(ids.length > 5 && !confirm(ids.length + '명에게 도장을 찍을까요?')) return;
 
@@ -2701,7 +2712,7 @@ async function saveObs(){
         student_id: ids[i], school_year: nowYear(), semester: nowSem(),
         class_no_snap: s.class_no || (S.selClass && S.selClass.cls) || null,
         number_snap: s.number || null,
-        category: cat, behavior: beh, lesson_note: plan, observed_on: today
+        category: cat, behavior: beh, lesson_note: note, observed_on: today
       });
     }
     var r = await sb.from('observations').insert(rows);
