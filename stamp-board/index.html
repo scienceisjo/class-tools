@@ -2969,13 +2969,18 @@ function gbqImport(input){
 }
 
 /* 준비 화면의 문제 칸 — 접으면 목록만, 펴면 편집기 */
+/* 시작 전(GB 가 아직 없을 때)에도 불린다 — 문제는 반·진행과 무관하게 미리 넣어둔다 */
 function gbqPanel(){
-  var l = gbqLoad(), use = Math.min(GB.total, l.length), h, i;
+  var l = gbqLoad(), tot = (GB && GB.total) || 0, h, i;
+  var use = tot ? Math.min(tot, l.length) : l.length;
   h = '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">📝 오늘 낼 문제</h3>' +
       '<button class="chip sm" onclick="gbqToggleEdit()">' +
       (_gbEdit ? '접기' : (l.length ? '고치기' : '문제 넣기')) + '</button></div>';
   if(!l.length){
     h += '<div class="sub">넣어둔 문제가 없어요. 이대로 시작하면 <b>선생님이 구두로</b> 내는 예전 방식으로 진행돼요.</div>';
+  } else if(!tot){
+    h += '<div class="sub"><b style="color:var(--ac-d)">' + l.length +
+         '개</b> 준비돼 있어요 · 시작할 때 고른 문제 수만큼 앞에서부터 씁니다</div>';
   } else {
     h += '<div class="sub">' + l.length + '개 중 <b style="color:var(--ac-d)">앞에서 ' + use + '개</b>를 씁니다' +
          (l.length > use ? ' · 나머지 ' + (l.length - use) + '개는 다음에' : '') + '</div>';
@@ -3175,7 +3180,8 @@ function renderGB(){
     el.innerHTML = '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">🔔 골든벨</h3></div>' +
       '<div class="sub">수업 시작에 3~5문제를 내고, 끝까지 남은 사람에게 도장을 찍어요.</div>' +
       '<div class="chips" id="gbClassChips" style="margin-top:10px"></div>' +
-      '<div class="sub" style="margin-top:8px">반을 먼저 골라주세요</div>' + gbSndBar() + '</div>';
+      '<div class="sub" style="margin-top:8px">반을 먼저 골라주세요</div>' + gbSndBar() + '</div>' +
+      gbqPanel();          /* 반과 무관하게 문제는 미리 넣어둘 수 있다 */
     renderGBClassChips(); return;
   }
   if(!GB || !gbMatchesClass()){
@@ -3184,7 +3190,8 @@ function renderGB(){
       '<div class="chips" id="gbClassChips" style="margin:8px 0"></div>' +
       '<div class="sub">학생들은 이면지에 답을 적어 들어 보이고, 선생님은 <b>틀린 사람만</b> 누르면 돼요.</div>' +
       gbSndBar() +
-      '<button class="btn" style="margin-top:12px;background:var(--ac);color:#fff" onclick="gbBegin()">🔔 골든벨 시작</button></div>';
+      '<button class="btn" style="margin-top:12px;background:var(--ac);color:#fff" onclick="gbBegin()">🔔 골든벨 시작</button></div>' +
+      gbqPanel();
     renderGBClassChips(); return;
   }
 
