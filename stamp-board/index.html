@@ -2585,11 +2585,27 @@ function planTitle(id){
    생기부 누가기록에는 개념만 남긴다 — «지지직의 정체 수업에서 칭찬받음»보다
    «마찰 전기와 전기력 수업에서 칭찬받음»이 기록으로 읽힌다.
    구분자는 공백을 낀 가운뎃점이라, «전압·저항»처럼 붙여 쓴 것과 섞이지 않는다. */
+/* 차시명은 «2-7-1-1 현상형 제목 · 개념» 형태다.
+   앞의 «2-7-1-1» 은 학년-단원-중단원-차시. 학생이 어느 차시인지 알아보라고 붙였다. */
+function planCode(title){
+  var m = String(title || '').match(/^\d+-\d+-\d+-\d+/);
+  return m ? m[0] : '';
+}
+/* 문장에 넣을 값 — 번호는 뺀다. «2-7-1-1 마찰 전기와 전기력 수업에서 칭찬받음» 은 안 읽힌다. */
 function planConcept(id){
   var s = planTitle(id);
   if(!s) return null;
   var p = s.split(PLAN_SEP);
-  return (p.length > 1 ? p.slice(1).join(PLAN_SEP).trim() : s.trim()) || s;
+  var tail = (p.length > 1 ? p.slice(1).join(PLAN_SEP).trim() : s.trim()) || s;
+  return tail.replace(/^\d+-\d+-\d+-\d+\s*/, '');
+}
+/* 기록(lesson_note)에 남길 값 — 번호를 앞에 붙여 둔다. 학생 기록 화면과 생기부 근거에서
+   «어느 차시였는지»가 한눈에 보여야 한다. */
+function planNote(id){
+  var c = planConcept(id);
+  if(!c) return null;
+  var code = planCode(planTitle(id));
+  return code ? (code + ' ' + c) : c;
 }
 function renderPlanChips(){
   var el = $('planChips'); if(!el) return;
@@ -2695,9 +2711,10 @@ async function saveObs(){
   if(!ids.length){ toast('학생을 먼저 골라주세요'); return; }
 
   var cat = S.selCat || 'general';
-  var note = S.selPlan ? planConcept(S.selPlan) : null;   /* 기록에 남길 개념 부분 */
+  var note = S.selPlan ? planNote(S.selPlan) : null;       /* 기록: 차시번호 + 개념 */
+  var say  = S.selPlan ? planConcept(S.selPlan) : null;    /* 문장: 개념만 */
   var beh = (($('behIn') && $('behIn').value) || '').trim().replace(/[\s\u2014-]+$/,'');
-  if(beh.length < 2) beh = note ? (note + ' 수업에서 칭찬받음') : '수업에서 칭찬받음';
+  if(beh.length < 2) beh = say ? (say + ' 수업에서 칭찬받음') : '수업에서 칭찬받음';
 
   if(ids.length > 5 && !confirm(ids.length + '명에게 도장을 찍을까요?')) return;
 
