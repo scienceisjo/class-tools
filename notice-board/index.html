@@ -164,6 +164,16 @@
   .rolerow:last-child{border-bottom:none}
   .rolerow .rn{flex:0 0 auto;font-weight:800;color:var(--purple);min-width:6.5rem}
   .rolerow .rm{font-weight:600}
+  /* 🗓️ 주간 시간표 표 */
+  #weekBox table{width:100%;border-collapse:collapse;table-layout:fixed}
+  #weekBox th,#weekBox td{border:1px solid var(--line);padding:.28rem .15rem;text-align:center;
+    font-size:.95rem;line-height:1.25;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  #weekBox th{background:var(--panel2);font-weight:800;color:var(--sub);font-size:.9rem}
+  #weekBox th.today{background:var(--accent);color:#fff}
+  #weekBox td.pn{background:var(--panel2);font-weight:800;color:var(--sub);width:2.6rem}
+  #weekBox td.now{background:rgba(59,110,245,.14);font-weight:800;color:var(--accent)}
+  #weekBox td.chg{color:var(--urgent);font-weight:800}
+  #weekBox td.tdcol{background:rgba(59,110,245,.05)}
   .listrow{display:flex;align-items:flex-start;gap:.7rem;padding:.55rem 0;border-bottom:1px solid var(--line);
     font-size:1.25rem;line-height:1.3}
   .listrow:last-child{border-bottom:none}
@@ -285,7 +295,12 @@
       </section>
       <section class="card">
         <h2 id="ttcTitle"><span class="em">🔄</span>수업 변경·장소</h2>
+        <h2 class="toggleh" id="ttToggle" style="display:none">
+          <button class="tgl on" id="tgl-today" onclick="switchTT('today')">📖 오늘</button>
+          <button class="tgl"    id="tgl-week"  onclick="switchTT('week')">🗓️ 주간</button>
+        </h2>
         <div class="body" id="ttcBox"></div>
+        <div class="body" id="weekBox" style="display:none"></div>
       </section>
       <section class="card" id="cleanCard">
         <h2 class="toggleh">
@@ -726,12 +741,68 @@ async function loadTimetableNEIS(){
   }catch(e){ neisTT=null; }
   renderTTC();
 }
+/* 🗓️ 주간 시간표 (교실 모드) — NEIS 는 주간 범위 조회 페이징이 고장나 있어 하루씩 5번 조회 */
+let weekTT = null;
+function mondayOf(d){ const x=new Date(d); const w=x.getDay(); x.setDate(x.getDate()-((w+6)%7)); x.setHours(0,0,0,0); return x; }
+async function loadWeekTT(){
+  if(!CLASS_MODE) return;
+  const mon = mondayOf(new Date());
+  const days = [0,1,2,3,4].map(i=>{ const d=new Date(mon); d.setDate(d.getDate()+i); return d; });
+  try{
+    const res = await Promise.all(days.map(async d=>{
+      const url=`https://open.neis.go.kr/hub/misTimetable?Type=json&pIndex=1&pSize=20`
+        +`&ATPT_OFCDC_SC_CODE=${CFG.neis_atpt}&SD_SCHUL_CODE=${CFG.neis_school}`
+        +`&GRADE=${CM_GRADE}&CLASS_NM=${CM_CLASS}&ALL_TI_YMD=${ymd(d)}`;
+      try{ const j=await (await fetch(url)).json(); return j?.misTimetable?.[1]?.row||[]; }catch(e){ return []; }
+    }));
+    weekTT = {mon, days, rows:res};
+  }catch(e){ weekTT=null; }
+  renderWeekTT();
+}
+function renderWeekTT(){
+  const box=$('weekBox'); if(!box||!CLASS_MODE) return;
+  if(!weekTT){ box.innerHTML='<div class="empty">주간 시간표를 불러오지 못했습니다</div>'; return; }
+  const {days, rows} = weekTT;
+  const maxP = Math.max(1, ...rows.flat().map(r=>Number(r.PERIO)||0));
+  const todayY = ymd(new Date());
+  const DW=['월','화','수','목','금'];
+  // 오늘 변경사항을 주간 표에도 반영
+  const myChg = ttcRows.filter(_mine);
+  let html='<table><thead><tr><th></th>'
+    + days.map((d,i)=>`<th class="${ymd(d)===todayY?'today':''}">${DW[i]}<br>${d.getMonth()+1}/${d.getDate()}</th>`).join('')
+    + '</tr></thead><tbody>';
+  for(let p=1;p<=maxP;p++){
+    html+=`<tr><td class="pn">${p}</td>`;
+    days.forEach((d,i)=>{
+      const isToday = ymd(d)===todayY;
+      const cell = (rows[i]||[]).find(r=>Number(r.PERIO)===p);
+      let subj = cell ? cell.ITRT_CNTNT : '';
+      let cls = isToday?'tdcol':'';
+      if(isToday){
+        const c = myChg.find(x=>x.period===p);
+        if(c){ subj = c.after_subj || subj; cls += ' chg'; }
+      }
+      html+=`<td class="${cls}">${esc(subj)}</td>`;
+    });
+    html+='</tr>';
+  }
+  box.innerHTML = html+'</tbody></table>';
+}
+function switchTT(which){
+  const wk = which==='week';
+  $('ttcBox').style.display  = wk?'none':'block';
+  $('weekBox').style.display = wk?'block':'none';
+  $('tgl-today').classList.toggle('on', !wk);
+  $('tgl-week').classList.toggle('on', wk);
+}
+
 const _mine = x => x.grade==null || (x.grade===CM_GRADE && (x.class_no==null || x.class_no===CM_CLASS));
 function renderTTC(){
   const box=$('ttcBox'); if(!box) return;
   if(CLASS_MODE){
     // ── 교실 보드: 오늘 시간표 전체 + 변경·장소 오버레이 ──
-    $('ttcTitle').innerHTML='<span class="em">📖</span>오늘 시간표';
+    $('ttcTitle').style.display='none';
+    $('ttToggle').style.display='flex';
     const myChg=ttcRows.filter(_mine), myLoc=locRows.filter(_mine);
     const periods={};
     (neisTT||[]).forEach(r=>{ const p=Number(r.PERIO); if(p && !periods[p]) periods[p]=r.ITRT_CNTNT||''; });
@@ -753,6 +824,7 @@ function renderTTC(){
     myLoc.filter(l=>!l.period || !pNums.includes(l.period)).forEach(l=>extra.push(
       `<div class="listrow ttc"><span class="who">${l.period?l.period+'교시':esc(l.subject)}</span><span class="t">${l.period?esc(l.subject)+' ':''}<span class="locpin">📍${esc(l.location)}</span>${l.note?` <span class="loc">(${esc(l.note)})</span>`:''}</span></div>`));
     box.innerHTML = html + extra.join('');
+    renderWeekTT();   // 변경사항을 주간 표에도 반영
   } else {
     // ── 중앙 보드: 오늘 변경 + 장소 안내 목록 ──
     $('ttcTitle').innerHTML='<span class="em">🔄</span>수업 변경·장소';
@@ -915,7 +987,18 @@ function renderDemo(){
   // 시간표 변경
   if(CLASS_MODE){
     // 교실 보드 데모: NEIS 시간표 + 변경 + 📍장소
-    $('ttcTitle').innerHTML='<span class="em">📖</span>오늘 시간표';
+    $('ttcTitle').style.display='none'; $('ttToggle').style.display='flex';
+    const WK={월:['과학','한문','역사','국어','기술·가정'],화:['과학','영어','미술','미술','국어'],
+              수:['수학','체육','한문','과학','역사'],목:['체육','진로','영어','기술·가정','도덕'],
+              금:['역사','기술·가정','국어','수학','체육']};
+    const dl=Object.keys(WK), ti=2; // 데모: 수요일이 오늘
+    let t='<table><thead><tr><th></th>'+dl.map((d,i)=>`<th class="${i===ti?'today':''}">${d}<br>8/${17+i}</th>`).join('')+'</tr></thead><tbody>';
+    for(let p=1;p<=5;p++){ t+=`<tr><td class="pn">${p}</td>`;
+      dl.forEach((d,i)=>{ let s=WK[d][p-1]||''; let c=i===ti?'tdcol':'';
+        if(i===ti&&p===4){ s='수학'; c+=' chg'; }
+        t+=`<td class="${c}">${s}</td>`; });
+      t+='</tr>'; }
+    $('weekBox').innerHTML=t+'</tbody></table>';
     $('ttcBox').innerHTML =
       `<div class="listrow ttc"><span class="who">1교시</span><span class="t">과학</span></div>`
       +`<div class="listrow ttc"><span class="who">2교시</span><span class="t">한문</span></div>`
@@ -939,7 +1022,7 @@ async function boot(){
   applyClassMode(); updatePeriod();
   if(DEMO){ renderDemo(); return; } // 데모: 정적 샘플만 (네트워크/실시간 없음)
   await loadConfig();
-  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadMeal(), loadWeather(), loadAir()]);
+  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadMeal(), loadWeather(), loadAir()]);
   subscribe();
 }
 boot();
@@ -949,6 +1032,7 @@ if(!DEMO){
   setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
   setInterval(loadMeal, 3600000);          // 급식 1시간마다
   setInterval(loadTimetableNEIS, 3600000); // NEIS 시간표 1시간마다
+  setInterval(loadWeekTT, 21600000);       // 주간 시간표 6시간마다
   setInterval(loadSchoolSched, 21600000);  // 학사일정 6시간마다
   setInterval(()=>{ loadWeather(); loadAir(); }, 1800000); // 날씨·미세먼지 30분마다
   // 자정 지나면 날짜 바뀌므로 급식/일정/디데이/평가/시간표 갱신
