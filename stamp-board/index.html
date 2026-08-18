@@ -2648,6 +2648,27 @@ var GB_BGM_LIST = [
 var _gbAud = {}, _gbBgm = null;
 
 function gbSndOn(){ try{ return localStorage.getItem('gb_snd') !== 'off'; }catch(e){ return true; } }
+
+/* 볼륨 0~1. 기본 0.7 — 이때 배경음이 0.35 라 예전과 같은 크기다.
+   배경음은 선생님 목소리 밑에 깔려야 하므로 슬라이더의 절반만 쓴다.
+   효과음(써주세요·들어주세요)은 반 전체가 들어야 하는 신호라 슬라이더 값 그대로. */
+function gbVol(){
+  var v;
+  try{ v = parseFloat(localStorage.getItem('gb_vol')); }catch(e){}
+  return (isFinite(v) && v >= 0 && v <= 1) ? v : 0.7;
+}
+function gbBgmVol(){ return gbVol() * 0.5; }
+
+/* 슬라이더를 끄는 동안 매번 화면을 다시 그리면 손가락이 슬라이더에서 떨어진다.
+   그래서 여기서는 소리와 숫자만 바꾸고 renderGB 는 부르지 않는다. */
+function gbSetVol(v){
+  v = Math.max(0, Math.min(1, (parseFloat(v) || 0) / 100));
+  try{ localStorage.setItem('gb_vol', String(v)); }catch(e){}
+  if(_gbBgm){ try{ _gbBgm.volume = gbBgmVol(); }catch(e){} }
+  for(var k in _gbAud){ if(_gbAud[k] !== _gbBgm){ try{ _gbAud[k].volume = v; }catch(e){} } }
+  var lab = document.getElementById('gbVolLab');
+  if(lab) lab.textContent = Math.round(v * 100) + '%';
+}
 function gbBgmKey(){ try{ return localStorage.getItem('gb_bgm') || 'tense1'; }catch(e){ return 'tense1'; } }
 function gbToggleSnd(){
   var on = !gbSndOn();
@@ -2674,13 +2695,13 @@ function gbAudio(key){
 function gbSfx(key){
   if(!gbSndOn()) return;
   var a = gbAudio(key); if(!a) return;
-  try{ a.currentTime = 0; var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+  try{ a.volume = gbVol(); a.currentTime = 0; var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
 }
 function gbPlayBgm(){
   var k = gbBgmKey();
   if(!gbSndOn() || k === 'off') return;
   var a = gbAudio(k); if(!a) return;
-  a.loop = true; a.volume = 0.35;
+  a.loop = true; a.volume = gbBgmVol();
   _gbBgm = a;
   try{ var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
 }
@@ -2700,6 +2721,12 @@ function gbSndBar(){
       h += '<button class="chip sm' + (k===GB_BGM_LIST[i].k?' on':'') +
            '" onclick="gbPickBgm(\'' + GB_BGM_LIST[i].k + '\')">' + GB_BGM_LIST[i].n + '</button>';
     }
+    h += '</div><div style="display:flex;gap:9px;align-items:center;margin-top:8px">' +
+         '<span style="font-size:11px;color:var(--mute);font-weight:700;flex:0 0 auto">🔉 크기</span>' +
+         '<input type="range" min="0" max="100" step="5" value="' + Math.round(gbVol()*100) + '"' +
+         ' oninput="gbSetVol(this.value)" style="flex:1;min-width:110px;accent-color:var(--ac)">' +
+         '<b id="gbVolLab" style="flex:0 0 auto;font-size:12px;color:var(--ac-d);min-width:38px;text-align:right">' +
+         Math.round(gbVol()*100) + '%</b>';
   }
   return h + '</div>';
 }
