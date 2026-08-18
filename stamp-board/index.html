@@ -187,6 +187,21 @@ main{flex:1;padding:14px 0 90px}
 .mdl-in{background:var(--card);border-radius:20px;padding:20px;width:min(440px,94vw);max-height:86dvh;overflow-y:auto;
   border:2px solid var(--line)}
 .pick{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:12px}
+/* 📖 캐릭터 도감 — 앞으로 어떤 모습이 되는지 미리 본다 */
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px}
+.dex-i{position:relative;border:2px solid var(--line);border-radius:13px;padding:7px 4px 6px;background:#fff;text-align:center}
+.dex-i.got{border-color:var(--ok);background:#F4FBF5}
+.dex-i.now{border-color:var(--ac);background:var(--ac-l);box-shadow:0 0 0 3px rgba(194,112,62,.16)}
+.dex-i.soon{opacity:.62}
+.dex-i svg{width:100%;height:auto;max-height:74px}
+.dex-n{font-size:11px;font-weight:900;color:var(--ink);margin-top:3px;line-height:1.3;word-break:keep-all}
+.dex-c{font-size:10px;font-weight:800;color:var(--mute);margin-top:1px}
+.dex-i.got .dex-c{color:var(--ok-d)}
+.dex-i.now .dex-c{color:var(--ac-d)}
+.dex-b{position:absolute;top:4px;right:5px;font-size:11px}
+.dex-tabs{display:flex;gap:5px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.dex-tabs::-webkit-scrollbar{display:none}
+.dex-tabs button{flex:0 0 auto}
 .pick-i{border:2px solid var(--line);border-radius:14px;padding:9px 5px;background:#fff;text-align:center}
 .pick-i.on{border-color:var(--ac);background:#FFF4EA}
 .pick-i svg{width:100%;height:auto}
@@ -2187,6 +2202,7 @@ function renderBoard(){
   h +=   '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:6px">';
   h +=     '<button class="chip sm" onclick="openThemePick()">🎨 모습 바꾸기</button>';
   h +=     (n>=TH[3] ? '<button class="chip sm" onclick="openBranchPick()">🧬 진화 고르기</button>' : '');
+  h +=     '<button class="chip sm" onclick="openDex()">📖 도감</button>';
   h +=   '</div>';
   h +=   DRAW[S.sp.theme](st, b);
   h +=   '<div class="char-name">' + esc(S.sp.nickname || (S.profile.name||'나')+'의 ' + th.name) + '</div>';
@@ -2253,6 +2269,73 @@ function renderLog(){
     h += '</div></div>';
   }
   $('p-log').innerHTML = h;
+}
+
+/* ── 📖 캐릭터 도감 ─────────────────────────────────────────────────────────
+   «20개 모으면 뭐가 되는지»가 안 보이면 모을 이유도 안 생긴다. 그래서 잠근 단계도
+   흐리게만 하고 그림은 다 보여 준다. 지금 단계에는 테두리를 둘러 어디쯤인지 알려 준다. */
+var _dexTheme = null;
+
+function openDex(theme){
+  var n = S.bal.earned, cur = stageOf(n);
+  _dexTheme = theme || _dexTheme || S.sp.theme;
+  var th = themeName(_dexTheme), b = branchOf(curBranch());
+
+  var h = '<h3 style="font-size:var(--fs-m);font-weight:900">📖 캐릭터 도감</h3>';
+  h += '<div class="sub" style="font-size:var(--fs-xxs);color:var(--ink2);margin-top:4px">' +
+       '도장을 모으면 이렇게 자라요. 지금은 <b>' + n + '개</b> · <b>' + esc(th.stages[cur]) + '</b></div>';
+
+  /* 테마 탭 — 다른 모습도 미리 보고 고를 수 있게 */
+  h += '<div class="dex-tabs" style="margin-top:10px">';
+  for (var i = 0; i < THEMES.length; i++) {
+    h += '<button class="chip sm' + (THEMES[i].id === _dexTheme ? ' on' : '') +
+         '" onclick="openDex(\'' + THEMES[i].id + '\')">' + THEMES[i].emoji + ' ' + THEMES[i].name + '</button>';
+  }
+  h += '</div>';
+
+  /* 7단계 */
+  h += '<div class="dex">';
+  for (i = 0; i < TH.length; i++) {
+    var got = n >= TH[i], now = (i === cur);
+    var cls = now ? 'now' : (got ? 'got' : 'soon');
+    h += '<div class="dex-i ' + cls + '">' +
+         '<div class="dex-b">' + (now ? '📍' : (got ? '✓' : '🔒')) + '</div>' +
+         DRAW[_dexTheme](i, b) +
+         '<div class="dex-n">' + esc(th.stages[i]) + '</div>' +
+         '<div class="dex-c">' + (TH[i] === 0 ? '시작' : '도장 ' + TH[i] + '개') + '</div>' +
+         '</div>';
+  }
+  h += '</div>';
+
+  /* 진화 갈래 — 6개 중 하나를 내가 고른다 */
+  h += '<div style="margin-top:16px;font-size:var(--fs-s);font-weight:900">🧬 진화 갈래 ' +
+       '<span style="font-weight:700;color:var(--mute);font-size:.8em">도장 ' + TH[3] + '개부터 고를 수 있어요</span></div>';
+  h += '<div class="dex">';
+  for (i = 0; i < BRANCHES.length; i++) {
+    var bb = BRANCHES[i], mine = (bb.id === curBranch());
+    h += '<div class="dex-i' + (mine ? ' now' : '') + '">' +
+         (mine ? '<div class="dex-b">📍</div>' : '') +
+         DRAW[_dexTheme](TH.length - 1, bb) +
+         '<div class="dex-n" style="color:' + bb.d + '">' + esc(bb.n[_dexTheme]) + '</div>' +
+         '<div class="dex-c">' + bb.icon + ' ' + esc(bb.label) + '</div>' +
+         '</div>';
+  }
+  h += '</div>';
+
+  if (_dexTheme !== S.sp.theme) {
+    h += '<button class="btn" style="margin-top:14px" onclick="pickThemeFromDex(\'' + _dexTheme + '\')">' +
+         '이 모습으로 바꾸기</button>';
+  }
+  h += '<button class="btn ghost" style="margin-top:8px" onclick="closeMdl()">닫기</button>';
+  $('mdlIn').innerHTML = h;
+  $('mdl').classList.add('show');
+}
+
+async function pickThemeFromDex(id){
+  await pickTheme(id);   /* 저장 + 도장판 다시 그리기 */
+  closeMdl();
+  _dexTheme = id;
+  openDex(id);
 }
 
 /* 모습(테마) 고르기 */
