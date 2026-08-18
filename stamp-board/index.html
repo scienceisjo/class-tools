@@ -255,6 +255,17 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
 </div>
 
 <!-- ══════════ 교사 ══════════ -->
+<!-- 🔔 골든벨 -->
+<div class="scr" id="s-gb">
+  <div class="hdr">
+    <div class="hdr-in">
+      <div class="logo">🔔 골든벨</div>
+      <button class="chip sm" onclick="closeGB()">← 나가기</button>
+    </div>
+  </div>
+  <div class="wrap"><div class="pane on" id="p-gb"></div></div>
+</div>
+
 <div class="scr" id="s-tea">
   <header class="hdr"><div class="wrap hdr-in">
     <div class="hdr-t">🧑‍🏫 <span id="teaName">선생님</span></div>
@@ -2402,6 +2413,13 @@ function renderGive(){
   }
 
   /* ② 학생 */
+  /* 🔔 골든벨 — 반을 고른 뒤에만 뜬다 */
+  h += '<div class="card" style="border-color:var(--ac);border-width:2px">' +
+       '<div class="hd"><h3 style="font-size:var(--fs-s)">🔔 골든벨로 주기</h3></div>' +
+       '<div class="sub">3~5문제 내고, <b>끝까지 남은 사람</b>에게 한 번에 도장을 찍어요.</div>' +
+       '<button class="btn" style="margin-top:10px;background:var(--ac);color:#fff" onclick="openGB()">🔔 골든벨 시작</button>' +
+       '</div>';
+
   h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">② 누구에게 줄까요?</h3>' +
        '<span style="display:flex;gap:5px"><button class="chip sm" onclick="selAll(1)">전체 선택</button>' +
        '<button class="chip sm" onclick="selAll(0)">전체 해제</button></span></div>';
@@ -2607,6 +2625,253 @@ function planNote(id){
   var code = planCode(planTitle(id));
   return code ? (code + ' ' + c) : c;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   🔔 골든벨 — 수업 시작 3~4문제, 끝까지 남은 사람에게 도장
+
+   교실에서 30초 안에 한 라운드가 끝나야 한다. 그래서 «맞은 사람»이 아니라
+   «틀린 사람»만 누른다 — 보통 반에서 서너 명이라 탭 수가 1/5 로 줄어든다.
+   진행 중 상태는 localStorage 에 둔다. 새로고침·실수로 뒤로가기 해도 살아난다.
+   DB 는 마지막에 도장 찍을 때만 쓴다(새 테이블 없음).
+   ══════════════════════════════════════════════════════════════════════════ */
+var GB_KEY = 'gb_state_v1';
+var GB = null;   // {g,c,total,round,alive:{id:1},out:{id:round},names:{id:label},done}
+
+function gbSave(){ try{ localStorage.setItem(GB_KEY, JSON.stringify(GB)); }catch(e){} }
+function gbLoad(){
+  try{
+    var s = localStorage.getItem(GB_KEY);
+    GB = s ? JSON.parse(s) : null;
+  }catch(e){ GB = null; }
+}
+function gbClear(){ GB = null; try{ localStorage.removeItem(GB_KEY); }catch(e){} }
+
+function gbAliveIds(){ return GB ? Object.keys(GB.alive) : []; }
+function gbLabel(id){ return (GB && GB.names[id]) || '학생'; }
+
+/* 진행 중이던 골든벨이 이 반 것이 맞는지 */
+function gbMatchesClass(){
+  return GB && S.selClass && GB.g === S.selClass.grade && GB.c === S.selClass.cls;
+}
+
+/* ── 열기 ── */
+function openGB(){
+  if(!S.selClass){ toast('반을 먼저 골라주세요'); return; }
+  gbLoad();
+  if(GB && !gbMatchesClass()){
+    if(!confirm('다른 반(' + GB.g + '-' + GB.c + ') 골든벨이 진행 중이에요. 새로 시작할까요?')) return;
+    gbClear();
+  }
+  if(!GB) gbSetup();
+  goScr('s-gb');
+  renderGB();     /* gbSetup 은 상태만 만든다 — 그리는 건 여기서 한 번만 */
+}
+function closeGB(){ goScr('s-tea'); teaTab('give'); }
+
+/* ── 준비: 전원 참가, 결석·불참만 빼고 시작 ── */
+function gbSetup(){
+  var names = {}, alive = {}, i, s;
+  for(i=0;i<S.students.length;i++){
+    s = S.students[i];
+    names[s.id] = (s.number ? s.number + '. ' : '') + (s.name || '');
+    alive[s.id] = 1;
+  }
+  GB = { g:S.selClass.grade, c:S.selClass.cls, total:4, round:1,
+         alive:alive, out:{}, names:names, done:false, ready:false };
+  gbSave();
+}
+
+function gbSetTotal(n){ if(!GB) return; GB.total = n; gbSave(); renderGB(); }
+
+/* 준비 단계에서 누르면 «오늘 안 함»(결석 등) — 시작 뒤에는 «탈락» */
+function gbTap(id){
+  if(!GB) return;
+  if(GB.alive[id]){ delete GB.alive[id]; GB.out[id] = GB.ready ? GB.round : 0; }
+  else { delete GB.out[id]; GB.alive[id] = 1; }
+  gbSave(); renderGB();
+}
+
+function gbStart(){
+  if(!GB) return;
+  if(!gbAliveIds().length){ toast('참가할 학생이 없어요'); return; }
+  GB.ready = true; GB.round = 1; gbSave(); renderGB();
+}
+
+function gbNext(){
+  if(!GB) return;
+  if(GB.round >= GB.total){ GB.done = true; }
+  else { GB.round += 1; }
+  gbSave(); renderGB();
+}
+function gbBack(){
+  if(!GB || GB.round <= 1) return;
+  /* 한 라운드 되돌리기 — 그 라운드에서 탈락한 사람을 모두 되살린다 */
+  var r = GB.round, id;
+  for(id in GB.out){ if(GB.out[id] === r){ delete GB.out[id]; GB.alive[id] = 1; } }
+  GB.round -= 1; GB.done = false; gbSave(); renderGB();
+}
+function gbReset(){
+  if(!confirm('지금까지 진행한 걸 지우고 처음부터 다시 할까요?')) return;
+  gbSetup(); renderGB();
+}
+function gbQuit(){
+  if(!confirm('골든벨을 끝내고 나갈까요? (도장을 아직 안 찍었다면 기록은 사라집니다)')) return;
+  gbClear(); closeGB();
+}
+
+/* 가장 오래 살아남은 사람들 — 아무도 끝까지 못 갔을 때 쓴다 */
+function gbFurthest(){
+  var best = 0, id, r;
+  for(id in GB.out){ r = GB.out[id]; if(r > best) best = r; }
+  var list = [];
+  for(id in GB.out){ if(GB.out[id] === best) list.push(id); }
+  return { round: best, ids: list };
+}
+
+/* ── 화면 ── */
+function renderGB(){
+  var el = $('p-gb'); if(!el || !GB) return;
+  var alive = gbAliveIds(), h = '';
+  var cls = GB.g + '학년 ' + GB.c + '반';
+
+  if(!GB.ready){
+    /* 준비 */
+    h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">🔔 골든벨 · ' + cls + '</h3></div>' +
+         '<div class="sub">문제 수를 고르고, <b>오늘 없는 사람만</b> 눌러서 빼주세요.</div>' +
+         '<div class="chips" style="margin-top:10px">';
+    [3,4,5].forEach(function(n){
+      h += '<button class="chip' + (GB.total===n?' on':'') + '" onclick="gbSetTotal(' + n + ')">' + n + '문제</button>';
+    });
+    h += '</div>' +
+         '<div class="sub" style="margin-top:12px"><b style="color:var(--ac-d)">' + alive.length + '명</b> 참가</div>' +
+         '<div class="stu-grid" style="margin-top:8px">' + gbCards() + '</div>' +
+         '<button class="btn g" style="margin-top:14px" onclick="gbStart()">🔔 시작 (' + GB.total + '문제)</button>' +
+         '<button class="btn" style="margin-top:8px;background:var(--line);color:var(--tx)" onclick="closeGB()">← 도장 주기로</button>' +
+         '</div>';
+    el.innerHTML = h; return;
+  }
+
+  if(!GB.done){
+    /* 진행 */
+    h += '<div class="card" style="text-align:center">' +
+         '<div class="sub">' + cls + ' · 골든벨</div>' +
+         '<div style="font-size:2.6em;font-weight:900;color:var(--ac-d);line-height:1.1;margin:4px 0">' +
+         GB.round + '번 문제</div>' +
+         '<div style="font-size:var(--fs-m);font-weight:800">남은 사람 <b style="color:var(--ok-d)">' +
+         alive.length + '명</b> <span style="color:var(--mute);font-weight:600">/ ' + GB.total + '문제 중 ' + GB.round + '</span></div>' +
+         '<div class="sub" style="margin-top:6px">답을 <b>틀린 사람만</b> 누르세요. 잘못 눌렀으면 다시 누르면 살아나요.</div>' +
+         '</div>';
+    h += '<div class="card"><div class="stu-grid">' + gbCards() + '</div></div>';
+    h += '<div class="card"><button class="btn g" onclick="gbNext()">' +
+         (GB.round >= GB.total ? '🏁 결과 보기' : '다음 문제 (' + (GB.round+1) + '번) →') + '</button>' +
+         '<div style="display:flex;gap:8px;margin-top:9px">' +
+         '<button class="chip sm" style="flex:1" onclick="gbBack()">↩ 앞 문제로</button>' +
+         '<button class="chip sm" style="flex:1" onclick="gbReset()">처음부터</button>' +
+         '<button class="chip sm" style="flex:1" onclick="gbQuit()">그만두기</button>' +
+         '</div></div>';
+    el.innerHTML = h; return;
+  }
+
+  /* 결과 */
+  h += '<div class="card" style="text-align:center">' +
+       '<div style="font-size:2.2em">' + (alive.length ? '🎉' : '😮') + '</div>' +
+       '<div style="font-size:var(--fs-l);font-weight:900;color:var(--ac-d)">' +
+       (alive.length ? alive.length + '명 생존!' : '끝까지 간 사람이 없어요') + '</div>' +
+       '<div class="sub">' + cls + ' · ' + GB.total + '문제</div></div>';
+
+  if(alive.length){
+    h += '<div class="card"><h3 style="font-size:var(--fs-s)">🏅 끝까지 남은 사람</h3>' +
+         '<div class="sub" style="margin:6px 0 9px">이 사람들에게 도장을 찍습니다</div>' +
+         '<div class="stu-grid">' + gbCards(true) + '</div>' +
+         '<button class="btn g" style="margin-top:13px" onclick="gbAward()">🏅 ' + alive.length + '명에게 도장 찍기</button></div>';
+  } else {
+    var f = gbFurthest();
+    h += '<div class="card"><h3 style="font-size:var(--fs-s)">가장 오래 남은 사람</h3>' +
+         '<div class="sub" style="margin:6px 0 9px">' + f.round + '번 문제까지 갔어요' +
+         (f.ids.length ? ' · ' + f.ids.length + '명' : '') + '</div>' +
+         '<div class="sub">' + f.ids.map(function(i){ return esc(gbLabel(i)); }).join(' · ') + '</div>' +
+         (f.ids.length ? '<button class="btn g" style="margin-top:13px" onclick="gbAwardFurthest()">🏅 이 ' +
+            f.ids.length + '명에게 도장 찍기</button>' : '') + '</div>';
+  }
+
+  /* 라운드별로 몇 명이 떨어졌는지 — 문제가 너무 어려웠는지 바로 보인다 */
+  var perRound = [], r, n, id;
+  for(r=1;r<=GB.total;r++){
+    n = 0; for(id in GB.out){ if(GB.out[id]===r) n++; }
+    perRound.push(r + '번 ' + n + '명');
+  }
+  h += '<div class="card"><h3 style="font-size:var(--fs-s)">문제별 탈락</h3>' +
+       '<div class="sub" style="margin-top:6px">' + perRound.join(' · ') + '</div></div>';
+
+  h += '<div class="card"><div style="display:flex;gap:8px">' +
+       '<button class="chip sm" style="flex:1" onclick="gbBack()">↩ 앞 문제로</button>' +
+       '<button class="chip sm" style="flex:1" onclick="gbReset()">처음부터</button>' +
+       '<button class="chip sm" style="flex:1" onclick="gbQuit()">그만두기</button>' +
+       '</div></div>';
+  el.innerHTML = h;
+}
+
+/* 학생 카드 — onlyAlive 면 생존자만 */
+function gbCards(onlyAlive){
+  var list = S.students.slice().sort(function(a,b){ return (a.number||0) - (b.number||0); });
+  var h = '', i, s, out;
+  for(i=0;i<list.length;i++){
+    s = list[i];
+    out = !GB.alive[s.id];
+    if(onlyAlive && out) continue;
+    h += '<button class="stu' + (out ? '' : ' sel') + '"' +
+         (out ? ' style="opacity:.42"' : '') +
+         (onlyAlive ? '' : ' onclick="gbTap(\'' + s.id + '\')"') + '>' +
+         '<span class="stu-c' + (out ? ' zero' : '') + '">' +
+         (out ? (GB.out[s.id] ? GB.out[s.id] + '번' : '—') : '○') + '</span>' +
+         '<div class="stu-n">' + esc((s.number ? s.number + '. ' : '') + (s.name || '')) + '</div>' +
+         '<div class="stu-m">' + (out ? (GB.out[s.id] ? GB.out[s.id] + '번에서' : '오늘 안 함') : '생존') + '</div>' +
+         '</button>';
+  }
+  return h || '<div class="empty" style="grid-column:1/-1"><p>아무도 없어요</p></div>';
+}
+
+/* ── 도장 ── */
+async function gbAward(){ await gbDoAward(gbAliveIds(), GB.total, false); }
+async function gbAwardFurthest(){
+  var f = gbFurthest();
+  await gbDoAward(f.ids, f.round, true);
+}
+
+async function gbDoAward(ids, upto, partial){
+  if(!ids.length){ toast('줄 사람이 없어요'); return; }
+  if(!confirm(ids.length + '명에게 도장을 찍을까요?')) return;
+  showLoad();
+  try{
+    var byId = {}, i;
+    for(i=0;i<S.students.length;i++) byId[S.students[i].id] = S.students[i];
+    var note = S.selPlan ? planNote(S.selPlan) : null;
+    var say  = S.selPlan ? planConcept(S.selPlan) : null;
+    var beh = partial
+      ? ('수업 여는 골든벨에서 ' + upto + '번 문제까지 통과함')
+      : ('수업 여는 골든벨 ' + GB.total + '문제를 끝까지 통과함');
+    if(say) beh = say + ' — ' + beh;
+    var today = new Date().toISOString().slice(0,10);
+    var rows = [], s;
+    for(i=0;i<ids.length;i++){
+      s = byId[ids[i]] || {};
+      rows.push({
+        student_id: ids[i], school_year: nowYear(), semester: nowSem(),
+        class_no_snap: s.class_no || GB.c || null, number_snap: s.number || null,
+        category: 'concept', behavior: beh,
+        lesson_note: note ? (note + ' · 골든벨') : '골든벨',
+        observed_on: today
+      });
+    }
+    var r = await sb.from('observations').insert(rows);
+    if(r.error){ toast('저장에 실패했어요'); console.error(r.error); return; }
+    gbClear();
+    await loadTeacherObs(); await loadStudents();
+    closeGB();
+    toast('🏅 ' + rows.length + '명에게 도장을 찍었어요!');
+  } finally { hideLoad(); }
+}
+
 function renderPlanChips(){
   var el = $('planChips'); if(!el) return;
   if(!S.plans.length){
