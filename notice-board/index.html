@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>해누리중학교 공지</title>
+<link rel="icon" href="logo.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -25,7 +26,8 @@
     padding:1.1rem 1.8rem;background:#fff;
     border-bottom:1px solid var(--line);box-shadow:var(--shadow);flex:0 0 auto}
   .brand{display:flex;align-items:center;gap:.9rem}
-  .brand .logo{font-size:2.6rem}
+  .brand .logo{width:3.4rem;height:3.4rem;object-fit:contain;display:block;flex:0 0 auto}
+  .brand .logo-fb{font-size:2.6rem;width:auto;height:auto}  /* 로고 못 불러올 때 이모지 대체 */
   .brand h1{font-size:2.2rem;font-weight:800;letter-spacing:-.5px}
   .hright{display:flex;align-items:center;gap:1.4rem}
   .clock{text-align:right;line-height:1.1}
@@ -229,7 +231,7 @@
 </head>
 <body>
   <header>
-    <div class="brand"><span class="logo">🏫</span><h1 id="schoolName">해누리중학교</h1>
+    <div class="brand"><img class="logo" src="logo.png" alt="해누리중학교 교표" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'logo logo-fb',textContent:'🏫'}))"><h1 id="schoolName">해누리중학교</h1>
       <span class="classbadge" id="classBadge" style="display:none"></span>
     </div>
     <div class="hright">
