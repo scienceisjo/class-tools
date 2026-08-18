@@ -13,69 +13,72 @@
     --shadow:0 2px 12px rgba(30,44,90,.06);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none}
+  /* 📐 화면 크기 자동 맞춤 — 가로(vw)와 세로(vh) 중 작은 쪽 기준으로 전체 축소.
+     16:9 전자칠판은 물론 세로가 짧은 노트북에서도 잘리지 않습니다. */
+  html{font-size:min(1vw, 1.62vh)}
   html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
     font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;}
   body{display:flex;flex-direction:column}
 
   /* ── 상단바 ── */
   header{display:flex;align-items:center;justify-content:space-between;
-    padding:1.1vw 1.8vw;background:#fff;
+    padding:1.1rem 1.8rem;background:#fff;
     border-bottom:1px solid var(--line);box-shadow:var(--shadow);flex:0 0 auto}
-  .brand{display:flex;align-items:center;gap:.9vw}
-  .brand .logo{font-size:2.6vw}
-  .brand h1{font-size:2.2vw;font-weight:800;letter-spacing:-.5px}
-  .hright{display:flex;align-items:center;gap:1.4vw}
+  .brand{display:flex;align-items:center;gap:.9rem}
+  .brand .logo{font-size:2.6rem}
+  .brand h1{font-size:2.2rem;font-weight:800;letter-spacing:-.5px}
+  .hright{display:flex;align-items:center;gap:1.4rem}
   .clock{text-align:right;line-height:1.1}
-  .clock .time{font-size:2.8vw;font-weight:800;font-variant-numeric:tabular-nums}
-  .clock .date{font-size:1.25vw;color:var(--sub);font-weight:600}
-  .wx{display:flex;align-items:center;gap:.5vw;font-size:1.5vw;font-weight:700}
-  .wx .ico{font-size:2vw}
-  .aqi{display:flex;align-items:center;gap:.35vw;font-size:1.25vw;font-weight:700}
+  .clock .time{font-size:2.8rem;font-weight:800;font-variant-numeric:tabular-nums}
+  .clock .date{font-size:1.25rem;color:var(--sub);font-weight:600}
+  .wx{display:flex;align-items:center;gap:.5rem;font-size:1.5rem;font-weight:700}
+  .wx .ico{font-size:2rem}
+  .aqi{display:flex;align-items:center;gap:.35rem;font-size:1.25rem;font-weight:700}
   .aqi b{font-weight:900}
-  .rain{display:flex;align-items:center;font-size:1.25vw;font-weight:800;color:var(--accent)}
-  #mealList sup.alg{font-size:.72vw;color:var(--sub);font-weight:700;margin-left:.2vw}
+  .rain{display:flex;align-items:center;font-size:1.25rem;font-weight:800;color:var(--accent)}
+  #mealList sup.alg{font-size:.72rem;color:var(--sub);font-weight:700;margin-left:.2rem}
   .locpin{color:var(--green);font-weight:800}
   .classbadge{display:inline-flex;align-items:center;background:var(--accent);color:#fff;
-    font-size:1.5vw;font-weight:800;padding:.2vw 1vw;border-radius:.6vw;letter-spacing:.5px}
-  .period{display:flex;align-items:center;gap:.4vw;font-size:1.4vw;font-weight:700;color:var(--green)}
+    font-size:1.5rem;font-weight:800;padding:.2rem 1rem;border-radius:.6rem;letter-spacing:.5px}
+  .period{display:flex;align-items:center;gap:.4rem;font-size:1.4rem;font-weight:700;color:var(--green)}
   .period b{font-weight:800;color:var(--txt)}
 
   /* ── 긴급 배너 ── */
-  #urgentBar{flex:0 0 auto;display:none;align-items:center;gap:1vw;
-    background:linear-gradient(90deg,#ff2d40,#ff5a3c);padding:.9vw 1.8vw;
-    font-size:1.9vw;font-weight:800;overflow:hidden;white-space:nowrap}
+  #urgentBar{flex:0 0 auto;display:none;align-items:center;gap:1rem;
+    background:linear-gradient(90deg,#ff2d40,#ff5a3c);padding:.9rem 1.8rem;
+    font-size:1.9rem;font-weight:800;overflow:hidden;white-space:nowrap}
   #urgentBar.show{display:flex}
-  #urgentBar .tag{background:#fff;color:var(--urgent);padding:.15vw 1vw;border-radius:99px;
-    font-size:1.4vw;font-weight:900;flex:0 0 auto;letter-spacing:1px}
+  #urgentBar .tag{background:#fff;color:var(--urgent);padding:.15rem 1rem;border-radius:99px;
+    font-size:1.4rem;font-weight:900;flex:0 0 auto;letter-spacing:1px}
   #urgentText{display:inline-block;animation:marquee 22s linear infinite}
-  @keyframes marquee{0%{transform:translateX(8vw)}100%{transform:translateX(-100%)}}
+  @keyframes marquee{0%{transform:translateX(8rem)}100%{transform:translateX(-100%)}}
 
   /* ── 호출 띠 ── */
-  #callBar{flex:0 0 auto;display:flex;align-items:center;gap:1vw;padding:.6vw 1.8vw;
+  #callBar{flex:0 0 auto;display:flex;align-items:center;gap:1rem;padding:.6rem 1.8rem;
     background:linear-gradient(90deg,#eaf1ff,#f1f6ff);border-bottom:2px solid #d3e2ff}
   #callBar.has{background:linear-gradient(90deg,#fff1d6,#ffe7c2);border-bottom-color:#ffce85}
-  #callBar .clabel{display:flex;align-items:center;gap:.4vw;font-size:1.45vw;font-weight:800;color:var(--accent);flex:0 0 auto}
+  #callBar .clabel{display:flex;align-items:center;gap:.4rem;font-size:1.45rem;font-weight:800;color:var(--accent);flex:0 0 auto}
   #callBar.has .clabel{color:#b45309}
-  #callFilter{font-size:1.15vw;font-weight:700;padding:.35vw .9vw;border-radius:.5vw;
+  #callFilter{font-size:1.15rem;font-weight:700;padding:.35rem .9rem;border-radius:.5rem;
     border:1.5px solid var(--line);background:#fff;color:var(--txt);flex:0 0 auto}
-  #callList{flex:1 1 auto;display:flex;gap:1vw;overflow:hidden;align-items:center}
-  .callitem{display:flex;align-items:center;gap:.5vw;font-size:1.35vw;font-weight:700;flex:0 0 auto;
-    background:#fff;border:1.5px solid #ffce85;border-radius:99px;padding:.3vw 1.1vw}
-  .callitem .cls{background:#b45309;color:#fff;font-size:1.05vw;font-weight:800;padding:.12vw .65vw;border-radius:99px}
+  #callList{flex:1 1 auto;display:flex;gap:1rem;overflow:hidden;align-items:center}
+  .callitem{display:flex;align-items:center;gap:.5rem;font-size:1.35rem;font-weight:700;flex:0 0 auto;
+    background:#fff;border:1.5px solid #ffce85;border-radius:99px;padding:.3rem 1.1rem}
+  .callitem .cls{background:#b45309;color:#fff;font-size:1.05rem;font-weight:800;padding:.12rem .65rem;border-radius:99px}
   .callitem .stu{color:#9a3412;font-weight:800}
   .callitem .arr{color:var(--sub);font-weight:600}
   .callitem .loc{color:var(--accent);font-weight:800}
-  #callEmpty{font-size:1.25vw;color:var(--sub);font-weight:600}
+  #callEmpty{font-size:1.25rem;color:var(--sub);font-weight:600}
 
   /* ── 디데이 띠 ── */
-  #ddayBar{flex:0 0 auto;display:flex;gap:.9vw;padding:.75vw 1.8vw 0;align-items:stretch;overflow:hidden}
+  #ddayBar{flex:0 0 auto;display:flex;gap:.9rem;padding:.75rem 1.8rem 0;align-items:stretch;overflow:hidden}
   #ddayBar:empty{display:none}
-  .dday{display:flex;align-items:center;gap:.8vw;background:#fff;box-shadow:var(--shadow);
-    border:1px solid var(--line);border-radius:.8vw;padding:.55vw 1.2vw;flex:0 0 auto}
-  .dday .ic{font-size:1.9vw}
-  .dday .lab{font-size:1.05vw;font-weight:700;color:var(--sub);line-height:1.15}
-  .dday .lab b{display:block;font-size:1.25vw;color:var(--txt);font-weight:800}
-  .dday .cnt{font-size:2.1vw;font-weight:900;font-variant-numeric:tabular-nums;margin-left:.3vw}
+  .dday{display:flex;align-items:center;gap:.8rem;background:#fff;box-shadow:var(--shadow);
+    border:1px solid var(--line);border-radius:.8rem;padding:.55rem 1.2rem;flex:0 0 auto}
+  .dday .ic{font-size:1.9rem}
+  .dday .lab{font-size:1.05rem;font-weight:700;color:var(--sub);line-height:1.15}
+  .dday .lab b{display:block;font-size:1.25rem;color:var(--txt);font-weight:800}
+  .dday .cnt{font-size:2.1rem;font-weight:900;font-variant-numeric:tabular-nums;margin-left:.3rem}
   .dday.t-시험 .cnt{color:var(--urgent)} .dday.t-평가 .cnt{color:var(--gold)}
   .dday.t-방학 .cnt{color:var(--green)} .dday.t-기타 .cnt{color:var(--accent)}
   .dday.today{border-color:var(--gold);background:linear-gradient(90deg,#fff6e8,#fffdf8)}
@@ -83,105 +86,145 @@
 
   /* ── 본문 그리드 ── */
   main{flex:1 1 auto;display:grid;grid-template-columns:30% 1fr;
-    grid-template-rows:1fr 1fr;gap:1vw;padding:1vw 1.8vw 1.4vw;min-height:0}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:1vw;box-shadow:var(--shadow);
-    padding:1.1vw 1.3vw;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-  .card h2{font-size:1.5vw;font-weight:800;display:flex;align-items:center;gap:.6vw;
-    margin-bottom:.7vw;flex:0 0 auto}
-  .card h2 .em{font-size:1.7vw}
+    grid-template-rows:1fr 1fr;gap:1rem;padding:1rem 1.8rem 1.4rem;min-height:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:1rem;box-shadow:var(--shadow);
+    padding:1.1rem 1.3rem;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .card h2{font-size:1.5rem;font-weight:800;display:flex;align-items:center;gap:.6rem;
+    margin-bottom:.7rem;flex:0 0 auto}
+  .card h2 .em{font-size:1.7rem}
   .card .body{flex:1 1 auto;min-height:0;overflow:hidden}
 
   #meal{grid-column:1;grid-row:1}    /* 좌측 위: 급식 */
   #assess{grid-column:1;grid-row:2}  /* 좌측 아래: 평가일정 */
 
   /* 급식 */
-  #mealDay{font-size:1.1vw;color:var(--gold);font-weight:800;margin-bottom:.45vw}
-  #mealList{list-style:none;display:flex;flex-direction:column;gap:.4vw}
-  #mealList li{font-size:1.35vw;font-weight:600;line-height:1.2;
-    padding-left:1.3vw;position:relative}
+  #mealDay{font-size:1.1rem;color:var(--gold);font-weight:800;margin-bottom:.45rem}
+  #mealList{list-style:none;display:flex;flex-direction:column;gap:.4rem}
+  #mealList li{font-size:1.35rem;font-weight:600;line-height:1.2;
+    padding-left:1.3rem;position:relative}
   #mealList li::before{content:'•';position:absolute;left:0;color:var(--green);font-weight:900}
-  #mealKcal{margin-top:.55vw;font-size:1vw;color:var(--sub);font-weight:600}
-  .empty{color:var(--sub);font-size:1.25vw;font-weight:600;padding:.8vw 0}
+  #mealKcal{margin-top:.55rem;font-size:1rem;color:var(--sub);font-weight:600}
+  .empty{color:var(--sub);font-size:1.25rem;font-weight:600;padding:.8rem 0}
 
   /* 평가일정 */
-  .assessrow{display:flex;align-items:flex-start;gap:.6vw;padding:.5vw 0;border-bottom:1px solid var(--line);font-size:1.2vw;line-height:1.25}
+  .assessrow{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:1.2rem;line-height:1.25}
   .assessrow:last-child{border-bottom:none}
-  .assessrow .d{flex:0 0 auto;font-weight:800;color:var(--gold);min-width:4.3vw}
-  .assessrow .ty{flex:0 0 auto;font-size:.85vw;font-weight:800;padding:.1vw .5vw;border-radius:.4vw;margin-right:.2vw}
+  .assessrow .d{flex:0 0 auto;font-weight:800;color:var(--gold);min-width:4.3rem}
+  .assessrow .ty{flex:0 0 auto;font-size:.85rem;font-weight:800;padding:.1rem .5rem;border-radius:.4rem;margin-right:.2rem}
   .ty-지필평가{background:rgba(239,59,70,.14);color:var(--urgent)}
   .ty-수행평가{background:rgba(217,119,6,.16);color:var(--gold)}
   .ty-기타{background:rgba(59,110,245,.14);color:var(--accent)}
   .assessrow .sub{font-weight:800}
-  .assessrow .sc{color:var(--sub);font-weight:600;font-size:.95vw;display:block}
+  .assessrow .sc{color:var(--sub);font-weight:600;font-size:.95rem;display:block}
 
   /* 공지 카드 영역 (우상단, 큰 비중) */
   #noticeCard{grid-column:2;grid-row:1/2}
   #noticeStage{position:relative;flex:1 1 auto;min-height:0}
-  .slide{position:absolute;inset:0;opacity:0;transition:opacity .6s;
-    display:flex;flex-direction:row;align-items:center;gap:1.6vw;pointer-events:none}
+  .slide{position:absolute;inset:0;opacity:0;transition:opacity .6s;overflow:hidden;
+    display:flex;flex-direction:row;align-items:center;gap:1.6rem;pointer-events:none}
   .slide.active{opacity:1}
   .slide .stext{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center}
-  .slide .rightmedia{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:.4vw}
-  .slide .rightmedia img{width:13vw;height:13vw;object-fit:contain;background:#fff;
-    border:1.5px solid var(--line);border-radius:.7vw;padding:.4vw}
-  .slide .rightmedia span{font-size:1.05vw;font-weight:800;color:var(--accent)}
+  .slide .rightmedia{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:.4rem}
+  .slide .rightmedia img{width:13rem;height:13rem;object-fit:contain;background:#fff;
+    border:1.5px solid var(--line);border-radius:.7rem;padding:.4rem}
+  .slide .rightmedia span{font-size:1.05rem;font-weight:800;color:var(--accent)}
   .cat-lost{background:rgba(245,158,11,.18);color:#b45309}
-  .slide .cat{display:inline-flex;align-self:flex-start;align-items:center;gap:.4vw;
-    font-size:1.2vw;font-weight:800;padding:.25vw 1vw;border-radius:99px;margin-bottom:.9vw}
+  .slide .cat{display:inline-flex;align-self:flex-start;align-items:center;gap:.4rem;
+    font-size:1.2rem;font-weight:800;padding:.25rem 1rem;border-radius:99px;margin-bottom:.9rem}
   .cat-교과{background:rgba(169,139,255,.2);color:var(--purple)}
   .cat-학년{background:rgba(91,140,255,.2);color:var(--accent)}
   .cat-일반{background:rgba(55,211,155,.2);color:var(--green)}
   .cat-긴급{background:rgba(255,77,94,.2);color:var(--urgent)}
-  .slide .stitle{font-size:2.5vw;font-weight:800;line-height:1.2;margin-bottom:.7vw}
-  .slide .sbody{font-size:1.6vw;color:#41506e;line-height:1.4;font-weight:500;
-    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-  .slide .meta{margin-top:1vw;font-size:1.1vw;color:var(--sub);font-weight:600}
-  #dots{display:flex;gap:.5vw;justify-content:center;margin-top:.6vw;flex:0 0 auto}
-  #dots i{width:.7vw;height:.7vw;border-radius:99px;background:var(--line);transition:.3s}
-  #dots i.on{background:var(--accent);width:2vw}
+  .slide .stitle{font-size:2.2rem;font-weight:800;line-height:1.2;margin-bottom:.6rem;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .slide .sbody{font-size:1.5rem;color:#41506e;line-height:1.4;font-weight:500;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .slide .meta{margin-top:.8rem;font-size:1.05rem;color:var(--sub);font-weight:600}
+  #dots{display:flex;gap:.5rem;justify-content:center;margin-top:.6rem;flex:0 0 auto}
+  #dots i{width:.7rem;height:.7rem;border-radius:99px;background:var(--line);transition:.3s}
+  #dots i.on{background:var(--accent);width:2rem}
 
   /* 하단 우측: 일정 + 시간표변경 나란히 */
-  #bottomRow{grid-column:2;grid-row:2/3;display:grid;grid-template-columns:1fr 1fr;gap:1vw;min-height:0}
+  #bottomRow{grid-column:2;grid-row:2/3;display:grid;grid-template-columns:1fr 1fr;gap:1rem;min-height:0}
   #cleanCard{display:none}
   body.cmode #bottomRow{grid-template-columns:1fr 1fr 1fr}
   body.cmode #cleanCard{display:flex}
-  .cleanrow{display:flex;align-items:flex-start;gap:.7vw;padding:.5vw 0;border-bottom:1px solid var(--line);font-size:1.2vw;line-height:1.3}
+  .cleanrow{display:flex;align-items:flex-start;gap:.7rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:1.2rem;line-height:1.3}
   .cleanrow:last-child{border-bottom:none}
-  .cleanrow .ar{flex:0 0 auto;font-weight:800;color:var(--accent);min-width:6vw}
+  .cleanrow .ar{flex:0 0 auto;font-weight:800;color:var(--accent);min-width:6rem}
   .cleanrow .mb{font-weight:600}
   /* 청소당번 ↔ 1인1역 토글 (전자칠판 터치) */
-  .toggleh{display:flex;gap:.5vw;margin-bottom:.7vw;flex:0 0 auto}
+  .toggleh{display:flex;gap:.5rem;margin-bottom:.7rem;flex:0 0 auto}
   .tgl{font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:var(--panel2);
-    color:var(--sub);font-size:1.15vw;font-weight:800;padding:.3vw 1vw;border-radius:99px;transition:.15s}
+    color:var(--sub);font-size:1.15rem;font-weight:800;padding:.3rem 1rem;border-radius:99px;transition:.15s}
   .tgl.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .rolerow{display:flex;align-items:center;gap:.7vw;padding:.5vw 0;border-bottom:1px solid var(--line);font-size:1.2vw;line-height:1.3}
+  .rolerow{display:flex;align-items:center;gap:.7rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:1.2rem;line-height:1.3}
   .rolerow:last-child{border-bottom:none}
-  .rolerow .rn{flex:0 0 auto;font-weight:800;color:var(--purple);min-width:6.5vw}
+  .rolerow .rn{flex:0 0 auto;font-weight:800;color:var(--purple);min-width:6.5rem}
   .rolerow .rm{font-weight:600}
-  .listrow{display:flex;align-items:flex-start;gap:.7vw;padding:.55vw 0;border-bottom:1px solid var(--line);
-    font-size:1.25vw;line-height:1.3}
+  .listrow{display:flex;align-items:flex-start;gap:.7rem;padding:.55rem 0;border-bottom:1px solid var(--line);
+    font-size:1.25rem;line-height:1.3}
   .listrow:last-child{border-bottom:none}
-  .listrow .d{flex:0 0 auto;font-weight:800;color:var(--gold);min-width:4.5vw}
+  .listrow .d{flex:0 0 auto;font-weight:800;color:var(--gold);min-width:4.5rem}
   .listrow .t{font-weight:600}
-  .listrow .loc{color:var(--sub);font-weight:600;margin-left:.4vw;font-size:1vw}
+  .listrow .loc{color:var(--sub);font-weight:600;margin-left:.4rem;font-size:1rem}
   .ttc .chg{font-weight:800}
-  .ttc .arrow{color:var(--accent);margin:0 .3vw}
-  .ttc .who{color:var(--sub);font-weight:700;min-width:5vw;flex:0 0 auto}
+  .ttc .arrow{color:var(--accent);margin:0 .3rem}
+  .ttc .who{color:var(--sub);font-weight:700;min-width:5rem;flex:0 0 auto}
 
-  /* 📮 선생님께 말하기 QR (좌하단 고정) */
-  #msgQR{position:fixed;left:1.8vw;bottom:1.4vw;z-index:40;display:flex;align-items:center;gap:.6vw;
-    background:var(--panel);border:1.5px solid var(--line);border-radius:.8vw;padding:.5vw .8vw;
-    box-shadow:var(--shadow)}
-  #msgQR img{width:5.2vw;height:5.2vw;display:block;background:#fff;border-radius:.3vw}
-  #msgQR .lab{font-size:1.05vw;font-weight:800;color:var(--accent);line-height:1.25}
-  #assess .body{padding-bottom:7.5vw}   /* QR 가림 방지 */
+  /* 📮 선생님께 말하기 — 버튼 + 입력창 */
+  #msgBtn{position:fixed;right:1.6rem;bottom:1.3rem;z-index:45;cursor:pointer;font-family:inherit;
+    background:var(--accent);color:#fff;border:none;border-radius:99px;padding:.75rem 1.6rem;
+    font-size:1.25rem;font-weight:800;box-shadow:0 .3rem 1rem rgba(59,110,245,.35)}
+  #msgBtn:active{transform:scale(.97)}
+  #msgModal{position:fixed;inset:0;z-index:60;background:rgba(15,25,50,.45);
+    display:none;align-items:center;justify-content:center;padding:2rem}
+  #msgModal.show{display:flex}
+  .mbox{background:var(--panel);border-radius:1.2rem;padding:1.8rem 2rem;width:60rem;max-width:900px;
+    max-height:92vh;overflow:auto;box-shadow:0 2rem 5rem rgba(0,0,0,.25)}
+  .mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+  .mhead h3{font-size:2rem;font-weight:900}
+  .mx{background:none;border:none;font-size:2rem;color:var(--sub);cursor:pointer;font-family:inherit;line-height:1}
+  .mdesc{font-size:1.15rem;color:var(--sub);font-weight:600;margin-bottom:1.1rem;line-height:1.5}
+  .mcats{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+  .mcat{font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:#fff;color:var(--sub);
+    font-size:1.15rem;font-weight:800;padding:.5rem 1.1rem;border-radius:99px}
+  .mcat.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .mcat.on[data-c="고민·상담"]{background:var(--gold);border-color:var(--gold)}
+  .mcat.on[data-c="도움 요청"]{background:var(--urgent);border-color:var(--urgent)}
+  .mwarn{display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:.6rem;
+    padding:.7rem 1rem;font-size:1.1rem;font-weight:700;margin-bottom:1rem}
+  .mwarn.show{display:block}
+  #msgModal input,#msgModal textarea,#msgModal select{-webkit-user-select:text;user-select:text}
+  #mBody{width:100%;min-height:9rem;font-family:inherit;font-size:1.4rem;padding:1rem;
+    border:1.5px solid var(--line);border-radius:.7rem;resize:none;color:var(--txt);background:#fff}
+  #mBody:focus{outline:none;border-color:var(--accent)}
+  .mrow{display:flex;gap:.6rem;margin-top:.8rem}
+  .mrow input,.mrow select{flex:1;font-family:inherit;font-size:1.2rem;padding:.7rem .9rem;
+    border:1.5px solid var(--line);border-radius:.6rem;background:#fff;color:var(--txt);min-width:0}
+  .mrow #mTeacher{flex:2}
+  .manon{display:flex;align-items:center;gap:.6rem;margin-top:.8rem;padding:.7rem 1rem;cursor:pointer;
+    background:var(--panel2);border-radius:.6rem;font-size:1.2rem;font-weight:700}
+  .manon input{width:1.5rem;height:1.5rem;accent-color:var(--accent)}
+  .manon small{color:var(--sub);font-weight:600;font-size:1rem;margin-left:.4rem}
+  .merr{display:none;color:var(--urgent);font-size:1.15rem;font-weight:700;margin-top:.7rem}
+  .merr.show{display:block}
+  .msend{width:100%;margin-top:1rem;background:var(--accent);color:#fff;border:none;cursor:pointer;
+    font-family:inherit;font-size:1.5rem;font-weight:900;padding:1rem;border-radius:.8rem}
+  .msend:disabled{opacity:.5}
+  #msgOk{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
+    background:rgba(15,25,50,.45)}
+  #msgOk.show{display:flex}
+  .okbox{background:var(--panel);border-radius:1.2rem;padding:2.5rem 4rem;text-align:center;
+    font-size:2.4rem;font-weight:900;color:var(--green)}
+  .okbox span{display:block;font-size:1.3rem;color:var(--sub);font-weight:700;margin-top:.6rem}
 
   /* 연결 끊김 표시 */
-  #offline{position:fixed;bottom:1vw;right:1.4vw;background:var(--urgent);color:#fff;
-    padding:.4vw 1vw;border-radius:99px;font-size:1vw;font-weight:700;display:none;z-index:50}
+  #offline{position:fixed;bottom:1rem;right:1.4rem;background:var(--urgent);color:#fff;
+    padding:.4rem 1rem;border-radius:99px;font-size:1rem;font-weight:700;display:none;z-index:50}
   #offline.show{display:block}
   .scroller{animation:vscroll 30s linear infinite}
-  @keyframes vscroll{0%,10%{transform:translateY(0)}90%,100%{transform:translateY(calc(-100% + 12vw))}}
+  @keyframes vscroll{0%,10%{transform:translateY(0)}90%,100%{transform:translateY(calc(-100% + 12rem))}}
 </style>
 </head>
 <body>
@@ -253,10 +296,49 @@
     </div>
   </main>
 
-  <div id="msgQR">
-    <img id="msgQRimg" alt="QR">
-    <div class="lab">📮 선생님께<br>말하기</div>
+  <button id="msgBtn" onclick="openMsg()">📮 선생님께 말하기</button>
+
+  <!-- 쪽지 쓰기 창 (전자칠판에서 바로 작성) -->
+  <div id="msgModal" onclick="if(event.target===this)closeMsg()">
+    <div class="mbox">
+      <div class="mhead">
+        <h3>📮 선생님께 말하기</h3>
+        <button class="mx" onclick="closeMsg()">✕</button>
+      </div>
+      <p class="mdesc">선생님만 볼 수 있어요. <b>전자칠판에는 안 나와요.</b>
+        보내고 나면 화면에서 바로 사라집니다.</p>
+
+      <div class="mcats" id="mcats">
+        <button class="mcat on" data-c="하고 싶은 말" onclick="mPick('하고 싶은 말')">💬 하고 싶은 말</button>
+        <button class="mcat" data-c="질문"      onclick="mPick('질문')">❓ 질문</button>
+        <button class="mcat" data-c="건의"      onclick="mPick('건의')">🙋 건의</button>
+        <button class="mcat" data-c="고민·상담" onclick="mPick('고민·상담')">😟 고민·상담</button>
+        <button class="mcat" data-c="도움 요청" onclick="mPick('도움 요청')">🚨 도움 요청</button>
+      </div>
+
+      <div class="mwarn" id="mWarn">⚠️ 많이 급하거나 위험하면 이 쪽지 말고 <b>가까운 선생님께 직접 말하세요.</b></div>
+
+      <textarea id="mBody" placeholder="하고 싶은 말을 적어주세요" maxlength="1000" oninput="resetMsgTimeout()"></textarea>
+
+      <div class="mrow">
+        <input id="mTeacher" placeholder="받는 선생님 (몰라도 됨)">
+        <select id="mGrade"><option value="">학년</option><option>1</option><option>2</option><option>3</option></select>
+        <input id="mClass" type="number" placeholder="반">
+        <input id="mName" placeholder="이름">
+      </div>
+
+      <label class="manon" for="mAnon">
+        <input type="checkbox" id="mAnon" onchange="mAnonToggle()">
+        <span>🕶️ 익명으로 보내기 <small>이름·학년·반을 숨겨요</small></span>
+      </label>
+
+      <div class="merr" id="mErr"></div>
+      <button class="msend" id="mSend" onclick="sendMsg()">📮 보내기</button>
+    </div>
   </div>
+
+  <!-- 보낸 뒤 확인 -->
+  <div id="msgOk"><div class="okbox">✅ 잘 보냈어요!<span>선생님이 확인할 거예요</span></div></div>
 
   <div id="offline">⚠️ 연결 끊김 — 마지막 정보 표시중</div>
 
@@ -288,10 +370,51 @@ function siblingPage(kind){
   return dir + map[kind];
 }
 
-/* 📮 선생님께 말하기 QR */
-function buildMsgQR(){
-  const url = siblingPage('message') + (CLASS_MODE ? `?class=${CLASS_MODE}` : '');
-  $('msgQRimg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=1&data=${encodeURIComponent(url)}`;
+/* 📮 선생님께 말하기 — 화면에서 바로 작성 */
+let mCat = '하고 싶은 말', mTimer = null;
+function openMsg(){
+  mCat='하고 싶은 말';
+  document.querySelectorAll('.mcat').forEach(b=>b.classList.toggle('on', b.dataset.c===mCat));
+  $('mWarn').classList.remove('show');
+  ['mBody','mTeacher','mName'].forEach(id=>$(id).value='');
+  $('mAnon').checked=false; mAnonToggle();
+  if(CLASS_MODE){ $('mGrade').value=String(CM_GRADE); $('mClass').value=String(CM_CLASS); }
+  else { $('mGrade').value=''; $('mClass').value=''; }
+  $('mErr').classList.remove('show');
+  $('msgModal').classList.add('show');
+  setTimeout(()=>$('mBody').focus(), 100);
+  resetMsgTimeout();
+}
+function closeMsg(){ $('msgModal').classList.remove('show'); clearTimeout(mTimer); }
+// 학생이 쓰다 말고 가버려도 90초 뒤 자동으로 닫힘 (내용 노출 방지)
+function resetMsgTimeout(){ clearTimeout(mTimer); mTimer=setTimeout(closeMsg, 90000); }
+function mPick(c){
+  mCat=c;
+  document.querySelectorAll('.mcat').forEach(b=>b.classList.toggle('on', b.dataset.c===c));
+  $('mWarn').classList.toggle('show', c==='도움 요청' || c==='고민·상담');
+  resetMsgTimeout();
+}
+function mAnonToggle(){
+  const on=$('mAnon').checked;
+  ['mName','mGrade','mClass'].forEach(id=>{ $(id).disabled=on; $(id).style.opacity=on?.45:1; });
+}
+async function sendMsg(){
+  const body=$('mBody').value.trim(), err=$('mErr');
+  err.classList.remove('show');
+  if(body.length<2){ err.textContent='하고 싶은 말을 적어주세요.'; err.classList.add('show'); return; }
+  const anon=$('mAnon').checked;
+  $('mSend').disabled=true; $('mSend').textContent='보내는 중…';
+  const { error } = await sb.from('messages').insert({
+    category:mCat, body, to_teacher:$('mTeacher').value.trim()||null, is_anonymous:anon,
+    student_name: anon?null:($('mName').value.trim()||null),
+    grade:    anon?null:($('mGrade').value?Number($('mGrade').value):null),
+    class_no: anon?null:($('mClass').value?Number($('mClass').value):null)
+  });
+  $('mSend').disabled=false; $('mSend').textContent='📮 보내기';
+  if(error){ err.textContent='보내지 못했어요: '+error.message; err.classList.add('show'); return; }
+  closeMsg();
+  $('msgOk').classList.add('show');
+  setTimeout(()=>$('msgOk').classList.remove('show'), 2500);
 }
 
 function applyClassMode(){
@@ -327,22 +450,31 @@ function switchDuty(which){
 
 /* ── 현재 교시 / 쉬는시간 (헤더 표시) ── */
 // 필요시 시간만 학교에 맞게 수정하세요.
+// 해누리중: 45분 수업 · 쉬는시간 10분 · 월수금 6교시, 화목 7교시
 const BELL = [
-  {label:'1교시', s:'08:50', e:'09:40'}, {label:'2교시', s:'09:50', e:'10:40'},
-  {label:'3교시', s:'10:50', e:'11:40'}, {label:'4교시', s:'11:50', e:'12:40'},
-  {label:'점심시간', s:'12:40', e:'13:40'}, {label:'5교시', s:'13:40', e:'14:30'},
-  {label:'6교시', s:'14:40', e:'15:30'}, {label:'7교시', s:'15:40', e:'16:30'},
+  {label:'조회',     s:'08:30', e:'08:40'},
+  {label:'1교시',    s:'08:50', e:'09:35'},
+  {label:'2교시',    s:'09:45', e:'10:30'},
+  {label:'3교시',    s:'10:40', e:'11:25'},
+  {label:'4교시',    s:'11:35', e:'12:20'},
+  {label:'점심시간', s:'12:20', e:'13:20'},
+  {label:'5교시',    s:'13:20', e:'14:05'},
+  {label:'6교시',    s:'14:15', e:'15:00'},
+  {label:'7교시',    s:'15:10', e:'15:55', days:[2,4]},  // 화·목만
 ];
 const _toMin = t => { const [a,b]=t.split(':').map(Number); return a*60+b; };
 function updatePeriod(){
   const el=$('periodChip'); const now=new Date(); const dow=now.getDay();
   if(dow===0 || dow===6){ el.style.display='none'; return; } // 주말 숨김
   const m=now.getHours()*60+now.getMinutes();
+  const today = BELL.filter(p => !p.days || p.days.includes(dow));  // 요일별 교시 수 반영
   let cur=null, nxt=null;
-  for(const p of BELL){ if(m>=_toMin(p.s) && m<_toMin(p.e)){ cur=p; break; } }
-  if(!cur){ for(const p of BELL){ if(m<_toMin(p.s)){ nxt=p; break; } } }
+  for(const p of today){ if(m>=_toMin(p.s) && m<_toMin(p.e)){ cur=p; break; } }
+  if(!cur){ for(const p of today){ if(m<_toMin(p.s)){ nxt=p; break; } } }
   if(cur){ el.style.display='flex';
-    el.innerHTML = cur.label==='점심시간' ? `🍴 점심시간 <b>~${cur.e}</b>` : `🔔 ${cur.label} <b>~${cur.e}</b>`;
+    el.innerHTML = cur.label==='점심시간' ? `🍴 점심시간 <b>~${cur.e}</b>`
+                 : cur.label==='조회'     ? `📣 조회 <b>~${cur.e}</b>`
+                 : `🔔 ${cur.label} <b>~${cur.e}</b>`;
   } else if(nxt){ el.style.display='flex'; el.innerHTML = `☕ 쉬는시간 <b>${nxt.label} ${nxt.s}</b>`;
   } else { el.style.display='none'; } // 등교 전 / 하교 후
 }
@@ -737,7 +869,7 @@ function renderDemo(){
   $('mealList').innerHTML = [['카레야채볶음밥','5·6'],['유부장국','5·6'],['어묵볶음','1·5·6'],['깍두기','9'],['요거트','2'],['자두','']].map(d=>`<li>${d[0]}${d[1]?`<sup class="alg">${d[1]}</sup>`:''}</li>`).join('');
   $('mealKcal').textContent = '열량 705.7 Kcal';
   $('wxTemp').textContent='27°'; $('wxIco').textContent='⛅'; $('wx').style.display='flex';
-  $('periodChip').style.display='flex'; $('periodChip').innerHTML='🔔 3교시 <b>~11:40</b>';
+  $('periodChip').style.display='flex'; $('periodChip').innerHTML='🔔 3교시 <b>~11:25</b>';
   const aq=$('aqi'); aq.style.display='flex'; aq.style.color='#d97706'; aq.innerHTML='😷 미세먼지 <b>나쁨</b>';
   $('rain').style.display='flex'; $('rain').textContent='☔ 60%';
   // 긴급
@@ -802,7 +934,7 @@ function renderDemo(){
 
 /* ── 부팅 + 주기적 새로고침 ── */
 async function boot(){
-  applyClassMode(); updatePeriod(); buildMsgQR();
+  applyClassMode(); updatePeriod();
   if(DEMO){ renderDemo(); return; } // 데모: 정적 샘플만 (네트워크/실시간 없음)
   await loadConfig();
   await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadMeal(), loadWeather(), loadAir()]);
