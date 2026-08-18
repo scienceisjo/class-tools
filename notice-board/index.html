@@ -121,6 +121,8 @@
 
   /* 공지 카드 영역 (우상단, 큰 비중) */
   #noticeCard{grid-column:2;grid-row:1/2}
+  /* ⚠️ .card .body 는 블록이라 자식의 flex:1 이 안 먹어 높이가 0이 됨 → 공지 카드 본문만 flex 컨테이너로 */
+  #noticeCard .body{display:flex;flex-direction:column}
   #noticeStage{position:relative;flex:1 1 auto;min-height:0}
   .slide{position:absolute;inset:0;opacity:0;transition:opacity .6s;overflow:hidden;
     display:flex;flex-direction:row;align-items:center;gap:1.6rem;pointer-events:none}
