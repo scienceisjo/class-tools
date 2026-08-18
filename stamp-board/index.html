@@ -237,7 +237,10 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
 <div class="scr" id="s-stu">
   <header class="hdr"><div class="wrap hdr-in">
     <div class="hdr-t">🏅 <span id="stuName">나</span>의 도장판</div>
-    <button class="hdr-b" onclick="doLogout()">로그아웃</button>
+    <span style="display:flex;gap:6px">
+      <button class="hdr-b" onclick="openPw()" title="비밀번호 변경">🔑</button>
+      <button class="hdr-b" onclick="doLogout()">로그아웃</button>
+    </span>
   </div>
   <div class="wrap"><div class="tabs">
     <button class="tab on" data-p="board" onclick="stuTab('board')">🏅 도장판</button>
@@ -252,6 +255,22 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
     <div class="pane" id="p-base"></div>
     <div class="pane" id="p-log"></div>
   </main>
+</div>
+
+<!-- 🔑 비밀번호 변경 -->
+<div class="mdl" id="pwMdl" onclick="if(event.target.id==='pwMdl')closePw()">
+  <div class="mdl-in" onclick="event.stopPropagation()">
+    <h3 style="font-size:var(--fs-m);font-weight:900">🔑 비밀번호 변경</h3>
+    <div class="sub" style="margin:6px 0 12px">새 비밀번호를 정해주세요.<br>다음부터 새 비밀번호로 들어와요.</div>
+    <label class="fl">새 비밀번호</label>
+    <input class="inp" id="pwNew" type="password" placeholder="4자 이상" autocomplete="new-password" style="margin-bottom:9px">
+    <label class="fl">새 비밀번호 확인</label>
+    <input class="inp" id="pwNew2" type="password" placeholder="한 번 더 입력" autocomplete="new-password"
+           onkeydown="if(event.key==='Enter')doChangePw()">
+    <div id="pwMsg" style="margin-top:10px;font-size:var(--fs-xs);font-weight:800;min-height:18px"></div>
+    <button class="btn g" id="pwSaveBtn" style="margin-top:10px" onclick="doChangePw()">변경하기</button>
+    <button class="btn" style="margin-top:8px;background:var(--line);color:var(--ink)" onclick="closePw()">취소</button>
+  </div>
 </div>
 
 <!-- ══════════ 교사 ══════════ -->
@@ -2110,6 +2129,40 @@ function curBranch(){ return S.sp.branch || autoBranch(); }
 /* ══════════════════════════════════════════════════════════════════════════
    학생 — 화면
    ══════════════════════════════════════════════════════════════════════════ */
+/* ── 🔑 비밀번호 변경 ────────────────────────────────────────────────────
+   질문 과수원과 같은 Supabase 계정을 쓰므로, 여기서 바꾸면 두 앱 모두 바뀐다.
+   (같은 프로젝트 + 같은 도메인이라 로그인 자체가 하나로 이어져 있다) */
+function openPw(){
+  var a = $('pwNew'), b = $('pwNew2'), m = $('pwMsg');
+  if(a) a.value = ''; if(b) b.value = '';
+  if(m){ m.textContent = ''; }
+  $('pwMdl').classList.add('show');
+  setTimeout(function(){ var e = $('pwNew'); if(e) e.focus(); }, 100);
+}
+function closePw(){ $('pwMdl').classList.remove('show'); }
+
+async function doChangePw(){
+  var a = ($('pwNew') && $('pwNew').value) || '';
+  var b = ($('pwNew2') && $('pwNew2').value) || '';
+  var m = $('pwMsg');
+  var setMsg = function(txt, ok){ if(m){ m.textContent = txt; m.style.color = ok ? 'var(--ok-d)' : 'var(--bad)'; } };
+  if(a.length < 4){ setMsg('비밀번호는 4자 이상이어야 해요', false); return; }
+  if(a !== b){ setMsg('두 비밀번호가 서로 달라요', false); return; }
+  var btn = $('pwSaveBtn'); if(btn) btn.disabled = true;
+  setMsg('변경 중…', true);
+  try{
+    var r = await sb.auth.updateUser({ password: a });
+    if(btn) btn.disabled = false;
+    if(r.error){ setMsg('변경 실패: ' + r.error.message, false); return; }
+    setMsg('✅ 바뀌었어요! 질문 과수원도 같은 비밀번호예요.', true);
+    toast('🔑 비밀번호가 바뀌었어요');
+    setTimeout(closePw, 1800);
+  }catch(e){
+    if(btn) btn.disabled = false;
+    setMsg('변경 실패: ' + (e && e.message || '오류'), false);
+  }
+}
+
 function stuTab(k){
   var a=document.querySelectorAll('#s-stu .tab'), i;
   for(i=0;i<a.length;i++) a[i].classList.toggle('on', a[i].dataset.p===k);
