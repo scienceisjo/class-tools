@@ -340,15 +340,17 @@
   <!-- 청소당번 -->
   <div class="panel" id="p-clean">
     <div class="card">
-      <h2>청소당번 추가</h2>
-      <div class="hint">그 반의 <b>교실 전자칠판</b>(<code>?class=학년-반</code>)에 표시됩니다. 매주 갱신해 주세요.</div>
+      <h2>오늘(이번 주) 청소 조</h2>
+      <div class="hint">조 번호만 고르면 그 반 <b>교실 전자칠판</b>(<code>?class=학년-반</code>)에 크게 표시됩니다.
+        누가 몇 조인지는 학생들이 아니까 이름은 안 적어도 돼요.</div>
       <div class="row">
-        <div class="field"><label>학년</label><select id="clGrade"><option>1</option><option>2</option><option>3</option></select></div>
-        <div class="field"><label>반</label><input id="clClass" type="number" placeholder="예: 3"></div>
-        <div class="field"><label>구역</label><input id="clArea" placeholder="예: 교실 앞 / 복도 / 칠판"></div>
-        <div class="field"><label>담당</label><input id="clMembers" placeholder="예: 1모둠 / 김OO·이OO"></div>
+        <div class="field"><label>학년</label><select id="clGrade" onchange="loadClean()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="clClass" type="number" placeholder="예: 3" oninput="loadClean()"></div>
+        <div class="field" style="flex:2"><label>비고 (선택)</label><input id="clNote" placeholder="예: 이번 주 / 오늘만 / 복도까지"></div>
       </div>
-      <button class="btn" id="clSave" onclick="saveClean()">당번 추가</button>
+      <label>청소 조 선택</label>
+      <div class="chips" id="squadChips"></div>
+      <button class="btn" id="clSave" onclick="saveClean()">청소 조 저장</button>
     </div>
     <div class="card">
       <h2>등록된 청소당번</h2>
@@ -509,7 +511,7 @@ function enterDash(){
   document.body.classList.toggle('readonly', READONLY);
   $('whoami').textContent = READONLY ? '👀 둘러보기' : (myName+' 선생님');
   loadNotices(); loadScheds(); loadTTCs(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadCfg(); makeUrl();
-  loadMsgs(false); refreshMsgBadge(); msgUrlHint();
+  loadMsgs(false); refreshMsgBadge(); msgUrlHint(); buildSquadChips();
   if(!READONLY) subscribeMsgs();
 }
 
@@ -765,16 +767,30 @@ async function loadLocs(){
   }).join('');
 }
 
-/* ── 청소당번 ── */
+/* ── 🧹 청소 조 ── */
+let curSquad = null;
+function buildSquadChips(){
+  const box=$('squadChips'); if(!box) return;
+  box.innerHTML = Array.from({length:8},(_,i)=>i+1)
+    .map(n=>`<button class="chip" data-s="${n}조" onclick="pickSquad('${n}조')">${n}조</button>`).join('');
+}
+function pickSquad(s){
+  curSquad=s;
+  document.querySelectorAll('#squadChips .chip').forEach(c=>c.classList.toggle('on', c.dataset.s===s));
+}
 async function saveClean(){
-  const g=$('clGrade').value, c=$('clClass').value, area=$('clArea').value.trim(), mem=$('clMembers').value.trim();
-  if(!g||!c||!area||!mem){ toast('학년·반·구역·담당을 모두 입력하세요'); return; }
+  const g=$('clGrade').value, c=$('clClass').value;
+  if(!g||!c){ toast('학년·반을 입력하세요'); return; }
+  if(!curSquad){ toast('청소 조를 선택하세요'); return; }
   $('clSave').disabled=true;
-  const { error } = await sb.from('cleaning_duties').insert({ grade:Number(g), class_no:Number(c), area, members:mem, author_id:me.id });
+  // 반마다 한 줄만 유지 (기존 것 지우고 새로 저장)
+  await sb.from('cleaning_duties').delete().eq('grade',Number(g)).eq('class_no',Number(c));
+  const { error } = await sb.from('cleaning_duties').insert({
+    grade:Number(g), class_no:Number(c), area:'청소당번', members:curSquad,
+    note:$('clNote').value.trim()||null, author_id:me.id });
   $('clSave').disabled=false;
   if(error){ toast('실패: '+error.message); return; }
-  $('clArea').value='';$('clMembers').value='';
-  toast('✅ 당번 추가됨'); loadClean();
+  toast(`✅ ${g}-${c} 청소당번 ${curSquad}`); loadClean();
 }
 async function loadClean(){
   const g=$('clGrade').value, c=$('clClass').value;
@@ -784,8 +800,11 @@ async function loadClean(){
   const box=$('cleanList');
   if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 당번이 없습니다</div>'; return; }
   box.innerHTML=data.map(c=>`<div class="item"><span class="tag" style="background:#3b6ef5">${c.grade}-${c.class_no}</span>
-    <div class="main"><div class="t">${esc(c.area)}</div><div class="meta">${esc(c.members)}</div></div>
+    <div class="main"><div class="t">🧹 ${esc(c.members)}</div><div class="meta">${c.note?esc(c.note):(c.area!=='청소당번'?esc(c.area):'')}</div></div>
     <button class="del" onclick="del('cleaning_duties',${c.id},loadClean)">삭제</button></div>`).join('');
+  // 현재 저장된 조를 칩에 반영
+  const mine=data.find(x=>String(x.grade)===g && String(x.class_no)===c);
+  if(mine) pickSquad(mine.members);
 }
 
 /* ── 📬 받은 쪽지 (학생 → 선생님) ── */

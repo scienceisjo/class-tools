@@ -55,10 +55,8 @@ INSERT INTO notices (category, title, body, grade, link, start_at, end_at, autho
      NULL, 'https://forms.gle/example', CURRENT_DATE, CURRENT_DATE + 5, '도서관');
 
 -- ── 🧹 청소당번 (2학년 3반 예시 — notice.html?class=2-3 에서 표시) ──
-INSERT INTO cleaning_duties (grade, class_no, area, members, sort_order) VALUES
-  (2, 3, '교실 앞',    '1모둠',        1),
-  (2, 3, '복도·계단',  '2모둠',        2),
-  (2, 3, '칠판·교탁',  '김OO·이OO',    3);
+INSERT INTO cleaning_duties (grade, class_no, area, members, note, sort_order) VALUES
+  (2, 3, '청소당번', '3조', '이번 주', 1);
 
 -- ── 🙋 1인1역 (2학년 3반 예시 — notice.html?class=2-3 에서 토글로 표시) ──
 INSERT INTO class_roles (grade, class_no, role, member, icon, sort_order) VALUES

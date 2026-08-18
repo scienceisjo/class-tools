@@ -155,6 +155,9 @@
   .cleanrow:last-child{border-bottom:none}
   .cleanrow .ar{flex:0 0 auto;font-weight:800;color:var(--accent);min-width:6rem}
   .cleanrow .mb{font-weight:600}
+  .squad{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:.3rem}
+  .squad b{font-size:4.2rem;font-weight:900;color:var(--accent);line-height:1}
+  .squad span{font-size:1.15rem;color:var(--sub);font-weight:700}
   /* 청소당번 ↔ 1인1역 토글 (전자칠판 터치) */
   .toggleh{display:flex;gap:.5rem;margin-bottom:.7rem;flex:0 0 auto}
   .tgl{font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:var(--panel2);
@@ -445,6 +448,12 @@ async function loadCleaning(){
     .eq('grade',CM_GRADE).eq('class_no',CM_CLASS).order('sort_order',{ascending:true}).order('id',{ascending:true});
   const box=$('cleanBox');
   if(!data || !data.length){ box.innerHTML='<div class="empty">등록된 당번이 없습니다</div>'; return; }
+  // 조만 등록된 경우(area='청소당번') 크게 표시
+  if(data.length===1 && data[0].area==='청소당번'){
+    const c=data[0];
+    box.innerHTML=`<div class="squad"><b>${esc(c.members)}</b>${c.note?`<span>${esc(c.note)}</span>`:''}</div>`;
+    return;
+  }
   box.innerHTML = data.map(c=>`<div class="cleanrow"><span class="ar">${esc(c.area)}</span><span class="mb">${esc(c.members)}</span></div>`).join('');
 }
 
@@ -729,16 +738,34 @@ async function loadLocations(){
     .eq('loc_date', todayStr()).order('grade').order('class_no').order('period');
   locRows = data || []; renderTTC();
 }
+/* NEIS 시간표 하루치 가져오기
+   ⚠️ NEIS 버그: 한 번에 5행만 주고 pIndex 페이징도 안 먹음(같은 5행 반복).
+      그래서 전체 건수(list_total_count)가 5보다 크면 6·7교시는 PERIO 를 지정해 따로 조회. */
+async function fetchDayTT(dateObj){
+  const base=`https://open.neis.go.kr/hub/misTimetable?Type=json&pIndex=1&pSize=20`
+    +`&ATPT_OFCDC_SC_CODE=${CFG.neis_atpt}&SD_SCHUL_CODE=${CFG.neis_school}`
+    +`&GRADE=${CM_GRADE}&CLASS_NM=${CM_CLASS}&ALL_TI_YMD=${ymd(dateObj)}`;
+  try{
+    const j = await (await fetch(base)).json();
+    const rows = j?.misTimetable?.[1]?.row || [];
+    const total = j?.misTimetable?.[0]?.head?.[0]?.list_total_count || rows.length;
+    if(total > rows.length){
+      const missing=[];
+      for(let p=rows.length+1; p<=total; p++) missing.push(p);
+      const extra = await Promise.all(missing.map(async p=>{
+        try{ const jj=await (await fetch(`${base}&PERIO=${p}`)).json();
+             return jj?.misTimetable?.[1]?.row?.[0] || null; }catch(e){ return null; }
+      }));
+      extra.filter(Boolean).forEach(r=>{ if(!rows.some(x=>Number(x.PERIO)===Number(r.PERIO))) rows.push(r); });
+    }
+    return rows;
+  }catch(e){ return []; }
+}
+
 // NEIS 시간표 (교실 모드 전용) — 그 반의 오늘 교시별 과목 자동
 async function loadTimetableNEIS(){
   if(!CLASS_MODE) return;
-  try{
-    const url=`https://open.neis.go.kr/hub/misTimetable?Type=json&pIndex=1&pSize=30`
-      +`&ATPT_OFCDC_SC_CODE=${CFG.neis_atpt}&SD_SCHUL_CODE=${CFG.neis_school}`
-      +`&GRADE=${CM_GRADE}&CLASS_NM=${CM_CLASS}&ALL_TI_YMD=${ymd(new Date())}`;
-    const r=await fetch(url); const j=await r.json();
-    neisTT = j?.misTimetable?.[1]?.row || null;
-  }catch(e){ neisTT=null; }
+  neisTT = await fetchDayTT(new Date());
   renderTTC();
 }
 /* 🗓️ 주간 시간표 (교실 모드) — NEIS 는 주간 범위 조회 페이징이 고장나 있어 하루씩 5번 조회 */
@@ -749,12 +776,7 @@ async function loadWeekTT(){
   const mon = mondayOf(new Date());
   const days = [0,1,2,3,4].map(i=>{ const d=new Date(mon); d.setDate(d.getDate()+i); return d; });
   try{
-    const res = await Promise.all(days.map(async d=>{
-      const url=`https://open.neis.go.kr/hub/misTimetable?Type=json&pIndex=1&pSize=20`
-        +`&ATPT_OFCDC_SC_CODE=${CFG.neis_atpt}&SD_SCHUL_CODE=${CFG.neis_school}`
-        +`&GRADE=${CM_GRADE}&CLASS_NM=${CM_CLASS}&ALL_TI_YMD=${ymd(d)}`;
-      try{ const j=await (await fetch(url)).json(); return j?.misTimetable?.[1]?.row||[]; }catch(e){ return []; }
-    }));
+    const res = await Promise.all(days.map(d => fetchDayTT(d)));
     weekTT = {mon, days, rows:res};
   }catch(e){ weekTT=null; }
   renderWeekTT();
@@ -971,9 +993,7 @@ function renderDemo(){
   ];
   rebuildStage();
   // 청소당번 (교실 모드일 때만 보임)
-  $('cleanBox').innerHTML = [
-    {area:'교실 앞',members:'1모둠'},{area:'복도·계단',members:'2모둠'},{area:'칠판·교탁',members:'김OO·이OO'}
-  ].map(c=>`<div class="cleanrow"><span class="ar">${c.area}</span><span class="mb">${c.members}</span></div>`).join('');
+  $('cleanBox').innerHTML = '<div class="squad"><b>3조</b><span>이번 주</span></div>';
   // 1인1역 (토글로 전환)
   $('roleBox').innerHTML = [
     {icon:'🥛',role:'우유당번',member:'김OO'},{icon:'💡',role:'전기·에어컨',member:'이OO'},

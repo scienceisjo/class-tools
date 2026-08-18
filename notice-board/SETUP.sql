@@ -144,12 +144,15 @@ CREATE TABLE IF NOT EXISTS cleaning_duties (
   id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   grade       int NOT NULL,
   class_no    int NOT NULL,
-  area        text NOT NULL,          -- 구역 (예: 교실 앞, 복도, 칠판)
-  members     text NOT NULL,          -- 담당 학생 (예: 1모둠 / 김OO·이OO)
+  area        text NOT NULL,          -- 구분 (조만 쓸 때는 '청소당번')
+  members     text NOT NULL,          -- 청소 조 (예: 3조)
+  note        text,                   -- 비고 (예: 이번 주 / 복도까지)
   sort_order  int DEFAULT 0,
   author_id   uuid,
   created_at  timestamptz DEFAULT now()
 );
+-- 이전 버전에서 만든 표에도 note 컬럼 보강
+ALTER TABLE cleaning_duties ADD COLUMN IF NOT EXISTS note text;
 
 
 -- ───────────────────────────────────────────────────────────────────
