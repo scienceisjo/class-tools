@@ -124,14 +124,21 @@
   /* ⚠️ .card .body 는 블록이라 자식의 flex:1 이 안 먹어 높이가 0이 됨 → 공지 카드 본문만 flex 컨테이너로 */
   #noticeCard .body{display:flex;flex-direction:column}
   #noticeStage{position:relative;flex:1 1 auto;min-height:0}
+  /* 한 페이지에 공지 여러 건 */
   .slide{position:absolute;inset:0;opacity:0;transition:opacity .6s;overflow:hidden;
-    display:flex;flex-direction:row;align-items:center;gap:1.6rem;pointer-events:none}
+    display:flex;flex-direction:column;gap:.6rem;pointer-events:none}
   .slide.active{opacity:1}
-  .slide .stext{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center}
-  .slide .rightmedia{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:.4rem}
-  .slide .rightmedia img{width:13rem;height:13rem;object-fit:contain;background:#fff;
-    border:1.5px solid var(--line);border-radius:.7rem;padding:.4rem}
-  .slide .rightmedia span{font-size:1.05rem;font-weight:800;color:var(--accent)}
+  .nitem{flex:1 1 0;min-height:0;display:flex;align-items:center;gap:1rem;overflow:hidden;
+    background:var(--panel2);border-radius:.7rem;padding:.6rem 1rem}
+  .nitem .ntext{flex:1 1 auto;min-width:0}
+  .nitem .nhead{display:flex;align-items:center;gap:.6rem;margin-bottom:.15rem}
+  .nitem .nmeta{font-size:.95rem;color:var(--sub);font-weight:600;white-space:nowrap}
+  .nitem .ntitle{font-size:1.6rem;font-weight:800;line-height:1.2;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nitem .nbody{font-size:1.15rem;color:#41506e;line-height:1.35;font-weight:500;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .nitem .nqr{flex:0 0 auto;width:5.2rem;height:5.2rem;object-fit:contain;background:#fff;
+    border:1.5px solid var(--line);border-radius:.5rem;padding:.2rem}
   .cat-lost{background:rgba(245,158,11,.18);color:#b45309}
   .slide .cat{display:inline-flex;align-self:flex-start;align-items:center;gap:.4rem;
     font-size:1.2rem;font-weight:800;padding:.25rem 1rem;border-radius:99px;margin-bottom:.9rem}
@@ -160,6 +167,11 @@
   .squad{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:.3rem}
   .squad b{font-size:4.2rem;font-weight:900;color:var(--accent);line-height:1}
   .squad span{font-size:1.15rem;color:var(--sub);font-weight:700}
+  /* 이름·역할이 함께 있을 땐 조를 작게 */
+  .squad.small{height:auto;flex-direction:row;gap:.6rem;justify-content:flex-start;
+    align-items:baseline;padding-bottom:.4rem;border-bottom:1.5px solid var(--line);margin-bottom:.4rem}
+  .squad.small b{font-size:1.8rem}
+  .squad.small span{font-size:1.05rem}
   /* 청소당번 ↔ 1인1역 토글 (전자칠판 터치) */
   .toggleh{display:flex;gap:.5rem;margin-bottom:.7rem;flex:0 0 auto}
   .tgl{font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:var(--panel2);
@@ -450,13 +462,13 @@ async function loadCleaning(){
     .eq('grade',CM_GRADE).eq('class_no',CM_CLASS).order('sort_order',{ascending:true}).order('id',{ascending:true});
   const box=$('cleanBox');
   if(!data || !data.length){ box.innerHTML='<div class="empty">등록된 당번이 없습니다</div>'; return; }
-  // 조만 등록된 경우(area='청소당번') 크게 표시
-  if(data.length===1 && data[0].area==='청소당번'){
-    const c=data[0];
-    box.innerHTML=`<div class="squad"><b>${esc(c.members)}</b>${c.note?`<span>${esc(c.note)}</span>`:''}</div>`;
-    return;
-  }
-  box.innerHTML = data.map(c=>`<div class="cleanrow"><span class="ar">${esc(c.area)}</span><span class="mb">${esc(c.members)}</span></div>`).join('');
+  const squad = data.find(c=>c.area==='청소당번');          // 조
+  const rows  = data.filter(c=>c.area!=='청소당번');        // 역할·이름 목록
+  let html='';
+  if(squad) html += `<div class="squad${rows.length?' small':''}"><b>${esc(squad.members)}</b>${squad.note?`<span>${esc(squad.note)}</span>`:''}</div>`;
+  html += rows.map(c=>`<div class="cleanrow">
+      <span class="ar">${esc(c.area||'')}</span><span class="mb">${esc(c.members||'')}</span></div>`).join('');
+  box.innerHTML = html || '<div class="empty">등록된 당번이 없습니다</div>';
 }
 
 /* ── 🙋 1인1역 (교실 보드, 청소당번과 토글) ── */
@@ -557,42 +569,49 @@ async function loadLost(){
   rebuildStage();
 }
 
-function noticeSlideHtml(n){
+/* 한 화면에 여러 건을 함께 표시하고, 넘치면 페이지 단위로 순환 */
+const PER_PAGE = 3;
+function noticeItemHtml(n){
   const catLabel = n.category==='교과' ? (n.subject||'교과') : n.category;
   const gradeTxt = n.grade ? `${n.grade}학년` : '전교';
   const icon = n.category==='교과'?'📚':(n.category==='학년'?'🎓':'📣');
-  let media='', cls='slide';
-  if(n.link){ const q=encodeURIComponent(n.link); cls+=' has-media';
-    media=`<div class="rightmedia"><img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=2&data=${q}" alt="QR"><span>📱 휴대폰으로 스캔</span></div>`; }
-  return `<div class="${cls}"><div class="stext">
-    <span class="cat cat-${n.category}">${icon} ${esc(catLabel)} · ${gradeTxt}</span>
-    <div class="stitle">${esc(n.title)}</div>
-    ${n.body?`<div class="sbody">${esc(n.body)}</div>`:''}
-    <div class="meta">${n.author_name?('— '+esc(n.author_name)+' 선생님'):''} ${fmtDate(n.created_at)}</div>
-    </div>${media}</div>`;
+  const qr = n.link
+    ? `<img class="nqr" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=1&data=${encodeURIComponent(n.link)}" alt="QR">`
+    : '';
+  return `<div class="nitem"><div class="ntext">
+    <div class="nhead"><span class="cat cat-${n.category}">${icon} ${esc(catLabel)} · ${gradeTxt}</span>
+      <span class="nmeta">${n.author_name?esc(n.author_name)+' 선생님':''} ${fmtDate(n.created_at)}</span></div>
+    <div class="ntitle">${esc(n.title)}</div>
+    ${n.body?`<div class="nbody">${esc(n.body)}</div>`:''}
+    </div>${qr}</div>`;
 }
-function lostSlideHtml(it){
-  const media = it.photo_url ? `<div class="rightmedia"><img src="${esc(it.photo_url)}" alt="분실물"></div>` : '';
-  return `<div class="slide${it.photo_url?' has-media':''}"><div class="stext">
-    <span class="cat cat-lost">🔍 분실물</span>
-    <div class="stitle">${esc(it.item_name)}</div>
-    <div class="sbody">${it.found_place?`발견 장소: ${esc(it.found_place)}<br>`:''}📍 <b>${esc(it.keep_place||'교무실')}</b> 에서 찾아가세요</div>
-    </div>${media}</div>`;
+function lostItemHtml(it){
+  const ph = it.photo_url ? `<img class="nqr" src="${esc(it.photo_url)}" alt="분실물">` : '';
+  return `<div class="nitem"><div class="ntext">
+    <div class="nhead"><span class="cat cat-lost">🔍 분실물</span></div>
+    <div class="ntitle">${esc(it.item_name)}</div>
+    <div class="nbody">${it.found_place?`발견 ${esc(it.found_place)} · `:''}📍 <b>${esc(it.keep_place||'교무실')}</b> 에서 찾아가세요</div>
+    </div>${ph}</div>`;
 }
 function rebuildStage(){
   const stage = $('noticeStage'); const dots = $('dots');
-  const htmls = [...noticeCards.map(noticeSlideHtml), ...lostItems.map(lostSlideHtml)];
+  const items = [...noticeCards.map(noticeItemHtml), ...lostItems.map(lostItemHtml)];
   stage.innerHTML=''; dots.innerHTML=''; slides=[]; slideIdx=0;
-  if(!htmls.length){
+  if(!items.length){
     stage.innerHTML = '<div class="empty">등록된 공지가 없습니다 🌤️</div>';
     if(slideTimer) clearInterval(slideTimer); return;
   }
-  htmls.forEach((h,i)=>{
-    const wrap = document.createElement('div'); wrap.innerHTML = h;
-    const slide = wrap.firstElementChild; if(i===0) slide.classList.add('active');
-    stage.appendChild(slide); slides.push(slide);
+  // PER_PAGE 개씩 묶어 한 페이지로
+  const pages=[];
+  for(let i=0;i<items.length;i+=PER_PAGE) pages.push(items.slice(i,i+PER_PAGE));
+  pages.forEach((pg,i)=>{
+    const el=document.createElement('div');
+    el.className='slide'+(i===0?' active':'');
+    el.innerHTML=pg.join('');
+    stage.appendChild(el); slides.push(el);
     const dot=document.createElement('i'); if(i===0)dot.className='on'; dots.appendChild(dot);
   });
+  $('dots').style.display = pages.length>1 ? 'flex' : 'none';
   if(slideTimer) clearInterval(slideTimer);
   if(slides.length>1) slideTimer = setInterval(nextSlide, (Number(CFG.slide_seconds)||12)*1000);
 }
@@ -995,7 +1014,9 @@ function renderDemo(){
   ];
   rebuildStage();
   // 청소당번 (교실 모드일 때만 보임)
-  $('cleanBox').innerHTML = '<div class="squad"><b>3조</b><span>이번 주</span></div>';
+  $('cleanBox').innerHTML = '<div class="squad small"><b>3조</b><span>이번 주</span></div>'
+    + [['칠판','김OO'],['바닥 쓸기','이OO'],['쓰레기통','박OO']]
+      .map(r=>`<div class="cleanrow"><span class="ar">${r[0]}</span><span class="mb">${r[1]}</span></div>`).join('');
   // 1인1역 (토글로 전환)
   $('roleBox').innerHTML = [
     {icon:'🥛',role:'우유당번',member:'김OO'},{icon:'💡',role:'전기·에어컨',member:'이OO'},
