@@ -781,6 +781,30 @@ async function loadLocations(){
     .eq('loc_date', todayStr()).order('grade').order('class_no').order('period');
   locRows = data || []; renderTTC();
 }
+/* ── 📝 시간표 수동 보정 ──────────────────────────────────────────
+   나이스는 분반(과학A/B, 국어A/B/C)이나 일부 과목명을 실제와 다르게 줍니다.
+   아래에 적은 칸은 나이스 값을 무시하고 이 값으로 표시합니다.
+   형식:  '학년-반': { 요일: { 교시: '과목' } }   (요일 1=월 2=화 3=수 4=목 5=금)
+   반을 추가하려면 같은 모양으로 한 줄 더 적으면 됩니다.            */
+const TT_OVERRIDE = {
+  '2-3': {
+    1: { 1:'과학B', 6:'과학A' },   // 월
+    2: { 4:'국어A', 6:'국어B' },   // 화
+    3: { 3:'독서' },               // 수
+    4: { 2:'국어C' },              // 목
+    5: { 5:'과학B' },              // 금
+  },
+};
+function ttOverrideMap(dateObj){
+  const cls = TT_OVERRIDE[CLASS_MODE];
+  if(!cls) return null;
+  return cls[dateObj.getDay()] || null;   // getDay: 월=1 … 금=5
+}
+function ttSubject(dateObj, period, neisValue){
+  const m = ttOverrideMap(dateObj);
+  return (m && m[period]) ? m[period] : neisValue;
+}
+
 /* NEIS 시간표 하루치 가져오기
    ⚠️ NEIS 버그: 한 번에 5행만 주고 pIndex 페이징도 안 먹음(같은 5행 반복).
       그래서 전체 건수(list_total_count)가 5보다 크면 6·7교시는 PERIO 를 지정해 따로 조회. */
@@ -828,7 +852,10 @@ function renderWeekTT(){
   const box=$('weekBox'); if(!box||!CLASS_MODE) return;
   if(!weekTT){ box.innerHTML='<div class="empty">주간 시간표를 불러오지 못했습니다</div>'; return; }
   const {days, rows} = weekTT;
-  const maxP = Math.max(1, ...rows.flat().map(r=>Number(r.PERIO)||0));
+  // 수업이 있는 날(나이스 자료가 있는 날)만 보정 적용 — 휴업일엔 빈칸 유지
+  const hasSchool = i => (rows[i]||[]).length > 0;
+  const ovPeriods = days.flatMap((d,i)=> hasSchool(i) ? Object.keys(ttOverrideMap(d)||{}).map(Number) : []);
+  const maxP = Math.max(1, ...rows.flat().map(r=>Number(r.PERIO)||0), ...ovPeriods);
   const todayY = ymd(new Date());
   const DW=['월','화','수','목','금'];
   // 오늘 변경사항을 주간 표에도 반영
@@ -841,7 +868,8 @@ function renderWeekTT(){
     days.forEach((d,i)=>{
       const isToday = ymd(d)===todayY;
       const cell = (rows[i]||[]).find(r=>Number(r.PERIO)===p);
-      let subj = cell ? cell.ITRT_CNTNT : '';
+      let subj = hasSchool(i) ? ttSubject(d, p, cell ? cell.ITRT_CNTNT : '')
+                              : (cell ? cell.ITRT_CNTNT : '');   // 수동 보정 우선
       let cls = isToday?'tdcol':'';
       if(isToday){
         const c = myChg.find(x=>x.period===p);
@@ -871,6 +899,9 @@ function renderTTC(){
     const myChg=ttcRows.filter(_mine), myLoc=locRows.filter(_mine);
     const periods={};
     (neisTT||[]).forEach(r=>{ const p=Number(r.PERIO); if(p && !periods[p]) periods[p]=r.ITRT_CNTNT||''; });
+    // 수동 보정 반영 (단, 수업이 아예 없는 날엔 적용 안 함)
+    const ov = (neisTT && neisTT.length) ? ttOverrideMap(new Date()) : null;
+    if(ov) Object.keys(ov).forEach(p=>{ periods[Number(p)] = ov[p]; });
     const pNums=Object.keys(periods).map(Number).sort((a,b)=>a-b);
     if(!pNums.length && !myChg.length && !myLoc.length){
       box.innerHTML='<div class="empty">오늘 시간표 정보가 없습니다</div>'; return; }
