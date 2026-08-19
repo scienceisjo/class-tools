@@ -124,21 +124,31 @@
   /* ⚠️ .card .body 는 블록이라 자식의 flex:1 이 안 먹어 높이가 0이 됨 → 공지 카드 본문만 flex 컨테이너로 */
   #noticeCard .body{display:flex;flex-direction:column}
   #noticeStage{position:relative;flex:1 1 auto;min-height:0}
-  /* 한 페이지에 공지 여러 건 */
+  /* 한 페이지에 공지 여러 건 — 2열 배치 */
   .slide{position:absolute;inset:0;opacity:0;transition:opacity .6s;overflow:hidden;
-    display:flex;flex-direction:column;gap:.6rem;pointer-events:none}
+    display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:.55rem;
+    align-content:stretch;pointer-events:none}
+  .slide.one{grid-template-columns:1fr}          /* 1건뿐이면 가로 전체 */
   .slide.active{opacity:1}
-  .nitem{flex:1 1 0;min-height:0;display:flex;align-items:center;gap:1rem;overflow:hidden;
-    background:var(--panel2);border-radius:.7rem;padding:.6rem 1rem}
+  .nitem{min-height:0;display:flex;align-items:center;gap:.8rem;overflow:hidden;
+    background:var(--panel2);border-radius:.7rem;padding:.5rem .9rem}
   .nitem .ntext{flex:1 1 auto;min-width:0}
   .nitem .nhead{display:flex;align-items:center;gap:.6rem;margin-bottom:.15rem}
   .nitem .nmeta{font-size:.95rem;color:var(--sub);font-weight:600;white-space:nowrap}
-  .nitem .ntitle{font-size:1.6rem;font-weight:800;line-height:1.2;
+  .nitem .ntitle{font-size:1.35rem;font-weight:800;line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .nitem .nbody{font-size:1.15rem;color:#41506e;line-height:1.35;font-weight:500;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .nitem .nqr{flex:0 0 auto;width:5.2rem;height:5.2rem;object-fit:contain;background:#fff;
+  .nitem .nbody{font-size:1.05rem;color:#41506e;line-height:1.3;font-weight:500;
+    display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .nitem .nqr{flex:0 0 auto;width:4.4rem;height:4.4rem;object-fit:contain;background:#fff;
     border:1.5px solid var(--line);border-radius:.5rem;padding:.2rem}
+  .nitem .cat{font-size:1rem;padding:.15rem .7rem}
+  .slide.one .ntitle{font-size:1.8rem}   /* 1건이면 크게 */
+  .slide.one .nbody{font-size:1.3rem;-webkit-line-clamp:3}
+  .slide.two .nbody{-webkit-line-clamp:2}  /* 2건이면 본문 2줄 */
+  /* 칸이 좁을 땐 본문 숨기고 제목만 (JS 가 자동 판단) */
+  .slide.compact .nbody{display:none}
+  .slide.compact .ntitle{font-size:1.25rem}
+  .slide.compact .nitem{padding:.35rem .8rem}
   .cat-lost{background:rgba(245,158,11,.18);color:#b45309}
   .slide .cat{display:inline-flex;align-self:flex-start;align-items:center;gap:.4rem;
     font-size:1.2rem;font-weight:800;padding:.25rem 1rem;border-radius:99px;margin-bottom:.9rem}
@@ -570,7 +580,7 @@ async function loadLost(){
 }
 
 /* 한 화면에 여러 건을 함께 표시하고, 넘치면 페이지 단위로 순환 */
-const PER_PAGE = 3;
+const PER_PAGE = 6;   // 2열 × 3줄
 function noticeItemHtml(n){
   const catLabel = n.category==='교과' ? (n.subject||'교과') : n.category;
   const gradeTxt = n.grade ? `${n.grade}학년` : '전교';
@@ -593,6 +603,17 @@ function lostItemHtml(it){
     <div class="nbody">${it.found_place?`발견 ${esc(it.found_place)} · `:''}📍 <b>${esc(it.keep_place||'교무실')}</b> 에서 찾아가세요</div>
     </div>${ph}</div>`;
 }
+/* 칸이 좁으면 본문을 숨겨 제목만이라도 깔끔히 보이게 (화면 높이에 따라 자동) */
+function fitNoticeItems(){
+  // rAF 는 화면이 안 보이는 상태에서 안 돌 수 있어 즉시 측정한다
+  // 높이를 추측하지 말고 '실제로 넘치는지' 보고 판단
+  slides.forEach(sl=>{
+    sl.classList.remove('compact');
+    const over = [...sl.querySelectorAll('.nitem')].some(it => it.scrollHeight > it.clientHeight + 2);
+    if(over) sl.classList.add('compact');
+  });
+}
+
 function rebuildStage(){
   const stage = $('noticeStage'); const dots = $('dots');
   const items = [...noticeCards.map(noticeItemHtml), ...lostItems.map(lostItemHtml)];
@@ -606,12 +627,13 @@ function rebuildStage(){
   for(let i=0;i<items.length;i+=PER_PAGE) pages.push(items.slice(i,i+PER_PAGE));
   pages.forEach((pg,i)=>{
     const el=document.createElement('div');
-    el.className='slide'+(i===0?' active':'');
+    el.className='slide'+(i===0?' active':'')+(pg.length===1?' one':pg.length===2?' two':'');
     el.innerHTML=pg.join('');
     stage.appendChild(el); slides.push(el);
     const dot=document.createElement('i'); if(i===0)dot.className='on'; dots.appendChild(dot);
   });
   $('dots').style.display = pages.length>1 ? 'flex' : 'none';
+  fitNoticeItems();
   if(slideTimer) clearInterval(slideTimer);
   if(slides.length>1) slideTimer = setInterval(nextSlide, (Number(CFG.slide_seconds)||12)*1000);
 }
@@ -1069,6 +1091,7 @@ async function boot(){
   subscribe();
 }
 boot();
+addEventListener('resize', fitNoticeItems);   // 창 크기 바뀌면 공지 칸 다시 맞춤
 setInterval(updatePeriod, 20000); // 현재 교시 표시 갱신
 if(!DEMO){
   setInterval(loadCalls, 30000); // 호출은 30초마다 (실시간 보조)
