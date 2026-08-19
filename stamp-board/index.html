@@ -93,7 +93,7 @@ main{flex:1;padding:14px 0 90px}
 
 /* ── 학생 도장판 ── */
 .char-box{text-align:center;position:relative}
-.char-box svg{width:min(260px,64vw);height:auto;display:block;margin:0 auto}
+.char-box svg,.char-box img.charimg{width:min(260px,64vw);height:auto;display:block;margin:0 auto}
 .char-name{font-size:var(--fs-l);font-weight:900;margin-top:2px}
 .char-sub{font-size:var(--fs-xs);color:var(--ink2);font-weight:700}
 .counters{display:flex;gap:10px;justify-content:center;margin:14px 0 6px}
@@ -151,7 +151,7 @@ main{flex:1;padding:14px 0 90px}
 /* ── 우리 반 기지 ── */
 .base-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:9px}
 .mate{text-align:center;background:#fff;border:2px solid var(--line);border-radius:14px;padding:7px 4px}
-.mate svg{width:100%;height:auto}
+.mate svg,.mate img.charimg{width:100%;height:auto}
 .mate-n{font-size:11.5px;font-weight:900;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mate-b{font-size:10px;font-weight:800;color:var(--mute)}
 .mate.me{border-color:var(--ac);background:#FFF8F1}
@@ -193,7 +193,7 @@ main{flex:1;padding:14px 0 90px}
 .dex-i.got{border-color:var(--ok);background:#F4FBF5}
 .dex-i.now{border-color:var(--ac);background:var(--ac-l);box-shadow:0 0 0 3px rgba(194,112,62,.16)}
 .dex-i.soon{opacity:.62}
-.dex-i svg{width:100%;height:auto;max-height:74px}
+.dex-i svg,.dex-i img.charimg{width:100%;height:auto;max-height:74px;object-fit:contain}
 .dex-n{font-size:11px;font-weight:900;color:var(--ink);margin-top:3px;line-height:1.3;word-break:keep-all}
 .dex-c{font-size:10px;font-weight:800;color:var(--mute);margin-top:1px}
 .dex-i.got .dex-c{color:var(--ok-d)}
@@ -204,7 +204,7 @@ main{flex:1;padding:14px 0 90px}
 .dex-tabs button{flex:0 0 auto}
 .pick-i{border:2px solid var(--line);border-radius:14px;padding:9px 5px;background:#fff;text-align:center}
 .pick-i.on{border-color:var(--ac);background:#FFF4EA}
-.pick-i svg{width:100%;height:auto}
+.pick-i svg,.pick-i img.charimg{width:100%;height:auto}
 .pick-i .t{font-size:11.5px;font-weight:900;margin-top:3px}
 footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;font-weight:700;line-height:1.7}
 </style>
@@ -2003,7 +2003,19 @@ function drawRobot(st, b){
   return '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">'+s+'</svg>';
 }
 
-var DRAW={creature:drawCreature, scientist:drawScientist, lab:drawLab, robot:drawRobot};
+/* 탐구생물 — 그린 그림 27장(알 s0~s2, 분화 뒤 s3~s6 × 6갈래).
+   파일이 없거나 못 불러오면 예전에 코드로 그리던 캐릭터로 조용히 되돌아간다. */
+function drawCreaturePhoto(st, b){
+  st = st|0; if(st<0) st=0; if(st>6) st=6;
+  var id = (b && b.id) || 'inquiry';
+  var f  = (st < 3) ? ('s' + st) : ('s' + st + '-' + id);
+  var alt = (STAGE_NAME[st] || '') + ' 단계 탐구생물';
+  return '<img class="charimg" src="images/' + f + '.png" alt="' + alt + '"' +
+         ' loading="lazy" decoding="async"' +
+         ' onerror="this.outerHTML=drawCreature(' + st + ',branchOf(&quot;' + id + '&quot;))">';
+}
+
+var DRAW={creature:drawCreaturePhoto, scientist:drawScientist, lab:drawLab, robot:drawRobot};
 
 /* ══════════════════════════════════════════════════════════════════════════
    상태 · 공용
