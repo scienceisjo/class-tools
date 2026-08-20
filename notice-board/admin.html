@@ -141,6 +141,7 @@
   <header>
     <h1>📺 공지 관리</h1>
     <div>
+      <a class="preview-link" id="guideLink" href="#" target="_blank">📘 사용법</a>
       <a class="preview-link" id="dispLink" href="#" target="_blank">🖥️ 디스플레이 미리보기</a>
       <span class="who" id="whoami"></span>
       <button class="ghost" onclick="doLogout()">로그아웃</button>
@@ -366,7 +367,14 @@
       <label>청소 조 선택 (선택 — 안 골라도 됩니다)</label>
       <div class="chips" id="squadChips"></div>
 
-      <label style="margin-top:14px">역할·이름 (비워둬도 저장돼요)</label>
+      <label style="margin-top:14px">이 반에서 쓰는 청소 역할 — 누르면 아래에 줄이 추가돼요</label>
+      <div class="chips" id="clRolePal"></div>
+      <div class="row" style="gap:8px;margin-bottom:12px">
+        <input id="clNewRole" placeholder="새 역할 입력 (예: 사물함 정리)" onkeydown="if(event.key==='Enter'){addRoleToPalette('clean');}">
+        <button class="ghost" style="flex:0 0 auto" onclick="addRoleToPalette('clean')">➕ 역할 추가</button>
+      </div>
+
+      <label>역할·이름 (비워둬도 저장돼요)</label>
       <div id="clRows"></div>
       <datalist id="cleanRoles">
         <option>바닥 쓸기</option><option>바닥 걸레</option><option>칠판</option><option>창문</option>
@@ -392,24 +400,17 @@
       <h2>1인1역 추가</h2>
       <div class="hint">그 반의 <b>교실 전자칠판</b>(<code>?class=학년-반</code>) 청소당번 칸에서 <b>🙋 1인1역</b> 버튼을 누르면 보입니다.</div>
       <div class="row">
-        <div class="field"><label>학년</label><select id="roGrade"><option>1</option><option>2</option><option>3</option></select></div>
-        <div class="field"><label>반</label><input id="roClass" type="number" placeholder="예: 3"></div>
+        <div class="field"><label>학년</label><select id="roGrade" onchange="onDutyClassChange()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="roClass" type="number" placeholder="예: 3" oninput="onDutyClassChange()"></div>
         <div class="field"><label>아이콘</label><input id="roIcon" value="🙋" maxlength="2"></div>
         <div class="field"><label>역할</label><input id="roRole" placeholder="예: 우유당번"></div>
         <div class="field"><label>담당 학생</label><input id="roMember" placeholder="예: 김OO"></div>
       </div>
-      <div class="hint">자주 쓰는 역할 (누르면 역할·아이콘 자동 입력)</div>
-      <div class="chips">
-        <button class="chip" onclick="preRole('🥛','우유당번')">🥛 우유당번</button>
-        <button class="chip" onclick="preRole('💡','전기·에어컨')">💡 전기·에어컨</button>
-        <button class="chip" onclick="preRole('📋','알림장')">📋 알림장</button>
-        <button class="chip" onclick="preRole('🪟','창문·환기')">🪟 창문·환기</button>
-        <button class="chip" onclick="preRole('♻️','재활용')">♻️ 재활용</button>
-        <button class="chip" onclick="preRole('🧴','칠판지우개')">🧴 칠판지우개</button>
-        <button class="chip" onclick="preRole('📚','학습부장')">📚 학습부장</button>
-        <button class="chip" onclick="preRole('🍚','급식도우미')">🍚 급식도우미</button>
-        <button class="chip" onclick="preRole('🖥️','TV·컴퓨터')">🖥️ TV·컴퓨터</button>
-        <button class="chip" onclick="preRole('🌱','화분')">🌱 화분</button>
+      <div class="hint">이 반에서 쓰는 역할 — 누르면 위에 자동 입력돼요</div>
+      <div class="chips" id="roRolePal"></div>
+      <div class="row" style="gap:8px;margin-bottom:12px">
+        <input id="roNewRole" placeholder="새 역할 입력 (예: 급식 줄서기 도우미)" onkeydown="if(event.key==='Enter'){addRoleToPalette('duty');}">
+        <button class="ghost" style="flex:0 0 auto" onclick="addRoleToPalette('duty')">➕ 역할 추가</button>
       </div>
       <button class="btn" id="roSave" onclick="saveRole()">1인1역 추가</button>
     </div>
@@ -539,6 +540,7 @@ function enterDash(){
   $('whoami').textContent = READONLY ? '👀 둘러보기' : (myName+' 선생님');
   loadNotices(); loadScheds(); loadTTCs(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadCfg(); makeUrl();
   loadMsgs(false); refreshMsgBadge(); msgUrlHint(); buildSquadChips(); loadSquadCfg();
+  loadPalette('clean'); loadPalette('duty');
   if(!READONLY) subscribeMsgs();
 }
 
@@ -842,8 +844,59 @@ async function saveSquadCfg(){
   const { error } = await sb.from('display_config').upsert({ key, value: val });
   if(error) toast('조 편성 저장 실패: '+error.message);
 }
-/* 역할·이름 입력 줄 (빈 값 허용) */
-const CLEAN_ROLE_SUGGEST = ['바닥 쓸기','바닥 걸레','칠판','창문','쓰레기통','사물함','복도','분리수거'];
+/* ── 🎨 반별 역할 목록 (선생님이 자유롭게 추가) ────────────────────
+   저장 위치: display_config 의  roles_clean_<학년>-<반>  /  roles_duty_<학년>-<반>
+   기본 목록으로 시작하고, 새 역할을 넣으면 그 반 목록에 계속 남습니다.   */
+const PALETTE_DEFAULT = {
+  clean: ['바닥 쓸기','바닥 걸레','칠판','창문','쓰레기통','사물함','복도','분리수거'],
+  duty : ['우유당번','전기·에어컨','알림장','창문·환기','재활용','칠판지우개','학습부장','급식도우미','TV·컴퓨터','화분'],
+};
+const PALETTE_UI = {
+  clean: { grade:'clGrade', cls:'clClass', box:'clRolePal', input:'clNewRole' },
+  duty : { grade:'roGrade', cls:'roClass', box:'roRolePal', input:'roNewRole' },
+};
+let palette = { clean:[], duty:[] };
+
+function paletteKey(kind){
+  const u=PALETTE_UI[kind];
+  const g=$(u.grade)?.value, c=$(u.cls)?.value;
+  return (g&&c) ? `roles_${kind}_${g}-${c}` : null;
+}
+async function loadPalette(kind){
+  const key=paletteKey(kind);
+  let list = PALETTE_DEFAULT[kind];
+  if(key){
+    const { data } = await sb.from('display_config').select('value').eq('key',key).maybeSingle();
+    if(data?.value) list = data.value.split('|').filter(Boolean);
+  }
+  palette[kind]=list; renderPalette(kind);
+}
+function renderPalette(kind){
+  const box=$(PALETTE_UI[kind].box); if(!box) return;
+  box.innerHTML = palette[kind].map(r=>
+    `<button class="chip" onclick="usePaletteRole('${kind}','${r.replace(/'/g,"\\'")}')">${esc(r)}</button>`
+    ).join('') || '<span class="hint">아직 역할이 없어요. 아래에서 추가해 주세요.</span>';
+}
+function usePaletteRole(kind, role){
+  if(kind==='clean') addCleanRow(role);
+  else preRole(DUTY_ICON[role] || '🙋', role);
+}
+async function addRoleToPalette(kind){
+  const inp=$(PALETTE_UI[kind].input);
+  const v=(inp.value||'').trim();
+  if(!v){ toast('역할 이름을 입력하세요'); return; }
+  if(palette[kind].includes(v)){ toast('이미 있는 역할이에요'); inp.value=''; return; }
+  palette[kind].push(v); renderPalette(kind); inp.value='';
+  const key=paletteKey(kind);
+  if(!key){ toast('학년·반을 먼저 고르면 저장돼요'); return; }
+  const { error } = await sb.from('display_config').upsert({ key, value: palette[kind].join('|') });
+  toast(error ? ('저장 실패: '+error.message) : `✅ '${v}' 추가됨`);
+}
+async function removeRoleFromPalette(kind, role){
+  palette[kind]=palette[kind].filter(r=>r!==role); renderPalette(kind);
+  const key=paletteKey(kind); if(!key) return;
+  await sb.from('display_config').upsert({ key, value: palette[kind].join('|') });
+}
 function addCleanRow(role='', name=null, count=1){
   const box=$('clRows');
   for(let i=0;i<count;i++){
@@ -868,7 +921,13 @@ function readCleanRows(){
 async function onCleanClassChange(){
   curSquad=null; $('sqCustom').value='';
   await loadSquadCfg();
+  await loadPalette('clean');
   loadClean();
+}
+// 1인1역 탭에서 학년·반을 바꿀 때
+async function onDutyClassChange(){
+  await loadPalette('duty');
+  loadRoles();
 }
 
 async function saveClean(){
@@ -991,6 +1050,8 @@ function subscribeMsgs(){
 }
 
 /* ── 🙋 1인1역 ── */
+const DUTY_ICON = { '우유당번':'🥛','전기·에어컨':'💡','알림장':'📋','창문·환기':'🪟','재활용':'♻️',
+  '칠판지우개':'🧴','학습부장':'📚','급식도우미':'🍚','TV·컴퓨터':'🖥️','화분':'🌱' };
 function preRole(icon, role){ $('roIcon').value=icon; $('roRole').value=role; $('roMember').focus(); }
 async function saveRole(){
   const g=$('roGrade').value, c=$('roClass').value, role=$('roRole').value.trim(), mem=$('roMember').value.trim();
@@ -1058,8 +1119,8 @@ function siblingPage(kind){
   const dir  = base.replace(/[^/]*$/,'');
   const file = base.slice(dir.length) || 'index.html';
   const map = /^notice_/.test(file)
-    ? {display:'notice_display.html', admin:'notice_admin.html', message:'notice_message.html'}
-    : {display:'index.html',          admin:'admin.html',        message:'message.html'};
+    ? {display:'notice_display.html', admin:'notice_admin.html', message:'notice_message.html', guide:'notice_guide.html'}
+    : {display:'index.html',          admin:'admin.html',        message:'message.html',        guide:'guide.html'};
   return dir + map[kind];
 }
 
@@ -1067,6 +1128,7 @@ function siblingPage(kind){
 function msgUrlHint(){
   const el=$('msgUrl'); if(el) el.textContent=siblingPage('message');
   const dl=$('dispLink'); if(dl) dl.href=siblingPage('display');
+  const gl=$('guideLink'); if(gl) gl.href=siblingPage('guide');
 }
 
 /* ── 교실별 보드 주소 생성 ── */

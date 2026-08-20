@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전자칠판 알림보드 사용법 — 해누리중학교</title>
+<link rel="icon" href="logo.png">
+<style>
+  :root{--bg:#f4f7fc;--card:#fff;--line:#e3e8f4;--txt:#1d2742;--sub:#6c7894;
+    --accent:#3b6ef5;--green:#0ea371;--warn:#d97706;--red:#ef3b46;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);line-height:1.65;
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+  .wrap{max-width:820px;margin:0 auto;padding:28px 18px 80px}
+  header{text-align:center;padding:16px 0 26px;border-bottom:2px solid var(--line);margin-bottom:26px}
+  header img{width:64px;height:64px;object-fit:contain}
+  header h1{font-size:27px;font-weight:900;margin:10px 0 6px}
+  header p{color:var(--sub);font-size:15px}
+  h2{font-size:21px;font-weight:900;margin:34px 0 12px;padding-left:11px;border-left:5px solid var(--accent)}
+  h3{font-size:17px;font-weight:800;margin:20px 0 8px}
+  p,li{font-size:15.5px}
+  ul,ol{padding-left:22px;margin:8px 0}
+  li{margin:5px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .step{display:flex;gap:13px;align-items:flex-start;margin:12px 0}
+  .step .n{flex:0 0 auto;width:27px;height:27px;border-radius:50%;background:var(--accent);color:#fff;
+    font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  code{background:#eef2fa;padding:2px 7px;border-radius:5px;font-size:14px;
+    font-family:'Consolas',monospace;word-break:break-all}
+  .box{border-radius:11px;padding:13px 16px;margin:12px 0;font-size:14.5px;line-height:1.6}
+  .tip{background:#eef7ff;border:1px solid #cfe4ff;color:#1e4fa3}
+  .warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
+  .danger{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left}
+  th{background:#eef2fa;font-weight:800}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+  .tab{background:#eef2fa;border-radius:99px;padding:5px 13px;font-size:14px;font-weight:700;color:var(--sub)}
+  a{color:var(--accent)}
+  .toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+  .toc a{display:block;padding:4px 0;text-decoration:none;font-weight:700}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
+    text-align:center;color:var(--sub);font-size:13px}
+  @media print{ body{background:#fff} .card,.toc{break-inside:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <img src="logo.png" alt="해누리중학교" onerror="this.style.display='none'">
+  <h1>📺 전자칠판 알림보드 사용법</h1>
+  <p>해누리중학교 · 선생님용 안내서</p>
+</header>
+
+<div class="toc">
+  <b style="display:block;margin-bottom:8px">목차</b>
+  <a href="#start">1. 처음 한 번만 — 가입하기</a>
+  <a href="#notice">2. 공지 올리기</a>
+  <a href="#assess">3. 평가일정 등록</a>
+  <a href="#call">4. 학생 부르기</a>
+  <a href="#class">5. 우리 반 관리 (청소·1인1역)</a>
+  <a href="#msg">6. 학생이 보낸 쪽지 확인</a>
+  <a href="#board">7. 교실 전자칠판 켜기</a>
+  <a href="#rule">8. 꼭 지켜주세요</a>
+</div>
+
+<h2 id="start">1. 처음 한 번만 — 가입하기</h2>
+<div class="card">
+  <div class="step"><div class="n">1</div><div>
+    <b>공지 관리</b> 주소로 접속합니다.<br>
+    <code>scienceisjo.github.io/class-tools/notice-board/admin.html</code></div></div>
+  <div class="step"><div class="n">2</div><div>
+    <b>[가입]</b> 탭을 누릅니다.</div></div>
+  <div class="step"><div class="n">3</div><div>
+    이름 · 담당 과목 · 이메일 · 비밀번호(6자 이상) · <b>가입 코드</b>를 넣고 가입합니다.<br>
+    <span style="color:var(--sub);font-size:14px">가입 코드는 담당 선생님께 물어보세요.</span></div></div>
+</div>
+<div class="box tip">💡 한 번 로그인하면 계속 유지됩니다. 다음부터는 주소만 열면 바로 들어가집니다.<br>
+휴대폰에 <b>즐겨찾기</b> 해두시면 이동 중에도 쓸 수 있어요.</div>
+<div class="box tip">👀 가입 전에 둘러보고 싶으면 로그인 화면의 <b>[둘러보기]</b>를 누르세요. 내용만 볼 수 있습니다.</div>
+
+<h2 id="notice">2. 공지 올리기</h2>
+<p><b>📢 공지사항</b> 탭에서 작성합니다.</p>
+<div class="card">
+  <h3>① 종류 고르기</h3>
+  <div class="tabs">
+    <span class="tab">📣 일반</span><span class="tab">🚨 긴급</span>
+    <span class="tab">📚 교과별</span><span class="tab">🎓 학년</span>
+  </div>
+  <p style="font-size:14.5px;color:var(--sub)">
+    <b>긴급</b>은 화면 맨 위에 빨간 띠로 흐릅니다. 정말 급할 때만 써주세요.<br>
+    <b>교과별</b>을 고르면 선생님 담당 과목이 자동으로 채워집니다.</p>
+
+  <h3>② 누구에게 보일지 정하기</h3>
+  <table>
+    <tr><th>설정</th><th>보이는 곳</th></tr>
+    <tr><td>학년 비움</td><td>전교 모든 화면</td></tr>
+    <tr><td>2학년</td><td>2학년 모든 반</td></tr>
+    <tr><td>2학년 + 3반</td><td>2학년 3반 교실에만</td></tr>
+  </table>
+
+  <h3>③ 언제까지 보일지</h3>
+  <p><b>노출 종료일</b>을 정하면 그날이 지나서 <b>자동으로 사라집니다.</b> 지우러 다시 안 오셔도 돼요.
+     비워두면 계속 표시됩니다.</p>
+
+  <h3>④ 신청서·설문이 있다면</h3>
+  <p><b>링크 URL</b> 칸에 주소를 넣으면 화면에 <b>QR코드</b>가 함께 뜹니다. 학생이 휴대폰으로 찍어서 바로 열 수 있어요.</p>
+</div>
+
+<h2 id="assess">3. 평가일정 등록</h2>
+<p><b>📋 평가일정</b> 탭. 수행평가·지필평가를 올리면 화면 왼쪽 <b>다가오는 평가</b>에 날짜순으로 표시됩니다.</p>
+<div class="card">
+  <ul>
+    <li><b>과목 · 유형(수행/지필) · 평가일</b>은 필수</li>
+    <li><b>대상 반</b>을 넣으면 그 반 화면에만 보입니다 (반마다 날짜가 다를 때)</li>
+    <li><b>시험범위</b>를 적으면 아래 작게 함께 나옵니다</li>
+    <li>날짜가 지나면 <b>자동으로 사라집니다</b></li>
+  </ul>
+</div>
+
+<h2 id="call">4. 학생 부르기</h2>
+<p><b>📣 학생 호출</b> 탭. 교무실로 오라고 방송하는 대신 화면에 띄웁니다.</p>
+<div class="card">
+  <div class="step"><div class="n">1</div><div>학년·반을 고르면 <b>학생 명단</b>이 나옵니다 (없으면 이름 직접 입력)</div></div>
+  <div class="step"><div class="n">2</div><div><b>오라는 곳</b>을 적습니다 (기본: 교무실)</div></div>
+  <div class="step"><div class="n">3</div><div><b>호출하기</b> → 그 반 교실 화면 위쪽에 바로 뜹니다</div></div>
+  <div class="step"><div class="n">4</div><div>학생이 오면 <b>✅ 완료</b>를 눌러 지웁니다</div></div>
+</div>
+<div class="box warn">🔒 <b>사유는 화면에 절대 안 나옵니다.</b> 이름·반·장소만 표시돼요.
+  사유 칸은 선생님만 보는 메모입니다. 그래도 민감한 내용은 적지 말아주세요.</div>
+
+<h2 id="class">5. 우리 반 관리 (담임 선생님)</h2>
+<p>교실 화면(<code>?class=2-3</code>)에만 나오는 항목입니다.</p>
+<div class="card">
+  <h3>🧹 청소당번</h3>
+  <ol>
+    <li>학년·반을 고릅니다</li>
+    <li><b>조 편성 방식</b>을 정합니다 — 개수(2~12개)와 부르는 말(조/모둠/팀/분단)<br>
+        <span style="color:var(--sub);font-size:14px">반마다 다르게 설정할 수 있고, 한 번 정하면 저장됩니다</span></li>
+    <li>오늘(이번 주) 당번 <b>조를 클릭</b>합니다</li>
+    <li>역할까지 정하려면 <b>역할 버튼</b>을 눌러 줄을 추가하고 이름을 적습니다</li>
+    <li><b>저장</b></li>
+  </ol>
+  <div class="box tip">➕ 우리 반에만 있는 역할은 <b>[역할 추가]</b>로 만들어두면 다음부터 버튼으로 나옵니다.</div>
+
+  <h3>🙋 1인1역</h3>
+  <p>역할과 담당 학생을 하나씩 등록합니다. 교실 화면에서 <b>[🙋 1인1역]</b> 버튼을 누르면 청소당번과 번갈아 볼 수 있어요.</p>
+
+  <h3>📍 수업 장소 · 시간표 변경</h3>
+  <p><b>🔄 시간표 변경</b> 탭에서 등록합니다. "오늘 체육 어디서 해요?"에 답하는 기능이에요.
+     해당 날짜에만 표시되고 다음 날 사라집니다.</p>
+</div>
+
+<h2 id="msg">6. 학생이 보낸 쪽지</h2>
+<p>학생이 교실 화면의 <b>[📮 선생님께 말하기]</b> 버튼으로 보낸 글이 <b>📬 받은 쪽지</b> 탭에 쌓입니다.</p>
+<div class="card">
+  <ul>
+    <li>새 쪽지가 오면 탭에 <b>빨간 숫자</b>가 뜹니다</li>
+    <li>내용을 확인하고 처리했으면 <b>✅ 처리 완료</b></li>
+    <li>학생은 <b>익명</b>으로도 보낼 수 있습니다 (고민·상담용)</li>
+  </ul>
+</div>
+<div class="box danger">🔒 쪽지는 <b>선생님만</b> 볼 수 있습니다. 전자칠판이나 학생 화면에는 절대 나오지 않습니다.</div>
+
+<h2 id="board">7. 교실 전자칠판 켜기</h2>
+<table>
+  <tr><th>용도</th><th>주소</th></tr>
+  <tr><td>교실 (담임 반)</td><td><code>.../notice-board/?class=2-3</code> ← 2학년 3반</td></tr>
+  <tr><td>복도·현관 (전교)</td><td><code>.../notice-board/</code></td></tr>
+</table>
+<div class="card">
+  <div class="step"><div class="n">1</div><div>전자칠판 브라우저에 주소를 입력합니다</div></div>
+  <div class="step"><div class="n">2</div><div><b>F11</b>을 눌러 전체화면으로 만듭니다</div></div>
+  <div class="step"><div class="n">3</div><div>그대로 두면 됩니다 — 급식·시간표·날씨는 <b>자동으로 갱신</b>됩니다</div></div>
+</div>
+<div class="box tip">✅ 자동으로 나오는 것 (입력 안 해도 됨)<br>
+  급식(알레르기 표시) · 우리 반 시간표 · 학사일정 · 현재 교시 · 날씨 · 미세먼지 · 우산 안내</div>
+<div class="box tip">🔁 <b>요일변경 수업</b>(예: 10/7 수요일은 금요일 수업)도 미리 넣어두어서, 그날은 바뀐 시간표가 자동으로 나옵니다.</div>
+
+<h2 id="rule">8. 꼭 지켜주세요</h2>
+<div class="box danger">
+  🚫 <b>전자칠판은 복도에서 누구나 봅니다.</b> 아래 내용은 절대 올리지 마세요.
+  <ul style="margin-top:8px">
+    <li>성적 · 석차 · 점수</li>
+    <li>징계 · 벌점 · 선도 내용</li>
+    <li>상담 · 건강 · 보건실 · 진료 기록</li>
+    <li>가정형편 · 교육급여 등 지원 대상</li>
+    <li>학생 연락처 · 주소</li>
+    <li>동의받지 않은 학생 사진</li>
+  </ul>
+</div>
+<div class="box warn">✏️ 공지는 <b>노출 종료일</b>을 꼭 넣어주세요. 안 지운 공지가 쌓이면 정작 중요한 공지가 안 보입니다.</div>
+
+<footer>
+  문의: 조승재 선생님 (과학)<br>
+  © 2026 해누리중학교
+</footer>
+
+</div>
+</body>
+</html>
