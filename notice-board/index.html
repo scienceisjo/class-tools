@@ -164,6 +164,7 @@
   #dots{display:flex;gap:.5rem;justify-content:center;margin-top:.6rem;flex:0 0 auto}
   #dots i{width:.7rem;height:.7rem;border-radius:99px;background:var(--line);transition:.3s}
   #dots i.on{background:var(--accent);width:2rem}
+  .pagecnt{margin-left:.7rem;font-size:.95rem;font-weight:700;color:var(--sub)}
 
   /* 하단 우측: 일정 + 시간표변경 나란히 */
   #bottomRow{grid-column:2;grid-row:2/3;display:grid;grid-template-columns:1fr 1fr;gap:1rem;min-height:0}
@@ -601,7 +602,19 @@ async function loadLost(){
 }
 
 /* 한 화면에 여러 건을 함께 표시하고, 넘치면 페이지 단위로 순환 */
-const PER_PAGE = 6;   // 2열 × 3줄
+/* 한 페이지에 몇 건을 넣을지 — 공지가 많아지면 자동으로 더 촘촘하게 */
+function perPage(total){
+  const stage = $('noticeStage');
+  let h = stage ? stage.getBoundingClientRect().height : 0;
+  if(!h) return 6;
+  const MIN_ROW = 58;                     // 한 줄 최소 높이(px)
+  // 여러 페이지가 되면 아래 점 표시가 생기므로 그 자리를 미리 빼둔다
+  const roughRows = Math.floor(h / MIN_ROW);
+  if(total > roughRows * 2) h -= 26;
+  const rows = Math.max(2, Math.min(5, Math.floor(h / MIN_ROW)));  // 2~5줄
+  const cap  = rows * 2;                                            // 2열이므로 ×2
+  return (total <= cap) ? Math.max(total, 1) : cap;                 // 남으면 페이지 안 나눔
+}
 function noticeItemHtml(n){
   const catLabel = n.category==='교과' ? (n.subject||'교과') : n.category;
   const gradeTxt = n.grade ? `${n.grade}학년${n.class_no?' '+n.class_no+'반':''}` : '전교';
@@ -643,17 +656,36 @@ function rebuildStage(){
     stage.innerHTML = '<div class="empty">등록된 공지가 없습니다 🌤️</div>';
     if(slideTimer) clearInterval(slideTimer); return;
   }
-  // PER_PAGE 개씩 묶어 한 페이지로
-  const pages=[];
-  for(let i=0;i<items.length;i+=PER_PAGE) pages.push(items.slice(i,i+PER_PAGE));
-  pages.forEach((pg,i)=>{
-    const el=document.createElement('div');
-    el.className='slide'+(i===0?' active':'')+(pg.length===1?' one':pg.length===2?' two':'');
-    el.innerHTML=pg.join('');
-    stage.appendChild(el); slides.push(el);
-    const dot=document.createElement('i'); if(i===0)dot.className='on'; dots.appendChild(dot);
-  });
-  $('dots').style.display = pages.length>1 ? 'flex' : 'none';
+  // 화면 높이에 맞춰 묶되, 실제로 넘치면 한 줄씩 줄여 다시 배치한다
+  let size = perPage(items.length);
+  let pages = [];
+  for(let attempt=0; attempt<4; attempt++){
+    stage.innerHTML=''; dots.innerHTML=''; slides=[];
+    pages=[];
+    for(let i=0;i<items.length;i+=size) pages.push(items.slice(i,i+size));
+    pages.forEach((pg,i)=>{
+      const el=document.createElement('div');
+      el.className='slide'+(i===0?' active':'')+(pg.length===1?' one':pg.length===2?' two':'');
+      el.innerHTML=pg.join('');
+      stage.appendChild(el); slides.push(el);
+      const dot=document.createElement('i'); if(i===0)dot.className='on'; dots.appendChild(dot);
+    });
+    dots.style.display = pages.length>1 ? 'flex' : 'none';
+    fitNoticeItems();
+    const over = slides.some(sl=>[...sl.querySelectorAll('.nitem')]
+                    .some(it=>it.scrollHeight > it.clientHeight + 2));
+    if(!over || size <= 2) break;
+    size = Math.max(2, size - 2);        // 한 줄(2칸) 줄여서 재배치
+  }
+  // 여러 페이지면 '전체 N건 · 1/3' 안내를 함께 표시
+  const dotsEl=$('dots');
+  dotsEl.style.display = pages.length>1 ? 'flex' : 'none';
+  let cnt=$('pageCount');
+  if(pages.length>1){
+    if(!cnt){ cnt=document.createElement('span'); cnt.id='pageCount'; cnt.className='pagecnt'; dotsEl.appendChild(cnt); }
+    else dotsEl.appendChild(cnt);
+    cnt.textContent = `전체 ${items.length}건 · 1/${pages.length}`;
+  } else if(cnt) cnt.remove();
   fitNoticeItems();
   if(slideTimer) clearInterval(slideTimer);
   if(slides.length>1) slideTimer = setInterval(nextSlide, (Number(CFG.slide_seconds)||12)*1000);
@@ -663,6 +695,8 @@ function nextSlide(){
   slides[slideIdx].classList.remove('active'); $('dots').children[slideIdx].className='';
   slideIdx = (slideIdx+1)%slides.length;
   slides[slideIdx].classList.add('active'); $('dots').children[slideIdx].className='on';
+  const cnt=$('pageCount');
+  if(cnt) cnt.textContent = cnt.textContent.replace(/\d+\/\d+$/, `${slideIdx+1}/${slides.length}`);
 }
 
 /* ── 호출 (학생 호출) ── */

@@ -27,10 +27,13 @@
     font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center;margin-top:2px}
   code{background:#eef2fa;padding:2px 7px;border-radius:5px;font-size:14px;
     font-family:'Consolas',monospace;word-break:break-all}
+  .big{font-size:17px;font-weight:700;display:inline-block;padding:6px 12px}
   .box{border-radius:11px;padding:13px 16px;margin:12px 0;font-size:14.5px;line-height:1.6}
   .tip{background:#eef7ff;border:1px solid #cfe4ff;color:#1e4fa3}
   .warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
-  .danger{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c}
+  .code-box{background:#fff;border:2px dashed var(--accent);border-radius:11px;
+    padding:14px 16px;margin:12px 0;text-align:center}
+  .code-box b{font-size:20px;letter-spacing:.5px;color:var(--accent)}
   table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14.5px}
   th,td{border:1px solid var(--line);padding:9px 11px;text-align:left}
   th{background:#eef2fa;font-weight:800}
@@ -57,32 +60,35 @@
   <b style="display:block;margin-bottom:8px">목차</b>
   <a href="#start">1. 처음 한 번만 — 가입하기</a>
   <a href="#notice">2. 공지 올리기</a>
-  <a href="#assess">3. 평가일정 등록</a>
+  <a href="#assess">3. 평가일정 등록하기</a>
   <a href="#call">4. 학생 부르기</a>
-  <a href="#class">5. 우리 반 관리 (청소·1인1역)</a>
-  <a href="#msg">6. 학생이 보낸 쪽지 확인</a>
+  <a href="#class">5. 우리 반 관리하기</a>
+  <a href="#msg">6. 학생이 보낸 쪽지 확인하기</a>
   <a href="#board">7. 교실 전자칠판 켜기</a>
-  <a href="#rule">8. 꼭 지켜주세요</a>
+  <a href="#rule">8. 함께 지켜주시면 좋은 것</a>
 </div>
 
 <h2 id="start">1. 처음 한 번만 — 가입하기</h2>
 <div class="card">
   <div class="step"><div class="n">1</div><div>
-    <b>공지 관리</b> 주소로 접속합니다. (메신저로 보내드린 링크를 눌러도 됩니다)<br>
+    <b>공지 관리</b> 주소로 접속합니다. (메신저로 보내드린 링크를 누르셔도 됩니다)<br>
     <code>scienceisjo.github.io/class-tools/notice-board/admin.html</code></div></div>
   <div class="step"><div class="n">2</div><div>
     <b>[가입]</b> 탭을 누릅니다.</div></div>
   <div class="step"><div class="n">3</div><div>
-    이름 · 담당 과목 · 이메일 · 비밀번호(6자 이상) · <b>가입 코드</b>를 넣고 가입합니다.<br>
-    <span style="color:var(--sub);font-size:14px">가입 코드는 담당 선생님께 물어보세요.</span></div></div>
+    이름 · 담당 과목 · 이메일 · 비밀번호(6자 이상) · <b>가입 코드</b>를 넣고 가입합니다.</div></div>
   <div class="step"><div class="n">4</div><div>
-    <b>승인을 기다립니다.</b> 관리 담당 선생님이 승인하면 바로 쓸 수 있습니다.</div></div>
+    <b>승인을 기다립니다.</b> 승인되면 바로 사용하실 수 있습니다.</div></div>
+
+  <div class="code-box">
+    가입 코드<br><b>hnrnotice26!</b>
+  </div>
 </div>
-<div class="box warn">⏳ 가입 직후에는 <b>승인 대기</b> 상태라 로그인이 안 됩니다.
-  급하시면 관리 담당 선생님께 말씀해 주세요.</div>
+<div class="box warn">⏳ 가입 직후에는 <b>승인 대기</b> 상태라 로그인이 되지 않습니다.
+  가입하신 뒤 <b>조승재(과학정보부)</b>에게 말씀해 주시면 바로 승인해 드리겠습니다.</div>
 <div class="box tip">💡 한 번 로그인하면 계속 유지됩니다. 다음부터는 주소만 열면 바로 들어가집니다.<br>
-휴대폰에 <b>즐겨찾기</b> 해두시면 이동 중에도 쓸 수 있어요.</div>
-<div class="box tip">👀 가입 전에 둘러보고 싶으면 로그인 화면의 <b>[둘러보기]</b>를 누르세요. 내용만 볼 수 있습니다.</div>
+  휴대폰에 즐겨찾기 해두시면 이동 중에도 확인하실 수 있습니다.</div>
+<div class="box tip">👀 가입 전에 둘러보고 싶으시면 로그인 화면의 <b>[둘러보기]</b>를 눌러주세요. 내용만 보실 수 있습니다.</div>
 
 <h2 id="notice">2. 공지 올리기</h2>
 <p><b>📢 공지사항</b> 탭에서 작성합니다.</p>
@@ -93,8 +99,8 @@
     <span class="tab">📚 교과별</span><span class="tab">🎓 학년</span>
   </div>
   <p style="font-size:14.5px;color:var(--sub)">
-    <b>긴급</b>은 화면 맨 위에 빨간 띠로 흐릅니다. 정말 급할 때만 써주세요.<br>
-    <b>교과별</b>을 고르면 선생님 담당 과목이 자동으로 채워집니다.</p>
+    <b>긴급</b>은 화면 맨 위에 빨간 띠로 흐릅니다. 정말 급한 경우에만 사용해 주십시오.<br>
+    <b>교과별</b>을 고르시면 담당 과목이 자동으로 입력됩니다.</p>
 
   <h3>② 누구에게 보일지 정하기</h3>
   <table>
@@ -104,125 +110,153 @@
     <tr><td>2학년 + 3반</td><td>2학년 3반 교실에만</td></tr>
   </table>
 
-  <h3>③ 언제까지 보일지</h3>
-  <p><b>노출 종료일</b>을 정하면 그날이 지나서 <b>자동으로 사라집니다.</b> 지우러 다시 안 오셔도 돼요.
-     비워두면 계속 표시됩니다.</p>
+  <h3>③ 언제까지 보일지 정하기</h3>
+  <p><b>노출 종료일</b>을 정하시면 그날이 지난 뒤 <b>자동으로 사라집니다.</b> 따로 지우러 오지 않으셔도 됩니다.
+     비워두시면 계속 표시됩니다.</p>
 
-  <h3>④ 신청서·설문이 있다면</h3>
-  <p><b>링크 URL</b> 칸에 주소를 넣으면 화면에 <b>QR코드</b>가 함께 뜹니다. 학생이 휴대폰으로 찍어서 바로 열 수 있어요.</p>
+  <h3>④ 신청서·설문이 있는 경우</h3>
+  <p><b>링크 URL</b> 칸에 주소를 넣으시면 화면에 <b>QR코드</b>가 함께 표시됩니다.
+     학생이 휴대폰으로 찍어서 바로 열 수 있습니다.</p>
+
+  <h3>⑤ 수정하기</h3>
+  <p>목록의 <b>✏️ 수정</b> 버튼을 누르시면 내용을 고칠 수 있습니다. 지우고 다시 쓰지 않으셔도 됩니다.</p>
 </div>
+<div class="box warn">✏️ 공지에 <b>노출 종료일</b>을 넣어주시면 그날 알아서 사라집니다.
+  안 지운 공지가 쌓이면 정작 중요한 공지가 묻힐 수 있습니다.</div>
 
-<h2 id="assess">3. 평가일정 등록</h2>
-<p><b>📋 평가일정</b> 탭. 수행평가·지필평가를 올리면 화면 왼쪽 <b>다가오는 평가</b>에 날짜순으로 표시됩니다.</p>
+<h2 id="assess">3. 평가일정 등록하기</h2>
+<p><b>📋 평가일정</b> 탭입니다. 수행평가·지필평가를 올리시면 화면 왼쪽 <b>다가오는 평가</b>에 날짜순으로 표시됩니다.</p>
 <div class="card">
   <ul>
-    <li><b>과목 · 유형(수행/지필) · 평가일</b>은 필수</li>
-    <li><b>대상 반</b>을 넣으면 그 반 화면에만 보입니다 (반마다 날짜가 다를 때)</li>
-    <li><b>시험범위</b>를 적으면 아래 작게 함께 나옵니다</li>
+    <li><b>과목 · 유형(수행/지필) · 평가일</b>은 필수 입력입니다</li>
+    <li><b>대상 반</b>을 넣으시면 그 반 화면에만 표시됩니다 (반마다 날짜가 다른 경우)</li>
+    <li><b>시험범위</b>를 적으시면 아래에 작게 함께 표시됩니다</li>
     <li>날짜가 지나면 <b>자동으로 사라집니다</b></li>
   </ul>
 </div>
 
 <h2 id="call">4. 학생 부르기</h2>
-<p><b>📣 학생 호출</b> 탭. <b>수리된 디벗 수령</b>처럼 학생을 불러야 할 때 방송 대신 화면에 띄웁니다.</p>
+<p><b>📣 학생 호출</b> 탭입니다. <b>수리된 디벗 수령</b>처럼 학생을 불러야 할 때 방송 대신 화면에 띄웁니다.</p>
 <div class="card">
   <div class="step"><div class="n">1</div><div>학년·반을 고릅니다</div></div>
   <div class="step"><div class="n">2</div><div><b>학생 이름을 직접 입력</b>합니다</div></div>
-  <div class="step"><div class="n">3</div><div><b>오라는 곳</b>을 적습니다 (기본: 교무실)</div></div>
-  <div class="step"><div class="n">4</div><div><b>호출하기</b> → 그 반 교실 화면 위쪽에 바로 뜹니다</div></div>
+  <div class="step"><div class="n">3</div><div><b>오라는 곳</b>을 적습니다 (기본값: 교무실)</div></div>
+  <div class="step"><div class="n">4</div><div><b>호출하기</b>를 누르면 그 반 교실 화면 위쪽에 바로 표시됩니다</div></div>
   <div class="step"><div class="n">5</div><div>학생이 오면 <b>✅ 완료</b>를 눌러 지웁니다</div></div>
 </div>
-<div class="box tip">📝 <b>학생 명렬표는 일부러 넣지 않았습니다.</b><br>
-  전교생 명단을 시스템에 올려두면 그만큼 관리 책임이 커지는데, 제가 보안 전문가가 아니라
-  안전하게 지킬 자신이 없어서요. 이름 직접 입력이 조금 번거로우시겠지만
-  <b>학생 정보를 최소한만 남기는 쪽</b>을 택했습니다. 양해 부탁드려요 🙏</div>
-<div class="box warn">🔒 <b>사유는 화면에 나오지 않습니다</b> (이름·반·장소만 표시). 사유 칸은 선생님만 보는 메모예요.<br>
-  다만 <b>같은 반 친구들이 모두 보는 화면</b>이라, 징계·벌점·선도 관련 호출은 다른 방법으로 부르시는 게 좋을 것 같아요 ㅎㅎ</div>
+<div class="box tip">📝 <b>학생 명렬표는 넣지 않았습니다.</b><br>
+  전교생 명단을 시스템에 올려두면 그만큼 관리 책임이 커지는데,
+  제가 보안 전문가가 아니라 안전하게 지킬 자신이 없습니다ㅠ
+  이름 직접 입력이 조금 번거로우시겠지만 학생 정보를 최소한만 남기는 쪽을 택했습니다!</div>
+<div class="box warn">🔒 <b>사유는 화면에 표시되지 않습니다</b> (이름·반·장소만 표시). 사유 칸은 선생님만 보는 메모입니다.<br>
+  다만 <b>같은 반 학생들이 모두 보는 화면</b>이므로, 징계·벌점·선도 관련 호출은 다른 방법으로 부르시는 편이 좋겠습니다.</div>
 
-<h2 id="class">5. 우리 반 관리 (담임 선생님)</h2>
-<p>교실 화면(<code>?class=2-3</code>)에만 나오는 항목입니다.</p>
+<h2 id="class">5. 우리 반 관리하기 (담임 선생님)</h2>
+<p>교실 화면에만 표시되는 항목입니다.</p>
 <div class="card">
   <h3>🧹 청소당번</h3>
   <ol>
     <li>학년·반을 고릅니다</li>
     <li><b>조 편성 방식</b>을 정합니다 — 개수(2~12개)와 부르는 말(조/모둠/팀/분단)<br>
-        <span style="color:var(--sub);font-size:14px">반마다 다르게 설정할 수 있고, 한 번 정하면 저장됩니다</span></li>
+        <span style="color:var(--sub);font-size:14px">반마다 다르게 설정하실 수 있고, 한 번 정하면 저장됩니다</span></li>
     <li>오늘(이번 주) 당번 <b>조를 클릭</b>합니다</li>
-    <li>역할까지 정하려면 <b>역할 버튼</b>을 눌러 줄을 추가하고 이름을 적습니다</li>
-    <li><b>저장</b></li>
+    <li>역할까지 정하시려면 <b>역할 버튼</b>을 눌러 줄을 추가하고 이름을 적습니다</li>
+    <li><b>저장</b>을 누릅니다</li>
   </ol>
-  <div class="box tip">➕ 우리 반에만 있는 역할은 <b>[역할 추가]</b>로 만들어두면 다음부터 버튼으로 나옵니다.</div>
+  <div class="box tip">➕ 우리 반에만 있는 역할은 <b>[역할 추가]</b>로 만들어두시면 다음부터 버튼으로 표시됩니다.</div>
 
   <h3>🙋 1인1역</h3>
-  <p>역할과 담당 학생을 하나씩 등록합니다. 교실 화면에서 <b>[🙋 1인1역]</b> 버튼을 누르면 청소당번과 번갈아 볼 수 있어요.</p>
+  <p>역할과 담당 학생을 하나씩 등록합니다. 교실 화면에서 <b>[🙋 1인1역]</b> 버튼을 누르면 청소당번과 번갈아 보실 수 있습니다.</p>
 
   <h3>📍 수업 장소 안내</h3>
-  <p><b>🔄 시간표 변경</b> 탭에서 등록합니다. "오늘 체육 어디서 해요?"에 답해주는 기능이에요.</p>
+  <p><b>🔄 시간표 변경</b> 탭에서 등록합니다. "오늘 체육 어디서 해요?"에 답해주는 기능입니다.</p>
   <ul>
-    <li>이동수업이 있는 과목은 <b>학년·반을 지정해서</b> 장소를 올릴 수 있습니다</li>
-    <li>장소 버튼(운동장·체육관·강당·시청각실·과학실 등)을 누르면 바로 입력돼요</li>
+    <li>이동수업이 있는 과목은 <b>학년·반을 지정해서</b> 장소를 올리실 수 있습니다</li>
+    <li>장소 버튼을 누르면 바로 입력됩니다 —
+      <span style="font-size:14px;color:var(--sub)">운동장 · 체육관 · 다목적실 · 과학실1 · 과학실2 · 메이커실 · 기술실 · 미술실 · 음악실 · 가정실 · 도서관 · 중정</span></li>
     <li>해당 날짜에만 표시되고 다음 날 자동으로 사라집니다</li>
   </ul>
 </div>
-<div class="box tip">✅ <b>시간표 변경(결보강)은 따로 공지 안 하셔도 됩니다.</b><br>
-  실무사님이 컴시간알리미에서 바꾸시면 <b>매일 아침 자동으로</b> 화면에 반영돼요.
-  장소 안내만 필요할 때 위 기능을 쓰시면 됩니다 🙂</div>
+<div class="box tip">✅ <b>시간표 변경(결보강)은 따로 공지하지 않으셔도 됩니다.</b><br>
+  실무사님이 컴시간알리미에서 변경하시면 <b>매일 아침 자동으로</b> 화면에 반영됩니다.
+  장소 안내가 필요할 때만 위 기능을 사용해 주십시오.</div>
 
-<h2 id="msg">6. 학생이 보낸 쪽지</h2>
+<h2 id="msg">6. 학생이 보낸 쪽지 확인하기</h2>
 <p>학생이 교실 화면의 <b>[📮 선생님께 말하기]</b> 버튼으로 보낸 글이 <b>📬 받은 쪽지</b> 탭에 쌓입니다.</p>
 <div class="card">
   <ul>
-    <li>새 쪽지가 오면 탭에 <b>빨간 숫자</b>가 뜹니다</li>
-    <li>내용을 확인하고 처리했으면 <b>✅ 처리 완료</b></li>
-    <li>학생은 <b>익명</b>으로도 보낼 수 있습니다 (고민·상담용)</li>
+    <li>새 쪽지가 오면 탭에 <b>빨간 숫자</b>가 표시됩니다</li>
+    <li>내용을 확인하고 처리하셨으면 <b>✅ 처리 완료</b>를 눌러주십시오</li>
   </ul>
 </div>
-<div class="box danger">🔒 쪽지는 <b>선생님만</b> 볼 수 있습니다. 전자칠판이나 학생 화면에는 절대 나오지 않습니다.</div>
-<div class="box tip">👤 <b>[나에게 온 것]</b>이 기본 화면입니다. 학생이 받는 선생님을 지정하지 않은 쪽지는 모든 선생님에게 보입니다.<br>
-  읽음 표시는 <b>선생님마다 따로</b>라, 다른 분이 먼저 읽어도 내 알림은 그대로 남습니다.</div>
-
-<div class="box warn">🗑️ <b>내가 올린 것만 지울 수 있습니다.</b> 다른 선생님이 올린 공지가 잘못됐다면 그분께 말씀해 주세요.</div>
+<div class="box warn">🔒 쪽지는 <b>선생님만</b> 보실 수 있습니다. 전자칠판이나 학생 화면에는 표시되지 않습니다.</div>
+<div class="box tip">👤 <b>[나에게 온 것]</b>이 기본 화면입니다. 받는 선생님을 지정하지 않은 쪽지는 모든 선생님께 표시됩니다.<br>
+  읽음 표시는 <b>선생님마다 따로</b> 관리되므로, 다른 분이 먼저 읽으셔도 내 알림은 그대로 남습니다.</div>
+<div class="box warn">🗑️ <b>본인이 올린 것만 삭제하실 수 있습니다.</b> 다른 선생님이 올린 공지가 잘못되었다면 그 선생님께 말씀해 주십시오.</div>
 
 <h2 id="board">7. 교실 전자칠판 켜기</h2>
 <div class="card">
   <div class="step"><div class="n">1</div><div>
-    전자칠판 브라우저 주소창에 이렇게 칩니다<br>
-    <code style="font-size:16px">joo.is/해누리중공지</code><br>
-    <span style="color:var(--sub);font-size:14px">전자칠판에서 긴 주소를 치기 번거로워서 짧게 만들어 둔 주소예요</span></div></div>
+    전자칠판 브라우저 주소창에 아래 주소를 입력합니다<br>
+    <code class="big">joo.is/해누리중공지</code><br>
+    <span style="color:var(--sub);font-size:14px">전자칠판에서 긴 주소를 입력하기 번거로워 짧게 만들어 둔 주소입니다</span></div></div>
+
   <div class="step"><div class="n">2</div><div>
-    화면이 열리면 주소 <b>끝에 우리 반을 붙입니다</b><br>
-    <code>joo.is/해누리중공지<b>?class=2-3</b></code> ← 2학년 3반<br>
-    <span style="color:var(--sub);font-size:14px">1학년 5반이면 <code>?class=1-5</code></span></div></div>
-  <div class="step"><div class="n">3</div><div><b>F11</b>을 눌러 전체화면으로 만듭니다</div></div>
-  <div class="step"><div class="n">4</div><div>그대로 두시면 됩니다 — 급식·시간표·날씨는 <b>자동으로 갱신</b>돼요</div></div>
+    <b>화면이 열린 뒤에</b>, 주소창 맨 끝에 우리 반을 덧붙이고 다시 이동합니다<br>
+    <code class="big">?class=2-3</code>
+    <div class="box warn" style="margin-top:8px">
+      ⚠️ 처음부터 <b>한 번에 이어서 입력하지 마십시오.</b>
+      짧은 주소는 뒷부분이 전달되지 않을 수 있습니다.<br>
+      <b>① 짧은 주소로 접속 → ② 열린 뒤에 뒤에 덧붙이기</b> 순서로 해주십시오.
+    </div>
+    <span style="color:var(--sub);font-size:14px">1학년 5반이면 <code>?class=1-5</code>, 3학년 2반이면 <code>?class=3-2</code> 입니다</span></div></div>
+
+  <div class="step"><div class="n">3</div><div>
+    <b>F11</b>을 눌러 전체화면으로 만듭니다</div></div>
+
+  <div class="step"><div class="n">4</div><div>
+    그대로 두시면 됩니다 — 급식·시간표·날씨는 <b>자동으로 갱신</b>됩니다</div></div>
 </div>
-<table>
-  <tr><th>어디에 띄우나</th><th>주소</th></tr>
-  <tr><td>우리 교실</td><td><code>joo.is/해누리중공지?class=2-3</code></td></tr>
-  <tr><td>복도·현관 (전교)</td><td><code>joo.is/해누리중공지</code></td></tr>
-</table>
-<div class="box tip">📌 반을 붙이면 <b>우리 반 시간표·호출·청소당번</b>이 나오고,
-  안 붙이면 전교 공지 화면이 됩니다.</div>
-<div class="box tip">✅ 자동으로 나오는 것 (입력 안 해도 됨)<br>
+
+<h3>매번 주소를 입력하지 않으려면</h3>
+<div class="card">
+  <p><b>방법 1 — 즐겨찾기</b></p>
+  <ol>
+    <li>우리 반 화면(<code>?class=2-3</code>까지 붙인 상태)을 띄웁니다</li>
+    <li>키보드 <b>Ctrl + D</b>를 누릅니다</li>
+    <li>이름을 <b>“우리반 알림보드”</b> 정도로 정하고 저장합니다</li>
+    <li>다음부터는 즐겨찾기 막대에서 한 번만 누르시면 됩니다</li>
+  </ol>
+
+  <p style="margin-top:14px"><b>방법 2 — 작업표시줄에 고정 (더 편합니다)</b></p>
+  <ol>
+    <li>우리 반 화면을 띄운 상태에서 브라우저 오른쪽 위 <b>점 세 개(⋮)</b>를 누릅니다</li>
+    <li><b>저장 및 공유</b> → <b>바로가기 만들기</b>를 선택합니다<br>
+        <span style="color:var(--sub);font-size:14px">(엣지는 <b>앱</b> → <b>이 사이트를 앱으로 설치</b>)</span></li>
+    <li>이름을 정하고 <b>만들기</b>를 누르면 바탕화면에 아이콘이 생깁니다</li>
+    <li>그 아이콘을 <b>마우스 오른쪽 클릭 → 작업 표시줄에 고정</b>합니다</li>
+    <li>이제 전자칠판을 켤 때마다 아이콘 한 번만 누르시면 됩니다</li>
+  </ol>
+</div>
+
+<div class="box tip">✅ 자동으로 표시되는 항목 (입력하지 않으셔도 됩니다)<br>
   급식(알레르기 표시) · 우리 반 시간표 · 학사일정 · 현재 교시 · 날씨 · 미세먼지 · 우산 안내</div>
-<div class="box tip">🔁 <b>요일변경 수업</b>(예: 10/7 수요일은 금요일 수업)도 미리 넣어두어서, 그날은 바뀐 시간표가 자동으로 나옵니다.</div>
+<div class="box tip">🔁 <b>요일변경 수업</b>(예: 10월 7일 수요일은 금요일 수업)도 미리 등록해 두었습니다.
+  그날은 바뀐 시간표가 자동으로 표시됩니다.</div>
 
 <h2 id="rule">8. 함께 지켜주시면 좋은 것 💛</h2>
 <div class="box tip">
-  전자칠판은 복도를 지나는 <b>모든 학생과 방문객</b>이 볼 수 있는 화면이라,
-  아래 내용만 살짝 피해주시면 마음 편히 쓸 수 있어요 🙂
+  전자칠판은 복도를 지나는 <b>모든 학생과 방문객</b>이 볼 수 있는 화면입니다.
+  아래 내용만 피해 주시면 마음 편히 사용하실 수 있습니다 🙂
   <ul style="margin-top:10px">
-    <li><b>성적 · 석차 · 점수</b> — 아이들이 서로 비교하게 될 수 있어요</li>
-    <li><b>징계 · 벌점 · 선도 내용</b> — 학생 입장에서 많이 속상할 수 있어요 🥲</li>
-    <li><b>상담 · 건강 · 보건실 기록</b> — 아주 민감한 정보라 조심스러워요</li>
-    <li><b>가정형편 · 교육급여 등 지원 대상</b> — 아이가 위축될 수 있어요</li>
-    <li><b>학생 연락처 · 주소</b> — 외부인도 볼 수 있는 화면이에요</li>
-    <li><b>동의받지 않은 학생 사진</b> — 초상권 문제가 생길 수 있어요</li>
+    <li>성적 · 석차 · 점수</li>
+    <li>징계 · 벌점 · 선도 내용</li>
+    <li>상담 · 건강 · 보건실 기록</li>
+    <li>가정형편 · 교육급여 등 지원 대상</li>
+    <li>학생 연락처 · 주소</li>
+    <li>동의받지 않은 학생 사진</li>
   </ul>
-  <div style="margin-top:10px">애매하다 싶으면 편하게 물어봐 주세요. 같이 고민하면 됩니다 😊</div>
 </div>
-<div class="box warn">✏️ 공지에 <b>노출 종료일</b>을 넣어주시면 그날 알아서 사라져요.
-  안 지운 공지가 쌓이면 정작 중요한 공지가 묻히더라고요 🙏</div>
 
 <footer>
   문의: 조승재 (과학정보부)<br>
