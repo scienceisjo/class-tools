@@ -834,10 +834,31 @@ function schoolDayFor(dateObj){
   return d;
 }
 
+/* 서버에 매일 갱신되는 시간표가 있으면 그걸 우선 쓴다 (없으면 내장표 사용) */
+let TT_LIVE = null;          // { '2-3': [월,화,수,목,금], ... }
+let ttLiveAt = null;         // 마지막 갱신 시각
+async function loadLiveTimetable(){
+  try{
+    const { data, error } = await sb.from('timetables').select('class_key,weekday,periods,updated_at');
+    if(error || !data || !data.length) return;      // 아직 준비 전이면 내장표 그대로
+    const map={};
+    let latest=null;
+    data.forEach(r=>{
+      (map[r.class_key] ||= [null,null,null,null,null])[r.weekday-1] = r.periods;
+      if(!latest || r.updated_at > latest) latest = r.updated_at;
+    });
+    TT_LIVE = map; ttLiveAt = latest;
+    renderTTC(); renderWeekTT();
+    if(!CLASS_MODE && typeof renderPickedWeek==='function' &&
+       getComputedStyle($('weekBox')).display!=='none') renderPickedWeek();
+  }catch(e){ /* 실패해도 내장표로 계속 동작 */ }
+}
+function ttSource(cls){ return (TT_LIVE && TT_LIVE[cls]) ? TT_LIVE[cls] : TT_BASE[cls]; }
+
 function ttBaseDay(dateObj){
   const w=dateObj.getDay();            // 월=1 … 금=5
   if(w<1||w>5) return null;
-  const t=TT_BASE[CLASS_MODE];
+  const t=ttSource(CLASS_MODE);        // 서버 갱신본 우선, 없으면 내장표
   return t ? (t[w-1]||null) : null;
 }
 function ttSubject(dateObj, period, neisValue){
@@ -933,7 +954,7 @@ function buildClassPicker(){
 function renderPickedWeek(){
   const sel=$('ttPick'); if(!sel) return;
   const cls=sel.value; localStorage.setItem('board_pick', cls);
-  const wk=TT_BASE[cls]; const box=$('weekBox');
+  const wk=ttSource(cls); const box=$('weekBox');
   if(!wk){ box.innerHTML='<div class="empty">시간표가 없습니다</div>'; return; }
   const DW=['월','화','수','목','금'];
   const todayIdx=new Date().getDay()-1;      // 월=0 … 금=4
@@ -1208,7 +1229,7 @@ async function boot(){
   applyClassMode(); updatePeriod();
   if(DEMO){ renderDemo(); return; } // 데모: 정적 샘플만 (네트워크/실시간 없음)
   await loadConfig();
-  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadMeal(), loadWeather(), loadAir()]);
+  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadLiveTimetable(), loadMeal(), loadWeather(), loadAir()]);
   subscribe();
 }
 boot();
@@ -1220,6 +1241,7 @@ if(!DEMO){
   setInterval(loadMeal, 3600000);          // 급식 1시간마다
   setInterval(loadTimetableNEIS, 3600000); // NEIS 시간표 1시간마다
   setInterval(loadWeekTT, 21600000);       // 주간 시간표 6시간마다
+  setInterval(loadLiveTimetable, 1800000); // 서버 갱신 시간표 30분마다 (아침 8:30 갱신분 반영)
   setInterval(loadSchoolSched, 21600000);  // 학사일정 6시간마다
   setInterval(()=>{ loadWeather(); loadAir(); }, 1800000); // 날씨·미세먼지 30분마다
   // 자정 지나면 날짜 바뀌므로 급식/일정/디데이/평가/시간표 갱신
