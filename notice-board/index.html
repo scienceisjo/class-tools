@@ -70,6 +70,8 @@
   .callitem .stu{color:#9a3412;font-weight:800}
   .callitem .arr{color:var(--sub);font-weight:600}
   .callitem .loc{color:var(--accent);font-weight:800}
+  .callitem .rsn{background:#fff3d6;color:#8a5a00;font-weight:700;font-size:1.1rem;
+    padding:.1rem .6rem;border-radius:99px}
   #callEmpty{font-size:1.25rem;color:var(--sub);font-weight:600}
 
   /* ── 디데이 띠 ── */
@@ -730,12 +732,12 @@ function renderCalls(){
     list.innerHTML = `<span id="callEmpty">${callData.length? '선택한 반에 호출이 없습니다' : '현재 호출 없음'}</span>`;
     return;
   }
-  // ⚠️ 개인정보 보호: 호출 '사유'는 화면에 표시하지 않습니다 (관리자에서만 확인)
   list.innerHTML = items.map(c=>`<div class="callitem">
     <span class="cls">${classKey(c)}</span>
     <span class="stu">${esc(c.student_name)}</span><span class="arr">←</span>
     <span>${esc(c.teacher_name)} 선생님</span><span class="arr">·</span>
-    <span class="loc">${esc(c.location||'교무실')} 오세요</span></div>`).join('');
+    <span class="loc">${esc(c.location||'교무실')} 오세요</span>
+    ${c.reason?`<span class="rsn">${esc(c.reason)}</span>`:''}</div>`).join('');
 }
 
 /* ── 디데이 ── */
@@ -795,8 +797,9 @@ async function loadSchoolSched(){
 }
 function renderSchedules(){
   const box = $('schedBox'); if(!box) return;
-  const names=new Set(schedData.map(s=>s.title));
-  const all=[...schedData, ...neisSched.filter(n=>!names.has(n.title))]
+  const mine=schedData.filter(forThisBoard);          // 우리 반/학년/전교 일정만
+  const names=new Set(mine.map(s=>s.title));
+  const all=[...mine, ...neisSched.filter(n=>!names.has(n.title))]
     .sort((a,b)=>a.start_date.localeCompare(b.start_date)).slice(0,8);
   if(!all.length){ box.innerHTML='<div class="empty">예정된 일정이 없습니다</div>'; return; }
   box.innerHTML = all.map(s=>{
