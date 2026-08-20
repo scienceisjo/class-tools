@@ -89,6 +89,35 @@
   .item .del{background:#fff0f1;color:var(--red);padding:6px 12px;font-size:12px;flex:0 0 auto}
   .empty{color:var(--sub);font-size:14px;padding:14px 0;text-align:center}
   .pin{color:var(--gold);font-weight:800;font-size:11px}
+  .box-stale{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;
+    padding:12px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.6}
+  .box-stale .chip{background:#fff;border-color:#fed7aa;color:#9a3412;font-size:12.5px;padding:5px 11px}
+
+  /* ── 📱 휴대폰 화면 (이동 중 확인용) ── */
+  @media (max-width:640px){
+    .wrap{padding:12px 10px 90px}
+    header{flex-wrap:wrap;gap:8px}
+    header h1{font-size:18px}
+    header .who{font-size:12px}
+    .preview-link{font-size:12px;margin-right:6px}
+    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+      padding-bottom:6px;margin-bottom:14px}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{flex:0 0 auto;font-size:13px;padding:8px 13px}
+    .card{padding:14px 13px;border-radius:12px}
+    .row{flex-direction:column;gap:0}
+    .row>*{min-width:0;width:100%}
+    input,select,textarea{font-size:16px;padding:12px}  /* 16px 미만이면 iOS가 확대함 */
+    .btn{padding:15px;font-size:16px}
+    .item{flex-wrap:wrap;gap:8px}
+    .item .main{flex:1 1 100%;order:2}
+    .item .del{order:3;padding:9px 14px}
+    .msg .body{font-size:14.5px}
+    .cleanrow-edit{flex-direction:row !important}
+    .cleanrow-edit input{font-size:15px;padding:10px}
+    #login{margin:4vh auto;padding:24px 20px}
+  }
+
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--txt);color:#fff;
     padding:11px 22px;border-radius:99px;font-size:14px;font-weight:700;opacity:0;transition:.3s;pointer-events:none;z-index:99}
   .toast.show{opacity:1}
@@ -172,11 +201,14 @@
       <div class="hint">학생은 전자칠판 오른쪽 아래 <b>📮 선생님께 말하기</b> 버튼을 눌러 바로 씁니다.
         휴대폰으로도 보낼 수 있어요 → <code id="msgUrl">message.html</code></div>
       <div class="chips" id="msgFilter">
-        <button class="chip on" data-f="unread" onclick="msgTab('unread')">🔴 안 읽음</button>
+        <button class="chip on" data-f="mine" onclick="msgTab('mine')">👤 나에게 온 것</button>
+        <button class="chip" data-f="unread" onclick="msgTab('unread')">🔴 안 읽음</button>
         <button class="chip" data-f="all"  onclick="msgTab('all')">전체</button>
         <button class="chip" data-f="done" onclick="msgTab('done')">✅ 처리됨</button>
-        <button class="chip" style="margin-left:auto" onclick="loadMsgs()">🔄 새로고침</button>
+        <button class="chip" style="margin-left:auto" onclick="loadMsgs(false)">🔄 새로고침</button>
       </div>
+      <div class="hint">받는 선생님을 지정하지 않은 쪽지는 <b>모든 선생님</b>에게 보입니다.
+        읽음 표시는 <b>선생님별로 따로</b> 관리되니, 다른 분이 열어도 내 알림은 그대로예요.</div>
       <div id="msgList"><div class="empty">불러오는 중…</div></div>
     </div>
   </div>
@@ -205,9 +237,12 @@
       </div>
       <div class="field"><label><input type="checkbox" id="nPin" style="width:auto;margin-right:6px">📌 상단 고정</label></div>
       <button class="btn" id="nSave" onclick="saveNotice()">공지 등록</button>
+      <button class="ghost" id="nCancel" style="width:100%;margin-top:8px;padding:11px;display:none"
+              onclick="cancelEditNotice()">✕ 수정 취소</button>
     </div>
     <div class="card">
       <h2>등록된 공지</h2>
+      <div class="box-stale" id="staleBox" style="display:none"></div>
       <div id="noticeList"><div class="empty">불러오는 중…</div></div>
     </div>
   </div>
@@ -452,6 +487,12 @@
       <div class="hint" style="margin-top:12px">현재 설정: 해누리중학교 / 서울특별시교육청(B10) / 학교코드 7130256</div>
     </div>
 
+    <div class="card wform" id="approveCard" style="display:none">
+      <h2>👥 교사 계정 승인</h2>
+      <div class="hint">가입 신청한 선생님을 승인해야 글을 올릴 수 있습니다. (관리 담당자만 보입니다)</div>
+      <div id="approveList"><div class="empty">불러오는 중…</div></div>
+    </div>
+
     <div class="card">
       <h2>🖥️ 전자칠판 주소</h2>
       <div class="hint"><b>중앙(전교용)</b> 보드: 그냥 <code>notice.html</code> 을 띄우세요.</div>
@@ -491,10 +532,13 @@ async function doLogin(){
   const { data, error } = await sb.auth.signInWithPassword({ email, password:pw });
   if(error){ $('loginBtn').disabled=false; err.textContent='로그인 실패: '+error.message; err.classList.add('show'); return; }
   // 공지 전용 계정인지 확인 — 질문나무 계정으로는 들어올 수 없음
-  const { data:adm } = await sb.from('notice_admins').select('name,subject').eq('auth_id', data.user.id).maybeSingle();
+  const { data:adm } = await sb.from('notice_admins').select('*').eq('auth_id', data.user.id).maybeSingle();
   $('loginBtn').disabled=false;
   if(!adm){ await sb.auth.signOut();
     err.textContent='공지 관리 권한이 없는 계정입니다. ‘가입’ 탭에서 공지 전용 계정을 만들어 주세요.';
+    err.classList.add('show'); return; }
+  if(adm.approved === false){ await sb.auth.signOut();
+    err.textContent='아직 승인 대기 중입니다. 관리 담당 선생님께 승인을 요청해 주세요.';
     err.classList.add('show'); return; }
   me=data.user; myAdmin=adm; myName=adm.name||email.split('@')[0]; READONLY=false;
   enterDash();
@@ -518,8 +562,13 @@ async function doSignup(){
   const { error:insErr } = await sb.from('notice_admins').insert({ auth_id:uid, name, subject });
   $('sgBtn').disabled=false;
   if(insErr){ err.textContent='계정은 만들어졌지만 프로필 저장 실패: '+insErr.message; err.classList.add('show'); return; }
-  me=data.user; myAdmin={name,subject}; myName=name; READONLY=false;
-  enterDash();
+  // 승인 대기 안내 후 로그인 화면으로
+  await sb.auth.signOut();
+  authTab('login');
+  const le=$('loginErr');
+  le.style.color='var(--green)';
+  le.textContent='✅ 가입되었습니다. 관리 담당 선생님이 승인하면 바로 사용할 수 있어요.';
+  le.classList.add('show');
 }
 
 function enterGuest(){ READONLY=true; me=null; myName='둘러보기'; enterDash(); }
@@ -529,8 +578,8 @@ async function doLogout(){ if(!READONLY){ try{ await sb.auth.signOut(); }catch(e
 async function checkSession(){
   const { data } = await sb.auth.getSession();
   if(data.session){
-    const { data:adm } = await sb.from('notice_admins').select('name,subject').eq('auth_id', data.session.user.id).maybeSingle();
-    if(adm){ me=data.session.user; myAdmin=adm; myName=adm.name; READONLY=false; enterDash(); }
+    const { data:adm } = await sb.from('notice_admins').select('*').eq('auth_id', data.session.user.id).maybeSingle();
+    if(adm && adm.approved !== false){ me=data.session.user; myAdmin=adm; myName=adm.name; READONLY=false; enterDash(); }
   }
 }
 
@@ -540,7 +589,7 @@ function enterDash(){
   $('whoami').textContent = READONLY ? '👀 둘러보기' : (myName+' 선생님');
   loadNotices(); loadScheds(); loadTTCs(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadCfg(); makeUrl();
   loadMsgs(false); refreshMsgBadge(); msgUrlHint(); buildSquadChips(); loadSquadCfg();
-  loadPalette('clean'); loadPalette('duty');
+  loadPalette('clean'); loadPalette('duty'); loadApprovals();
   if(!READONLY) subscribeMsgs();
 }
 
@@ -559,6 +608,53 @@ function pickCat(c){ curCat=c;
   // 교과 선택 시 담당 과목 자동 입력 (가입 때 입력한 과목)
   if(c==='교과' && !$('nSubj').value && myAdmin?.subject) $('nSubj').value = myAdmin.subject;
 }
+/* ── 🧹 오래된 공지 정리 알림 ──
+   종료일 없이 2주 넘게 걸려 있는 공지를 모아서 알려준다 */
+function renderStaleWarning(list){
+  const box=$('staleBox'); if(!box) return;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const stale=(list||[]).filter(n=>{
+    if(n.end_at) return false;                       // 종료일 있으면 알아서 사라짐
+    const d=new Date(n.created_at);
+    return (today - d)/86400000 >= 14;               // 2주 이상
+  });
+  if(!stale.length){ box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = `🧹 <b>${stale.length}건</b>이 종료일 없이 2주 넘게 걸려 있습니다.
+    오래된 공지가 쌓이면 중요한 공지가 묻힙니다 — 확인 후 정리하거나 종료일을 넣어주세요.
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      ${stale.slice(0,6).map(n=>`<button class="chip" onclick="startEditNotice(${n.id})">${esc((n.title||'').slice(0,14))}</button>`).join('')}
+      ${stale.length>6?`<span class="hint">외 ${stale.length-6}건</span>`:''}
+    </div>`;
+}
+
+/* ── ✏️ 공지 수정 ── */
+let editingNoticeId = null;
+function startEditNotice(id){
+  const n = (noticeCache||[]).find(x=>x.id===id);
+  if(!n){ toast('공지를 찾지 못했습니다'); return; }
+  editingNoticeId = id;
+  pickCat(n.category);
+  $('nTitle').value = n.title||'';
+  $('nBody').value  = n.body||'';
+  $('nLink').value  = n.link||'';
+  $('nSubj').value  = n.subject||'';
+  $('nGrade').value = n.grade ? String(n.grade) : '';
+  $('nClass').value = n.class_no ? String(n.class_no) : '';
+  $('nEnd').value   = n.end_at||'';
+  $('nPin').checked = !!n.pinned;
+  $('nSave').textContent = '✏️ 수정 저장';
+  $('nCancel').style.display = 'block';
+  $('nTitle').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function cancelEditNotice(){
+  editingNoticeId = null;
+  ['nTitle','nBody','nSubj','nEnd','nLink','nClass'].forEach(id=>$(id).value='');
+  $('nPin').checked=false;
+  $('nSave').textContent='공지 등록';
+  $('nCancel').style.display='none';
+}
+
 async function saveNotice(){
   const title=$('nTitle').value.trim();
   if(!title){ toast('제목을 입력하세요'); return; }
@@ -570,15 +666,31 @@ async function saveNotice(){
     link:$('nLink').value.trim()||null,
     pinned:$('nPin').checked, end_at:$('nEnd').value||null,
     author_id:me.id, author_name:myName };
-  const { error } = await sb.from('notices').insert(rec);
+  let error;
+  if(editingNoticeId){
+    delete rec.author_id; delete rec.author_name;      // 작성자는 그대로 둔다
+    ({ error } = await sb.from('notices').update(rec).eq('id', editingNoticeId));
+  } else {
+    ({ error } = await sb.from('notices').insert(rec));
+  }
   $('nSave').disabled=false;
-  if(error){ toast('등록 실패: '+error.message); return; }
-  $('nTitle').value='';$('nBody').value='';$('nSubj').value='';$('nEnd').value='';$('nLink').value='';$('nClass').value='';$('nPin').checked=false;
-  toast('✅ 공지 등록됨'); loadNotices();
+  if(error){
+    toast(/policy|permission|row-level/i.test(error.message)
+      ? '다른 선생님이 올린 공지는 수정할 수 없습니다'
+      : ((editingNoticeId?'수정':'등록')+' 실패: '+error.message));
+    return;
+  }
+  const wasEdit = !!editingNoticeId;
+  cancelEditNotice();
+  toast(wasEdit ? '✏️ 수정됐습니다' : '✅ 공지 등록됨');
+  loadNotices();
 }
+let noticeCache = [];
 async function loadNotices(){
   const { data } = await sb.from('notices').select('*').order('pinned',{ascending:false}).order('created_at',{ascending:false});
   const box=$('noticeList');
+  noticeCache = data || [];
+  renderStaleWarning(noticeCache);
   if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 공지가 없습니다</div>'; return; }
   box.innerHTML = data.map(n=>{
     const cat = n.category==='교과'&&n.subject?`교과·${esc(n.subject)}`:n.category;
@@ -587,7 +699,8 @@ async function loadNotices(){
       <div class="main"><div class="t">${n.pinned?'<span class="pin">📌 </span>':''}${esc(n.title)}${n.grade?` <span class="meta">[${n.grade}학년${n.class_no?' '+n.class_no+'반':''}]</span>`:''}</div>
       ${n.body?`<div class="b">${esc(n.body)}</div>`:''}
       <div class="meta">${esc(n.author_name||'')} · ${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
-      <button class="del" onclick="del('notices',${n.id},loadNotices)">삭제</button></div>`;
+      <button class="del" style="background:#eef2fa;color:#3b6ef5" onclick="startEditNotice(${n.id})">✏️ 수정</button>
+      <button class="del" onclick="del('notices',${n.id},loadNotices,${JSON.stringify(n.title||'')})">삭제</button></div>`;
   }).join('');
 }
 
@@ -936,14 +1049,13 @@ async function saveClean(){
   const rows=readCleanRows();
   if(!curSquad && !rows.length){ toast('조를 고르거나 역할·이름을 한 줄이라도 넣어주세요'); return; }
   $('clSave').disabled=true;
-  // 반 단위로 다시 저장 (기존 것 지우고 새로)
-  await sb.from('cleaning_duties').delete().eq('grade',Number(g)).eq('class_no',Number(c));
+  // 반 단위 교체를 서버에서 한 번에 처리 (두 선생님이 동시에 저장해도 유실 없음)
   const payload=[];
-  if(curSquad) payload.push({ grade:Number(g), class_no:Number(c), area:'청소당번',
-    members:curSquad, note:$('clNote').value.trim()||null, sort_order:0, author_id:me.id });
-  rows.forEach((r,i)=>payload.push({ grade:Number(g), class_no:Number(c),
-    area:r.area||' ', members:r.members||' ', sort_order:i+1, author_id:me.id }));
-  const { error } = await sb.from('cleaning_duties').insert(payload);
+  if(curSquad) payload.push({ area:'청소당번', members:curSquad,
+    note:$('clNote').value.trim()||null, sort_order:0 });
+  rows.forEach((r,i)=>payload.push({ area:r.area||' ', members:r.members||' ', sort_order:i+1 }));
+  const { error } = await sb.rpc('replace_cleaning', {
+    p_grade:Number(g), p_class:Number(c), p_rows:payload, p_author:me.id });
   $('clSave').disabled=false;
   if(error){ toast('실패: '+error.message); return; }
   toast(`✅ ${g}-${c} 저장됨 (${payload.length}줄)`); loadClean();
@@ -978,40 +1090,63 @@ async function loadClean(){
 /* ── 📬 받은 쪽지 (학생 → 선생님) ── */
 const MSG_COLOR = {'하고 싶은 말':'#3b6ef5','질문':'#7c5cff','건의':'#0ea371','고민·상담':'#d97706','도움 요청':'#ef3b46'};
 const MSG_ICON  = {'하고 싶은 말':'💬','질문':'❓','건의':'🙋','고민·상담':'😟','도움 요청':'🚨'};
-let msgFilterMode = 'unread';
+let msgFilterMode = 'mine';
+let myReadIds = new Set();          // 내가 읽은 쪽지 (교사별로 따로)
+
+// 나에게 온 쪽지인가 (받는 사람 미지정 = 전체 공용)
+function msgForMe(m){
+  if(m.to_auth_id) return m.to_auth_id === me?.id;
+  if(m.to_teacher && myName) return m.to_teacher.replace(/\s|선생님/g,'').includes(myName.replace(/\s/g,''));
+  return !m.to_teacher;             // 받는 사람 안 정한 쪽지는 모두에게
+}
+async function loadMyReads(){
+  if(!me) return;
+  const { data } = await sb.from('message_reads').select('message_id').eq('reader_id', me.id);
+  myReadIds = new Set((data||[]).map(r=>r.message_id));
+}
 function msgTab(f){
   msgFilterMode=f;
   document.querySelectorAll('#msgFilter .chip[data-f]').forEach(c=>c.classList.toggle('on',c.dataset.f===f));
   loadMsgs(true);
 }
-// 배지만 갱신 (읽음 처리 안 함)
+// 배지 = '나에게 온 것 중 내가 아직 안 읽은 쪽지' 개수
 async function refreshMsgBadge(){
-  const { count, error } = await sb.from('messages').select('*',{count:'exact',head:true}).eq('status','unread');
-  const b=$('msgBadge'); if(!b) return;
-  if(!error && count>0){ b.textContent=count; b.style.display='inline-block'; } else b.style.display='none';
+  const b=$('msgBadge'); if(!b || !me) return;
+  await loadMyReads();
+  const { data, error } = await sb.from('messages').select('id,to_auth_id,to_teacher,status')
+    .neq('status','done').limit(300);
+  if(error){ b.style.display='none'; return; }
+  const n = (data||[]).filter(m=>msgForMe(m) && !myReadIds.has(m.id)).length;
+  if(n>0){ b.textContent=n; b.style.display='inline-block'; } else b.style.display='none';
 }
 // markRead=true 는 쪽지 탭을 실제로 열었을 때만
 async function loadMsgs(markRead){
   let qy = sb.from('messages').select('*');
-  if(msgFilterMode==='unread') qy = qy.in('status',['unread','read']);
-  else if(msgFilterMode==='done') qy = qy.eq('status','done');
-  const { data, error } = await qy.order('created_at',{ascending:false}).limit(100);
+  if(msgFilterMode==='done') qy = qy.eq('status','done');
+  else qy = qy.neq('status','done');
+  const { data:raw, error } = await qy.order('created_at',{ascending:false}).limit(200);
   const box=$('msgList');
   if(error){ box.innerHTML='<div class="empty">쪽지를 불러오지 못했습니다 — SQL을 실행했는지 확인하세요</div>'; return; }
+  await loadMyReads();
+
+  let data = raw||[];
+  if(msgFilterMode==='mine')        data = data.filter(msgForMe);
+  else if(msgFilterMode==='unread') data = data.filter(m=>!myReadIds.has(m.id));
   await refreshMsgBadge();
 
-  if(!data||!data.length){ box.innerHTML='<div class="empty">받은 쪽지가 없습니다</div>'; return; }
+  if(!data.length){ box.innerHTML='<div class="empty">받은 쪽지가 없습니다</div>'; return; }
   box.innerHTML = data.map(m=>{
     const who = m.is_anonymous ? '<span class="anon">🕶️ 익명</span>'
       : `${m.grade?m.grade+'-':''}${m.class_no??''} ${esc(m.student_name||'이름 없음')}`;
     const to = m.to_teacher ? ` → ${esc(m.to_teacher)}` : '';
     const d = new Date(m.created_at);
     const when = `${d.getMonth()+1}.${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<div class="msg ${m.status==='unread'?'unread':''}">
+    const isNew = !myReadIds.has(m.id);
+    return `<div class="msg ${isNew?'unread':''}">
       <div class="top">
         <span class="ctag" style="background:${MSG_COLOR[m.category]||'#6c7894'}">${MSG_ICON[m.category]||'💬'} ${esc(m.category)}</span>
         <span class="who">${who}</span><span class="anon">${to}</span>
-        ${m.status==='unread'?'<span class="ctag" style="background:#ef3b46">NEW</span>':''}
+        ${isNew?'<span class="ctag" style="background:#ef3b46">NEW</span>':''}
         <span class="when">${when}</span>
       </div>
       <div class="body">${esc(m.body)}</div>
@@ -1020,11 +1155,11 @@ async function loadMsgs(markRead){
         <button onclick="msgDel(${m.id})">🗑️ 삭제</button>
       </div></div>`;
   }).join('');
-  // 쪽지 탭을 실제로 열었을 때만 'unread' → 'read'
-  if(markRead && !READONLY){
-    const unreadIds = data.filter(m=>m.status==='unread').map(m=>m.id);
-    if(unreadIds.length){
-      await sb.from('messages').update({status:'read', read_at:new Date().toISOString()}).in('id',unreadIds);
+  // 쪽지 탭을 열었을 때 '내 읽음'만 기록 (다른 선생님 알림은 그대로)
+  if(markRead && !READONLY && me){
+    const fresh = data.filter(m=>!myReadIds.has(m.id)).map(m=>({message_id:m.id, reader_id:me.id}));
+    if(fresh.length){
+      await sb.from('message_reads').upsert(fresh, { onConflict:'message_id,reader_id' });
       refreshMsgBadge();
     }
   }
@@ -1124,6 +1259,32 @@ function siblingPage(kind){
   return dir + map[kind];
 }
 
+/* ── 👥 교사 계정 승인 (관리 담당자 전용) ── */
+async function loadApprovals(){
+  if(READONLY || !myAdmin?.is_owner) return;
+  $('approveCard').style.display='block';
+  const { data, error } = await sb.from('notice_admins').select('*').order('created_at',{ascending:false});
+  const box=$('approveList');
+  if(error){ box.innerHTML='<div class="empty">목록을 불러오지 못했습니다</div>'; return; }
+  if(!data?.length){ box.innerHTML='<div class="empty">가입한 선생님이 없습니다</div>'; return; }
+  box.innerHTML=data.map(a=>{
+    const wait = a.approved===false;
+    return `<div class="item">
+      <span class="tag" style="background:${wait?'#d97706':'#0ea371'}">${wait?'대기':'승인'}</span>
+      <div class="main"><div class="t">${esc(a.name||'(이름없음)')}${a.is_owner?' 👑':''}</div>
+        <div class="meta">${esc(a.subject||'과목 미지정')}</div></div>
+      ${wait
+        ? `<button class="del" style="background:#e7f9f0;color:#0ea371" onclick="setApproval('${a.auth_id}',true)">✅ 승인</button>`
+        : (a.is_owner ? '' : `<button class="del" onclick="setApproval('${a.auth_id}',false)">승인 취소</button>`)}
+    </div>`;
+  }).join('');
+}
+async function setApproval(authId, ok){
+  const { error } = await sb.from('notice_admins').update({ approved: ok }).eq('auth_id', authId);
+  if(error){ toast('실패: '+error.message); return; }
+  toast(ok?'✅ 승인했습니다':'승인을 취소했습니다'); loadApprovals();
+}
+
 /* 학생용 쪽지 페이지 주소 안내 */
 function msgUrlHint(){
   const el=$('msgUrl'); if(el) el.textContent=siblingPage('message');
@@ -1161,10 +1322,18 @@ async function saveCfg(){
 }
 
 /* ── 공통 ── */
-async function del(table,id,reload){
-  if(!confirm('삭제할까요?')) return;
+async function del(table,id,reload,summary){
+  if(!confirm('삭제할까요? 되돌릴 수 없습니다.')) return;
   const { error } = await sb.from(table).delete().eq('id',id);
-  if(error){ toast('삭제 실패: '+error.message); return; }
+  if(error){
+    toast(/policy|permission|row-level/i.test(error.message)
+      ? '다른 선생님이 올린 항목은 삭제할 수 없습니다'
+      : ('삭제 실패: '+error.message));
+    return;
+  }
+  // 누가 무엇을 지웠는지 기록
+  sb.from('audit_log').insert({ table_name:table, action:'delete', row_id:id,
+    summary:summary||null, actor_id:me?.id, actor_name:myName }).then(()=>{},()=>{});
   toast('🗑️ 삭제됨'); reload();
 }
 function esc(s){ return (s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
