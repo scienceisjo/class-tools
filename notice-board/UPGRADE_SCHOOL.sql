@@ -81,14 +81,25 @@ UPDATE notice_admins SET is_owner = true
 WHERE auth_id = (SELECT auth_id FROM notice_admins ORDER BY created_at LIMIT 1);
 
 -- 관리자는 다른 교사 계정을 조회·승인할 수 있어야 함
+-- ⚠️ 정책 안에서 같은 표를 조회하면 무한 반복(42P17)이 납니다.
+--    그래서 판단을 보안 함수로 빼둡니다.
+CREATE OR REPLACE FUNCTION is_notice_owner()
+RETURNS boolean
+LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public
+AS $fn$
+  SELECT EXISTS (
+    SELECT 1 FROM notice_admins WHERE auth_id = auth.uid() AND is_owner
+  );
+$fn$;
+REVOKE ALL ON FUNCTION is_notice_owner() FROM public;
+GRANT EXECUTE ON FUNCTION is_notice_owner() TO anon, authenticated;
+
 DROP POLICY IF EXISTS "na_owner_read" ON notice_admins;
 CREATE POLICY "na_owner_read" ON notice_admins FOR SELECT
-  USING (EXISTS (SELECT 1 FROM notice_admins o
-                 WHERE o.auth_id = auth.uid() AND o.is_owner));
+  USING (is_notice_owner());
 DROP POLICY IF EXISTS "na_owner_update" ON notice_admins;
 CREATE POLICY "na_owner_update" ON notice_admins FOR UPDATE
-  USING (EXISTS (SELECT 1 FROM notice_admins o
-                 WHERE o.auth_id = auth.uid() AND o.is_owner));
+  USING (is_notice_owner());
 
 
 -- ④ 긴급공지 자동 만료: 종료일을 안 넣으면 당일까지만
