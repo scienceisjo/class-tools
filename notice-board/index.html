@@ -189,6 +189,8 @@
   .tgl.on{background:var(--accent);color:#fff;border-color:var(--accent)}
   .swapb{display:inline-flex;align-items:center;background:rgba(217,119,6,.15);color:#b45309;
     font-size:1rem;font-weight:800;padding:.25rem .8rem;border-radius:99px;margin-left:auto}
+  #ttPick{display:none;margin-left:auto;font-family:inherit;font-size:1rem;font-weight:700;
+    padding:.25rem .6rem;border:1.5px solid var(--line);border-radius:.5rem;background:#fff;color:var(--txt)}
   .rolerow{display:flex;align-items:center;gap:.7rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:1.2rem;line-height:1.3}
   .rolerow:last-child{border-bottom:none}
   .rolerow .rn{flex:0 0 auto;font-weight:800;color:var(--purple);min-width:6.5rem}
@@ -324,6 +326,11 @@
       </section>
       <section class="card">
         <h2 id="ttcTitle"><span class="em">🔄</span>수업 변경·장소</h2>
+        <h2 class="toggleh" id="ttCentral" style="display:none">
+          <button class="tgl" id="tglc-tt" onclick="switchCentral('tt')">📖 시간표</button>
+          <button class="tgl on" id="tglc-chg" onclick="switchCentral('chg')">🔄 변경·장소</button>
+          <select id="ttPick" onchange="renderPickedWeek()"></select>
+        </h2>
         <h2 class="toggleh" id="ttToggle" style="display:none">
           <button class="tgl on" id="tgl-today" onclick="switchTT('today')">📖 오늘</button>
           <button class="tgl"    id="tgl-week"  onclick="switchTT('week')">🗓️ 주간</button>
@@ -909,6 +916,48 @@ function renderWeekTT(){
   }
   box.innerHTML = html+'</tbody></table>';
 }
+/* ── 중앙 보드: 반을 골라 그 반 주간 시간표 보기 (학교 원본 표 사용) ── */
+function buildClassPicker(){
+  const sel=$('ttPick'); if(!sel || sel.options.length) return;
+  const keys=Object.keys(TT_BASE).sort((a,b)=>{
+    const [ag,ac]=a.split('-').map(Number), [bg,bc]=b.split('-').map(Number);
+    return ag-bg || ac-bc;
+  });
+  sel.innerHTML = keys.map(k=>`<option value="${k}">${k.replace('-','학년 ')}반</option>`).join('');
+  const saved = localStorage.getItem('board_pick');
+  if(saved && keys.includes(saved)) sel.value = saved;
+}
+function renderPickedWeek(){
+  const sel=$('ttPick'); if(!sel) return;
+  const cls=sel.value; localStorage.setItem('board_pick', cls);
+  const wk=TT_BASE[cls]; const box=$('weekBox');
+  if(!wk){ box.innerHTML='<div class="empty">시간표가 없습니다</div>'; return; }
+  const DW=['월','화','수','목','금'];
+  const todayIdx=new Date().getDay()-1;      // 월=0 … 금=4
+  const maxP=Math.max(...wk.map(d=>d.length));
+  let html='<table><thead><tr><th></th>'
+    + DW.map((d,i)=>`<th class="${i===todayIdx?'today':''}">${d}</th>`).join('')
+    + '</tr></thead><tbody>';
+  for(let p=1;p<=maxP;p++){
+    html+=`<tr><td class="pn">${p}</td>`;
+    for(let i=0;i<5;i++){
+      const s=(wk[i]||[])[p-1]||'';
+      html+=`<td class="${i===todayIdx?'tdcol':''}">${esc(s)}</td>`;
+    }
+    html+='</tr>';
+  }
+  box.innerHTML=html+'</tbody></table>';
+}
+function switchCentral(which){
+  const tt = which==='tt';
+  if(tt) renderPickedWeek();
+  $('weekBox').style.display = tt?'block':'none';
+  $('ttcBox').style.display  = tt?'none':'block';
+  $('ttPick').style.display  = tt?'inline-block':'none';
+  $('tglc-tt').classList.toggle('on', tt);
+  $('tglc-chg').classList.toggle('on', !tt);
+}
+
 function switchTT(which){
   const wk = which==='week';
   $('ttcBox').style.display  = wk?'none':'block';
@@ -958,8 +1007,10 @@ function renderTTC(){
     box.innerHTML = html + extra.join('');
     renderWeekTT();   // 변경사항을 주간 표에도 반영
   } else {
-    // ── 중앙 보드: 오늘 변경 + 장소 안내 목록 ──
-    $('ttcTitle').innerHTML='<span class="em">🔄</span>수업 변경·장소';
+    // ── 중앙 보드: 반을 골라 시간표를 보거나, 변경·장소 목록 ──
+    $('ttcTitle').style.display='none';
+    $('ttCentral').style.display='flex';
+    buildClassPicker();
     const who = x => `${x.grade?x.grade+'-':''}${x.class_no??''}${x.period?` ${x.period}교시`:''}`.trim();
     const rows=[
       ...ttcRows.map(c=>`<div class="listrow ttc"><span class="who">${who(c)||'전체'}</span>
