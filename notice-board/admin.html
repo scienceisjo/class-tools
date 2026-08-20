@@ -704,7 +704,8 @@ async function loadNotices(){
       ${n.body?`<div class="b">${esc(n.body)}</div>`:''}
       <div class="meta">${esc(n.author_name||'')} · ${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
       <button class="del" style="background:#eef2fa;color:#3b6ef5" onclick="startEditNotice(${n.id})">✏️ 수정</button>
-      <button class="del" onclick="del('notices',${n.id},loadNotices,${JSON.stringify(n.title||'')})">삭제</button></div>`;
+      <button class="del" data-title="${esc(n.title||'')}"
+              onclick="del('notices',${n.id},loadNotices,this.dataset.title)">삭제</button></div>`;
   }).join('');
 }
 
