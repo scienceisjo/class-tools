@@ -198,6 +198,8 @@
         <div class="field" id="nSubjWrap" style="display:none"><label>교과명</label><input id="nSubj" placeholder="예: 수학"></div>
         <div class="field"><label>대상 학년</label>
           <select id="nGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>대상 반 (비우면 학년 전체)</label>
+          <input id="nClass" type="number" min="1" placeholder="예: 3"></div>
         <div class="field"><label>노출 종료일 (비우면 무기한)</label><input id="nEnd" type="date"></div>
       </div>
       <div class="field"><label><input type="checkbox" id="nPin" style="width:auto;margin-right:6px">📌 상단 고정</label></div>
@@ -548,6 +550,7 @@ async function saveNotice(){
   $('nSave').disabled=true;
   const rec={ category:curCat, title, body:$('nBody').value.trim()||null,
     grade:$('nGrade').value?Number($('nGrade').value):null,
+    class_no:($('nGrade').value && $('nClass').value)?Number($('nClass').value):null,
     subject:curCat==='교과'?($('nSubj').value.trim()||null):null,
     link:$('nLink').value.trim()||null,
     pinned:$('nPin').checked, end_at:$('nEnd').value||null,
@@ -555,7 +558,7 @@ async function saveNotice(){
   const { error } = await sb.from('notices').insert(rec);
   $('nSave').disabled=false;
   if(error){ toast('등록 실패: '+error.message); return; }
-  $('nTitle').value='';$('nBody').value='';$('nSubj').value='';$('nEnd').value='';$('nLink').value='';$('nPin').checked=false;
+  $('nTitle').value='';$('nBody').value='';$('nSubj').value='';$('nEnd').value='';$('nLink').value='';$('nClass').value='';$('nPin').checked=false;
   toast('✅ 공지 등록됨'); loadNotices();
 }
 async function loadNotices(){
@@ -566,7 +569,7 @@ async function loadNotices(){
     const cat = n.category==='교과'&&n.subject?`교과·${esc(n.subject)}`:n.category;
     const exp = n.end_at?` · ~${n.end_at}`:'';
     return `<div class="item"><span class="tag tag-${n.category}">${esc(cat)}</span>
-      <div class="main"><div class="t">${n.pinned?'<span class="pin">📌 </span>':''}${esc(n.title)}${n.grade?` <span class="meta">[${n.grade}학년]</span>`:''}</div>
+      <div class="main"><div class="t">${n.pinned?'<span class="pin">📌 </span>':''}${esc(n.title)}${n.grade?` <span class="meta">[${n.grade}학년${n.class_no?' '+n.class_no+'반':''}]</span>`:''}</div>
       ${n.body?`<div class="b">${esc(n.body)}</div>`:''}
       <div class="meta">${esc(n.author_name||'')} · ${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
       <button class="del" onclick="del('notices',${n.id},loadNotices)">삭제</button></div>`;

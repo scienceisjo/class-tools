@@ -135,6 +135,8 @@ CREATE TABLE IF NOT EXISTS calls (
 
 -- notices 에 링크(QR) 컬럼 추가
 ALTER TABLE notices ADD COLUMN IF NOT EXISTS link text;  -- 신청서/설문 등 URL → 화면에 QR 표시
+-- 노출 대상 반 (NULL = 학년 전체 / 값 = 그 반에서만 표시)
+ALTER TABLE notices ADD COLUMN IF NOT EXISTS class_no int;
 
 
 -- ───────────────────────────────────────────────────────────────────

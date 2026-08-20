@@ -187,6 +187,8 @@
   .tgl{font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:var(--panel2);
     color:var(--sub);font-size:1.15rem;font-weight:800;padding:.3rem 1rem;border-radius:99px;transition:.15s}
   .tgl.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .swapb{display:inline-flex;align-items:center;background:rgba(217,119,6,.15);color:#b45309;
+    font-size:1rem;font-weight:800;padding:.25rem .8rem;border-radius:99px;margin-left:auto}
   .rolerow{display:flex;align-items:center;gap:.7rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:1.2rem;line-height:1.3}
   .rolerow:last-child{border-bottom:none}
   .rolerow .rn{flex:0 0 auto;font-weight:800;color:var(--purple);min-width:6.5rem}
@@ -548,6 +550,16 @@ async function loadConfig(){
 
 /* ── 공지 로드 + 슬라이드 ── */
 let slideTimer=null, slideIdx=0, slides=[], noticeCards=[], lostItems=[];
+
+/* 이 보드에 보여줄 공지인지 판단
+   중앙 보드: 전부 표시 / 교실 보드: 전교 + 그 학년 + 그 학년-그 반 만 */
+function forThisBoard(n){
+  if(!CLASS_MODE) return true;
+  if(n.grade == null) return true;              // 전교 공지
+  if(Number(n.grade) !== CM_GRADE) return false;
+  if(n.class_no == null) return true;           // 그 학년 전체
+  return Number(n.class_no) === CM_CLASS;       // 그 반 지정
+}
 async function loadNotices(){
   const t = todayStr();
   const { data, error } = await sb.from('notices').select('*')
@@ -559,14 +571,14 @@ async function loadNotices(){
   const list = data || [];
 
   // 긴급공지 → 상단 배너
-  const urgent = list.filter(n => n.category==='긴급');
+  const urgent = list.filter(n => n.category==='긴급').filter(forThisBoard);
   if(urgent.length){
     $('urgentBar').classList.add('show');
     $('urgentText').textContent = urgent.map(n => n.title + (n.body?` — ${n.body}`:'')).join('     ◆     ');
   } else $('urgentBar').classList.remove('show');
 
   // 카드 슬라이드 = 긴급 외 공지 (긴급도 카드에 한 번 더 노출)
-  const cards = list.filter(n => n.category!=='긴급');
+  const cards = list.filter(n => n.category!=='긴급').filter(forThisBoard);
   noticeCards = cards.length ? cards : list;
   rebuildStage();
 }
@@ -583,7 +595,7 @@ async function loadLost(){
 const PER_PAGE = 6;   // 2열 × 3줄
 function noticeItemHtml(n){
   const catLabel = n.category==='교과' ? (n.subject||'교과') : n.category;
-  const gradeTxt = n.grade ? `${n.grade}학년` : '전교';
+  const gradeTxt = n.grade ? `${n.grade}학년${n.class_no?' '+n.class_no+'반':''}` : '전교';
   const icon = n.category==='교과'?'📚':(n.category==='학년'?'🎓':'📣');
   const qr = n.link
     ? `<img class="nqr" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=1&data=${encodeURIComponent(n.link)}" alt="QR">`
@@ -656,18 +668,21 @@ async function loadCalls(){
   buildCallFilter(); renderCalls();
 }
 function buildCallFilter(){
-  const sel = $('callFilter'); const prev = sel.value;
-  const classes = [...new Set(callData.map(classKey))].filter(c=>!c.includes('?'));
-  if(CLASS_MODE && !classes.includes(CLASS_MODE)) classes.push(CLASS_MODE); // 교실 모드: 우리 반 항상 포함
-  classes.sort();
+  const sel = $('callFilter');
+  // 교실 보드는 그 반 호출만 보므로 드롭다운 자체를 감춘다
+  if(CLASS_MODE){ sel.style.display='none'; return; }
+  const prev = sel.value;
+  const classes = [...new Set(callData.map(classKey))].filter(c=>!c.includes('?')).sort();
   sel.innerHTML = '<option value="">전체 반</option>' + classes.map(c=>`<option value="${c}">${c}반</option>`).join('');
-  if(CLASS_MODE && !_callDefaulted){ sel.value = CLASS_MODE; _callDefaulted = true; } // 우리 반으로 기본 필터
-  else if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
+  if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
 }
 function renderCalls(){
-  const bar=$('callBar'), list=$('callList'), f=$('callFilter').value;
-  bar.classList.toggle('has', callData.length>0);
-  const items = callData.filter(c => !f || classKey(c)===f);
+  const bar=$('callBar'), list=$('callList');
+  // 교실 보드: 그 반 호출만 / 중앙 보드: 드롭다운 선택대로
+  const items = CLASS_MODE
+    ? callData.filter(c => classKey(c)===CLASS_MODE)
+    : callData.filter(c => { const f=$('callFilter').value; return !f || classKey(c)===f; });
+  bar.classList.toggle('has', items.length>0);
   if(!items.length){
     list.innerHTML = `<span id="callEmpty">${callData.length? '선택한 반에 호출이 없습니다' : '현재 호출 없음'}</span>`;
     return;
@@ -781,28 +796,44 @@ async function loadLocations(){
     .eq('loc_date', todayStr()).order('grade').order('class_no').order('period');
   locRows = data || []; renderTTC();
 }
-/* ── 📝 시간표 수동 보정 ──────────────────────────────────────────
-   나이스는 분반(과학A/B, 국어A/B/C)이나 일부 과목명을 실제와 다르게 줍니다.
-   아래에 적은 칸은 나이스 값을 무시하고 이 값으로 표시합니다.
-   형식:  '학년-반': { 요일: { 교시: '과목' } }   (요일 1=월 2=화 3=수 4=목 5=금)
-   반을 추가하려면 같은 모양으로 한 줄 더 적으면 됩니다.            */
-const TT_OVERRIDE = {
-  '2-3': {
-    1: { 1:'과학B', 6:'과학A' },   // 월
-    2: { 4:'국어A', 6:'국어B' },   // 화
-    3: { 3:'독서' },               // 수
-    4: { 2:'국어C' },              // 목
-    5: { 5:'과학B' },              // 금
-  },
+/* ── 📚 학급 시간표 (컴시간알리미 원본, 해누리중 코드 90186) ────────
+   나이스는 분반(과학A/B, 국어A/B/C)을 구분하지 못해 실제와 다릅니다.
+   아래 표는 학교 시간표 원본에서 뽑은 전 학급 정규 시간표입니다.
+   형식: '학년-반': [월,화,수,목,금]  각 요일은 1교시부터 순서대로.
+   시간표가 바뀌면 이 표만 다시 받아 갈아끼우면 됩니다.            */
+const TT_BASE = {"1-1":[["과학A","체육","사회","수학","국어B","영어A"],["수학","국어A","영어A","사회B","스포츠","진로","음악"],["체육","영어B","창진1","도덕A","기술","기술"],["음악","도덕A","영어A","사회","국어B","수학","과학B"],["수학","국어A","정보","정보","체육","과학A"]],"1-2":[["창진1","영어A","수학","국어A","음악","도덕A"],["사회B","영어A","체육","수학","스포츠","정보","정보"],["사회","국어B","영어B","과학A","수학","음악"],["과학B","국어B","수학","체육","진로","도덕A","국어A"],["사회","기술","기술","영어A","과학A","체육"]],"1-3":[["수학","과학A","국어B","영어A","도덕A","사회"],["체육","창진1","기술","기술","스포츠","국어A","사회B"],["음악","과학A","수학","영어B","사회","체육"],["영어A","진로","도덕A","음악","수학","정보","정보"],["과학B","수학","영어A","국어A","체육","국어B"]],"1-4":[["국어B","정보","정보","과학B","체육","수학"],["과학A","국어B","사회B","체육","스포츠","영어A","수학"],["영어A","음악","도덕A","사회","국어A","창진1"],["국어A","수학","영어B","과학A","도덕A","사회","음악"],["영어A","진로","체육","수학","기술","기술"]],"1-5":[["체육","도덕A","기술","기술","사회","국어A"],["영어B","체육","수학","창진1","국어B","스포츠","사회B"],["진로","영어A","정보","정보","수학","과학A"],["수학","체육","과학A","국어B","음악","국어A","영어A"],["음악","도덕A","수학","과학B","사회","영어A"]],"1-6":[["국어A","음악","진로","수학","도덕A","과학A"],["음악","수학","국어A","과학A","영어A","스포츠","사회B"],["수학","체육","기술","기술","영어A","창진1"],["도덕A","사회","체육","영어A","과학B","수학","국어B"],["정보","정보","영어B","체육","국어B","사회"]],"1-7":[["진로","수학","체육","과학B","과학A","창진1"],["정보","정보","국어B","사회B","도덕A","스포츠","국어A"],["도덕A","국어A","수학","체육","음악","영어A"],["체육","영어B","수학","영어A","기술","기술","사회"],["과학A","음악","국어B","사회","영어A","수학"]],"1-8":[["사회","국어A","음악","국어B","수학","체육"],["기술","기술","사회B","수학","과학A","스포츠","영어A"],["국어A","사회","체육","영어A","도덕A","국어B"],["정보","정보","음악","영어B","수학","과학B","창진1"],["체육","영어A","과학A","수학","진로","도덕A"]],"2-1":[["역사","국어A","수학","체육","미술","미술"],["기술","수학","과학A","도덕A","영어","과학B","스포츠"],["영어","수학","역사","기가","국어B","한문"],["체육","독서","과학A","영어","가정","한문","수학"],["창진2","역사","도덕A","체육","국어C","과학B"]],"2-2":[["독서","체육","역사","영어","과학A","수학"],["국어B","체육","기술","역사","수학","영어","스포츠"],["과학B","도덕A","국어C","체육","한문","과학A"],["과학B","수학","가정","국어A","한문","창진2","역사"],["기가","영어","도덕A","수학","미술","미술"]],"2-3":[["과학B","기가","기술","역사","수학","과학A"],["수학","가정","체육","국어A","한문","국어B","스포츠"],["체육","도덕A","독서","영어","수학","역사"],["영어","국어C","체육","수학","한문","과학A","도덕A"],["창진2","미술","미술","역사","과학B","영어"]],"2-4":[["수학","기술","과학A","국어A","체육","영어"],["역사","과학B","영어","수학","미술","미술","스포츠"],["국어B","역사","창진2","과학A","체육","도덕A"],["수학","영어","과학B","국어C","독서","기가","한문"],["도덕A","한문","체육","가정","역사","수학"]],"2-5":[["기가","영어","도덕A","국어B","한문","체육"],["영어","수학","과학B","도덕A","국어C","역사","스포츠"],["수학","독서","체육","과학A","역사","가정"],["과학B","한문","역사","수학","과학A","미술","미술"],["기술","체육","창진2","수학","영어","국어A"]],"2-6":[["체육","미술","미술","수학","기가","역사"],["과학B","창진2","국어C","과학A","수학","도덕A","스포츠"],["가정","수학","독서","한문","국어A","영어"],["기술","체육","과학B","도덕A","역사","수학","영어"],["역사","과학A","영어","국어B","한문","체육"]],"2-7":[["한문","역사","과학B","기가","국어A","수학"],["체육","도덕A","역사","수학","영어","가정","과학A"],["역사","체육","창진2","독서","미술","미술"],["한문","영어","수학","체육","스포츠","과학A","국어C"],["영어","기술","국어B","도덕A","수학","과학B"]],"2-8":[["역사","수학","창진2","국어C","과학A","도덕A"],["미술","미술","도덕A","체육","국어A","영어","수학"],["한문","기술","과학A","영어","과학B","수학"],["수학","체육","독서","과학B","스포츠","기가","역사"],["국어B","가정","영어","한문","체육","역사"]],"2-9":[["과학A","도덕A","한문","체육","과학B","기가"],["도덕A","한문","가정","수학","국어B","과학B","영어"],["국어A","영어","역사","기술","수학","체육"],["미술","미술","창진2","역사","스포츠","수학","독서"],["체육","역사","과학A","국어C","수학","영어"]],"2-10":[["체육","수학","도덕A","역사","국어B","영어"],["수학","국어C","한문","과학A","가정","역사","국어A"],["미술","미술","한문","과학B","영어","도덕A"],["독서","기가","체육","수학","스포츠","역사","영어"],["과학A","수학","창진2","과학B","기술","체육"]],"2-11":[["과학B","영어","수학","가정","역사","체육"],["과학A","국어A","독서","창진2","과학B","도덕A","수학"],["체육","수학","미술","미술","국어C","한문"],["역사","과학A","영어","도덕A","스포츠","국어B","기술"],["한문","체육","수학","영어","역사","기가"]],"2-12":[["영어","독서","체육","한문","국어C","수학"],["영어","기가","체육","역사","수학","한문","도덕A"],["과학A","과학B","가정","역사","체육","기술"],["수학","국어B","미술","미술","스포츠","영어","국어A"],["수학","과학B","역사","창진2","도덕A","과학A"]],"3-1":[["국어B","창진3","가정","체육B","영어B","사회"],["체육A","중국어","과학B","수학A","과학A","역사","음악"],["음악","과학B","수학A","국어A","미술","미술"],["수학A","영어A","과학A","독서","국어B","스포츠","가정"],["국어A","사회","체육A","수학B","역사","영어A"]],"3-2":[["국어A","독서","과학B","수학A","사회","음악"],["국어B","영어A","창진3","체육A","중국어","음악","과학A"],["체육A","수학A","역사","영어B","사회","과학A"],["국어B","수학B","과학B","역사","가정","스포츠","국어A"],["수학A","가정","영어A","체육B","미술","미술"]],"3-3":[["과학B","국어A","창진3","가정","체육A","수학A"],["영어B","수학A","중국어","과학B","사회","미술","미술"],["영어A","가정","체육B","음악","수학A","국어B"],["역사","사회","국어A","독서","영어A","스포츠","과학A"],["수학B","과학A","역사","국어B","음악","체육A"]],"3-4":[["역사","영어A","미술","미술","과학A","체육A"],["수학B","체육B","국어A","중국어","창진3","국어B","영어A"],["가정","과학A","음악","체육A","국어A","수학A"],["과학B","음악","국어B","가정","수학A","스포츠","사회"],["사회","역사","수학A","과학B","독서","영어B"]],"3-5":[["미술","미술","체육A","창진3","수학B","영어A"],["중국어","역사","과학A","국어B","가정","수학A","독서"],["역사","체육A","사회","국어B","과학B","영어A"],["영어B","수학A","음악","사회","국어A","과학A","스포츠"],["과학B","체육B","국어A","수학A","음악","가정"]],"3-6":[["체육B","수학A","사회","과학A","영어A","가정"],["음악","국어A","수학A","창진3","영어B","과학B","역사"],["미술","미술","국어B","수학B","가정","사회"],["중국어","역사","영어A","체육A","과학B","수학A","스포츠"],["체육A","국어B","독서","과학A","국어A","음악"]],"3-7":[["음악","체육A","수학A","국어A","역사","영어B"],["과학A","창진3","가정","역사","영어A","수학A","국어B"],["수학B","사회","영어A","음악","체육A","과학B"],["국어A","중국어","체육B","과학A","수학A","사회","스포츠"],["미술","미술","가정","독서","과학B","국어B"]],"3-8":[["창진3","과학A","역사","영어A","국어B","수학A"],["사회","수학B","미술","미술","음악","가정","국어A"],["과학B","독서","수학A","역사","과학A","체육B"],["가정","체육A","중국어","수학A","영어B","국어B","스포츠"],["영어A","과학B","음악","사회","체육A","국어A"]],"3-9":[["사회","수학B","국어B","음악","국어A","역사"],["창진3","가정","체육A","영어A","수학A","국어A","과학B"],["국어B","영어B","과학A","가정","체육B","수학A"],["체육A","미술","미술","중국어","역사","과학B","스포츠"],["과학A","음악","수학A","영어A","사회","독서"]]};
+/* 🔁 요일변경 수업 — 학사일정 기준 (예: 10/7 수요일은 금요일 수업)
+   값: 1=월 2=화 3=수 4=목 5=금  */
+const DAY_SWAP = {
+  '2026-10-07': 5,   // 수 → 금요일 수업
+  '2026-11-03': 5,   // 화 → 금요일 수업
+  '2027-01-05': 4,   // 화 → 목요일 수업
+  '2027-01-06': 5,   // 수 → 금요일 수업
 };
-function ttOverrideMap(dateObj){
-  const cls = TT_OVERRIDE[CLASS_MODE];
-  if(!cls) return null;
-  return cls[dateObj.getDay()] || null;   // getDay: 월=1 … 금=5
+function swapInfo(dateObj){
+  const key=`${dateObj.getFullYear()}-${pad(dateObj.getMonth()+1)}-${pad(dateObj.getDate())}`;
+  const w=DAY_SWAP[key];
+  return w ? {weekday:w, label:'월화수목금'[w-1]+'요일 수업'} : null;
+}
+// 시간표를 읽을 때 쓸 '기준 요일' — 요일변경일이면 바뀐 요일로
+function schoolDayFor(dateObj){
+  const s=swapInfo(dateObj);
+  if(!s) return dateObj;
+  const d=new Date(dateObj);
+  d.setDate(d.getDate() + (s.weekday - (dateObj.getDay()||7)));
+  return d;
+}
+
+function ttBaseDay(dateObj){
+  const w=dateObj.getDay();            // 월=1 … 금=5
+  if(w<1||w>5) return null;
+  const t=TT_BASE[CLASS_MODE];
+  return t ? (t[w-1]||null) : null;
 }
 function ttSubject(dateObj, period, neisValue){
-  const m = ttOverrideMap(dateObj);
-  return (m && m[period]) ? m[period] : neisValue;
+  const day=ttBaseDay(dateObj);
+  const v=day ? day[period-1] : null;
+  return (v && v.trim()) ? v : neisValue;   // 원본 우선, 없으면 나이스
 }
 
 /* NEIS 시간표 하루치 가져오기
@@ -852,10 +883,8 @@ function renderWeekTT(){
   const box=$('weekBox'); if(!box||!CLASS_MODE) return;
   if(!weekTT){ box.innerHTML='<div class="empty">주간 시간표를 불러오지 못했습니다</div>'; return; }
   const {days, rows} = weekTT;
-  // 수업이 있는 날(나이스 자료가 있는 날)만 보정 적용 — 휴업일엔 빈칸 유지
-  const hasSchool = i => (rows[i]||[]).length > 0;
-  const ovPeriods = days.flatMap((d,i)=> hasSchool(i) ? Object.keys(ttOverrideMap(d)||{}).map(Number) : []);
-  const maxP = Math.max(1, ...rows.flat().map(r=>Number(r.PERIO)||0), ...ovPeriods);
+  const basePeriods = days.map(d=>(ttBaseDay(schoolDayFor(d))||[]).length);
+  const maxP = Math.max(1, ...rows.flat().map(r=>Number(r.PERIO)||0), ...basePeriods);
   const todayY = ymd(new Date());
   const DW=['월','화','수','목','금'];
   // 오늘 변경사항을 주간 표에도 반영
@@ -868,8 +897,7 @@ function renderWeekTT(){
     days.forEach((d,i)=>{
       const isToday = ymd(d)===todayY;
       const cell = (rows[i]||[]).find(r=>Number(r.PERIO)===p);
-      let subj = hasSchool(i) ? ttSubject(d, p, cell ? cell.ITRT_CNTNT : '')
-                              : (cell ? cell.ITRT_CNTNT : '');   // 수동 보정 우선
+      let subj = ttSubject(schoolDayFor(d), p, cell ? cell.ITRT_CNTNT : '');  // 요일변경 반영
       let cls = isToday?'tdcol':'';
       if(isToday){
         const c = myChg.find(x=>x.period===p);
@@ -896,12 +924,20 @@ function renderTTC(){
     // ── 교실 보드: 오늘 시간표 전체 + 변경·장소 오버레이 ──
     $('ttcTitle').style.display='none';
     $('ttToggle').style.display='flex';
+    // 요일변경일 안내 (예: 오늘은 금요일 수업)
+    const sw=swapInfo(new Date());
+    let swBadge=$('swapBadge');
+    if(sw){
+      if(!swBadge){ swBadge=document.createElement('span'); swBadge.id='swapBadge'; swBadge.className='swapb';
+        $('ttToggle').appendChild(swBadge); }
+      swBadge.textContent='🔁 오늘은 '+sw.label; swBadge.style.display='inline-flex';
+    } else if(swBadge) swBadge.style.display='none';
     const myChg=ttcRows.filter(_mine), myLoc=locRows.filter(_mine);
     const periods={};
     (neisTT||[]).forEach(r=>{ const p=Number(r.PERIO); if(p && !periods[p]) periods[p]=r.ITRT_CNTNT||''; });
-    // 수동 보정 반영 (단, 수업이 아예 없는 날엔 적용 안 함)
-    const ov = (neisTT && neisTT.length) ? ttOverrideMap(new Date()) : null;
-    if(ov) Object.keys(ov).forEach(p=>{ periods[Number(p)] = ov[p]; });
+    // 학교 원본 시간표(컴시간) 우선 — 분반(과학A/B 등)까지 정확
+    const baseDay = ttBaseDay(schoolDayFor(new Date()));
+    if(baseDay) baseDay.forEach((s,i)=>{ if(s && s.trim()) periods[i+1]=s; });
     const pNums=Object.keys(periods).map(Number).sort((a,b)=>a-b);
     if(!pNums.length && !myChg.length && !myLoc.length){
       box.innerHTML='<div class="empty">오늘 시간표 정보가 없습니다</div>'; return; }
