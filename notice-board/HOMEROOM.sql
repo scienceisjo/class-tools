@@ -13,6 +13,12 @@ ALTER TABLE schedules ADD COLUMN IF NOT EXISTS grade    int;
 ALTER TABLE schedules ADD COLUMN IF NOT EXISTS class_no int;
 
 
+-- 2-2) 공지에 부서 표시 (선택 사항)
+ALTER TABLE notices      ADD COLUMN IF NOT EXISTS dept text;
+-- 가입할 때 소속 부서를 저장해 두면 공지 작성 시 자동으로 채워집니다
+ALTER TABLE notice_admins ADD COLUMN IF NOT EXISTS dept text;
+
+
 -- 3) "이 사람이 그 반 담임인가" 를 판단하는 함수
 --    정책 안에서 notice_admins 를 직접 조회하면 무한 반복이 나므로 함수로 분리합니다.
 CREATE OR REPLACE FUNCTION is_homeroom_of(p_grade int, p_class int)

@@ -154,6 +154,7 @@
   <div id="signupForm" style="display:none">
     <input id="sgName" placeholder="이름 (예: 김OO)">
     <input id="sgSubject" placeholder="담당 과목 (선택) — 교과 공지에 자동 입력">
+    <select id="sgDept"><option value="">소속 부서 (선택)</option></select>
     <label style="display:block;font-size:13px;font-weight:800;color:var(--sub);margin:6px 0 4px">
       담임 학급 (담임이 아니시면 비워두세요)</label>
     <div class="row" style="gap:8px">
@@ -232,6 +233,8 @@
       </div>
       <div class="field"><label>제목</label><input id="nTitle" placeholder="공지 제목"></div>
       <div class="field"><label>내용 (선택)</label><textarea id="nBody" placeholder="자세한 내용"></textarea></div>
+      <div class="field"><label>🏫 부서 (선택) — 넣으면 화면에 함께 표시됩니다</label>
+        <select id="nDept"><option value="">표시 안 함</option></select></div>
       <div class="field"><label>🔗 링크 URL (선택) — 입력하면 화면에 <b>QR코드</b>가 표시됩니다</label><input id="nLink" type="url" placeholder="예: https://forms.gle/... (신청서·설문)"></div>
       <div class="row">
         <div class="field" id="nSubjWrap" style="display:none"><label>교과명</label><input id="nSubj" placeholder="예: 수학"></div>
@@ -525,6 +528,15 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 const $ = id => document.getElementById(id);
 let me = null, myName = '', myAdmin = null, READONLY = false;
 
+/* ── 🏫 학교 부서 목록 ── */
+const DEPTS = ['과학정보부','학생생활부','체육안전부','창의인성부','교무업무지원팀','행정실',
+  '1학년부','2학년부','3학년부','상담복지부','학력신장부','개별화교무실','시설관리과'];
+function fillDeptSelects(){
+  const opts = DEPTS.map(d=>`<option value="${d}">${d}</option>`).join('');
+  const sg=$('sgDept'); if(sg && sg.options.length<=1) sg.innerHTML='<option value="">소속 부서 (선택)</option>'+opts;
+  const nd=$('nDept'); if(nd && nd.options.length<=1) nd.innerHTML='<option value="">표시 안 함</option>'+opts;
+}
+
 /* ── 인증 (공지 전용 계정 — 질문나무와 별개) ── */
 function authTab(t){
   $('atab-login').classList.toggle('on', t==='login');
@@ -570,6 +582,7 @@ async function doSignup(){
   if(!uid){ $('sgBtn').disabled=false; err.textContent='이메일 인증이 필요합니다. 메일 확인 후 로그인하세요.'; err.classList.add('show'); authTab('login'); return; }
   const hrG=$('sgHrGrade').value, hrC=$('sgHrClass').value;
   const { error:insErr } = await sb.from('notice_admins').insert({ auth_id:uid, name, subject,
+    dept:$('sgDept').value||null,
     hr_grade:(hrG&&hrC)?Number(hrG):null, hr_class:(hrG&&hrC)?Number(hrC):null });
   $('sgBtn').disabled=false;
   if(insErr){ err.textContent='계정은 만들어졌지만 프로필 저장 실패: '+insErr.message; err.classList.add('show'); return; }
@@ -601,6 +614,8 @@ function enterDash(){
   loadNotices(); loadScheds(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadCfg(); makeUrl();
   loadMsgs(false); refreshMsgBadge(); msgUrlHint(); buildSquadChips(); loadSquadCfg();
   loadPalette('clean'); loadPalette('duty'); loadApprovals();
+  fillDeptSelects();
+  if(myAdmin?.dept) $('nDept').value = myAdmin.dept;   // 내 부서를 기본 선택
   if(!READONLY) subscribeMsgs();
 }
 
@@ -653,6 +668,7 @@ function startEditNotice(id){
   $('nGrade').value = n.grade ? String(n.grade) : '';
   $('nClass').value = n.class_no ? String(n.class_no) : '';
   $('nEnd').value   = n.end_at||'';
+  $('nDept').value  = n.dept||'';
   $('nPin').checked = !!n.pinned;
   $('nSave').textContent = '✏️ 수정 저장';
   $('nCancel').style.display = 'block';
@@ -661,6 +677,7 @@ function startEditNotice(id){
 function cancelEditNotice(){
   editingNoticeId = null;
   ['nTitle','nBody','nSubj','nEnd','nLink','nClass'].forEach(id=>$(id).value='');
+  $('nDept').value = myAdmin?.dept || '';        // 내 소속 부서로 되돌림
   $('nPin').checked=false;
   $('nSave').textContent='공지 등록';
   $('nCancel').style.display='none';
@@ -673,6 +690,7 @@ async function saveNotice(){
   const rec={ category:curCat, title, body:$('nBody').value.trim()||null,
     grade:$('nGrade').value?Number($('nGrade').value):null,
     class_no:($('nGrade').value && $('nClass').value)?Number($('nClass').value):null,
+    dept:$('nDept').value||null,
     subject:curCat==='교과'?($('nSubj').value.trim()||null):null,
     link:$('nLink').value.trim()||null,
     pinned:$('nPin').checked, end_at:$('nEnd').value||null,
@@ -709,7 +727,7 @@ async function loadNotices(){
     return `<div class="item"><span class="tag tag-${n.category}">${esc(cat)}</span>
       <div class="main"><div class="t">${n.pinned?'<span class="pin">📌 </span>':''}${esc(n.title)}${n.grade?` <span class="meta">[${n.grade}학년${n.class_no?' '+n.class_no+'반':''}]</span>`:''}</div>
       ${n.body?`<div class="b">${esc(n.body)}</div>`:''}
-      <div class="meta">${esc(n.author_name||'')} · ${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
+      <div class="meta">${n.dept?esc(n.dept)+' · ':''}${esc(n.author_name||'')} · ${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
       <button class="del" style="background:#eef2fa;color:#3b6ef5" onclick="startEditNotice(${n.id})">✏️ 수정</button>
       <button class="del" data-title="${esc(n.title||'')}"
               onclick="del('notices',${n.id},loadNotices,this.dataset.title)">삭제</button></div>`;
@@ -1303,6 +1321,7 @@ let toastT; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.
 const today=new Date().toISOString().slice(0,10);
 $('sStart').value=today; $('dDate').value=today; $('aDate').value=today; $('lcDate').value=today;
 $('pw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+fillDeptSelects();      // 로그인 전에도 가입 화면의 부서 목록이 보이도록
 checkSession();
 </script>
 </body>

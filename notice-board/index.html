@@ -137,6 +137,8 @@
   .nitem .ntext{flex:1 1 auto;min-width:0}
   .nitem .nhead{display:flex;align-items:center;gap:.6rem;margin-bottom:.15rem}
   .nitem .nmeta{font-size:.95rem;color:var(--sub);font-weight:600;white-space:nowrap}
+  .nitem .ndept{font-size:.9rem;font-weight:800;color:var(--purple);background:rgba(124,92,255,.12);
+    padding:.05rem .5rem;border-radius:99px;white-space:nowrap}
   .nitem .ntitle{font-size:1.35rem;font-weight:800;line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .nitem .nbody{font-size:1.05rem;color:#41506e;line-height:1.3;font-weight:500;
@@ -626,6 +628,7 @@ function noticeItemHtml(n){
     : '';
   return `<div class="nitem"><div class="ntext">
     <div class="nhead"><span class="cat cat-${n.category}">${icon} ${esc(catLabel)} · ${gradeTxt}</span>
+      ${n.dept?`<span class="ndept">${esc(n.dept)}</span>`:''}
       <span class="nmeta">${n.author_name?esc(n.author_name)+' 선생님':''} ${fmtDate(n.created_at)}</span></div>
     <div class="ntitle">${esc(n.title)}</div>
     ${n.body?`<div class="nbody">${esc(n.body)}</div>`:''}
