@@ -2179,7 +2179,8 @@ async function doChangePw(){
   var btn = $('pwSaveBtn'); if(btn) btn.disabled = true;
   setMsg('변경 중…', true);
   try{
-    var r = await sb.auth.updateUser({ password: a });
+    /* pw_changed 표시를 계정에 남긴다 — 질문 과수원이 더 이상 묻지 않게 */
+    var r = await sb.auth.updateUser({ password: a, data:{ pw_changed:true } });
     if(btn) btn.disabled = false;
     if(r.error){ setMsg('변경 실패: ' + r.error.message, false); return; }
     setMsg('✅ 바뀌었어요! 질문 과수원도 같은 비밀번호예요.', true);
