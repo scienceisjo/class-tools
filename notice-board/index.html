@@ -549,7 +549,9 @@ setInterval(tick, 1000); tick();
 
 /* ── 설정 로드 ── */
 async function loadConfig(){
-  const { data } = await sb.from('display_config').select('key,value');
+  // 화면에 필요한 값만 받아온다 (가입 코드 등은 애초에 요청하지 않음)
+  const { data } = await sb.from('display_config').select('key,value')
+    .in('key', ['school_name','slide_seconds','neis_atpt','neis_school','weather_lat','weather_lon']);
   if(data) data.forEach(r => CFG[r.key] = r.value);
   $('schoolName').textContent = CFG.school_name || '해누리중학교';
   document.title = (CFG.school_name||'학교') + ' 공지';

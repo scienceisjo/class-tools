@@ -492,10 +492,10 @@ async function doSignup(){
   const err=$('sgErr'); err.classList.remove('show');
   if(!name){ err.textContent='이름을 입력하세요'; err.classList.add('show'); return; }
   if(!email||pw.length<6){ err.textContent='이메일과 6자 이상 비밀번호를 입력하세요'; err.classList.add('show'); return; }
-  // 가입 코드 확인 (설정의 admin_code)
-  const { data:cfg } = await sb.from('display_config').select('value').eq('key','admin_code').maybeSingle();
-  const need = cfg?.value || '';
-  if(need && code!==need){ err.textContent='가입 코드가 올바르지 않습니다. 학교 담당자에게 문의하세요.'; err.classList.add('show'); return; }
+  // 가입 코드 확인 — 코드 값을 받아오지 않고, 맞는지만 서버에 물어본다
+  const { data:ok, error:codeErr } = await sb.rpc('check_admin_code', { code });
+  if(codeErr){ err.textContent='가입 코드를 확인하지 못했습니다. 관리자에게 문의하세요. ('+codeErr.message+')'; err.classList.add('show'); return; }
+  if(ok !== true){ err.textContent='가입 코드가 올바르지 않습니다. 학교 담당자에게 문의하세요.'; err.classList.add('show'); return; }
   $('sgBtn').disabled=true;
   const { data, error } = await sb.auth.signUp({ email, password:pw });
   if(error){ $('sgBtn').disabled=false; err.textContent='가입 실패: '+error.message; err.classList.add('show'); return; }
@@ -1016,6 +1016,11 @@ function makeUrl(){
 
 /* ── 설정 ── */
 async function loadCfg(){
+  // 둘러보기(비로그인)에서는 설정값을 아예 불러오지 않는다 — 숨겨진 칸으로도 새지 않게
+  if(READONLY){
+    ['cfgSchool','cfgSlide','cfgAtpt','cfgSchoolCode','cfgCode'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
+    return;
+  }
   const { data } = await sb.from('display_config').select('*');
   const m={}; (data||[]).forEach(r=>m[r.key]=r.value);
   $('cfgSchool').value=m.school_name||''; $('cfgSlide').value=m.slide_seconds||'12';

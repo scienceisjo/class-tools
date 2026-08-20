@@ -367,12 +367,39 @@ DROP POLICY IF EXISTS "na_self_update" ON notice_admins;
 CREATE POLICY "na_self_update" ON notice_admins FOR UPDATE USING (auth.uid() = auth_id);
 
 -- display_config ---------------------------------------------------
+-- 🔒 가입 코드(admin_code)는 로그인한 교사만 볼 수 있게. 나머지 설정은 공개 읽기.
+--    (전자칠판은 익명으로 학교명·NEIS코드 등을 읽어야 하므로)
 ALTER TABLE display_config ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "cfg_public_read" ON display_config;
-CREATE POLICY "cfg_public_read" ON display_config FOR SELECT USING (true);
+CREATE POLICY "cfg_public_read" ON display_config FOR SELECT
+  USING (key <> 'admin_code' OR auth.role() = 'authenticated');
 DROP POLICY IF EXISTS "cfg_auth_write"  ON display_config;
 CREATE POLICY "cfg_auth_write"  ON display_config FOR ALL
   USING (auth.role() = 'authenticated') WITH CHECK (auth.role() = 'authenticated');
+
+
+-- ═══════════════════════════════════════════════════════════════════
+-- 🔑 가입 코드 대조 함수
+-- ───────────────────────────────────────────────────────────────────
+-- 가입 화면은 아직 로그인 전(anon)이라 admin_code 를 읽을 수 없습니다.
+-- 대신 "입력한 코드가 맞는지"만 서버에서 확인해 true/false 로 답합니다.
+-- → 코드 값 자체는 절대 밖으로 나가지 않습니다.
+-- ═══════════════════════════════════════════════════════════════════
+CREATE OR REPLACE FUNCTION check_admin_code(code text)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER          -- 정책을 우회해 서버 안에서만 대조
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM display_config
+    WHERE key = 'admin_code' AND value = code
+  );
+$$;
+
+REVOKE ALL ON FUNCTION check_admin_code(text) FROM public;
+GRANT EXECUTE ON FUNCTION check_admin_code(text) TO anon, authenticated;
 
 
 -- ═══════════════════════════════════════════════════════════════════
