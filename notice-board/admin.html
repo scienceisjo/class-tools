@@ -305,6 +305,8 @@
           <select id="aType"><option>수행평가</option><option>지필평가</option><option>기타</option></select></div>
         <div class="field"><label>대상 학년</label>
           <select id="aGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>대상 반 (비우면 학년 전체)</label>
+          <input id="aClass" type="number" min="1" placeholder="예: 3"></div>
         <div class="field"><label>평가일</label><input id="aDate" type="date"></div>
       </div>
       <div class="field"><label>평가명</label><input id="aTitle" placeholder="예: 함수 단원 수행평가"></div>
@@ -346,10 +348,21 @@
       <div class="hint">조 번호만 고르면 그 반 <b>교실 전자칠판</b>(<code>?class=학년-반</code>)에 크게 표시됩니다.
         누가 몇 조인지는 학생들이 아니까 이름은 안 적어도 돼요.</div>
       <div class="row">
-        <div class="field"><label>학년</label><select id="clGrade" onchange="loadClean()"><option>1</option><option>2</option><option>3</option></select></div>
-        <div class="field"><label>반</label><input id="clClass" type="number" placeholder="예: 3" oninput="loadClean()"></div>
+        <div class="field"><label>학년</label><select id="clGrade" onchange="onCleanClassChange()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="clClass" type="number" placeholder="예: 3" oninput="onCleanClassChange()"></div>
         <div class="field" style="flex:2"><label>비고 (선택)</label><input id="clNote" placeholder="예: 이번 주 / 오늘만 / 복도까지"></div>
       </div>
+      <div class="hint" style="margin-top:10px">이 반의 <b>조 편성 방식</b> — 반마다 다르게 설정할 수 있어요 (한 번 정하면 저장됩니다)</div>
+      <div class="row" style="align-items:flex-end;margin-bottom:10px">
+        <div class="field"><label>개수</label>
+          <select id="sqCount" onchange="saveSquadCfg()"></select></div>
+        <div class="field"><label>부르는 말</label>
+          <select id="sqUnit" onchange="saveSquadCfg()">
+            <option>조</option><option>모둠</option><option>팀</option><option>분단</option></select></div>
+        <div class="field" style="flex:2"><label>또는 직접 입력 (예: A조, 창가팀)</label>
+          <input id="sqCustom" placeholder="자유롭게 입력" oninput="pickSquad(this.value.trim())"></div>
+      </div>
+
       <label>청소 조 선택 (선택 — 안 골라도 됩니다)</label>
       <div class="chips" id="squadChips"></div>
 
@@ -525,7 +538,7 @@ function enterDash(){
   document.body.classList.toggle('readonly', READONLY);
   $('whoami').textContent = READONLY ? '👀 둘러보기' : (myName+' 선생님');
   loadNotices(); loadScheds(); loadTTCs(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadCfg(); makeUrl();
-  loadMsgs(false); refreshMsgBadge(); msgUrlHint(); buildSquadChips();
+  loadMsgs(false); refreshMsgBadge(); msgUrlHint(); buildSquadChips(); loadSquadCfg();
   if(!READONLY) subscribeMsgs();
 }
 
@@ -670,10 +683,11 @@ async function saveAssess(){
   $('aSave').disabled=true;
   const { error } = await sb.from('assessments').insert({ subject, title, assess_date:date,
     assess_type:$('aType').value, grade:$('aGrade').value?Number($('aGrade').value):null,
+    class_no:($('aGrade').value && $('aClass').value)?Number($('aClass').value):null,
     scope:$('aScope').value.trim()||null, author_id:me.id });
   $('aSave').disabled=false;
   if(error){ toast('실패: '+error.message); return; }
-  $('aTitle').value='';$('aScope').value='';
+  $('aTitle').value='';$('aScope').value='';$('aClass').value='';
   toast('✅ 평가일정 추가됨'); loadAssess();
 }
 async function loadAssess(){
@@ -683,7 +697,7 @@ async function loadAssess(){
   const box=$('assessList');
   if(!data||!data.length){ box.innerHTML='<div class="empty">예정된 평가가 없습니다</div>'; return; }
   box.innerHTML = data.map(a=>{
-    const g=a.grade?`${a.grade}학년 `:'';
+    const g=a.grade?`${a.grade}학년${a.class_no?' '+a.class_no+'반':''} `:'';
     const color=a.assess_type==='지필평가'?'#ef3b46':(a.assess_type==='수행평가'?'#d97706':'#3b6ef5');
     return `<div class="item"><span class="tag" style="background:${color}">${esc(a.assess_type)}</span>
       <div class="main"><div class="t">${g}${esc(a.subject)} · ${esc(a.title)}</div>
@@ -784,14 +798,49 @@ async function loadLocs(){
 
 /* ── 🧹 청소 조 ── */
 let curSquad = null;
+
+/* 반마다 조 편성이 다를 수 있어 개수·명칭을 반별로 저장한다
+   저장 위치: display_config 의 clean_squad_<학년>-<반>  (예: "8|조") */
+function squadCfgKey(){
+  const g=$('clGrade').value, c=$('clClass').value;
+  return (g&&c) ? `clean_squad_${g}-${c}` : null;
+}
 function buildSquadChips(){
   const box=$('squadChips'); if(!box) return;
-  box.innerHTML = Array.from({length:8},(_,i)=>i+1)
-    .map(n=>`<button class="chip" data-s="${n}조" onclick="pickSquad('${n}조')">${n}조</button>`).join('');
+  // 개수 선택지 준비 (2~12)
+  const sc=$('sqCount');
+  if(sc && !sc.options.length){
+    sc.innerHTML = Array.from({length:11},(_,i)=>i+2).map(n=>`<option value="${n}">${n}개</option>`).join('');
+    sc.value = '8';   // 만들자마자 첫 항목(2)이 잡히지 않도록 기본값 지정
+  }
+  const n = Number(sc?.value) || 8;
+  const unit = $('sqUnit')?.value || '조';
+  box.innerHTML = Array.from({length:n},(_,i)=>{
+    const label = (i+1)+unit;
+    return `<button class="chip" data-s="${label}" onclick="pickSquad('${label}')">${label}</button>`;
+  }).join('');
+  if(curSquad) pickSquad(curSquad);
 }
 function pickSquad(s){
-  curSquad=s;
+  curSquad = s || null;
   document.querySelectorAll('#squadChips .chip').forEach(c=>c.classList.toggle('on', c.dataset.s===s));
+}
+// 반을 고르면 그 반의 조 편성 설정을 불러온다
+async function loadSquadCfg(){
+  const key=squadCfgKey(); if(!key) return;
+  const { data } = await sb.from('display_config').select('value').eq('key',key).maybeSingle();
+  const [n,u] = (data?.value || '8|조').split('|');
+  if($('sqCount').options.length===0) buildSquadChips();
+  $('sqCount').value = n || '8';
+  $('sqUnit').value  = u || '조';
+  buildSquadChips();
+}
+async function saveSquadCfg(){
+  buildSquadChips();
+  const key=squadCfgKey(); if(!key || READONLY) return;
+  const val = `${$('sqCount').value}|${$('sqUnit').value}`;
+  const { error } = await sb.from('display_config').upsert({ key, value: val });
+  if(error) toast('조 편성 저장 실패: '+error.message);
 }
 /* 역할·이름 입력 줄 (빈 값 허용) */
 const CLEAN_ROLE_SUGGEST = ['바닥 쓸기','바닥 걸레','칠판','창문','쓰레기통','사물함','복도','분리수거'];
@@ -813,6 +862,13 @@ function readCleanRows(){
     area: d.querySelector('.cl-role').value.trim(),
     members: d.querySelector('.cl-name').value.trim()
   })).filter(r=>r.area||r.members);   // 양쪽 다 비면 저장 안 함
+}
+
+// 학년·반을 바꾸면 그 반의 조 편성 + 저장 내용을 함께 불러온다
+async function onCleanClassChange(){
+  curSquad=null; $('sqCustom').value='';
+  await loadSquadCfg();
+  loadClean();
 }
 
 async function saveClean(){
@@ -847,7 +903,12 @@ async function loadClean(){
   if(g && c){
     const mineAll=data.filter(x=>String(x.grade)===g && String(x.class_no)===c);
     const sq=mineAll.find(x=>x.area==='청소당번');
-    if(sq){ pickSquad(sq.members); $('clNote').value=sq.note||''; }
+    if(sq){
+      pickSquad(sq.members); $('clNote').value=sq.note||'';
+      // 칩에 없는 값(직접 입력한 조)이면 직접입력 칸에 되살린다
+      const inChips=[...document.querySelectorAll('#squadChips .chip')].some(c=>c.dataset.s===sq.members);
+      $('sqCustom').value = inChips ? '' : (sq.members||'');
+    }
     clearCleanRows();
     mineAll.filter(x=>x.area!=='청소당번')
       .sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))

@@ -778,13 +778,14 @@ function renderSchedules(){
 async function loadAssessments(){
   const t = todayStr();
   const { data } = await sb.from('assessments').select('*').gte('assess_date', t)
-    .order('assess_date',{ascending:true}).limit(7);
+    .order('assess_date',{ascending:true}).limit(20);
   const box = $('assessBox');
-  if(!data || !data.length){ box.innerHTML='<div class="empty">예정된 평가가 없습니다</div>'; return; }
-  box.innerHTML = data.map(a=>{
+  const rows = (data||[]).filter(forThisBoard).slice(0,7);   // 교실 보드는 그 반 것만
+  if(!rows.length){ box.innerHTML='<div class="empty">예정된 평가가 없습니다</div>'; return; }
+  box.innerHTML = rows.map(a=>{
     const d = new Date(a.assess_date+'T00:00');
     const dd = `${d.getMonth()+1}/${d.getDate()}(${DOW[d.getDay()]})`;
-    const g = a.grade ? `${a.grade}학년 ` : '';
+    const g = a.grade ? `${a.grade}학년${a.class_no?' '+a.class_no+'반':''} ` : '';
     return `<div class="assessrow"><span class="d">${dd}</span>
       <span class="t"><span class="ty ty-${a.assess_type}">${esc(a.assess_type)}</span>
       <span class="sub">${g}${esc(a.subject)}</span> ${esc(a.title)}
