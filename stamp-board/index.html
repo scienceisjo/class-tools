@@ -94,6 +94,26 @@ main{flex:1;padding:14px 0 90px}
 /* ── 학생 도장판 ── */
 .char-box{text-align:center;position:relative}
 .char-box svg,.char-box img.charimg{width:min(260px,64vw);height:auto;display:block;margin:0 auto}
+
+/* 🔭 다음 단계 미리보기 — 무엇이 되는지 알아야 모으고 싶어진다 */
+.peek{margin-top:12px;border:2px dashed var(--line);border-radius:14px;
+ padding:11px 13px;background:var(--paper2)}
+.peek.done{border-style:solid;border-color:var(--ok);background:var(--paper2)}
+.peek-row{display:flex;align-items:center;gap:13px;text-align:left}
+.peek-img{position:relative;width:68px;flex:none}
+.char-box .peek-img svg,.char-box .peek-img img.charimg{
+ width:68px;height:68px;object-fit:contain;display:block;margin:0;
+ filter:grayscale(.2) contrast(.95);opacity:.9}
+.peek-img .lk{position:absolute;right:-1px;bottom:-1px;font-size:15px;
+ background:#fff;border-radius:999px;padding:1px 3px;box-shadow:var(--sh)}
+.peek-tx{flex:1;min-width:0}
+.peek-tx .k{display:block;font-size:var(--fs-xxs);color:var(--mute)}
+.peek-tx .nm{display:block;font-size:var(--fs-m);font-weight:900;margin:1px 0 2px;line-height:1.25}
+.peek-tx .nd{display:block;font-size:var(--fs-xs);color:var(--ink2);line-height:1.5}
+.peek-tx .nd b{color:var(--ac-d)}
+.peek-b{font-size:var(--fs-xxs);color:var(--mute);margin-top:9px;line-height:1.65;text-align:left}
+.peek-b b{color:var(--ink)}
+.peek-go{margin-top:10px;width:100%}
 .char-name{font-size:var(--fs-l);font-weight:900;margin-top:2px}
 .char-sub{font-size:var(--fs-xs);color:var(--ink2);font-weight:700}
 .counters{display:flex;gap:10px;justify-content:center;margin:14px 0 6px}
@@ -2227,6 +2247,33 @@ function renderBoard(){
   h +=   '<div class="bar"><i style="width:' + pct + '%"></i></div>';
   h +=   '<div class="bar-l"><span>' + esc(th.stages[st]) + '</span><span>' +
            (next ? ('다음 단계까지 ' + (next-n) + '개') : '최고 단계 달성! 🎉') + '</span></div>';
+
+  /* 🔭 다음에 뭐가 되는지 — 여기서 바로 보여 준다 */
+  var nx = st + 1;
+  if(nx < TH.length){
+    h += '<div class="peek"><div class="peek-row">';
+    h +=   '<div class="peek-img">' + DRAW[S.sp.theme](nx, b) + '<span class="lk">🔒</span></div>';
+    h +=   '<div class="peek-tx">' +
+             '<span class="k">도장을 더 모으면</span>' +
+             '<span class="nm">' + esc(th.stages[nx]) + '</span>' +
+             '<span class="nd">도장 <b>' + (TH[nx] - n) + '개</b>만 더 모으면 이 모습이 돼요</span>' +
+           '</div>';
+    h += '</div>';
+    if(nx === 3){
+      h += '<p class="peek-b">🧬 이때 <b>여섯 갈래</b> 중 하나를 고르게 돼요 — ' +
+           '해석 · 개념 · 소통 · 협력 · 탐구 · 책임 가운데 어떤 모습이 될지 도감에서 미리 볼 수 있어요.</p>';
+    } else if(nx > 3){
+      h += '<p class="peek-b">🧬 지금 갈래는 <b>' + esc(b.icon + ' ' + b.label) + '</b>예요. ' +
+           '「진화 고르기」로 언제든 바꿀 수 있어요.</p>';
+    }
+    h += '</div>';
+  } else {
+    h += '<div class="peek done"><div class="peek-row"><div class="peek-tx">' +
+           '<span class="nm">🎉 최고 단계까지 키웠어요!</span>' +
+           '<span class="nd">도감에서 다른 모습과 여섯 갈래를 모두 볼 수 있어요</span>' +
+         '</div></div></div>';
+  }
+  h += '<button class="chip sm peek-go" onclick="openDex()">📖 자라면 뭐가 되는지 전부 보기 →</button>';
   h += '</div>';
 
   h += '<div class="card"><div class="hd"><h3>✨ 최근 받은 도장</h3></div>';
@@ -2296,7 +2343,8 @@ function openDex(theme){
 
   var h = '<h3 style="font-size:var(--fs-m);font-weight:900">📖 캐릭터 도감</h3>';
   h += '<div class="sub" style="font-size:var(--fs-xxs);color:var(--ink2);margin-top:4px">' +
-       '도장을 모으면 이렇게 자라요. 지금은 <b>' + n + '개</b> · <b>' + esc(th.stages[cur]) + '</b></div>';
+       '도장을 모으면 이렇게 자라요. 🔒는 아직 안 열린 모습이에요.<br>' +
+       '지금은 <b>' + n + '개</b> · <b>' + esc(th.stages[cur]) + '</b></div>';
 
   /* 테마 탭 — 다른 모습도 미리 보고 고를 수 있게 */
   h += '<div class="dex-tabs" style="margin-top:10px">';
@@ -2323,6 +2371,9 @@ function openDex(theme){
   /* 진화 갈래 — 6개 중 하나를 내가 고른다 */
   h += '<div style="margin-top:16px;font-size:var(--fs-s);font-weight:900">🧬 진화 갈래 ' +
        '<span style="font-weight:700;color:var(--mute);font-size:.8em">도장 ' + TH[3] + '개부터 고를 수 있어요</span></div>';
+  h += '<p style="font-size:var(--fs-xxs);color:var(--mute);margin:4px 0 0;line-height:1.6">' +
+       '아래는 갈래마다 <b>끝까지 자랐을 때</b>의 모습이에요. 도장을 어떤 이유로 많이 받았는지에 따라 자동으로 정해지고, ' +
+       '「진화 고르기」로 직접 바꿀 수도 있어요.</p>';
   h += '<div class="dex">';
   for (i = 0; i < BRANCHES.length; i++) {
     var bb = BRANCHES[i], mine = (bb.id === curBranch());
