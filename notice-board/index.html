@@ -754,8 +754,9 @@ async function loadDdays(){
   const { data } = await sb.from('ddays').select('*').gte('target_date', t)
     .order('target_date',{ascending:true}).limit(6);
   const bar = $('ddayBar');
-  if(!data || !data.length){ bar.innerHTML=''; return; }
-  bar.innerHTML = data.map(x=>{
+  const rows = (data||[]).filter(forThisBoard);     // 우리 반/학년/전교 것만
+  if(!rows.length){ bar.innerHTML=''; return; }
+  bar.innerHTML = rows.map(x=>{
     const n = ddayNum(x.target_date);
     const cnt = n===0 ? 'D-DAY' : `D-${n}`;
     const dd = new Date(x.target_date+'T00:00');

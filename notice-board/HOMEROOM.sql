@@ -11,6 +11,8 @@ ALTER TABLE notice_admins ADD COLUMN IF NOT EXISTS hr_class int;
 -- 2) 주요일정에도 학년/반을 지정할 수 있게 (우리 반만의 일정)
 ALTER TABLE schedules ADD COLUMN IF NOT EXISTS grade    int;
 ALTER TABLE schedules ADD COLUMN IF NOT EXISTS class_no int;
+ALTER TABLE ddays     ADD COLUMN IF NOT EXISTS grade    int;
+ALTER TABLE ddays     ADD COLUMN IF NOT EXISTS class_no int;
 
 
 -- 2-2) 공지에 부서 표시 (선택 사항)

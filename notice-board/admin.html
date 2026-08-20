@@ -332,6 +332,9 @@
         <div class="field"><label>유형</label>
           <select id="dType" onchange="ddayIcon()"><option>시험</option><option>평가</option><option>방학</option><option>기타</option></select></div>
         <div class="field"><label>아이콘</label><input id="dIcon" value="📝" maxlength="2"></div>
+        <div class="field"><label>대상 학년 (비우면 전교)</label>
+          <select id="dGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>대상 반</label><input id="dClass" type="number" min="1" placeholder="전체"></div>
       </div>
       <button class="btn" id="dSave" onclick="saveDday()">디데이 추가</button>
     </div>
@@ -772,11 +775,14 @@ async function saveDday(){
   const title=$('dTitle').value.trim(), date=$('dDate').value;
   if(!title||!date){ toast('이름과 날짜를 입력하세요'); return; }
   $('dSave').disabled=true;
+  const dg=$('dGrade').value, dc=$('dClass').value;
   const { error } = await sb.from('ddays').insert({ title, target_date:date,
-    type:$('dType').value, icon:$('dIcon').value||'🎯', author_id:me.id });
+    type:$('dType').value, icon:$('dIcon').value||'🎯',
+    grade: dg?Number(dg):null, class_no:(dg&&dc)?Number(dc):null,
+    author_id:me.id });
   $('dSave').disabled=false;
   if(error){ toast('실패: '+error.message); return; }
-  $('dTitle').value='';
+  $('dTitle').value='';$('dClass').value='';
   toast('✅ 디데이 추가됨'); loadDdays();
 }
 async function loadDdays(){
@@ -787,8 +793,9 @@ async function loadDdays(){
   box.innerHTML = data.map(x=>{
     const n=Math.round((new Date(x.target_date+'T00:00')-t)/86400000);
     const dtxt = n<0?`D+${-n} (지남)`:(n===0?'D-DAY':`D-${n}`);
+    const tgt = x.grade?`[${x.grade}학년${x.class_no?' '+x.class_no+'반':''}] `:'';
     return `<div class="item"><span class="tag" style="background:#8b6cff">${x.icon||'🎯'} ${esc(x.type)}</span>
-      <div class="main"><div class="t">${esc(x.title)} <span class="meta">${dtxt}</span></div>
+      <div class="main"><div class="t">${tgt}${esc(x.title)} <span class="meta">${dtxt}</span></div>
       <div class="meta">${x.target_date}</div></div>
       <button class="del" onclick="del('ddays',${x.id},loadDdays)">삭제</button></div>`;
   }).join('');
