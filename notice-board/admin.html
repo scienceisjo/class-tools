@@ -224,7 +224,6 @@
   <div class="panel on" id="p-notice">
     <div class="card">
       <h2>새 공지 작성</h2>
-      <div class="guide">🚫 <b>게시 금지</b> — 전자칠판은 누구나 봅니다. <b>성적·석차, 징계·벌점, 개인 연락처/주소, 가정형편·지원대상, 건강·진료 정보, 동의 없는 학생 사진</b>은 올리지 마세요.</div>
       <div class="chips" id="catChips">
         <button class="chip on" data-c="일반" onclick="pickCat('일반')">📣 일반</button>
         <button class="chip" data-c="긴급" onclick="pickCat('긴급')">🚨 긴급</button>
@@ -532,8 +531,10 @@ const $ = id => document.getElementById(id);
 let me = null, myName = '', myAdmin = null, READONLY = false;
 
 /* ── 🏫 학교 부서 목록 ── */
-const DEPTS = ['과학정보부','학생생활부','체육안전부','창의인성부','교무업무지원팀','행정실',
-  '1학년부','2학년부','3학년부','상담복지부','학력신장부','개별화교무실','시설관리과'];
+const DEPTS = ['교장','교감',
+  '과학정보부','학생생활부','체육안전부','창의인성부','교무업무지원팀','교육연구지원팀',
+  '진로진학부','상담복지부','학력신장부','1학년부','2학년부','3학년부',
+  '개별화교무실','행정실','시설관리과','조리실','방송실'];
 function fillDeptSelects(){
   const opts = DEPTS.map(d=>`<option value="${d}">${d}</option>`).join('');
   const sg=$('sgDept'); if(sg && sg.options.length<=1) sg.innerHTML='<option value="">소속 부서 (선택)</option>'+opts;
