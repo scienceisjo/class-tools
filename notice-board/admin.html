@@ -699,18 +699,23 @@ async function saveNotice(){
     link:$('nLink').value.trim()||null,
     pinned:$('nPin').checked, end_at:$('nEnd').value||null,
     author_id:me.id, author_name:myName };
-  let error;
+  let error, rows;
   if(editingNoticeId){
     delete rec.author_id; delete rec.author_name;      // 작성자는 그대로 둔다
-    ({ error } = await sb.from('notices').update(rec).eq('id', editingNoticeId));
+    // .select() 로 실제 바뀐 행을 받아온다 (권한에 막히면 오류 없이 0건이 되므로)
+    ({ data: rows, error } = await sb.from('notices').update(rec).eq('id', editingNoticeId).select());
   } else {
-    ({ error } = await sb.from('notices').insert(rec));
+    ({ data: rows, error } = await sb.from('notices').insert(rec).select());
   }
   $('nSave').disabled=false;
   if(error){
     toast(/policy|permission|row-level/i.test(error.message)
-      ? '다른 선생님이 올린 공지는 수정할 수 없습니다'
+      ? '수정 권한이 없습니다 (본인 공지 또는 우리 반 공지만 가능)'
       : ((editingNoticeId?'수정':'등록')+' 실패: '+error.message));
+    return;
+  }
+  if(editingNoticeId && (!rows || !rows.length)){
+    toast('수정되지 않았습니다 — 본인 공지이거나 우리 반 공지여야 합니다');
     return;
   }
   const wasEdit = !!editingNoticeId;
@@ -719,6 +724,16 @@ async function saveNotice(){
   loadNotices();
 }
 let noticeCache = [];
+
+/* 내가 이 항목을 손댈 수 있나 (서버 규칙과 같은 조건) */
+function canEdit(n){
+  if(READONLY || !me) return false;
+  if(!n.author_id) return true;                    // 작성자 기록 없는 예전 자료
+  if(n.author_id === me.id) return true;           // 본인 것
+  if(myAdmin?.is_owner) return true;               // 관리담당자
+  return !!(myAdmin?.hr_grade && n.grade === myAdmin.hr_grade
+            && n.class_no && n.class_no === myAdmin.hr_class);   // 우리 반 것
+}
 async function loadNotices(){
   const { data } = await sb.from('notices').select('*').order('pinned',{ascending:false}).order('created_at',{ascending:false});
   const box=$('noticeList');
@@ -732,7 +747,7 @@ async function loadNotices(){
       <div class="main"><div class="t">${n.pinned?'<span class="pin">📌 </span>':''}${esc(n.title)}${n.grade?` <span class="meta">[${n.grade}학년${n.class_no?' '+n.class_no+'반':''}]</span>`:''}</div>
       ${n.body?`<div class="b">${esc(n.body)}</div>`:''}
       <div class="meta">${n.dept?esc(n.dept)+' · ':''}${esc(n.author_name||'')} · ${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
-      <button class="del" style="background:#eef2fa;color:#3b6ef5" onclick="startEditNotice(${n.id})">✏️ 수정</button>
+      ${canEdit(n)?`<button class="del" style="background:#eef2fa;color:#3b6ef5" onclick="startEditNotice(${n.id})">✏️ 수정</button>`:''}
       <button class="del" data-title="${esc(n.title||'')}"
               onclick="del('notices',${n.id},loadNotices,this.dataset.title)">삭제</button></div>`;
   }).join('');
