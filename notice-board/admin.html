@@ -1309,11 +1309,17 @@ async function saveCfg(){
 /* ── 공통 ── */
 async function del(table,id,reload,summary){
   if(!confirm('삭제할까요? 되돌릴 수 없습니다.')) return;
-  const { error } = await sb.from(table).delete().eq('id',id);
+  // .select() 를 붙여 '실제로 지워진 행'을 받아온다.
+  // 권한에 막히면 오류 없이 0건이 되므로, 그걸 잡아내야 한다.
+  const { data, error } = await sb.from(table).delete().eq('id',id).select();
   if(error){
     toast(/policy|permission|row-level/i.test(error.message)
-      ? '다른 선생님이 올린 항목은 삭제할 수 없습니다'
+      ? '삭제 권한이 없습니다 (본인이 올린 항목만 삭제 가능)'
       : ('삭제 실패: '+error.message));
+    return;
+  }
+  if(!data || !data.length){
+    toast('삭제되지 않았습니다 — 본인이 올린 항목만 지울 수 있어요');
     return;
   }
   // 누가 무엇을 지웠는지 기록
