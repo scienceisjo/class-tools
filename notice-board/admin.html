@@ -36,6 +36,12 @@
   .robanner{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;font-weight:700;
     padding:10px 14px;border-radius:10px;margin-bottom:14px;display:none}
   body.readonly .robanner{display:block}
+  /* 👥 공동계정: 개인정보·설정 관련 화면 숨김 */
+  body.shared [data-p="msg"], body.shared #p-msg,
+  body.shared [data-p="cfg"], body.shared #p-cfg{display:none !important}
+  .shbanner{background:#eef7ff;border:1px solid #cfe4ff;color:#1e4fa3;font-size:13.5px;
+    font-weight:700;padding:10px 14px;border-radius:10px;margin-bottom:14px;display:none;line-height:1.6}
+  body.shared .shbanner{display:block}
 
   /* 헤더 */
   header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
@@ -185,6 +191,9 @@
   </header>
 
   <div class="robanner">👀 둘러보기 모드 — 내용을 볼 수만 있습니다. 작성·수정하려면 <b>로그아웃 후 로그인</b>하세요.</div>
+  <div class="shbanner">👥 <b>공동계정으로 접속하셨습니다.</b>
+    공지·평가일정·학생 호출 등은 그대로 쓰실 수 있고, <b>학생이 보낸 쪽지와 설정</b>은 보이지 않습니다.<br>
+    쪽지를 확인하시려면 <b>개인 계정으로 가입</b>해 주세요.</div>
 
   <div class="tabs">
     <button class="tab" data-p="msg" onclick="tab('msg')">📬 받은 쪽지<span class="badge" id="msgBadge" style="display:none">0</span></button>
@@ -614,13 +623,19 @@ async function checkSession(){
 function enterDash(){
   $('login').style.display='none'; $('dash').style.display='block';
   document.body.classList.toggle('readonly', READONLY);
-  $('whoami').textContent = READONLY ? '👀 둘러보기' : (myName+' 선생님');
+  // 공동계정: 개인정보(쪽지)·설정·승인은 숨긴다
+  const shared = !!myAdmin?.is_shared;
+  document.body.classList.toggle('shared', shared);
+  if(shared && document.querySelector('.tab.on')?.dataset.p === 'msg') tab('notice');
+  $('whoami').textContent = READONLY ? '👀 둘러보기'
+    : (shared ? '👥 공동계정' : (myName+' 선생님'));
   loadNotices(); loadScheds(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadCfg(); makeUrl();
-  loadMsgs(false); refreshMsgBadge(); msgUrlHint(); buildSquadChips(); loadSquadCfg();
+  if(!shared){ loadMsgs(false); refreshMsgBadge(); }   // 공동계정은 쪽지 조회 자체를 안 함
+  msgUrlHint(); buildSquadChips(); loadSquadCfg();
   loadPalette('clean'); loadPalette('duty'); loadApprovals();
   fillDeptSelects();
   if(myAdmin?.dept) $('nDept').value = myAdmin.dept;   // 내 부서를 기본 선택
-  if(!READONLY) subscribeMsgs();
+  if(!READONLY && !shared) subscribeMsgs();
 }
 
 /* ── 탭 ── */
