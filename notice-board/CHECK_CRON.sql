@@ -15,10 +15,12 @@ WHERE jobname = 'sync-timetable-daily';
 
 
 -- (나) 예약이 실제로 실행됐는가 (최근 10회)
-SELECT start_time, status, return_message
-FROM cron.job_run_details
-WHERE jobname = 'sync-timetable-daily'
-ORDER BY start_time DESC
+--     job_run_details 에는 jobname 이 없는 버전이 있어 jobid 로 연결합니다.
+SELECT d.start_time, d.status, d.return_message
+FROM cron.job_run_details d
+JOIN cron.job j ON j.jobid = d.jobid
+WHERE j.jobname = 'sync-timetable-daily'
+ORDER BY d.start_time DESC
 LIMIT 10;
 --   -> 0행이면 한 번도 안 돌았습니다
 --   -> status 가 failed 면 실행은 됐으나 실패
