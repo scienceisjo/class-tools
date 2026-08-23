@@ -62,6 +62,8 @@ function buildRows(d: any) {
           weekday: dy,
           periods,
           source: (chgDay && chgDay[0] > 0) ? "comcigan(변경반영)" : "comcigan",
+          // DEFAULT now() 는 새로 넣을 때만 적용되므로, 갱신 시각을 직접 넣는다
+          updated_at: new Date().toISOString(),
         });
       }
     }
