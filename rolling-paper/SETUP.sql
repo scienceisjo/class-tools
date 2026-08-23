@@ -7,7 +7,7 @@
 -- 1) 메시지를 담을 표 만들기
 create table if not exists public.farewell_messages (
   id          text primary key,
-  room        text not null default 'dahyun',   -- 반 구분용(?room= 로 바뀜)
+  room        text not null default 'class',   -- 반 구분용(?room= 로 바뀜)
   author      text,                             -- 이름/별명(없어도 됨)
   content     text not null,                    -- 편지 내용
   color       text,                             -- 쪽지 색
