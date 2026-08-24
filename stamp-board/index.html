@@ -317,6 +317,7 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
   <div class="wrap"><div class="tabs">
     <button class="tab on" data-p="give" onclick="teaTab('give')">⚡ 도장 주기</button>
     <button class="tab" data-p="gb" onclick="teaTab('gb')">🔔 골든벨</button>
+    <button class="tab" data-p="cls" onclick="teaTab('cls')">🏕️ 우리 반</button>
     <button class="tab" data-p="stu" onclick="teaTab('stu')">👥 학생</button>
     <button class="tab" data-p="cp" onclick="teaTab('cp')">🎟️ 쿠폰</button>
     <button class="tab" data-p="out" onclick="teaTab('out')">📤 내보내기</button>
@@ -325,6 +326,7 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
   <main class="wrap">
     <div class="pane on" id="p-give"></div>
     <div class="pane" id="p-gb"></div>
+    <div class="pane" id="p-cls"></div>
     <div class="pane" id="p-stu"></div>
     <div class="pane" id="p-cp"></div>
     <div class="pane" id="p-out"></div>
@@ -2517,40 +2519,110 @@ async function redeem(code){
   } finally { hideLoad(); }
 }
 
-/* 우리 반 기지 */
-async function renderBase(){
-  $('p-base').innerHTML = '<div class="card"><div class="empty"><div class="spin" style="margin:0 auto"></div></div></div>';
-  var m = await sb.rpc('class_base');
-  var t = await sb.rpc('class_total');
-  S.mates = m.data || []; S.classTotal = (typeof t.data==='number') ? t.data : 0;
-  var lvl = S.classTotal>=150?4 : S.classTotal>=80?3 : S.classTotal>=30?2 : 1;
+/* 우리 반 기지
+   ─────────────────────────────────────────────────────────────────────────
+   학생 화면과 교사 화면이 «똑같이» 보여야 한다. 교사가 전자칠판에 띄웠을 때
+   학생이 자기 폰에서 보는 것과 다르면 그 화면을 같이 볼 이유가 없다.
+   그래서 HTML 을 만드는 곳은 baseHTML() 한 군데뿐이고, 학생/교사는 데이터를
+   어디서 가져오는지만 다르다.
+     · 학생 : class_base()     — auth.uid() 로 «내 반» 을 찾는다
+     · 교사 : class_base_for() — 반을 인자로 받는다 (6_교사_우리반보기.sql)
+   도장 «개수» 는 교사 화면에서도 안 보여 준다. 개수는 «👥 학생» 탭에 있다. */
+function baseHTML(total, mates, meId){
+  var lvl = total>=150?4 : total>=80?3 : total>=30?2 : 1;
   var lvName = ['','⛺ 텐트','🏚️ 오두막','🏫 연구소','🏛️ 대형 연구단지'][lvl];
   var nextAt = [0,30,80,150,999][lvl];
 
   var h = '<div class="card" style="text-align:center">';
   h += '<h3>🏕️ 우리 반 탐구기지</h3>';
-  h += '<div style="font-size:var(--fs-xl);font-weight:900;color:var(--ac-d);margin-top:6px">' + S.classTotal + '<span style="font-size:.45em;color:var(--ink2)">개</span></div>';
+  h += '<div style="font-size:var(--fs-xl);font-weight:900;color:var(--ac-d);margin-top:6px">' + total + '<span style="font-size:.45em;color:var(--ink2)">개</span></div>';
   h += '<div class="sub">우리 반이 함께 모은 도장</div>';
   h += '<div style="font-size:var(--fs-m);font-weight:900;margin-top:10px">' + lvName + '</div>';
   if(lvl<4){
-    h += '<div class="bar" style="max-width:320px;margin:8px auto 0"><i style="width:' + Math.min(100,Math.round(S.classTotal/nextAt*100)) + '%"></i></div>';
-    h += '<div class="bar-l" style="max-width:320px;margin:5px auto 0"><span>기지 레벨 ' + lvl + '</span><span>다음까지 ' + Math.max(0,nextAt-S.classTotal) + '개</span></div>';
+    h += '<div class="bar" style="max-width:320px;margin:8px auto 0"><i style="width:' + Math.min(100,Math.round(total/nextAt*100)) + '%"></i></div>';
+    h += '<div class="bar-l" style="max-width:320px;margin:5px auto 0"><span>기지 레벨 ' + lvl + '</span><span>다음까지 ' + Math.max(0,nextAt-total) + '개</span></div>';
   }
   h += '</div>';
 
   h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">🧑‍🤝‍🧑 우리 반 친구들</h3>' +
-       '<span class="chip sm">' + S.mates.length + '명</span></div>';
+       '<span class="chip sm">' + mates.length + '명</span></div>';
   h += '<div class="sub" style="margin-bottom:10px">친구들의 도장 개수는 보이지 않아요 🤫</div>';
   h += '<div class="base-grid">';
-  for(var i=0;i<S.mates.length;i++){
-    var mm = S.mates[i], me = mm.student_id===S.user.id;
+  for(var i=0;i<mates.length;i++){
+    var mm = mates[i], me = (meId != null && mm.student_id === meId);
     var bb = branchOf(mm.branch || 'inquiry');
     h += '<div class="mate' + (me?' me':'') + '">' + DRAW[mm.theme||'creature'](mm.stage, bb) +
          '<div class="mate-n">' + esc(me ? '나' : (mm.name||'친구')) + '</div>' +
          '<div class="mate-b">' + esc(mm.stage>=3 ? bb.n[mm.theme||'creature'] : themeName(mm.theme).stages[mm.stage]) + '</div></div>';
   }
   h += '</div></div>';
-  $('p-base').innerHTML = h;
+  return h;
+}
+
+/* 학생: 내 반 */
+async function renderBase(){
+  $('p-base').innerHTML = '<div class="card"><div class="empty"><div class="spin" style="margin:0 auto"></div></div></div>';
+  var m = await sb.rpc('class_base');
+  var t = await sb.rpc('class_total');
+  S.mates = m.data || []; S.classTotal = (typeof t.data==='number') ? t.data : 0;
+  $('p-base').innerHTML = baseHTML(S.classTotal, S.mates, S.user.id);
+}
+
+/* 교사: 반을 골라서 본다 (골든벨 탭과 같은 반 칩을 쓴다) */
+function renderTeaBaseChips(){
+  var el = $('clsChips'); if(!el) return;
+  if(!S.classes || !S.classes.length){
+    el.innerHTML = '<span class="sub">반 목록을 불러오는 중…</span>'; loadClasses(); return;
+  }
+  var h = '', i, c;
+  for(i=0;i<S.classes.length;i++){
+    c = S.classes[i];
+    h += '<button class="chip' + (S.selClass && S.selClass.grade===c.grade && S.selClass.cls===c.cls ? ' on' : '') +
+         '" onclick="clsPickClass(' + c.grade + ',' + c.cls + ')">' + c.grade + '-' + c.cls + '</button>';
+  }
+  el.innerHTML = h;
+}
+async function clsPickClass(g,c){ await pickClass(g,c); teaTab('cls'); }
+
+async function renderTeaBase(){
+  var head = '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">어느 반을 볼까요?</h3></div>' +
+             '<div class="chips" id="clsChips"></div>' +
+             '<div class="sub" style="margin-top:8px">학생들이 «🏕️ 우리 반» 에서 보는 화면과 똑같습니다. ' +
+             '전자칠판에 그대로 띄우세요.</div></div>';
+  $('p-cls').innerHTML = head;
+  renderTeaBaseChips();
+
+  if(!S.selClass){
+    $('p-cls').innerHTML = head + '<div class="card"><div class="empty">위에서 반을 먼저 골라 주세요</div></div>';
+    renderTeaBaseChips();
+    return;
+  }
+  $('p-cls').innerHTML = head + '<div class="card"><div class="empty"><div class="spin" style="margin:0 auto"></div></div></div>';
+  renderTeaBaseChips();
+
+  var arg = { p_grade: S.selClass.grade, p_class: S.selClass.cls };
+  var m = await sb.rpc('class_base_for', arg);
+  var t = await sb.rpc('class_total_for', arg);
+
+  if(m.error || t.error){
+    var msg = (m.error && m.error.message) || (t.error && t.error.message) || '';
+    /* 함수가 아직 없으면 SQL 을 안 돌린 것이다 — 그것부터 알려 준다 */
+    var tip = (msg.indexOf('class_base_for') >= 0 || msg.indexOf('404') >= 0 ||
+               msg.indexOf('does not exist') >= 0 || msg.indexOf('schema cache') >= 0)
+      ? 'Supabase → SQL Editor 에서 <b>6_교사_우리반보기.sql</b> 을 한 번 실행해 주세요.'
+      : esc(msg);
+    $('p-cls').innerHTML = head + '<div class="card"><div class="empty">불러오지 못했어요<br><br>' + tip + '</div></div>';
+    renderTeaBaseChips();
+    return;
+  }
+
+  var mates = m.data || [], total = (typeof t.data==='number') ? t.data : 0;
+  $('p-cls').innerHTML = head +
+    '<div class="sub" style="margin:2px 2px 8px;font-weight:700">' +
+      S.selClass.grade + '학년 ' + S.selClass.cls + '반' +
+    '</div>' +
+    baseHTML(total, mates, null);
+  renderTeaBaseChips();
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -2579,6 +2651,7 @@ function teaTab(k){
   var b=document.querySelectorAll('#s-tea .pane');
   for(i=0;i<b.length;i++) b[i].classList.toggle('on', b[i].id==='p-'+k);
   if(k==='give') renderGive();
+  if(k==='cls')  renderTeaBase();
   if(k==='stu')  renderStuList();
   if(k==='cp')   renderCoupons();
   if(k==='out')  renderExport();
