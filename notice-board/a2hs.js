@@ -103,6 +103,7 @@
   var btn = document.createElement('button');
   btn.id = 'a2hsBtn';
   btn.innerHTML = '📱 홈 화면에 추가';
+  if (CFG.bottom) btn.style.bottom = CFG.bottom + 'px';   // 아래쪽 다른 단추를 가리지 않도록
   btn.setAttribute('aria-label', '이 화면을 휴대폰 홈 화면에 추가합니다');
 
   // 설치 안내 신호가 오지 않는 브라우저를 위해, 직접 하는 방법을 적어 둡니다
