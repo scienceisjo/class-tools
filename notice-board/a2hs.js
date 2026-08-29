@@ -105,16 +105,21 @@
   btn.innerHTML = '📱 홈 화면에 추가';
   btn.setAttribute('aria-label', '이 화면을 휴대폰 홈 화면에 추가합니다');
 
+  // 설치 안내 신호가 오지 않는 브라우저를 위해, 직접 하는 방법을 적어 둡니다
+  var steps = isIOS
+    ? '<li>화면 아래의 <span class="sh">공유 ⬆️</span> 단추를 누릅니다.</li>' +
+      '<li>목록을 내려서 <span class="sh">홈 화면에 추가</span>를 고릅니다.</li>' +
+      '<li>오른쪽 위 <span class="sh">추가</span>를 누르면 끝입니다.</li>'
+    : '<li>오른쪽 위 <span class="sh">⋮</span> (또는 <span class="sh">≡</span>) 를 누릅니다.</li>' +
+      '<li><span class="sh">홈 화면에 추가</span> 를 고릅니다.</li>' +
+      '<li><span class="sh">설치</span> 또는 <span class="sh">추가</span> 를 누르면 끝입니다.</li>';
+
   var wrap = document.createElement('div');
   wrap.id = 'a2hsWrap';
   wrap.innerHTML =
     '<div id="a2hsBox">' +
     '<h3>📱 홈 화면에 추가하기</h3>' +
-    '<ol>' +
-    '<li>화면 아래(또는 위)의 <span class="sh">공유 ⬆️</span> 단추를 누릅니다.</li>' +
-    '<li>목록을 내려서 <span class="sh">홈 화면에 추가</span>를 고릅니다.</li>' +
-    '<li>오른쪽 위 <span class="sh">추가</span>를 누르면 끝입니다.</li>' +
-    '</ol>' +
+    '<ol>' + steps + '</ol>' +
     '<button type="button">알겠습니다</button></div>';
   wrap.addEventListener('click', function (e) {
     if (e.target === wrap || e.target.tagName === 'BUTTON') wrap.style.display = 'none';
@@ -148,7 +153,9 @@
     registerSW();
     document.body.appendChild(btn);
     document.body.appendChild(wrap);
-    if (isIOS) show();                   // 아이폰은 설치 안내 신호를 주지 않습니다
+    // 설치 신호를 주지 않는 브라우저(아이폰 등)도 있어, 버튼은 늘 띄워 두고
+    // 신호가 없을 때는 직접 하는 방법을 안내합니다
+    show();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
