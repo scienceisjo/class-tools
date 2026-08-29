@@ -43,6 +43,34 @@
     font-weight:700;padding:10px 14px;border-radius:10px;margin-bottom:14px;display:none;line-height:1.6}
   body.shared .shbanner{display:block}
 
+  /* 👤 공동계정 — 지금 쓰시는 선생님 */
+  #posterBar,#posterPick{display:none}
+  body.shared #posterBar{display:flex}
+  body.shared.pickon #posterPick{display:block}
+  body.readonly #posterBar,body.readonly #posterPick{display:none !important}
+  #posterBar{align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;
+    background:#fff;border:2px solid var(--accent);border-radius:12px;padding:11px 15px}
+  #posterBar.unset{border-color:#f59e0b;background:#fffbeb}
+  #posterBar .pb-l{font-size:12px;color:var(--sub);font-weight:700}
+  #posterBar .pb-n{font-size:17px;font-weight:900;color:var(--txt)}
+  #posterBar.unset .pb-n{color:#b45309}
+  #posterBar .pb-s{font-size:12.5px;color:var(--sub);font-weight:700}
+  #posterBar .pb-cls{margin-left:auto;font-size:12.5px;color:var(--sub);font-weight:700}
+  #posterPick{background:#f8fafc;border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:16px}
+  #posterPick h3{font-size:13px;color:var(--sub);font-weight:800;margin-bottom:10px}
+  #posterPick .names{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+  #posterPick .names .chip{position:relative;padding-right:14px}
+  #posterPick .names .chip.on{background:var(--accent);border-color:transparent}
+  #posterPick .names .x{margin-left:7px;color:#cbd5e1;font-weight:900}
+  #posterPick .names .chip.on .x{color:#dbeafe}
+  #posterPick .sep{border-top:1px dashed var(--line);margin:14px 0}
+
+  /* ⏱ 종료일·템플릿 빠른 선택 */
+  .quick{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px}
+  .quick .chip{padding:6px 12px;font-size:12.5px}
+  .quick .chip.on{background:var(--accent);border-color:transparent}
+
   /* 헤더 */
   header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
   header h1{font-size:20px;display:flex;align-items:center;gap:8px}
@@ -195,6 +223,52 @@
     공지·평가일정·학생 호출 등은 그대로 쓰실 수 있고, <b>학생이 보낸 쪽지와 설정</b>은 보이지 않습니다.<br>
     쪽지를 확인하시려면 <b>개인 계정으로 가입</b>해 주세요.</div>
 
+  <!-- 👤 공동계정 — 지금 쓰시는 선생님 -->
+  <div id="posterBar">
+    <div>
+      <div class="pb-l">지금 쓰시는 선생님</div>
+      <div class="pb-n" id="pbName">이름을 골라주세요</div>
+    </div>
+    <span class="pb-s" id="pbSub"></span>
+    <span class="pb-cls" id="pbCls"></span>
+    <button class="ghost" onclick="togglePoster()" id="pbToggle">✏️ 바꾸기</button>
+  </div>
+
+  <div id="posterPick">
+    <h3>👤 어느 선생님이 올리시나요? <span style="font-weight:600">— 고르신 이름으로 화면에 표시됩니다</span></h3>
+    <div class="names" id="pbNames"></div>
+    <div class="row">
+      <div class="field"><label>이름 (처음이시면 직접 적어주세요)</label>
+        <input id="pbNewName" placeholder="예: 조승재" autocomplete="off"></div>
+      <div class="field"><label>담당 과목 (선택)</label>
+        <input id="pbNewSubj" placeholder="예: 과학" autocomplete="off"></div>
+      <div class="field"><label>소속 부서 (선택)</label>
+        <select id="pbNewDept"><option value="">표시 안 함</option></select></div>
+    </div>
+    <button class="btn" onclick="savePoster()">이 이름으로 시작하기</button>
+
+    <div class="sep"></div>
+    <h3>🏫 이 기기가 놓인 교실 <span style="font-weight:600">— 정해두면 대상 학년·반이 미리 채워집니다</span></h3>
+    <div class="hint">교실 전자칠판이라면 그 반으로 맞춰두세요. 다른 반에 잘못 올리는 일을 막아줍니다.
+      교무실 컴퓨터처럼 여러 반에 올리는 자리라면 <b>정하지 않음</b>으로 두세요.</div>
+    <div class="row">
+      <div class="field"><label>학년</label>
+        <select id="pbDevGrade"><option value="">정하지 않음</option><option>1</option><option>2</option><option>3</option></select></div>
+      <div class="field"><label>반</label>
+        <input id="pbDevClass" type="number" min="1" placeholder="예: 3"></div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <button class="ghost" style="width:100%;padding:12px" onclick="saveDeviceClass()">이 교실로 저장</button></div>
+    </div>
+    <div id="pbUrlWrap" style="display:none">
+      <label>🖥️ 이 교실 전자칠판에 띄울 주소</label>
+      <div class="row">
+        <input id="pbUrl" readonly style="flex:3;min-width:200px">
+        <button class="ghost" style="flex:1;padding:12px" onclick="copyPbUrl()">📋 주소 복사</button>
+        <button class="ghost" style="flex:1;padding:12px" onclick="window.open($('pbUrl').value,'_blank')">🖥️ 열어보기</button>
+      </div>
+    </div>
+  </div>
+
   <div class="tabs">
     <button class="tab" data-p="msg" onclick="tab('msg')">📬 받은 쪽지<span class="badge" id="msgBadge" style="display:none">0</span></button>
     <button class="tab on" data-p="notice" onclick="tab('notice')">📢 공지사항</button>
@@ -239,6 +313,9 @@
         <button class="chip" data-c="교과" onclick="pickCat('교과')">📚 교과별</button>
         <button class="chip" data-c="학년" onclick="pickCat('학년')">🎓 학년</button>
       </div>
+      <div class="quick" id="nTpl">
+        <span style="font-size:12px;color:var(--sub);font-weight:700;align-self:center">자주 쓰는 공지</span>
+      </div>
       <div class="field"><label>제목</label><input id="nTitle" placeholder="공지 제목"></div>
       <div class="field"><label>내용 (선택)</label><textarea id="nBody" placeholder="자세한 내용"></textarea></div>
       <div class="field"><label>🏫 부서 (선택) — 넣으면 화면에 함께 표시됩니다</label>
@@ -251,6 +328,14 @@
         <div class="field"><label>대상 반 (비우면 학년 전체)</label>
           <input id="nClass" type="number" min="1" placeholder="예: 3"></div>
         <div class="field"><label>노출 종료일 (비우면 무기한)</label><input id="nEnd" type="date"></div>
+      </div>
+      <div class="quick" id="nEndQuick">
+        <span style="font-size:12px;color:var(--sub);font-weight:700;align-self:center">언제까지 걸어둘까요</span>
+        <button class="chip" onclick="setEnd(0)">오늘까지</button>
+        <button class="chip" onclick="setEnd(2)">3일</button>
+        <button class="chip" onclick="setEnd(6)">1주일</button>
+        <button class="chip" onclick="setEnd(13)">2주일</button>
+        <button class="chip" onclick="setEnd(null)">무기한</button>
       </div>
       <div class="field"><label><input type="checkbox" id="nPin" style="width:auto;margin-right:6px">📌 상단 고정</label></div>
       <button class="btn" id="nSave" onclick="saveNotice()">공지 등록</button>
@@ -548,6 +633,197 @@ function fillDeptSelects(){
   const opts = DEPTS.map(d=>`<option value="${d}">${d}</option>`).join('');
   const sg=$('sgDept'); if(sg && sg.options.length<=1) sg.innerHTML='<option value="">소속 부서 (선택)</option>'+opts;
   const nd=$('nDept'); if(nd && nd.options.length<=1) nd.innerHTML='<option value="">표시 안 함</option>'+opts;
+  const pd=$('pbNewDept'); if(pd && pd.options.length<=1) pd.innerHTML='<option value="">표시 안 함</option>'+opts;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   👤 공동계정 — "지금 쓰시는 선생님"
+   ───────────────────────────────────────────────────────────────
+   공동계정은 여러 선생님이 같이 쓰는 계정이라, 그냥 올리면 전자칠판에
+   모두 "공동계정 선생님"으로 나옵니다. 그래서 올리시는 분을 한 번
+   고르시게 하고, 그 이름으로 올라가게 합니다.
+   고르신 이름은 이 기기에 기억되므로 매번 고르실 필요는 없습니다.
+   ═══════════════════════════════════════════════════════════════ */
+let POSTER = { name:'', subject:'', dept:'' };   // 지금 쓰시는 선생님
+let ROSTER = [];                                  // 지금까지 쓰인 이름들
+const LS_POSTER = 'hnr_notice_poster';
+const LS_DEVCLS = 'hnr_notice_device_class';
+
+function isShared(){ return !!myAdmin?.is_shared; }
+
+/* 글에 적힐 이름 — 공동계정이면 고르신 이름, 개인계정이면 본인 이름 */
+function posterName(){ return isShared() ? (POSTER.name || '') : myName; }
+
+/* 이름을 아직 안 고르셨으면 등록을 막고 고르는 곳을 열어 드립니다 */
+function needPoster(){
+  if(!isShared() || POSTER.name) return false;
+  document.body.classList.add('pickon');
+  $('posterPick').scrollIntoView({behavior:'smooth', block:'center'});
+  $('pbNewName').focus();
+  toast('먼저 올리시는 선생님 성함을 골라주세요');
+  return true;
+}
+
+function loadPosterLocal(){
+  try{ const v=JSON.parse(localStorage.getItem(LS_POSTER)||'{}');
+       POSTER = { name:v.name||'', subject:v.subject||'', dept:v.dept||'' }; }
+  catch(e){ POSTER = { name:'', subject:'', dept:'' }; }
+}
+function renderPosterBar(){
+  const bar=$('posterBar'); if(!bar) return;
+  bar.classList.toggle('unset', !POSTER.name);
+  $('pbName').textContent = POSTER.name ? POSTER.name+' 선생님' : '이름을 골라주세요';
+  $('pbSub').textContent  = [POSTER.subject, POSTER.dept].filter(Boolean).join(' · ');
+  const d=deviceClass();
+  $('pbCls').textContent  = d.grade ? `🏫 이 기기 : ${d.grade}학년${d.class_no?' '+d.class_no+'반':''}` : '';
+  $('pbToggle').textContent = POSTER.name ? '✏️ 바꾸기' : '👤 이름 고르기';
+}
+function togglePoster(){
+  document.body.classList.toggle('pickon');
+  if(document.body.classList.contains('pickon')) renderRoster();
+}
+
+async function loadRoster(){
+  if(!isShared() && !myAdmin?.is_owner) return;
+  const { data } = await sb.from('shared_posters').select('*')
+    .order('uses',{ascending:false}).order('name');
+  ROSTER = data || [];
+  renderRoster();
+}
+function renderRoster(){
+  const box=$('pbNames'); if(!box) return;
+  if(!ROSTER.length){
+    box.innerHTML='<span class="hint" style="margin:0">아직 등록된 이름이 없습니다. 아래에 성함을 적어주세요.</span>';
+    return;
+  }
+  box.innerHTML = ROSTER.map(r=>{
+    const sub=[r.subject,r.dept].filter(Boolean).join(' · ');
+    return `<button class="chip${r.name===POSTER.name?' on':''}" data-n="${esc(r.name)}"
+      onclick="pickPoster(this.dataset.n)" title="${esc(sub)}">${esc(r.name)}${
+      sub?` <span style="font-weight:600;opacity:.75">${esc(sub)}</span>`:''}<span class="x"
+      onclick="event.stopPropagation();removePoster(this.closest('.chip').dataset.n)">✕</span></button>`;
+  }).join('');
+}
+function pickPoster(name){
+  const r = ROSTER.find(x=>x.name===name); if(!r) return;
+  POSTER = { name:r.name, subject:r.subject||'', dept:r.dept||'' };
+  localStorage.setItem(LS_POSTER, JSON.stringify(POSTER));
+  $('pbNewName').value=''; $('pbNewSubj').value=''; $('pbNewDept').value='';
+  applyPoster();
+  document.body.classList.remove('pickon');
+  toast(`👤 ${POSTER.name} 선생님으로 시작합니다`);
+}
+async function savePoster(){
+  const name=$('pbNewName').value.trim();
+  if(!name){ toast('성함을 적어주세요'); $('pbNewName').focus(); return; }
+  POSTER = { name, subject:$('pbNewSubj').value.trim(), dept:$('pbNewDept').value };
+  localStorage.setItem(LS_POSTER, JSON.stringify(POSTER));
+  await sb.rpc('touch_poster', { p_name:POSTER.name, p_subject:POSTER.subject||null, p_dept:POSTER.dept||null })
+          .then(()=>{},()=>{});
+  await loadRoster();
+  applyPoster();
+  document.body.classList.remove('pickon');
+  toast(`👤 ${POSTER.name} 선생님으로 시작합니다`);
+}
+async function removePoster(name){
+  if(!confirm(`명단에서 "${name}" 을(를) 지울까요?\n(이미 올라간 공지는 그대로 남습니다)`)) return;
+  const { error } = await sb.from('shared_posters').delete().eq('name', name);
+  if(error){ toast('지우지 못했습니다: '+error.message); return; }
+  if(POSTER.name===name){ POSTER={name:'',subject:'',dept:''}; localStorage.removeItem(LS_POSTER); }
+  await loadRoster(); applyPoster();
+}
+/* 고르신 이름에 맞춰 과목·부서 칸을 미리 채웁니다 */
+function applyPoster(){
+  renderPosterBar();
+  if(!isShared()) return;
+  if(POSTER.dept && !$('nDept').value) $('nDept').value = POSTER.dept;
+  if(POSTER.subject && curCat==='교과' && !$('nSubj').value) $('nSubj').value = POSTER.subject;
+}
+
+/* ── 🏫 이 기기가 놓인 교실 ──
+   교실 전자칠판은 늘 같은 반이라, 한 번 정해두면 대상 학년·반이
+   미리 채워집니다. 다른 반에 잘못 올리는 사고를 막아줍니다. ── */
+function deviceClass(){
+  try{ const v=JSON.parse(localStorage.getItem(LS_DEVCLS)||'{}');
+       if(v.grade) return { grade:String(v.grade), class_no:v.class_no?String(v.class_no):'' }; }
+  catch(e){}
+  // 담임 선생님은 따로 정하지 않으셔도 우리 반이 기본이 됩니다
+  if(myAdmin?.hr_grade)
+    return { grade:String(myAdmin.hr_grade), class_no:myAdmin.hr_class?String(myAdmin.hr_class):'' };
+  return { grade:'', class_no:'' };
+}
+function saveDeviceClass(){
+  const g=$('pbDevGrade').value, c=$('pbDevClass').value;
+  if(!g){ localStorage.removeItem(LS_DEVCLS); toast('교실 지정을 해제했습니다'); }
+  else { localStorage.setItem(LS_DEVCLS, JSON.stringify({grade:g, class_no:c||''}));
+         toast(`🏫 ${g}학년${c?' '+c+'반':''}으로 맞췄습니다`); }
+  applyDeviceClass(true); renderPosterBar();
+}
+/* 학년·반 칸이 있는 모든 탭에 기본값을 채웁니다 (이미 고르신 값은 건드리지 않습니다) */
+function applyDeviceClass(force){
+  const d=deviceClass();
+  renderDeviceUrl();
+  if(!d.grade) return;
+  [['nGrade','nClass'],['sGrade','sClass'],['dGrade','dClass'],['aGrade','aClass'],
+   ['kGrade','kClass'],['lcGrade','lcClass'],['clGrade','clClass'],['roGrade','roClass'],
+   ['urlGrade','urlClass']].forEach(([gi,ci])=>{
+    const ge=$(gi), ce=$(ci);
+    if(ge && (force || !ge.value)) ge.value=d.grade;
+    if(ce && d.class_no && (force || !ce.value)) ce.value=d.class_no;
+  });
+  if(typeof makeUrl==='function') makeUrl();
+}
+/* 이 교실 전자칠판 주소 — 공동계정은 설정 탭이 없어 여기서 만들어 드립니다 */
+function renderDeviceUrl(){
+  const d=deviceClass(), wrap=$('pbUrlWrap'); if(!wrap) return;
+  if(!d.grade || !d.class_no){ wrap.style.display='none'; }
+  else {
+    wrap.style.display='block';
+    $('pbUrl').value = `${siblingPage('display')}?class=${d.grade}-${d.class_no}`;
+  }
+  const dl=$('dispLink');   // 위쪽 미리보기 링크도 이 교실로 맞춰 둡니다
+  if(dl) dl.href = (d.grade && d.class_no)
+    ? `${siblingPage('display')}?class=${d.grade}-${d.class_no}` : siblingPage('display');
+}
+function copyPbUrl(){
+  const el=$('pbUrl'); el.select(); el.setSelectionRange(0,999);
+  navigator.clipboard.writeText(el.value).then(
+    ()=>toast('📋 주소를 복사했습니다'),
+    ()=>{ document.execCommand('copy'); toast('📋 주소를 복사했습니다'); });
+}
+
+/* ── ⏱ 노출 종료일 빠른 선택 ── */
+function setEnd(plusDays){
+  if(plusDays===null){ $('nEnd').value=''; toast('무기한으로 걸립니다'); return; }
+  const d=new Date(); d.setDate(d.getDate()+plusDays);
+  $('nEnd').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* ── ⚡ 자주 쓰는 공지 ── */
+const TEMPLATES = [
+  { k:'📦 준비물',   cat:'교과', t:'다음 시간 준비물',   b:'준비물 : \n못 가져오면 미리 말해주세요.' },
+  { k:'📍 이동수업', cat:'일반', t:'다음 시간은 이동수업입니다', b:'장소 : \n수업 시작 전까지 이동해 주세요.' },
+  { k:'📝 수행평가', cat:'교과', t:'수행평가 안내',       b:'일시 : \n범위 : \n준비물 : ' },
+  { k:'🎒 가정통신문', cat:'일반', t:'가정통신문 회신 안내', b:'제출 기한 : \n담임 선생님께 내주세요.' },
+  { k:'🏃 체육복',   cat:'일반', t:'체육복 착용 안내',     b:'해당 요일 : \n갈아입을 시간을 미리 확인해 주세요.' },
+  { k:'🚌 행사',     cat:'학년', t:'행사 안내',           b:'일시 : \n장소 : \n준비물 : ' },
+];
+function buildTemplates(){
+  const box=$('nTpl'); if(!box || box.dataset.built) return;
+  box.dataset.built='1';
+  TEMPLATES.forEach((tp,i)=>{
+    const b=document.createElement('button');
+    b.className='chip'; b.textContent=tp.k; b.onclick=()=>useTemplate(i);
+    box.appendChild(b);
+  });
+}
+function useTemplate(i){
+  const tp=TEMPLATES[i]; if(!tp) return;
+  pickCat(tp.cat);
+  if(!$('nTitle').value.trim()) $('nTitle').value = tp.t;
+  if(!$('nBody').value.trim())  $('nBody').value  = tp.b;
+  if(!$('nEnd').value) setEnd(6);          // 기본 1주일 — 오래된 공지가 쌓이지 않게
+  $('nTitle').focus();
 }
 
 /* ── 인증 (공지 전용 계정 — 질문나무와 별개) ── */
@@ -633,8 +909,16 @@ function enterDash(){
   if(!shared){ loadMsgs(false); refreshMsgBadge(); }   // 공동계정은 쪽지 조회 자체를 안 함
   msgUrlHint(); buildSquadChips(); loadSquadCfg();
   loadPalette('clean'); loadPalette('duty'); loadApprovals();
-  fillDeptSelects();
+  fillDeptSelects(); buildTemplates();
   if(myAdmin?.dept) $('nDept').value = myAdmin.dept;   // 내 부서를 기본 선택
+  // 이 기기에 정해둔 교실 → 학년·반 칸에 미리 채웁니다
+  const dc = deviceClass();
+  $('pbDevGrade').value = dc.grade; $('pbDevClass').value = dc.class_no;
+  applyDeviceClass(true);
+  if(shared){                       // 공동계정: 올리시는 선생님을 고르게 합니다
+    loadPosterLocal(); renderPosterBar(); loadRoster(); applyPoster();
+    if(!POSTER.name) document.body.classList.add('pickon');
+  }
   if(!READONLY && !shared) subscribeMsgs();
 }
 
@@ -650,8 +934,10 @@ let curCat='일반';
 function pickCat(c){ curCat=c;
   document.querySelectorAll('#catChips .chip').forEach(ch=>ch.classList.toggle('on',ch.dataset.c===c));
   $('nSubjWrap').style.display = c==='교과' ? 'block' : 'none';
-  // 교과 선택 시 담당 과목 자동 입력 (가입 때 입력한 과목)
-  if(c==='교과' && !$('nSubj').value && myAdmin?.subject) $('nSubj').value = myAdmin.subject;
+  // 교과 선택 시 담당 과목 자동 입력
+  // (공동계정이면 지금 쓰시는 선생님의 과목, 개인계정이면 가입 때 적으신 과목)
+  const subj = isShared() ? POSTER.subject : myAdmin?.subject;
+  if(c==='교과' && !$('nSubj').value && subj) $('nSubj').value = subj;
 }
 /* ── 🧹 오래된 공지 정리 알림 ──
    종료일 없이 2주 넘게 걸려 있는 공지를 모아서 알려준다 */
@@ -678,6 +964,9 @@ let editingNoticeId = null;
 function startEditNotice(id){
   const n = (noticeCache||[]).find(x=>x.id===id);
   if(!n){ toast('공지를 찾지 못했습니다'); return; }
+  // 공동계정에서 다른 선생님이 올리신 글을 고칠 때는 한 번 여쭤봅니다
+  if(isShared() && n.author_name && n.author_name !== POSTER.name
+     && !confirm(`이 공지는 ${n.author_name} 선생님이 올리신 것입니다.\n고쳐도 괜찮을까요?`)) return;
   editingNoticeId = id;
   pickCat(n.category);
   $('nTitle').value = n.title||'';
@@ -696,15 +985,17 @@ function startEditNotice(id){
 function cancelEditNotice(){
   editingNoticeId = null;
   ['nTitle','nBody','nSubj','nEnd','nLink','nClass'].forEach(id=>$(id).value='');
-  $('nDept').value = myAdmin?.dept || '';        // 내 소속 부서로 되돌림
+  $('nDept').value = (isShared() ? POSTER.dept : myAdmin?.dept) || '';   // 소속 부서로 되돌림
   $('nPin').checked=false;
   $('nSave').textContent='공지 등록';
   $('nCancel').style.display='none';
+  applyDeviceClass(true);            // 이 기기의 교실로 다시 맞춰 둡니다
 }
 
 async function saveNotice(){
   const title=$('nTitle').value.trim();
   if(!title){ toast('제목을 입력하세요'); return; }
+  if(needPoster()) return;                 // 공동계정: 올리시는 분부터 골라주세요
   $('nSave').disabled=true;
   const rec={ category:curCat, title, body:$('nBody').value.trim()||null,
     grade:$('nGrade').value?Number($('nGrade').value):null,
@@ -713,7 +1004,7 @@ async function saveNotice(){
     subject:curCat==='교과'?($('nSubj').value.trim()||null):null,
     link:$('nLink').value.trim()||null,
     pinned:$('nPin').checked, end_at:$('nEnd').value||null,
-    author_id:me.id, author_name:myName };
+    author_id:me.id, author_name:posterName() };
   let error, rows;
   if(editingNoticeId){
     delete rec.author_id; delete rec.author_name;      // 작성자는 그대로 둔다
@@ -735,7 +1026,10 @@ async function saveNotice(){
   }
   const wasEdit = !!editingNoticeId;
   cancelEditNotice();
-  toast(wasEdit ? '✏️ 수정됐습니다' : '✅ 공지 등록됨');
+  if(isShared() && POSTER.name && !wasEdit)   // 명단에 이름을 최신으로 남겨둡니다
+    sb.rpc('touch_poster', { p_name:POSTER.name, p_subject:POSTER.subject||null,
+                             p_dept:POSTER.dept||null }).then(()=>{},()=>{});
+  toast(wasEdit ? '✏️ 수정됐습니다' : `✅ ${posterName()} 선생님 이름으로 등록됐습니다`);
   loadNotices();
 }
 let noticeCache = [];
@@ -761,7 +1055,12 @@ async function loadNotices(){
     return `<div class="item"><span class="tag tag-${n.category}">${esc(cat)}</span>
       <div class="main"><div class="t">${n.pinned?'<span class="pin">📌 </span>':''}${esc(n.title)}${n.grade?` <span class="meta">[${n.grade}학년${n.class_no?' '+n.class_no+'반':''}]</span>`:''}</div>
       ${n.body?`<div class="b">${esc(n.body)}</div>`:''}
-      <div class="meta">${n.dept?esc(n.dept)+' · ':''}${esc(n.author_name||'')} · ${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
+      <div class="meta">${n.dept?esc(n.dept)+' · ':''}${
+        // 공동계정에서는 누가 올린 글인지 눈에 띄게 — 남의 글을 실수로 지우지 않게
+        n.author_name ? (isShared() && n.author_name!==POSTER.name
+          ? `<b style="color:#b45309">${esc(n.author_name)} 선생님</b>`
+          : `<b>${esc(n.author_name)}</b>`) + ' · ' : ''
+      }${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
       ${canEdit(n)?`<button class="del" style="background:#eef2fa;color:#3b6ef5" onclick="startEditNotice(${n.id})">✏️ 수정</button>`:''}
       <button class="del" data-title="${esc(n.title||'')}"
               onclick="del('notices',${n.id},loadNotices,this.dataset.title)">삭제</button></div>`;
@@ -867,10 +1166,11 @@ async function saveCall(){
   const g=$('kGrade').value, c=$('kClass').value;
   const name=$('kName').value.trim();
   if(!name){ toast('학생 이름을 입력하세요'); return; }
+  if(needPoster()) return;                 // 화면에 "○○ 선생님이 부르십니다"로 나갑니다
   $('kSave').disabled=true;
   const { error } = await sb.from('calls').insert({ student_name:name,
     grade:g?Number(g):null, class_no:c?Number(c):null,
-    teacher_name:myName, location:$('kLoc').value.trim()||'교무실',
+    teacher_name:posterName(), location:$('kLoc').value.trim()||'교무실',
     reason:$('kReason').value.trim()||null, author_id:me.id });
   $('kSave').disabled=false;
   if(error){ toast('호출 실패: '+error.message); return; }
@@ -1338,7 +1638,14 @@ async function saveCfg(){
 
 /* ── 공통 ── */
 async function del(table,id,reload,summary){
-  if(!confirm('삭제할까요? 되돌릴 수 없습니다.')) return;
+  // 공동계정은 여러 선생님이 함께 쓰므로, 다른 분이 올리신 것이면 한 번 더 여쭤봅니다
+  let ask = '삭제할까요? 되돌릴 수 없습니다.';
+  if(isShared() && table==='notices'){
+    const n=(noticeCache||[]).find(x=>x.id===id);
+    if(n && n.author_name && n.author_name !== POSTER.name)
+      ask = `이 공지는 ${n.author_name} 선생님이 올리신 것입니다.\n\n"${n.title}"\n\n정말 지울까요? 되돌릴 수 없습니다.`;
+  }
+  if(!confirm(ask)) return;
   // .select() 를 붙여 '실제로 지워진 행'을 받아온다.
   // 권한에 막히면 오류 없이 0건이 되므로, 그걸 잡아내야 한다.
   const { data, error } = await sb.from(table).delete().eq('id',id).select();
@@ -1354,7 +1661,8 @@ async function del(table,id,reload,summary){
   }
   // 누가 무엇을 지웠는지 기록
   sb.from('audit_log').insert({ table_name:table, action:'delete', row_id:id,
-    summary:summary||null, actor_id:me?.id, actor_name:myName }).then(()=>{},()=>{});
+    summary:summary||null, actor_id:me?.id,
+    actor_name: posterName() || myName }).then(()=>{},()=>{});
   toast('🗑️ 삭제됨'); reload();
 }
 function esc(s){ return (s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }

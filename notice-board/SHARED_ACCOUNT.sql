@@ -54,14 +54,14 @@ CREATE POLICY "cfg_auth_write" ON display_config FOR ALL
 -- 5) 공동계정을 실제로 만들기
 -- -------------------------------------------------------------------
 --   ① 먼저 관리자 화면에서 아래 정보로 [가입] 을 한 번 해주세요.
---        이메일   : haenuri.board@outlook.kr   (원하는 주소로 바꾸셔도 됩니다)
+--        이메일   : haenuriboard@haenuri.sen.ms.kr   (원하는 주소로 바꾸셔도 됩니다)
 --        이름     : 공동계정
 --        비밀번호 : 선생님들께 알려드릴 쉬운 비밀번호
 --   ② 그다음 이 아래 블록을 실행하면 승인 + 공동계정 지정이 끝납니다.
 -- ═══════════════════════════════════════════════════════════════════
 DO $mk$
 DECLARE
-  v_email text := 'haenuri.board@outlook.kr';   -- ← 위에서 가입한 이메일
+  v_email text := 'haenuriboard@haenuri.sen.ms.kr';   -- ← 위에서 가입한 이메일
   v_id    uuid;
 BEGIN
   SELECT id INTO v_id FROM auth.users WHERE email = v_email;
