@@ -630,8 +630,9 @@ async function loadNotices(){
   } else $('urgentBar').classList.remove('show');
 
   // 카드 슬라이드 = 긴급 외 공지 (긴급도 카드에 한 번 더 노출)
-  const cards = list.filter(n => n.category!=='긴급').filter(forThisBoard);
-  noticeCards = cards.length ? cards : list;
+  // 우리 반 공지가 한 건도 없으면 "공지 없음"을 보여준다.
+  // (예전에는 비면 전체 목록으로 되돌렸는데, 그래서 다른 반 공지가 새어 나왔습니다)
+  noticeCards = list.filter(n => n.category!=='긴급').filter(forThisBoard);
   rebuildStage();
 }
 
@@ -1313,6 +1314,19 @@ async function boot(){
 }
 boot();
 addEventListener('resize', fitNoticeItems);   // 창 크기 바뀌면 공지 칸 다시 맞춤
+
+/* ── 🔄 하루 한 번 새로고침 ────────────────────────────────────────
+   전자칠판은 몇 주씩 켜둔 채로 두게 됩니다. 그동안 자료는 계속 받아오지만
+   화면을 움직이는 프로그램 자체는 처음 켰을 때 것 그대로라,
+   기능이 개선돼도 반영되지 않습니다.
+   그래서 아무도 보지 않는 새벽에 한 번 스스로 새로고침합니다.        */
+const PAGE_OPENED_AT = Date.now();
+setInterval(()=>{
+  const d = new Date();
+  const openedHours = (Date.now() - PAGE_OPENED_AT) / 3600000;
+  // 새벽 4시대 + 6시간 이상 켜져 있었을 때만
+  if(d.getHours() === 4 && openedHours > 6) location.reload();
+}, 300000);   // 5분마다 확인
 setInterval(updatePeriod, 20000); // 현재 교시 표시 갱신
 if(!DEMO){
   setInterval(loadCalls, 30000); // 호출은 30초마다 (실시간 보조)
@@ -1327,5 +1341,18 @@ if(!DEMO){
   setInterval(()=>{ const d=new Date(); if(d.getHours()===0 && d.getMinutes()<3){ loadMeal(); loadSchedules(); loadSchoolSched(); loadTTC(); loadLocations(); loadTimetableNEIS(); loadDdays(); loadAssessments(); } }, 120000);
 }
 </script>
+
+<!-- 📱 홈 화면에 추가 — 폰으로 열었을 때만 나타납니다 -->
+<script>
+window.A2HS = {
+  name: function(){
+    return CLASS_MODE ? `해누리중 ${CM_GRADE}-${CM_CLASS} 공지` : '해누리중 공지';
+  },
+  short: CLASS_MODE ? `${CM_GRADE}-${CM_CLASS} 공지` : '해누리중 공지',
+  theme: '#2563eb',
+  onlyMobile: true          // 전자칠판에는 버튼을 띄우지 않습니다
+};
+</script>
+<script src="a2hs.js"></script>
 </body>
 </html>
