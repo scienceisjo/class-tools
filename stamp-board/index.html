@@ -188,6 +188,13 @@ main{flex:1;padding:14px 0 90px}
 .rw.locked{opacity:.55}
 .rw.honor{border-color:var(--warn);background:#FFFBF0}
 .coupon{border:2.5px dashed var(--ac);border-radius:14px;padding:12px;background:#FFF4EA;margin-bottom:8px}
+/* 누가 요청했는지 — 쿠폰 묶음의 머리 */
+.cp-who{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 2px 7px;padding-bottom:6px;border-bottom:2px solid var(--ac)}
+.cp-who:first-of-type{margin-top:2px}
+.cp-av{font-size:19px}
+.cp-nm{font-size:var(--fs-s);font-weight:900;color:var(--ac)}
+.cp-cls{font-size:11px;font-weight:800;color:var(--mute)}
+.cp-cnt{margin-left:auto;font-size:11px;font-weight:900;color:var(--ac);background:#FFF4EA;border:1.5px solid var(--ac);border-radius:999px;padding:3px 10px}
 .coupon.done{border-style:solid;border-color:var(--line);background:#F6F1E4;opacity:.7}
 
 /* ── 기타 ── */
@@ -3673,19 +3680,61 @@ async function renderCoupons(){
   $('p-cp').innerHTML = '<div class="card"><div class="empty"><div class="spin" style="margin:0 auto"></div></div></div>';
   var r = await sb.from('stamp_rewards').select('*').eq('status','issued').order('issued_at',{ascending:false}).limit(100);
   S.coupons = r.data || [];
-  var h = '<div class="card"><div class="hd"><h3>🎟️ 지급할 쿠폰</h3><span class="chip sm">' + S.coupons.length + '건</span></div>';
+
+  /* 누가 요청했는지 알아야 지급을 할 수 있다.
+     stamp_rewards 를 그냥 조인하면 RLS 에 걸릴 수 있어 이름만 따로 가져와 붙인다. */
+  var who = {}, ids = [], i, k;
+  for(i=0;i<S.coupons.length;i++){
+    k = S.coupons[i].student_id;
+    if(k && ids.indexOf(k) < 0) ids.push(k);
+  }
+  if(ids.length){
+    var pr = await sb.from('profiles').select('id,name,grade,class_no,number').in('id', ids);
+    var rows = pr.data || [];
+    for(i=0;i<rows.length;i++) who[rows[i].id] = rows[i];
+  }
+
+  /* 같은 학생의 쿠폰은 한 묶음으로 — 한 명 불러 한꺼번에 주려고 */
+  var grp = {};
+  for(i=0;i<S.coupons.length;i++){
+    k = S.coupons[i].student_id;
+    (grp[k] = grp[k] || []).push(S.coupons[i]);
+  }
+  var keys = Object.keys(grp);
+  keys.sort(function(a,b){
+    var x = who[a] || {}, y = who[b] || {};
+    return (x.grade||99) - (y.grade||99)
+        || (x.class_no||99) - (y.class_no||99)
+        || (x.number||999) - (y.number||999)
+        || String(x.name||'').localeCompare(String(y.name||''));
+  });
+
+  function md(t){ var d = String(t||''); return d.length >= 10 ? d.slice(5,7)+'/'+d.slice(8,10) : ''; }
+
+  var h = '<div class="card"><div class="hd"><h3>🎟️ 지급할 쿠폰</h3><span class="chip sm">'
+        + S.coupons.length + '건 · ' + keys.length + '명</span></div>';
   if(!S.coupons.length){
     h += '<div class="empty"><div class="e">🎫</div><p>지급할 쿠폰이 없어요</p></div>';
   } else {
     h += '<div class="sub" style="margin-bottom:10px">학생에게 실물을 준 뒤 「지급 완료」를 눌러주세요</div>';
-    for(var i=0;i<S.coupons.length;i++){
-      var c=S.coupons[i];
-      h += '<div class="coupon"><div style="display:flex;align-items:center;gap:10px">';
-      h +=   '<span style="font-size:22px">🎫</span>';
-      h +=   '<div style="flex:1"><div style="font-size:var(--fs-xs);font-weight:900">' + esc(c.reward_name) + '</div>' +
-             '<div style="font-size:10.5px;font-weight:800;color:var(--mute)">🎟️ ' + c.cost + '개 · ~' + esc(c.expires_on) + '</div></div>';
-      h +=   '<button class="rw-btn" onclick="doneCoupon(' + c.id + ')">지급 완료</button>';
-      h += '</div></div>';
+    for(var g=0;g<keys.length;g++){
+      var p = who[keys[g]], list = grp[keys[g]];
+      var nm = p && p.name ? esc(p.name) : '이름을 불러오지 못했어요';
+      var cls = p && p.grade ? (p.grade + '학년 ' + (p.class_no||'?') + '반 ' + (p.number||'?') + '번') : '';
+      h += '<div class="cp-who"><span class="cp-av">🙋</span>'
+         +   '<span class="cp-nm">' + nm + '</span>'
+         +   (cls ? '<span class="cp-cls">' + esc(cls) + '</span>' : '')
+         +   '<span class="cp-cnt">' + list.length + '건</span></div>';
+      for(i=0;i<list.length;i++){
+        var c = list[i];
+        h += '<div class="coupon"><div style="display:flex;align-items:center;gap:10px">';
+        h +=   '<span style="font-size:22px">🎫</span>';
+        h +=   '<div style="flex:1"><div style="font-size:var(--fs-xs);font-weight:900">' + esc(c.reward_name) + '</div>' +
+               '<div style="font-size:10.5px;font-weight:800;color:var(--mute)">🎟️ ' + c.cost + '개 · 요청 ' +
+               md(c.issued_at) + ' · ~' + esc(c.expires_on) + '</div></div>';
+        h +=   '<button class="rw-btn" onclick="doneCoupon(' + c.id + ')">지급 완료</button>';
+        h += '</div></div>';
+      }
     }
   }
   h += '</div>';
