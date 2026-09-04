@@ -362,6 +362,9 @@ var sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 /* 학년도·학기 — 3~7월=1학기, 그 외=2학기 */
 function nowYear(){ return new Date().getFullYear(); }
 function nowSem(){ var m=new Date().getMonth()+1; return (m>=3 && m<=7) ? 1 : 2; }
+/* 오늘 날짜 — 반드시 한국 시간으로. toISOString() 은 UTC 라서 오전 9시 이전에 찍으면
+   (1교시 8:50 골든벨이 딱 그 구간이다) 날짜가 하루 밀려 어제 자로 기록된다. */
+function todayStr(){ return new Date(Date.now() + 9*3600*1000).toISOString().slice(0,10); }
 
 /* 행동 칩 — 누르면 입력칸에 '깔린다'(문장 시작틀) */
 var BEHAVIOR_CHIPS = {
@@ -2671,7 +2674,7 @@ function teaTab(k){
    차시·역량·행동은 전부 선택 사항이다. 아무것도 안 고르면 그냥 «칭찬 도장»이 찍힌다.
    ══════════════════════════════════════════════════════════════════════════ */
 function renderGive(){
-  var today = new Date().toISOString().slice(0,10);
+  var today = todayStr();
   var todayCnt = S.teaObs.filter(function(o){ return o.observed_on === today; }).length;
   var h = '';
 
@@ -3086,7 +3089,7 @@ function gbqExport(){
   var blob = new Blob([JSON.stringify(GBQ, null, 2)], {type:'application/json'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = '골든벨_문제_' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = '골든벨_문제_' + todayStr() + '.json';
   a.click(); URL.revokeObjectURL(a.href);
   toast('문제 ' + GBQ.length + '개를 내려받았어요');
 }
@@ -3469,7 +3472,7 @@ async function gbDoAward(ids, upto, partial){
       ? ('수업 여는 골든벨에서 ' + upto + '번 문제까지 통과함')
       : ('수업 여는 골든벨 ' + GB.total + '문제를 끝까지 통과함');
     if(say) beh = say + ' — ' + beh;
-    var today = new Date().toISOString().slice(0,10);
+    var today = todayStr();
     var rows = [], s;
     for(i=0;i<ids.length;i++){
       s = byId[ids[i]] || {};
@@ -3481,13 +3484,25 @@ async function gbDoAward(ids, upto, partial){
         observed_on: today
       });
     }
-    var r = await sb.from('observations').insert(rows);
-    if(r.error){ toast('저장에 실패했어요'); console.error(r.error); return; }
+    /* 저장된 행을 되받아 «몇 명이 실제로 들어갔는지» 확인한다 —
+       그냥 insert 만 하면 조용히 어긋났을 때 알 길이 없다 */
+    var r = await sb.from('observations').insert(rows).select('id');
+    if(r.error){
+      toast('저장에 실패했어요 — ' + (r.error.message || r.error.code || ''));
+      console.error('[골든벨 도장] 저장 실패', r.error, rows);
+      return;
+    }
+    var saved = (r.data || []).length;
+    if(saved !== rows.length){
+      console.warn('[골든벨 도장] 요청 ' + rows.length + '명 · 저장 ' + saved + '명', r);
+      alert('⚠️ ' + rows.length + '명에게 찍으려 했는데 ' + saved + '명만 저장됐어요.\n' +
+            '「👥 학생」 탭에서 확인해 주세요.');
+    }
     gbStopBgm(); gbSfx('award');
     gbClear();
     await loadTeacherObs(); await loadStudents();
     closeGB();
-    toast('🏅 ' + rows.length + '명에게 도장을 찍었어요!');
+    toast('🏅 ' + saved + '명에게 도장을 찍었어요!');
   } finally { hideLoad(); }
 }
 
@@ -3606,7 +3621,7 @@ async function saveObs(){
   try{
     var rows = [], i, byId = {}, s;
     for(i=0;i<S.students.length;i++) byId[S.students[i].id] = S.students[i];
-    var today = new Date().toISOString().slice(0,10);
+    var today = todayStr();
     for(i=0;i<ids.length;i++){
       s = byId[ids[i]] || {};
       rows.push({
@@ -3616,12 +3631,18 @@ async function saveObs(){
         category: cat, behavior: beh, lesson_note: note, observed_on: today
       });
     }
-    var r = await sb.from('observations').insert(rows);
-    if(r.error){ toast('저장에 실패했어요'); console.error(r.error); return; }
+    var r = await sb.from('observations').insert(rows).select('id');
+    if(r.error){
+      toast('저장에 실패했어요 — ' + (r.error.message || r.error.code || ''));
+      console.error('[도장] 저장 실패', r.error, rows);
+      return;
+    }
+    var saved = (r.data || []).length;
+    if(saved !== rows.length) console.warn('[도장] 요청 ' + rows.length + '명 · 저장 ' + saved + '명', r);
     S.selSt = {}; if($('behIn')) $('behIn').value = ''; _qCache = {};
     await loadTeacherObs(); await loadStudents();
     renderGive();
-    toast('🏅 ' + rows.length + '명에게 도장을 찍었어요!');
+    toast('🏅 ' + saved + '명에게 도장을 찍었어요!');
   } finally { hideLoad(); }
 }
 
@@ -3776,7 +3797,7 @@ function doExport(){
   var blob = new Blob(['﻿'+head+body], {type:'text/csv;charset=utf-8;'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = '칭찬도장_관찰기록_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.download = '칭찬도장_관찰기록_' + todayStr() + '.csv';
   a.click(); URL.revokeObjectURL(a.href);
   toast('내려받았어요 (' + rows.length + '건)');
 }
