@@ -1,113 +1,40 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>이삼한 친구들 · 학급 도구 모음</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학급 운영 도구모음 · 자리를 옮겼습니다</title>
+<link rel="canonical" href="https://scienceisjo.github.io/growing-teachers/">
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=https://scienceisjo.github.io/growing-teachers/">
 <style>
-  :root{
-    --bg1:#0f172a; --bg2:#1e1b4b; --bg3:#312e81;
-    --accent:#6366f1; --accent2:#8b5cf6; --gold:#f59e0b;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{
-    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',-apple-system,sans-serif;
-    color:#fff; min-height:100vh;
-    background:linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
-    background-attachment:fixed; -webkit-font-smoothing:antialiased;
-  }
-  .wrap{max-width:960px; margin:0 auto; padding:56px 20px 80px;}
-  .hero{text-align:center; margin-bottom:44px;}
-  .hero .emoji{font-size:60px;}
-  .hero h1{font-size:42px; font-weight:900; letter-spacing:-1px; margin:14px 0 10px; line-height:1.15;}
-  .hero p{color:#c7d2fe; font-size:17px;}
-
-  .grid{display:grid; gap:22px; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}
-  .tool{display:block; text-decoration:none; color:inherit;
-    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14);
-    border-radius:22px; padding:28px 26px; transition:.18s;}
-  .tool:hover{transform:translateY(-4px); background:rgba(255,255,255,.13);
-    box-shadow:0 18px 40px rgba(0,0,0,.35); border-color:rgba(255,255,255,.3);}
-  .tool .ico{font-size:52px; margin-bottom:14px;}
-  .tool h2{font-size:24px; font-weight:900; margin-bottom:8px;}
-  .tool p{color:#cbd5e1; font-size:15px; line-height:1.55;}
-  .tool .go{display:inline-flex; align-items:center; gap:6px; margin-top:16px;
-    color:#fde68a; font-weight:800; font-size:15px;}
-
-  .soon{background:rgba(255,255,255,.04); border:1px dashed rgba(255,255,255,.2);
-    border-radius:22px; padding:28px 26px; display:flex; flex-direction:column; justify-content:center;
-    align-items:center; text-align:center; color:#94a3b8;}
-  .soon .ico{font-size:44px; margin-bottom:10px; opacity:.6;}
-
-  footer{text-align:center; color:#94a3b8; font-size:13px; margin-top:48px;}
+  :root{color-scheme:light}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;display:grid;place-items:center;padding:24px;
+    background:#f2f0eb;color:rgba(0,0,0,.87);
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    letter-spacing:-.01em;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .box{max-width:420px;text-align:center;background:#fff;border-radius:12px;padding:40px 32px;
+    box-shadow:0 0 .5px 0 rgba(0,0,0,.14),0 1px 1px 0 rgba(0,0,0,.24)}
+  .seal{width:44px;height:44px;border-radius:50%;background:#006241;color:#fff;
+    display:grid;place-items:center;margin:0 auto 20px;
+    font-family:"Gowun Batang","Batang",serif;font-size:20px;font-weight:700}
+  h1{font-size:20px;font-weight:700;color:#006241;letter-spacing:-.02em}
+  p{margin-top:12px;font-size:14.5px;color:rgba(0,0,0,.58);word-break:keep-all}
+  a.btn{display:inline-flex;align-items:center;justify-content:center;margin-top:24px;
+    background:#00754A;color:#fff;border-radius:50px;padding:11px 22px;
+    font-size:15px;font-weight:600;text-decoration:none;transition:background .2s ease}
+  a.btn:hover{background:#006241}
+  a.btn:active{transform:scale(.95)}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="hero">
-      <div class="emoji">🧰</div>
-      <h1>이삼한 친구들<br>학급 도구 모음</h1>
-      <p>수업과 학급 운영에 바로 쓰는 웹 도구들을 모아둔 곳이에요.</p>
-    </div>
-
-    <div class="grid">
-      <a class="tool" href="election/">
-        <div class="ico">🗳️</div>
-        <h2>학급 임원 선거</h2>
-        <p>유의사항·규칙·후보자를 입력하면 PPT 없이 선거를 진행. 소견발표 타이머와 개표·당선자 발표까지.</p>
-        <span class="go">열기 →</span>
-      </a>
-
-      <a class="tool" href="rolling-paper/">
-        <div class="ico">💌</div>
-        <h2>롤링페이퍼</h2>
-        <p>전학·졸업 가는 친구에게. QR을 몰래 뿌려 반 친구들이 메시지를 남기면, 전시 화면에 모여요. 배경 사진·콜라주로 꾸미고 PDF로 저장해 인쇄까지.</p>
-        <span class="go">열기 →</span>
-      </a>
-
-      <a class="tool" href="memory-village/">
-        <div class="ico">🌲</div>
-        <h2>이삼한 친구들의 숲</h2>
-        <p>진짜 3D 숲을 내 캐릭터로 걸어다니는 학급 추억 공간. 다짐·명장면·행사·응원·1인1역을 남기고 친구 마음에 ❤️ 공감. 교사 공지 알림과 발표 모드까지.</p>
-        <span class="go">열기 →</span>
-      </a>
-
-      <a class="tool" href="pdf-tool/">
-        <div class="ico">📄</div>
-        <h2>PDF 만능 도구</h2>
-        <p>병합·분할·압축·이미지 변환·페이지 정리·쪽번호·워터마크·모아찍기·텍스트 추출·OCR까지 11가지. 파일이 밖으로 나가지 않고, 앱으로 설치해 인터넷 없이도 써요.</p>
-        <span class="go">열기 →</span>
-      </a>
-
-      <a class="tool" href="stamp-board/">
-        <div class="ico">🏅</div>
-        <h2>과학 칭찬도장판</h2>
-        <p>칭찬을 모으면 내가 고른 캐릭터가 자라요. 선생님은 수업 중 30초면 기록 끝, 그 기록이 그대로 생기부 누가기록 근거가 됩니다. 잃어버릴 걱정 없는 도장판.</p>
-        <span class="go">열기 →</span>
-      </a>
-
-      <a class="tool" href="notice-board/">
-        <div class="ico">📺</div>
-        <h2>전자칠판 알림보드</h2>
-        <p>복도·교실 전자칠판에 상시 띄우는 학교 공지판. 급식·시간표·학사일정은 나이스에서 자동으로 뜨고, 긴급공지·디데이·평가일정·수업 장소·청소당번·1인1역·분실물까지. 학생을 교무실로 부르고, 학생은 QR로 선생님께 쪽지를 보내요.</p>
-        <span class="go">열기 →</span>
-      </a>
-
-      <a class="tool" href="guide/">
-        <div class="ico">📘</div>
-        <h2>과학 앱 사용법</h2>
-        <p>질문과수원과 칭찬도장판을 어떻게 쓰는지 정리한 매뉴얼. 선생님용(계정 준비·수업 루틴·생기부 활용)과 학생용(로그인·질문 심기·캐릭터 키우기)이 탭으로 나뉘고, 인쇄해서 나눠줄 수도 있어요.</p>
-        <span class="go">열기 →</span>
-      </a>
-
-      <div class="soon">
-        <div class="ico">➕</div>
-        <div><b>도구 추가 예정</b><br><span style="font-size:13px">필요한 학급 도구를 계속 모을 거예요</span></div>
-      </div>
-    </div>
-
-    <footer>made with Claude Code · scienceisjo</footer>
+  <div class="box">
+    <div class="seal">조</div>
+    <h1>자리를 옮겼습니다</h1>
+    <p>여기 있던 도구들은 그대로 있습니다. 이제 <b>조승재 포트폴리오</b> 한 곳에서 모두 찾으실 수 있습니다.</p>
+    <a class="btn" href="https://scienceisjo.github.io/growing-teachers/">포트폴리오로 이동 →</a>
   </div>
-<footer id="app-credit" style="width:100%;box-sizing:border-box;margin:2.5rem 0 0;padding:14px 12px;text-align:center;font-size:12.5px;line-height:1.6;color:#8a8f98;font-family:system-ui,-apple-system,'Segoe UI','Malgun Gothic',sans-serif;border-top:1px solid rgba(128,128,128,.25);">© 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br><span style="font-size:11px;opacity:.85;">최종 업데이트: 2026-08-16</span></footer>
+  <script>location.replace("https://scienceisjo.github.io/growing-teachers/");</script>
 </body>
 </html>
