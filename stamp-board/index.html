@@ -140,7 +140,10 @@ main{flex:1;padding:14px 0 90px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{padding:8px 13px;border-radius:999px;border:2px solid var(--line);background:#fff;
   font-size:var(--fs-xxs);font-weight:800;color:var(--ink2)}
-.chip.on{color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(0,0,0,.16)}
+/* 고른 칩 — 바탕색을 여기서 준다. 예전엔 글자만 희게 두고 바탕은 부르는 쪽에서
+   inline 으로 붙였는데, 안 붙인 곳(배경음 칩 등)은 흰 바탕에 흰 글씨가 됐다.
+   inline 이 우선이라 따로 색을 준 칩은 그대로 간다. */
+.chip.on{background:var(--ac);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(0,0,0,.16)}
 .chip.sm{padding:6px 11px;font-size:11.5px}
 
 /* ── 교사: 학생 그리드 ── */
@@ -2931,6 +2934,86 @@ var GB_BGM_LIST = [
 ];
 var _gbAud = {}, _gbBgm = null;
 
+/* ── 🎵 내 음악 넣기 ───────────────────────────────────────────────────────
+   집에서 고른 mp3 를 이 «기기 브라우저»에만 넣어둔다(IndexedDB). 파일이 저장소로
+   올라가지 않으니 공개 배포와 무관하고, 전자칠판에서 한 번 넣어두면 학기 내내
+   그대로 남는다. 배경음으로만 쓴다 — 효과음은 짧고 정해진 신호라 손대지 않는다.
+   ────────────────────────────────────────────────────────────────────────── */
+var GBU = null;            /* [{id,name,url}] — url 은 이 세션에서 만든 임시 주소 */
+var _gbuBusy = false;
+
+function gbuDB(){
+  return new Promise(function(res, rej){
+    if(!window.indexedDB){ rej(0); return; }
+    var rq = indexedDB.open('gb_user_snd', 1);
+    rq.onupgradeneeded = function(){
+      var d = rq.result;
+      if(!d.objectStoreNames.contains('snd')) d.createObjectStore('snd', {keyPath:'id'});
+    };
+    rq.onsuccess = function(){ res(rq.result); };
+    rq.onerror   = function(){ rej(rq.error); };
+  });
+}
+/* 화면을 그리다 처음 불리면 조용히 읽어오고, 다 읽으면 한 번만 다시 그린다 */
+function gbuLoad(){
+  if(GBU || _gbuBusy) return;
+  _gbuBusy = true;
+  gbuDB().then(function(d){
+    var out = [], rq = d.transaction('snd','readonly').objectStore('snd').openCursor();
+    rq.onsuccess = function(){
+      var c = rq.result;
+      if(c){
+        var v = c.value;
+        try{ out.push({ id:v.id, name:v.name, url:URL.createObjectURL(v.blob) }); }catch(e){}
+        c.continue();
+      } else {
+        GBU = out; _gbuBusy = false;
+        if(out.length) renderGB();
+      }
+    };
+    rq.onerror = function(){ GBU = []; _gbuBusy = false; };
+  }).catch(function(){ GBU = []; _gbuBusy = false; });
+}
+function gbuAdd(input){
+  var fs = input.files;
+  input.value = '';                       /* 같은 파일을 다시 골라도 들어가게 */
+  if(!fs || !fs.length) return;
+  var picked = [], i, f;
+  for(i=0;i<fs.length;i++){
+    f = fs[i];
+    if(/^audio\//.test(f.type || '') || /\.(mp3|m4a|ogg|wav|aac)$/i.test(f.name)) picked.push(f);
+  }
+  if(!picked.length){ toast('음악 파일이 아니에요'); return; }
+  gbuDB().then(function(d){
+    var tx = d.transaction('snd','readwrite'), st = tx.objectStore('snd');
+    if(!GBU) GBU = [];
+    for(var j=0;j<picked.length;j++){
+      var g = picked[j];
+      var rec = { id:'u_' + Date.now().toString(36) + j, name:g.name.replace(/\.[^.]+$/, ''), blob:g };
+      st.put(rec);
+      try{ GBU.push({ id:rec.id, name:rec.name, url:URL.createObjectURL(g) }); }catch(e){}
+    }
+    tx.oncomplete = function(){ toast('음악 ' + picked.length + '개를 넣었어요'); renderGB(); };
+    tx.onerror    = function(){ toast('넣지 못했어요 — 저장 공간을 확인해 주세요'); };
+  }).catch(function(){ toast('이 브라우저에는 넣을 수 없어요'); });
+}
+function gbuDel(id){
+  var it = gbuAt(id); if(!it) return;
+  if(!confirm('「' + it.name + '」을 뺄까요? (원본 파일은 그대로예요)')) return;
+  gbuDB().then(function(d){
+    d.transaction('snd','readwrite').objectStore('snd').delete(id);
+    GBU = GBU.filter(function(x){ return x.id !== id; });
+    try{ URL.revokeObjectURL(it.url); }catch(e){}
+    delete _gbAud[id];
+    if(gbBgmKey() === id) gbPickBgm('tense1');    /* 틀던 곡을 뺐으면 기본으로 */
+    else renderGB();
+  }).catch(function(){});
+}
+function gbuAt(id){
+  for(var i=0;i<(GBU||[]).length;i++) if(GBU[i].id === id) return GBU[i];
+  return null;
+}
+
 function gbSndOn(){ try{ return localStorage.getItem('gb_snd') !== 'off'; }catch(e){ return true; } }
 
 /* 볼륨 0~1. 기본 0.7 — 이때 배경음이 0.35 라 예전과 같은 크기다.
@@ -2968,9 +3051,12 @@ function gbPickBgm(k){
 }
 
 function gbAudio(key){
-  if(!GB_SND[key]) return null;
+  /* u_ 로 시작하면 내가 넣어둔 음악 — 파일이 아니라 이 기기 안의 주소를 쓴다 */
+  var mine = (key && key.indexOf('u_') === 0) ? gbuAt(key) : null;
+  var src = mine ? mine.url : GB_SND[key];
+  if(!src) return null;
   if(!_gbAud[key]){
-    var a = new Audio(); a.preload = 'none'; a.src = GB_SND[key];
+    var a = new Audio(); a.preload = 'none'; a.src = src;
     _gbAud[key] = a;
   }
   return _gbAud[key];
@@ -3002,9 +3088,22 @@ function gbSndBar(){
   if(on){
     h += '<span style="font-size:11px;color:var(--mute);font-weight:700">배경음</span>';
     for(var i=0;i<GB_BGM_LIST.length;i++){
+      if(GB_BGM_LIST[i].k === 'off') continue;        /* 「끄기」는 내 음악 뒤로 민다 */
       h += '<button class="chip sm' + (k===GB_BGM_LIST[i].k?' on':'') +
            '" onclick="gbPickBgm(\'' + GB_BGM_LIST[i].k + '\')">' + GB_BGM_LIST[i].n + '</button>';
     }
+    gbuLoad();
+    var mine = GBU || [];
+    for(i=0;i<mine.length;i++){
+      h += '<span class="chip sm' + (k===mine[i].id?' on':'') +
+           '" style="display:inline-flex;align-items:center;gap:7px">' +
+           '<b onclick="gbPickBgm(\'' + mine[i].id + '\')" style="cursor:pointer;font-weight:800">🎵 ' +
+           esc(mine[i].name) + '</b>' +
+           '<b onclick="gbuDel(\'' + mine[i].id + '\')" style="cursor:pointer;opacity:.5">✕</b></span>';
+    }
+    h += '<label class="chip sm" style="cursor:pointer">＋ 내 음악' +
+         '<input type="file" accept="audio/*" multiple style="display:none" onchange="gbuAdd(this)"></label>' +
+         '<button class="chip sm' + (k==='off'?' on':'') + '" onclick="gbPickBgm(\'off\')">끄기</button>';
     h += '</div><div style="display:flex;gap:9px;align-items:center;margin-top:8px">' +
          '<span style="font-size:11px;color:var(--mute);font-weight:700;flex:0 0 auto">🔉 크기</span>' +
          '<input type="range" min="0" max="100" step="5" value="' + Math.round(gbVol()*100) + '"' +

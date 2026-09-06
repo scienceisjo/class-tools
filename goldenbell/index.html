@@ -289,18 +289,23 @@ function imgSweep(){
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   2. 🔊 음향 — 칭찬도장판과 같은 소리를 함께 쓴다
+   2. 🔊 소리 — 브라우저가 그 자리에서 만든다
 
-   파일은 stamp-board/audio 한 벌만 두고 여기서 빌려 쓴다(11MB 를 두 번 올릴
-   이유가 없다). 이 폴더만 따로 복사해서 쓸 거면 아래 BASE 를 './audio/' 로
-   바꾸고 mp3 7개를 옆에 두면 된다.
-   preload='none' 이라 누르기 전에는 한 바이트도 안 받는다(학교 와이파이 배려).
+   나눠 쓰는 판이라 남의 음원을 실어 보낼 수 없다. 무료라고 적힌 음원도 대개
+   «파일 그대로 재배포»는 막혀 있어서, 공개 저장소에 mp3 를 담는 순간 걸린다.
+   그래서 파일을 두지 않고 WebAudio 로 그때그때 합성한다 — 받을 게 없으니
+   학교 와이파이가 느려도 즉시 나고, 인터넷이 끊겨도 나고, 라이선스가 붙을
+   대상 자체가 없다.
+
+   직접 만들었거나 권리가 있는 mp3 를 쓰고 싶으면 audio/ 폴더에 아래 이름대로
+   넣고 USE_FILES 를 true 로 바꾸면 파일 쪽으로 굴러간다.
    ══════════════════════════════════════════════════════════════════════════ */
-var SND_BASE = '../stamp-board/audio/';
+var USE_FILES = false;
+var SND_BASE  = './audio/';
 var SND = {
   write:   'sfx-write.mp3',    show:  'sfx-show.mp3',
   tense1:  'bgm-tense1.mp3',   tense2:'bgm-tense2.mp3',
-  cute:    'bgm-cute.mp3',     fanfare:'sfx-fanfare.mp3',  award:'bgm-award.mp3'
+  cute:    'bgm-cute.mp3',     fanfare:'sfx-fanfare.mp3'
 };
 var BGM_LIST = [{k:'tense1',n:'긴장감 1'},{k:'tense2',n:'긴장감 2'},{k:'cute',n:'귀여운 퀴즈'},{k:'off',n:'끄기'}];
 var _aud = {}, _bgm = null;
@@ -313,6 +318,7 @@ function bgmKey(){ return lsGet('gb2_bgm','tense1'); }
 function setVol(v){
   v = Math.max(0, Math.min(1, (parseFloat(v)||0)/100));
   lsSet('gb2_vol', String(v));
+  syncVol();                                   /* 합성기 쪽 */
   if(_bgm){ try{ _bgm.volume = bgmVol(); }catch(e){} }
   for(var k in _aud){ if(_aud[k] !== _bgm){ try{ _aud[k].volume = v; }catch(e){} } }
   var lab = $('volLab'); if(lab) lab.textContent = Math.round(v*100) + '%';
@@ -328,27 +334,163 @@ function pickBgm(k){
   if(k !== 'off' && sndOn() && ST.ready && !ST.done) bgmPlay();
   render();
 }
+/* ── 파일로 쓸 때(USE_FILES) ── */
 function aud(key){
   if(!SND[key]) return null;
   if(!_aud[key]){ var a = new Audio(); a.preload = 'none'; a.src = SND_BASE + SND[key]; _aud[key] = a; }
   return _aud[key];
 }
+
+/* ── 합성기 ────────────────────────────────────────────────────────────────
+   효과음 줄(_SG)과 배경음 줄(_BG)을 따로 둔다. 배경음은 선생님 목소리 밑에
+   깔려야 하니 슬라이더의 절반만 쓴다 — mp3 때와 똑같은 규칙이다.
+   AudioContext 는 «교사가 시작을 누른 뒤»에 깨어난다(브라우저 규칙). ── */
+var _AC = null, _SG = null, _BG = null, _NB = null;
+function ac(){
+  if(!_AC){
+    try{ _AC = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ return null; }
+    _SG = _AC.createGain(); _SG.connect(_AC.destination);
+    _BG = _AC.createGain(); _BG.connect(_AC.destination);
+  }
+  if(_AC.state === 'suspended'){ try{ _AC.resume(); }catch(e){} }
+  syncVol();
+  return _AC;
+}
+function syncVol(){
+  if(_SG) _SG.gain.value = vol();
+  if(_BG) _BG.gain.value = bgmVol();
+}
+
+/* 소리 한 알 — 파형 하나에 붙였다 떼는 봉투를 씌운다 */
+function tone(t0, o){
+  if(!_AC) return;
+  var osc = _AC.createOscillator(), g = _AC.createGain();
+  osc.type = o.type || 'sine';
+  osc.frequency.setValueAtTime(o.f, t0);
+  if(o.f2) osc.frequency.exponentialRampToValueAtTime(Math.max(1, o.f2), t0 + o.d);
+  var pk = (o.g == null ? 0.25 : o.g), atk = (o.a == null ? 0.008 : o.a);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(pk, t0 + atk);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + o.d);
+  osc.connect(g); g.connect(o.bus || _SG);
+  osc.start(t0); osc.stop(t0 + o.d + 0.04);
+}
+/* 스치는 소리 — 초침·팡파레 끝의 «촤» 같은 것 */
+function noise(t0, o){
+  if(!_AC) return;
+  if(!_NB){
+    var n = Math.floor(_AC.sampleRate * 0.5);
+    _NB = _AC.createBuffer(1, n, _AC.sampleRate);
+    var ch = _NB.getChannelData(0);
+    for(var i=0;i<n;i++) ch[i] = Math.random()*2 - 1;
+  }
+  var d = o.d || 0.05;
+  var src = _AC.createBufferSource(); src.buffer = _NB; src.loop = true;
+  var bp = _AC.createBiquadFilter(); bp.type = 'bandpass';
+  bp.frequency.value = o.f || 3000; bp.Q.value = o.q || 1;
+  var g = _AC.createGain();
+  g.gain.setValueAtTime(o.g == null ? 0.2 : o.g, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+  src.connect(bp); bp.connect(g); g.connect(o.bus || _SG);
+  src.start(t0); src.stop(t0 + d + 0.02);
+}
+
+function sfxSynth(key){
+  if(!ac()) return;
+  var t = _AC.currentTime + 0.02;
+  if(key === 'write'){
+    /* «정답을 써주세요» — 종처럼 두 번, 낮은 데서 높은 데로 */
+    tone(t,        {f:784,  d:0.42, g:0.30});
+    tone(t,        {f:1568, d:0.28, g:0.07});
+    tone(t + 0.20, {f:1047, d:0.60, g:0.30});
+    tone(t + 0.20, {f:2093, d:0.34, g:0.06});
+  } else if(key === 'show'){
+    /* «정답을 들어주세요» — 세 계단 올라가며 재촉한다 */
+    [1047, 1319, 1568].forEach(function(f, i){
+      tone(t + i*0.10, {f:f, d:0.32, type:'triangle', g:0.26});
+    });
+    tone(t + 0.30, {f:2093, d:0.55, g:0.15});
+  } else if(key === 'fanfare'){
+    /* 팡파레 — 금관처럼 올라갔다가 화음으로 멈춘다 */
+    [523, 659, 784, 1047].forEach(function(f, i){
+      tone(t + i*0.11, {f:f,   d:0.20, type:'sawtooth', g:0.15});
+      tone(t + i*0.11, {f:f/2, d:0.20, type:'square',   g:0.05});
+    });
+    [523, 659, 784, 1047].forEach(function(f){
+      tone(t + 0.46, {f:f, d:1.6, type:'sawtooth', g:0.11, a:0.02});
+    });
+    noise(t + 0.46, {f:6000, d:0.55, g:0.09, q:0.7});
+  }
+}
+
+/* 배경음 — 한 박씩 미리 예약해 두고 끊길 때까지 이어 붙인다 */
+var _bgmJob = null;
+function bgmPattern(kind, s, t){
+  var B = _BG;
+  if(kind === 'tense1'){
+    /* 시계 초침 — 골든벨의 긴장은 사실 이 소리다 */
+    noise(t, {f:4200, d:0.045, g:0.16, q:1.4, bus:B});
+    if(s % 4 === 0) tone(t, {f:110, d:0.42, g:0.20, bus:B});
+    if(s % 8 === 4) tone(t, {f:98,  d:0.42, g:0.15, bus:B});
+  } else if(kind === 'tense2'){
+    /* 심장 박동 — 쿵, 쿵 … 그 밑에 반음 어긋난 현이 깔린다 */
+    if(s % 4 === 0){
+      tone(t,        {f:70, d:0.30, g:0.34, bus:B});
+      tone(t + 0.22, {f:62, d:0.34, g:0.24, bus:B});
+    }
+    if(s % 8 === 0){
+      tone(t, {f:147, d:3.8, type:'sawtooth', g:0.045, a:0.6, bus:B});
+      tone(t, {f:156, d:3.8, type:'sawtooth', g:0.032, a:0.6, bus:B});
+    }
+  } else if(kind === 'cute'){
+    /* 마림바처럼 통통 — 5음 음계라 아무렇게 겹쳐도 어긋나지 않는다 */
+    var sc = [523, 587, 659, 784, 880, 1047];
+    var f  = sc[[0,2,4,2,1,3,5,3][s % 8]];
+    tone(t, {f:f,   d:0.26, type:'triangle', g:0.20, bus:B});
+    tone(t, {f:f*2, d:0.13, g:0.05, bus:B});
+    if(s % 8 === 0) tone(t, {f:131, d:0.5, g:0.16, bus:B});
+    if(s % 8 === 4) tone(t, {f:175, d:0.5, g:0.14, bus:B});
+  }
+}
+function bgmSynth(kind){
+  if(!ac()) return null;
+  var stopped = false, at = _AC.currentTime + 0.06, step = 0;
+  var beat = (kind === 'cute') ? 0.30 : 0.5;
+  function fill(){
+    if(stopped || !_AC) return;
+    while(at < _AC.currentTime + 0.6){ bgmPattern(kind, step, at); at += beat; step++; }
+  }
+  var iv = setInterval(fill, 120);
+  fill();
+  return { stop: function(){ stopped = true; clearInterval(iv); } };
+}
+
+/* ── 바깥에서 쓰는 문 — 파일이든 합성이든 여기까지만 보면 된다 ── */
 function sfx(key){
   if(!sndOn()) return;
-  var a = aud(key); if(!a) return;
-  try{ a.volume = vol(); a.currentTime = 0; var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+  if(USE_FILES){
+    var a = aud(key); if(!a) return;
+    try{ a.volume = vol(); a.currentTime = 0; var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+    return;
+  }
+  sfxSynth(key);
 }
 function bgmPlay(){
   var k = bgmKey();
   if(!sndOn() || k === 'off') return;
-  var a = aud(k); if(!a) return;
-  a.loop = true; a.volume = bgmVol(); _bgm = a;
-  try{ var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+  bgmStop();
+  if(USE_FILES){
+    var a = aud(k); if(!a) return;
+    a.loop = true; a.volume = bgmVol(); _bgm = a;
+    try{ var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+    return;
+  }
+  _bgmJob = bgmSynth(k);
 }
 function bgmStop(){
-  if(!_bgm) return;
-  try{ _bgm.pause(); _bgm.currentTime = 0; }catch(e){}
-  _bgm = null;
+  if(_bgmJob){ _bgmJob.stop(); _bgmJob = null; }
+  if(_bgm){ try{ _bgm.pause(); _bgm.currentTime = 0; }catch(e){} _bgm = null; }
 }
 function sndBar(){
   var on = sndOn(), k = bgmKey(), i;
