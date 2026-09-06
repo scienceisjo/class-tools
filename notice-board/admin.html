@@ -6,6 +6,7 @@
 <title>공지 관리 — 해누리중학교</title>
 <link rel="icon" href="logo.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="video.js?v=2608301"></script>
 <style>
   :root{--bg:#f4f6fb;--card:#fff;--line:#e3e8f3;--txt:#1c2540;--sub:#7d8aa8;
     --accent:#4a72ff;--green:#1eb87f;--red:#ff4d5e;--gold:#f5a623;--purple:#8b6cff;}
@@ -65,6 +66,16 @@
   #posterPick .names .x{margin-left:7px;color:#cbd5e1;font-weight:900}
   #posterPick .names .chip.on .x{color:#dbeafe}
   #posterPick .sep{border-top:1px dashed var(--line);margin:14px 0}
+
+  /* 🎬 영상 미리보기 */
+  .vprev{margin:-4px 0 12px}
+  .vprev .ok{display:flex;gap:12px;align-items:center;background:#f8fafc;border:1px solid var(--line);
+    border-radius:10px;padding:10px}
+  .vprev img{width:120px;height:68px;object-fit:cover;border-radius:7px;flex:0 0 auto;background:#e2e8f0}
+  .vprev .t{font-size:13px;font-weight:700;color:var(--txt)}
+  .vprev .s{font-size:12px;color:var(--sub);margin-top:2px}
+  .vprev .bad{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:12.5px;
+    font-weight:700;border-radius:10px;padding:10px 12px;line-height:1.6}
 
   /* ⏱ 종료일·템플릿 빠른 선택 */
   .quick{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px}
@@ -273,6 +284,7 @@
     <button class="tab" data-p="msg" onclick="tab('msg')">📬 받은 쪽지<span class="badge" id="msgBadge" style="display:none">0</span></button>
     <button class="tab on" data-p="notice" onclick="tab('notice')">📢 공지사항</button>
     <button class="tab" data-p="sched" onclick="tab('sched')">📅 주요일정</button>
+    <button class="tab" data-p="vid" onclick="tab('vid')">🎬 영상</button>
     <button class="tab" data-p="ttc" onclick="tab('ttc')">📍 수업 장소</button>
     <button class="tab" data-p="dday" onclick="tab('dday')">🎯 디데이</button>
     <button class="tab" data-p="assess" onclick="tab('assess')">📋 평가일정</button>
@@ -374,6 +386,31 @@
   </div>
 
   <!-- 수업 장소 -->
+  <!-- 🎬 영상 -->
+  <div class="panel" id="p-vid">
+    <div class="card wform">
+      <h2>🎬 교실에서 볼 영상 올리기</h2>
+      <div class="hint">주소를 넣어두시면 교실 전자칠판 위쪽 <b>[🎬 영상]</b>을 눌러 바로 재생하실 수 있습니다.
+        재생은 화면에서 직접 누르셔야 시작됩니다 — 수업 중에 갑자기 소리가 나는 일은 없습니다.</div>
+      <div class="field"><label>영상 주소 (유튜브 등)</label>
+        <input id="vUrl" type="url" placeholder="예: https://www.youtube.com/watch?v=..." oninput="previewVideo()"></div>
+      <div id="vPrev" class="vprev"></div>
+      <div class="field"><label>제목</label><input id="vTitle" placeholder="예: 학교폭력 예방 교육 영상"></div>
+      <div class="field"><label>한 줄 설명 (선택)</label><input id="vNote" placeholder="예: 조회 시간에 함께 봅니다"></div>
+      <div class="row">
+        <div class="field"><label>대상 학년</label>
+          <select id="vGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>대상 반 (비우면 학년 전체)</label>
+          <input id="vClass" type="number" min="1" placeholder="예: 3"></div>
+        <div class="field"><label>노출 종료일 (비우면 계속)</label><input id="vEnd" type="date"></div>
+      </div>
+      <button class="btn" id="vSave" onclick="saveVideo()">영상 등록</button>
+      <button class="ghost" id="vCancel" style="width:100%;margin-top:8px;padding:11px;display:none"
+              onclick="cancelEditVideo()">✕ 수정 취소</button>
+    </div>
+    <div class="card"><h2>올라간 영상</h2><div id="vidList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
   <div class="panel" id="p-ttc">
     <div class="box tip" style="background:#eef7ff;border:1px solid #cfe4ff;color:#1e4fa3;
          border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.6">
@@ -766,7 +803,7 @@ function applyDeviceClass(force){
   if(!d.grade) return;
   [['nGrade','nClass'],['sGrade','sClass'],['dGrade','dClass'],['aGrade','aClass'],
    ['kGrade','kClass'],['lcGrade','lcClass'],['clGrade','clClass'],['roGrade','roClass'],
-   ['urlGrade','urlClass']].forEach(([gi,ci])=>{
+   ['vGrade','vClass'],['urlGrade','urlClass']].forEach(([gi,ci])=>{
     const ge=$(gi), ce=$(ci);
     if(ge && (force || !ge.value)) ge.value=d.grade;
     if(ce && d.class_no && (force || !ce.value)) ce.value=d.class_no;
@@ -905,7 +942,7 @@ function enterDash(){
   if(shared && document.querySelector('.tab.on')?.dataset.p === 'msg') tab('notice');
   $('whoami').textContent = READONLY ? '👀 둘러보기'
     : (shared ? '👥 공동계정' : (myName+' 선생님'));
-  loadNotices(); loadScheds(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadCfg(); makeUrl();
+  loadNotices(); loadScheds(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadVideos(); loadCfg(); makeUrl();
   if(!shared){ loadMsgs(false); refreshMsgBadge(); }   // 공동계정은 쪽지 조회 자체를 안 함
   msgUrlHint(); buildSquadChips(); loadSquadCfg();
   loadPalette('clean'); loadPalette('duty'); loadApprovals();
@@ -1194,6 +1231,107 @@ async function doneCall(id){
   const { error } = await sb.from('calls').update({ status:'done', done_at:new Date().toISOString() }).eq('id',id);
   if(error){ toast('실패: '+error.message); return; }
   toast('완료 처리됨'); loadCalls();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎬 영상 — 교실 화면에서 바로 재생
+   ═══════════════════════════════════════════════════════════════ */
+let videoCache = [], editingVideoId = null;
+
+function previewVideo(){
+  const box=$('vPrev'), raw=$('vUrl').value.trim();
+  if(!raw){ box.innerHTML=''; return; }
+  const v = parseVideo(raw);
+  if(!v){
+    box.innerHTML = `<div class="bad">이 주소는 화면 안에서 재생할 수 없습니다.<br>
+      유튜브·비메오 주소나 영상 파일(.mp4) 주소를 넣어주세요.</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="ok">
+    ${v.thumb?`<img src="${esc(v.thumb)}" alt="">`:''}
+    <div><div class="t">✅ ${esc(v.label)} 영상으로 확인됐습니다</div>
+    <div class="s">교실 화면에서 바로 재생됩니다</div></div></div>`;
+}
+
+async function saveVideo(){
+  const url=$('vUrl').value.trim(), title=$('vTitle').value.trim();
+  if(!url){ toast('영상 주소를 넣어주세요'); return; }
+  if(!parseVideo(url)){ toast('유튜브·비메오 주소나 .mp4 주소만 넣을 수 있습니다'); return; }
+  if(!title){ toast('제목을 입력하세요'); return; }
+  if(needPoster()) return;
+  $('vSave').disabled=true;
+  const g=$('vGrade').value, c=$('vClass').value;
+  const rec={ title, url, note:$('vNote').value.trim()||null,
+    grade:g?Number(g):null, class_no:(g&&c)?Number(c):null,
+    end_at:$('vEnd').value||null };
+  let error, rows;
+  if(editingVideoId){
+    ({ data:rows, error } = await sb.from('videos').update(rec).eq('id',editingVideoId).select());
+  } else {
+    rec.author_id=me.id; rec.author_name=posterName();
+    ({ data:rows, error } = await sb.from('videos').insert(rec).select());
+  }
+  $('vSave').disabled=false;
+  if(error){
+    toast(/relation|does not exist/i.test(error.message)
+      ? '영상 표가 아직 없습니다 — VIDEOS.sql 을 한 번 실행해 주세요'
+      : ((editingVideoId?'수정':'등록')+' 실패: '+error.message));
+    return;
+  }
+  if(editingVideoId && (!rows||!rows.length)){
+    toast('수정되지 않았습니다 — 본인 영상이거나 우리 반 영상이어야 합니다'); return;
+  }
+  const wasEdit=!!editingVideoId;
+  cancelEditVideo();
+  toast(wasEdit?'✏️ 수정됐습니다':'🎬 영상이 등록됐습니다');
+  loadVideos();
+}
+function cancelEditVideo(){
+  editingVideoId=null;
+  ['vUrl','vTitle','vNote','vEnd','vClass'].forEach(id=>$(id).value='');
+  $('vPrev').innerHTML='';
+  $('vSave').textContent='영상 등록'; $('vCancel').style.display='none';
+  applyDeviceClass(true);
+}
+function startEditVideo(id){
+  const v=videoCache.find(x=>x.id===id); if(!v){ toast('영상을 찾지 못했습니다'); return; }
+  if(isShared() && v.author_name && v.author_name!==POSTER.name
+     && !confirm(`이 영상은 ${v.author_name} 선생님이 올리신 것입니다.\n고쳐도 괜찮을까요?`)) return;
+  editingVideoId=id;
+  $('vUrl').value=v.url||''; $('vTitle').value=v.title||''; $('vNote').value=v.note||'';
+  $('vGrade').value=v.grade?String(v.grade):''; $('vClass').value=v.class_no?String(v.class_no):'';
+  $('vEnd').value=v.end_at||'';
+  previewVideo();
+  $('vSave').textContent='✏️ 수정 저장'; $('vCancel').style.display='block';
+  $('vUrl').scrollIntoView({behavior:'smooth', block:'center'});
+}
+async function loadVideos(){
+  const { data, error } = await sb.from('videos').select('*')
+    .order('sort_order').order('created_at',{ascending:false});
+  const box=$('vidList'); if(!box) return;
+  if(error){
+    box.innerHTML = `<div class="empty">영상 표가 아직 없습니다 —
+      <b>VIDEOS.sql</b> 을 한 번 실행해 주세요</div>`;
+    return;
+  }
+  videoCache = data || [];
+  if(!videoCache.length){ box.innerHTML='<div class="empty">등록된 영상이 없습니다</div>'; return; }
+  box.innerHTML = videoCache.map(v=>{
+    const p=parseVideo(v.url);
+    const who = v.author_name
+      ? (isShared() && v.author_name!==POSTER.name
+          ? `<b style="color:#b45309">${esc(v.author_name)} 선생님</b> · `
+          : `<b>${esc(v.author_name)}</b> · `) : '';
+    return `<div class="item">
+      <span class="tag" style="background:#7c3aed">${esc(p?p.label:'주소 확인')}</span>
+      <div class="main"><div class="t">${esc(v.title)}${
+        v.grade?` <span class="meta">[${v.grade}학년${v.class_no?' '+v.class_no+'반':''}]</span>`:''}</div>
+      ${v.note?`<div class="b">${esc(v.note)}</div>`:''}
+      <div class="meta">${who}${fmtDate(v.created_at)}${v.end_at?` · ~${v.end_at}`:''}</div></div>
+      ${canEdit(v)?`<button class="del" style="background:#eef2fa;color:#3b6ef5" onclick="startEditVideo(${v.id})">✏️ 수정</button>`:''}
+      <button class="del" data-title="${esc(v.title||'')}"
+              onclick="del('videos',${v.id},loadVideos,this.dataset.title)">삭제</button></div>`;
+  }).join('');
 }
 
 /* ── 📍 수업 장소 안내 ── */

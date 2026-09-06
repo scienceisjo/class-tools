@@ -6,6 +6,7 @@
 <title>해누리중학교 공지</title>
 <link rel="icon" href="logo.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="video.js?v=2608301"></script>
 <style>
   :root{
     --bg:#f4f7fc; --panel:#ffffff; --panel2:#eef2fa; --line:#e3e8f4;
@@ -283,12 +284,52 @@
   #offline.show{display:block}
   .scroller{animation:vscroll 30s linear infinite}
   @keyframes vscroll{0%,10%{transform:translateY(0)}90%,100%{transform:translateY(calc(-100% + 12rem))}}
+
+  /* ═══ 🎬 영상 보기 ═══════════════════════════════════════════ */
+  /* 볼 영상이 있을 때만 머리말에 전환 단추가 나타납니다 */
+  .viewtabs{display:none;gap:.35rem;margin-left:1rem}
+  body.hasvideo .viewtabs{display:inline-flex}
+  .viewtabs button{border:none;font-family:inherit;font-weight:800;cursor:pointer;
+    background:#eef2f7;color:var(--sub);border-radius:99px;padding:.45rem 1.1rem;font-size:1.15rem}
+  .viewtabs button.on{background:var(--accent);color:#fff}
+
+  #videoStage{display:none;flex:1 1 auto;min-height:0;gap:1rem;padding:1rem 1.8rem 1.4rem}
+  body.videomode main{display:none}
+  body.videomode #videoStage{display:flex}
+  /* 영상 볼 때는 화면을 넓게 씁니다 (긴급 공지는 그대로 둡니다) */
+  body.videomode #callBar,body.videomode #ddayBar,
+  body.videomode #goClass,body.videomode #msgBtn,
+  body.videomode #a2hsBtn{display:none !important}
+
+  .vplayer{flex:1 1 auto;min-width:0;position:relative;background:#000;
+    border-radius:1rem;overflow:hidden;box-shadow:var(--shadow)}
+  .vplayer iframe,.vplayer video{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .vplayer .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:.8rem;color:#94a3b8;font-size:1.5rem;font-weight:700}
+
+  .vlist{width:24%;min-width:15rem;display:flex;flex-direction:column;gap:.6rem;min-height:0;overflow:auto}
+  .vitem{display:flex;gap:.7rem;align-items:center;text-align:left;cursor:pointer;
+    background:var(--panel);border:1px solid var(--line);border-radius:.8rem;padding:.6rem .7rem;
+    font-family:inherit;box-shadow:var(--shadow)}
+  .vitem.on{border-color:var(--accent);background:#eff6ff}
+  .vitem img,.vitem .noimg{width:6.5rem;height:3.7rem;object-fit:cover;border-radius:.5rem;
+    flex:0 0 auto;background:#e2e8f0}
+  .vitem .noimg{display:flex;align-items:center;justify-content:center;font-size:1.8rem}
+  .vitem .vt{font-size:1.25rem;font-weight:800;line-height:1.3}
+  .vitem .vn{font-size:1.05rem;color:var(--sub);margin-top:.15rem}
+  .vitem .vg{font-size:.95rem;color:var(--accent);font-weight:800}
+  .vback{margin-top:auto;border:none;font-family:inherit;font-weight:800;cursor:pointer;
+    background:var(--accent);color:#fff;border-radius:.8rem;padding:.8rem;font-size:1.2rem}
 </style>
 </head>
 <body>
   <header>
     <div class="brand"><img class="logo" src="logo.png" alt="해누리중학교 교표" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'logo logo-fb',textContent:'🏫'}))"><h1 id="schoolName">해누리중학교</h1>
       <span class="classbadge" id="classBadge" style="display:none"></span>
+      <span class="viewtabs">
+        <button id="vtNotice" class="on" onclick="showNotices()">📢 공지</button>
+        <button id="vtVideo" onclick="showVideos()">🎬 영상</button>
+      </span>
     </div>
     <div class="hright">
       <span class="period" id="periodChip" style="display:none"></span>
@@ -363,6 +404,14 @@
       </section>
     </div>
   </main>
+
+  <!-- 🎬 영상 보기 -->
+  <section id="videoStage">
+    <div class="vplayer" id="vPlayer">
+      <div class="ph">🎬<div>영상을 고르면 여기에서 재생됩니다</div></div>
+    </div>
+    <div class="vlist" id="vList"></div>
+  </section>
 
   <div id="goClass">
     <span class="lbl">🏫 교실 화면 바로가기</span>
@@ -635,6 +684,72 @@ async function loadNotices(){
   noticeCards = list.filter(n => n.category!=='긴급').filter(forThisBoard);
   rebuildStage();
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   🎬 영상 보기
+   ───────────────────────────────────────────────────────────────
+   선생님이 올려두신 영상을 [🎬 영상] 을 눌러 화면에서 바로 봅니다.
+   재생은 눌러야 시작합니다 — 수업 중에 갑자기 소리가 나지 않게요.
+   ═══════════════════════════════════════════════════════════════ */
+let VIDEOS = [], vidIdx = -1, vidEnteredAt = 0;
+
+async function loadVideos(){
+  const t = todayStr();
+  const { data, error } = await sb.from('videos').select('*')
+    .lte('start_at', t).or(`end_at.is.null,end_at.gte.${t}`)
+    .order('sort_order').order('created_at',{ascending:false});
+  if(error){ VIDEOS=[]; renderVideos(); return; }   // 영상 표가 아직 없어도 화면은 그대로
+  VIDEOS = (data||[]).filter(forThisBoard).filter(v=>parseVideo(v.url));
+  renderVideos();
+}
+
+function renderVideos(){
+  const has = VIDEOS.length > 0;
+  document.body.classList.toggle('hasvideo', has);
+  $('vtVideo').textContent = has && VIDEOS.length>1 ? `🎬 영상 ${VIDEOS.length}` : '🎬 영상';
+  if(!has){ showNotices(); return; }               // 영상이 없어지면 공지 화면으로
+
+  const box=$('vList'); if(!box) return;
+  box.innerHTML = VIDEOS.map((v,i)=>{
+    const p=parseVideo(v.url);
+    return `<button class="vitem${i===vidIdx?' on':''}" onclick="playVideo(${i})">
+      ${p.thumb?`<img src="${p.thumb}" alt="">`:'<span class="noimg">🎬</span>'}
+      <span><span class="vt">${esc(v.title)}</span>
+      ${v.note?`<span class="vn">${esc(v.note)}</span>`:''}
+      ${v.grade?`<span class="vg">${v.grade}학년${v.class_no?' '+v.class_no+'반':''}</span>`:''}</span>
+    </button>`;
+  }).join('') + `<button class="vback" onclick="showNotices()">📢 공지 화면으로 돌아가기</button>`;
+}
+
+function playVideo(i){
+  const v=VIDEOS[i]; if(!v) return;
+  const p=parseVideo(v.url); if(!p) return;
+  vidIdx=i;
+  $('vPlayer').innerHTML = p.kind==='file'
+    ? `<video src="${esc(p.embed)}" controls playsinline></video>`
+    : `<iframe src="${esc(p.embed)}" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen"
+         allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  renderVideos();
+}
+
+function showVideos(){
+  if(!VIDEOS.length) return;
+  document.body.classList.add('videomode');
+  $('vtVideo').classList.add('on'); $('vtNotice').classList.remove('on');
+  vidEnteredAt = Date.now();
+  if(vidIdx < 0) playVideo(0);           // 한 편이면 바로 틀어 놓습니다
+}
+function showNotices(){
+  document.body.classList.remove('videomode');
+  $('vtNotice').classList.add('on'); $('vtVideo').classList.remove('on');
+  $('vPlayer').innerHTML = '<div class="ph">🎬<div>영상을 고르면 여기에서 재생됩니다</div></div>';
+  vidIdx = -1; vidEnteredAt = 0;
+  if(VIDEOS.length) renderVideos();
+}
+/* 영상 화면을 켜둔 채로 잊고 가시는 일이 있어, 90분 뒤에는 공지 화면으로 돌아갑니다 */
+setInterval(()=>{
+  if(vidEnteredAt && Date.now()-vidEnteredAt > 90*60000) showNotices();
+}, 60000);
 
 /* 분실물 (전교 보드 — 공지 카드에 함께 순환) */
 async function loadLost(){
@@ -1309,7 +1424,7 @@ async function boot(){
   applyClassMode(); updatePeriod(); buildGoClass();
   if(DEMO){ renderDemo(); return; } // 데모: 정적 샘플만 (네트워크/실시간 없음)
   await loadConfig();
-  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadLiveTimetable(), loadMeal(), loadWeather(), loadAir()]);
+  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadVideos(), loadLiveTimetable(), loadMeal(), loadWeather(), loadAir()]);
   subscribe();
 }
 boot();
@@ -1330,7 +1445,7 @@ setInterval(()=>{
 setInterval(updatePeriod, 20000); // 현재 교시 표시 갱신
 if(!DEMO){
   setInterval(loadCalls, 30000); // 호출은 30초마다 (실시간 보조)
-  setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
+  setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); loadVideos(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
   setInterval(loadMeal, 3600000);          // 급식 1시간마다
   setInterval(loadTimetableNEIS, 3600000); // NEIS 시간표 1시간마다
   setInterval(loadWeekTT, 21600000);       // 주간 시간표 6시간마다
