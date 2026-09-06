@@ -2964,7 +2964,7 @@ function gbuLoad(){
       var c = rq.result;
       if(c){
         var v = c.value;
-        try{ out.push({ id:v.id, name:v.name, url:URL.createObjectURL(v.blob) }); }catch(e){}
+        try{ out.push({ id:v.id, name:v.name, slot:(v.slot || 'bgm'), url:URL.createObjectURL(v.blob) }); }catch(e){}
         c.continue();
       } else {
         GBU = out; _gbuBusy = false;
@@ -2975,27 +2975,68 @@ function gbuLoad(){
   }).catch(function(){ GBU = []; _gbuBusy = false; });
 }
 function gbuAdd(input){
-  var fs = input.files;
-  input.value = '';                       /* 같은 파일을 다시 골라도 들어가게 */
-  if(!fs || !fs.length) return;
-  var picked = [], i, f;
-  for(i=0;i<fs.length;i++){
+  /* ⚠️ input.files 는 «살아 있는» 목록이라 input.value='' 를 먼저 하면 그 자리에서
+     비어버린다. 그래서 파일을 배열로 다 옮겨 담은 «뒤에» 입력칸을 비운다. */
+  var fs = input.files, picked = [], i, f;
+  for(i=0;i<(fs ? fs.length : 0);i++){
     f = fs[i];
-    if(/^audio\//.test(f.type || '') || /\.(mp3|m4a|ogg|wav|aac)$/i.test(f.name)) picked.push(f);
+    if(/^audio\//.test(f.type || '') || /\.(mp3|m4a|ogg|wav|aac|flac|opus)$/i.test(f.name)) picked.push(f);
   }
-  if(!picked.length){ toast('음악 파일이 아니에요'); return; }
+  input.value = '';                       /* 같은 파일을 다시 골라도 들어가게 */
+  if(!picked.length){ toast(fs && fs.length ? '음악 파일이 아니에요' : '고른 파일이 없어요'); return; }
   gbuDB().then(function(d){
     var tx = d.transaction('snd','readwrite'), st = tx.objectStore('snd');
     if(!GBU) GBU = [];
     for(var j=0;j<picked.length;j++){
       var g = picked[j];
-      var rec = { id:'u_' + Date.now().toString(36) + j, name:g.name.replace(/\.[^.]+$/, ''), blob:g };
+      var rec = { id:'u_' + Date.now().toString(36) + j, name:gbuTidy(g.name), slot:'bgm', blob:g };
       st.put(rec);
-      try{ GBU.push({ id:rec.id, name:rec.name, url:URL.createObjectURL(g) }); }catch(e){}
+      try{ GBU.push({ id:rec.id, name:rec.name, slot:'bgm', url:URL.createObjectURL(g) }); }catch(e){}
     }
-    tx.oncomplete = function(){ toast('음악 ' + picked.length + '개를 넣었어요'); renderGB(); };
-    tx.onerror    = function(){ toast('넣지 못했어요 — 저장 공간을 확인해 주세요'); };
+    tx.oncomplete = function(){
+      toast('음악 ' + picked.length + '개를 넣었어요 · 이름과 자리를 정해주세요');
+      _gbuEdit = true;        /* 넣자마자 관리 칸을 펴 준다 — 파일 이름이 대개 길다 */
+      renderGB();
+    };
+    tx.onerror = function(){ toast('넣지 못했어요 — 저장 공간을 확인해 주세요'); };
   }).catch(function(){ toast('이 브라우저에는 넣을 수 없어요'); });
+}
+/* 내려받은 파일 이름은 대개 지저분하다 — 확장자·화질표기·업로더 꼬리를 떼어 준다 */
+function gbuTidy(n){
+  return String(n)
+    .replace(/\.[^.]+$/, '')
+    .replace(/\s*\((?:\d{2,4}k|\d{3,4}p|공식|가사[^)]*|[^)]*자막[^)]*)\)\s*/gi, ' ')
+    .replace(/\s*-\s*(?:Topic|[^-]*뮤직\s*라이브러리)\s*$/i, '')
+    .replace(/[【】［］]/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .slice(0, 28) || '내 음악';
+}
+function gbuRename(id){
+  var it = gbuAt(id); if(!it) return;
+  var n = prompt('이 음악을 뭐라고 부를까요?\n(예: 긴장감 3)', it.name);
+  if(n === null) return;
+  n = n.trim().slice(0, 28); if(!n) return;
+  gbuPatch(id, { name: n });
+}
+function gbuSlot(id, slot){ gbuPatch(id, { slot: slot }); }
+/* 저장된 알맹이(blob)는 그대로 두고 이름·자리만 고쳐 쓴다.
+   ⚠️ 이름과 자리를 연달아 바꾸면 두 번의 «읽고 → 고쳐 → 쓰기»가 겹쳐서 뒤엣것이
+   앞엣것을 지운다. 그래서 화면 값(it)을 먼저 바꾸고, 저장할 때는 언제 끝나든
+   «그 시점의 화면 값»을 통째로 받아 적는다 — 겹쳐도 같은 결과로 모인다. */
+function gbuPatch(id, patch){
+  var it = gbuAt(id); if(!it) return;
+  for(var k in patch) it[k] = patch[k];
+  gbuDB().then(function(d){
+    var st = d.transaction('snd','readwrite').objectStore('snd'), rq = st.get(id);
+    rq.onsuccess = function(){
+      var rec = rq.result; if(!rec) return;
+      rec.name = it.name; rec.slot = it.slot || 'bgm';
+      st.put(rec);
+    };
+  }).catch(function(){});
+  if(it.slot === 'award' && gbBgmKey() === id) gbPickBgm('tense1');
+  else renderGB();
 }
 function gbuDel(id){
   var it = gbuAt(id); if(!it) return;
@@ -3005,7 +3046,8 @@ function gbuDel(id){
     GBU = GBU.filter(function(x){ return x.id !== id; });
     try{ URL.revokeObjectURL(it.url); }catch(e){}
     delete _gbAud[id];
-    if(gbBgmKey() === id) gbPickBgm('tense1');    /* 틀던 곡을 뺐으면 기본으로 */
+    if(_gbAwardKey === id) gbAwardStop();          /* 시상식에서 틀고 있었으면 멎는다 */
+    if(gbBgmKey() === id) gbPickBgm('tense1');     /* 틀던 곡을 뺐으면 기본으로 */
     else renderGB();
   }).catch(function(){});
 }
@@ -3032,7 +3074,10 @@ function gbSetVol(v){
   v = Math.max(0, Math.min(1, (parseFloat(v) || 0) / 100));
   try{ localStorage.setItem('gb_vol', String(v)); }catch(e){}
   if(_gbBgm){ try{ _gbBgm.volume = gbBgmVol(); }catch(e){} }
-  for(var k in _gbAud){ if(_gbAud[k] !== _gbBgm){ try{ _gbAud[k].volume = v; }catch(e){} } }
+  if(_gbAwardAud){ try{ _gbAwardAud.volume = gbBgmVol(); }catch(e){} }
+  for(var k in _gbAud){
+    if(_gbAud[k] !== _gbBgm && _gbAud[k] !== _gbAwardAud){ try{ _gbAud[k].volume = v; }catch(e){} }
+  }
   var lab = document.getElementById('gbVolLab');
   if(lab) lab.textContent = Math.round(v * 100) + '%';
 }
@@ -3040,7 +3085,7 @@ function gbBgmKey(){ try{ return localStorage.getItem('gb_bgm') || 'tense1'; }ca
 function gbToggleSnd(){
   var on = !gbSndOn();
   try{ localStorage.setItem('gb_snd', on ? 'on' : 'off'); }catch(e){}
-  if(!on) gbStopBgm();
+  if(!on){ gbStopBgm(); gbAwardStop(); }
   renderGB();
 }
 function gbPickBgm(k){
@@ -3071,6 +3116,7 @@ function gbPlayBgm(){
   var k = gbBgmKey();
   if(!gbSndOn() || k === 'off') return;
   var a = gbAudio(k); if(!a) return;
+  gbAwardStop();                  /* 시상식곡이 돌고 있었으면 겹치지 않게 멎힌다 */
   a.loop = true; a.volume = gbBgmVol();
   _gbBgm = a;
   try{ var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
@@ -3080,37 +3126,99 @@ function gbStopBgm(){
   try{ _gbBgm.pause(); _gbBgm.currentTime = 0; }catch(e){}
   _gbBgm = null;
 }
+/* ── 🏅 시상식 음악 ────────────────────────────────────────────────────────
+   배경음과 다른 줄에 둔다. 시상식은 «틀어놓고 도장을 찍는» 순간이라 미리 골라두는
+   게 아니라 그때 눌러서 고른다. 배경음 줄과 채널이 달라서, 누르면 배경음은 멎고
+   고른 곡이 반복 재생된다. ── */
+var _gbAwardAud = null, _gbAwardKey = null;
+function gbAwardPlay(key){
+  gbStopBgm();
+  gbAwardStop();
+  if(!gbSndOn()) return;
+  var a = gbAudio(key); if(!a) return;
+  a.loop = true; a.volume = gbBgmVol();
+  _gbAwardAud = a; _gbAwardKey = key;
+  try{ a.currentTime = 0; var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+  renderGB();
+}
+function gbAwardStop(){
+  if(_gbAwardAud){ try{ _gbAwardAud.pause(); _gbAwardAud.currentTime = 0; }catch(e){} }
+  _gbAwardAud = null; _gbAwardKey = null;
+}
+function gbAwardOff(){ gbAwardStop(); renderGB(); }
+function gbuBySlot(s){
+  gbuLoad();
+  return (GBU || []).filter(function(x){ return (x.slot || 'bgm') === s; });
+}
+
 /* 음향 조작 줄 */
+var _gbuEdit = false;
+function gbuToggleEdit(){ _gbuEdit = !_gbuEdit; renderGB(); }
+
 function gbSndBar(){
-  var on = gbSndOn(), k = gbBgmKey();
+  var on = gbSndOn(), k = gbBgmKey(), i;
+  var lab = 'font-size:11px;color:var(--mute);font-weight:700';
   var h = '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:9px">' +
           '<button class="chip sm" onclick="gbToggleSnd()">' + (on ? '🔊 소리 켜짐' : '🔇 소리 꺼짐') + '</button>';
-  if(on){
-    h += '<span style="font-size:11px;color:var(--mute);font-weight:700">배경음</span>';
-    for(var i=0;i<GB_BGM_LIST.length;i++){
-      if(GB_BGM_LIST[i].k === 'off') continue;        /* 「끄기」는 내 음악 뒤로 민다 */
-      h += '<button class="chip sm' + (k===GB_BGM_LIST[i].k?' on':'') +
-           '" onclick="gbPickBgm(\'' + GB_BGM_LIST[i].k + '\')">' + GB_BGM_LIST[i].n + '</button>';
-    }
-    gbuLoad();
-    var mine = GBU || [];
-    for(i=0;i<mine.length;i++){
-      h += '<span class="chip sm' + (k===mine[i].id?' on':'') +
-           '" style="display:inline-flex;align-items:center;gap:7px">' +
-           '<b onclick="gbPickBgm(\'' + mine[i].id + '\')" style="cursor:pointer;font-weight:800">🎵 ' +
-           esc(mine[i].name) + '</b>' +
-           '<b onclick="gbuDel(\'' + mine[i].id + '\')" style="cursor:pointer;opacity:.5">✕</b></span>';
-    }
-    h += '<label class="chip sm" style="cursor:pointer">＋ 내 음악' +
-         '<input type="file" accept="audio/*" multiple style="display:none" onchange="gbuAdd(this)"></label>' +
-         '<button class="chip sm' + (k==='off'?' on':'') + '" onclick="gbPickBgm(\'off\')">끄기</button>';
-    h += '</div><div style="display:flex;gap:9px;align-items:center;margin-top:8px">' +
-         '<span style="font-size:11px;color:var(--mute);font-weight:700;flex:0 0 auto">🔉 크기</span>' +
-         '<input type="range" min="0" max="100" step="5" value="' + Math.round(gbVol()*100) + '"' +
-         ' oninput="gbSetVol(this.value)" style="flex:1;min-width:110px;accent-color:var(--ac)">' +
-         '<b id="gbVolLab" style="flex:0 0 auto;font-size:12px;color:var(--ac-d);min-width:38px;text-align:right">' +
-         Math.round(gbVol()*100) + '%</b>';
+  if(!on) return h + '</div>';
+
+  /* ── 배경음 ── */
+  h += '<span style="' + lab + '">배경음</span>';
+  for(i=0;i<GB_BGM_LIST.length;i++){
+    if(GB_BGM_LIST[i].k === 'off') continue;          /* 「끄기」는 내 음악 뒤로 민다 */
+    h += '<button class="chip sm' + (k===GB_BGM_LIST[i].k?' on':'') +
+         '" onclick="gbPickBgm(\'' + GB_BGM_LIST[i].k + '\')">' + GB_BGM_LIST[i].n + '</button>';
   }
+  var bgm = gbuBySlot('bgm');
+  for(i=0;i<bgm.length;i++){
+    h += '<button class="chip sm' + (k===bgm[i].id?' on':'') +
+         '" onclick="gbPickBgm(\'' + bgm[i].id + '\')">🎵 ' + esc(bgm[i].name) + '</button>';
+  }
+  h += '<label class="chip sm" style="cursor:pointer">＋ 내 음악' +
+       '<input type="file" accept="audio/*" multiple style="display:none" onchange="gbuAdd(this)"></label>' +
+       '<button class="chip sm' + (k==='off'?' on':'') + '" onclick="gbPickBgm(\'off\')">끄기</button>' +
+       ((GBU && GBU.length) ? '<button class="chip sm" onclick="gbuToggleEdit()">' +
+         (_gbuEdit ? '접기' : '🎵 음악 관리') + '</button>' : '') +
+       '</div>';
+
+  /* ── 시상식 ── */
+  var aw = gbuBySlot('award');
+  h += '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:7px">' +
+       '<span style="' + lab + '">🏅 시상식</span>' +
+       '<button class="chip sm' + (_gbAwardKey==='award'?' on':'') +
+       '" onclick="gbAwardPlay(\'award\')">기본 시상식</button>';
+  for(i=0;i<aw.length;i++){
+    h += '<button class="chip sm' + (_gbAwardKey===aw[i].id?' on':'') +
+         '" onclick="gbAwardPlay(\'' + aw[i].id + '\')">🎵 ' + esc(aw[i].name) + '</button>';
+  }
+  h += '<button class="chip sm' + (_gbAwardKey?'':' on') + '" onclick="gbAwardOff()">■ 멈춤</button>' +
+       '</div>';
+
+  /* ── 관리: 이름 바꾸기 · 배경음↔시상식 · 빼기 ── */
+  if(_gbuEdit && GBU && GBU.length){
+    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-top:9px;padding-top:9px;' +
+         'border-top:2px dashed var(--line)">';
+    for(i=0;i<GBU.length;i++){
+      var m = GBU[i], s = m.slot || 'bgm';
+      h += '<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:7px 9px;' +
+           'border:2px solid var(--line);border-radius:12px;background:#fff">' +
+           '<b style="flex:1;min-width:110px;font-size:12.5px">🎵 ' + esc(m.name) + '</b>' +
+           '<button class="chip sm" onclick="gbuRename(\'' + m.id + '\')">이름</button>' +
+           '<button class="chip sm' + (s==='bgm'?' on':'') + '" onclick="gbuSlot(\'' + m.id + '\',\'bgm\')">배경음</button>' +
+           '<button class="chip sm' + (s==='award'?' on':'') + '" onclick="gbuSlot(\'' + m.id + '\',\'award\')">시상식</button>' +
+           '<button class="chip sm" onclick="gbuDel(\'' + m.id + '\')">✕</button>' +
+           '</div>';
+    }
+    h += '<div style="' + lab + ';line-height:1.6">이 음악들은 이 기기에만 있어요 — 다른 기기에서는 다시 넣어야 합니다.</div></div>';
+  }
+
+  /* ── 크기 ── */
+  h += '<div style="display:flex;gap:9px;align-items:center;margin-top:8px">' +
+       '<span style="' + lab + ';flex:0 0 auto">🔉 크기</span>' +
+       '<input type="range" min="0" max="100" step="5" value="' + Math.round(gbVol()*100) + '"' +
+       ' oninput="gbSetVol(this.value)" style="flex:1;min-width:110px;accent-color:var(--ac)">' +
+       '<b id="gbVolLab" style="flex:0 0 auto;font-size:12px;color:var(--ac-d);min-width:38px;text-align:right">' +
+       Math.round(gbVol()*100) + '%</b>';
   return h + '</div>';
 }
 
@@ -3597,7 +3705,7 @@ async function gbDoAward(ids, upto, partial){
       alert('⚠️ ' + rows.length + '명에게 찍으려 했는데 ' + saved + '명만 저장됐어요.\n' +
             '「👥 학생」 탭에서 확인해 주세요.');
     }
-    gbStopBgm(); gbSfx('award');
+    gbAwardPlay('award');   /* 기본 시상식곡으로 시작 — 다른 곡은 시상식 줄에서 눌러 바꾼다 */
     gbClear();
     await loadTeacherObs(); await loadStudents();
     closeGB();
