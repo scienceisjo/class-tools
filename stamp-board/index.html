@@ -3139,13 +3139,34 @@ function gbAwardPlay(key){
   a.loop = true; a.volume = gbBgmVol();
   _gbAwardAud = a; _gbAwardKey = key;
   try{ a.currentTime = 0; var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+  gbAwardFloat();
   renderGB();
 }
 function gbAwardStop(){
   if(_gbAwardAud){ try{ _gbAwardAud.pause(); _gbAwardAud.currentTime = 0; }catch(e){} }
   _gbAwardAud = null; _gbAwardKey = null;
+  gbAwardFloat();
 }
 function gbAwardOff(){ gbAwardStop(); renderGB(); }
+
+/* 도장을 찍으면 「도장 주기」 탭으로 넘어가서 골든벨 화면이 사라진다. 그때도
+   음악은 계속 나가야 하니, 어느 탭에 있든 멈출 수 있는 줄을 띄워 둔다. */
+function gbAwardFloat(){
+  var el = document.getElementById('gbAwardFloat');
+  if(!_gbAwardAud){ if(el) el.parentNode.removeChild(el); return; }
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'gbAwardFloat';
+    el.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:70;' +
+      'display:flex;align-items:center;gap:9px;padding:8px 10px 8px 15px;border-radius:999px;' +
+      'background:var(--card);border:2px solid var(--ac);box-shadow:0 6px 22px rgba(0,0,0,.18);' +
+      'font-size:12.5px;font-weight:800;max-width:92vw';
+    document.body.appendChild(el);
+  }
+  var nm = _gbAwardKey === 'award' ? '기본 시상식' : ((gbuAt(_gbAwardKey) || {}).name || '시상식 음악');
+  el.innerHTML = '<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🏅 ' + esc(nm) + '</span>' +
+                 '<button class="chip sm" onclick="gbAwardOff()">■ 멈춤</button>';
+}
 function gbuBySlot(s){
   gbuLoad();
   return (GBU || []).filter(function(x){ return (x.slot || 'bgm') === s; });
@@ -3155,7 +3176,19 @@ function gbuBySlot(s){
 var _gbuEdit = false;
 function gbuToggleEdit(){ _gbuEdit = !_gbuEdit; renderGB(); }
 
-function gbSndBar(){
+/* 시상식 곡 단추들 — 소리 줄에도, 결과 화면의 큰 칸에도 같은 걸 쓴다 */
+function gbAwardChips(sz){
+  var aw = gbuBySlot('award'), h = '', i;
+  h += '<button class="chip' + sz + (_gbAwardKey==='award'?' on':'') +
+       '" onclick="gbAwardPlay(\'award\')">기본 시상식</button>';
+  for(i=0;i<aw.length;i++){
+    h += '<button class="chip' + sz + (_gbAwardKey===aw[i].id?' on':'') +
+         '" onclick="gbAwardPlay(\'' + aw[i].id + '\')">🎵 ' + esc(aw[i].name) + '</button>';
+  }
+  return h + '<button class="chip' + sz + (_gbAwardKey?'':' on') + '" onclick="gbAwardOff()">■ 멈춤</button>';
+}
+
+function gbSndBar(noAward){
   var on = gbSndOn(), k = gbBgmKey(), i;
   var lab = 'font-size:11px;color:var(--mute);font-weight:700';
   var h = '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:9px">' +
@@ -3181,18 +3214,11 @@ function gbSndBar(){
          (_gbuEdit ? '접기' : '🎵 음악 관리') + '</button>' : '') +
        '</div>';
 
-  /* ── 시상식 ── */
-  var aw = gbuBySlot('award');
-  h += '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:7px">' +
-       '<span style="' + lab + '">🏅 시상식</span>' +
-       '<button class="chip sm' + (_gbAwardKey==='award'?' on':'') +
-       '" onclick="gbAwardPlay(\'award\')">기본 시상식</button>';
-  for(i=0;i<aw.length;i++){
-    h += '<button class="chip sm' + (_gbAwardKey===aw[i].id?' on':'') +
-         '" onclick="gbAwardPlay(\'' + aw[i].id + '\')">🎵 ' + esc(aw[i].name) + '</button>';
+  /* ── 시상식 (결과 화면에서는 따로 큰 칸으로 보여주니 여기서는 뺀다) ── */
+  if(!noAward){
+    h += '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:7px">' +
+         '<span style="' + lab + '">🏅 시상식</span>' + gbAwardChips(' sm') + '</div>';
   }
-  h += '<button class="chip sm' + (_gbAwardKey?'':' on') + '" onclick="gbAwardOff()">■ 멈춤</button>' +
-       '</div>';
 
   /* ── 관리: 이름 바꾸기 · 배경음↔시상식 · 빼기 ── */
   if(_gbuEdit && GBU && GBU.length){
@@ -3607,6 +3633,17 @@ function renderGB(){
        (alive.length ? alive.length + '명 생존!' : '끝까지 간 사람이 없어요') + '</div>' +
        '<div class="sub">' + cls + ' · ' + GB.total + '문제</div></div>';
 
+  /* 🏅 시상식 음악 — 여기가 «틀 곡을 고르는» 자리다. 도장을 찍고 탭이 넘어가도
+     고른 곡은 계속 나가고, 아래쪽 떠 있는 줄에서 멈출 수 있다. */
+  h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">🏅 시상식 음악</h3>' +
+       (gbSndOn() ? '' : '<span class="chip sm" onclick="gbToggleSnd()">🔇 소리가 꺼져 있어요</span>') + '</div>' +
+       '<div class="sub">눌러서 고르세요 · 도장을 찍는 동안 계속 나옵니다</div>' +
+       '<div class="chips" style="margin-top:10px">' + gbAwardChips('') + '</div>' +
+       (gbuBySlot('award').length ? '' :
+         '<div class="sub" style="margin-top:8px">넣어둔 곡을 여기에 띄우려면 준비 화면에서 ' +
+         '<b>＋ 내 음악</b>으로 넣고 <b>🎵 음악 관리</b>에서 자리를 <b>시상식</b>으로 옮기세요</div>') +
+       '</div>';
+
   if(alive.length){
     h += '<div class="card"><h3 style="font-size:var(--fs-s)">🏅 끝까지 남은 사람</h3>' +
          '<div class="sub" style="margin:6px 0 9px">이 사람들에게 도장을 찍습니다</div>' +
@@ -3630,6 +3667,8 @@ function renderGB(){
   }
   h += '<div class="card"><h3 style="font-size:var(--fs-s)">문제별 탈락</h3>' +
        '<div class="sub" style="margin-top:6px">' + perRound.join(' · ') + '</div></div>';
+
+  h += '<div class="card">' + gbSndBar(true) + '</div>';   /* 시상식 줄은 위 칸에 있다 */
 
   h += '<div class="card"><div style="display:flex;gap:8px">' +
        '<button class="chip sm" style="flex:1" onclick="gbBack()">↩ 앞 문제로</button>' +
@@ -3705,7 +3744,8 @@ async function gbDoAward(ids, upto, partial){
       alert('⚠️ ' + rows.length + '명에게 찍으려 했는데 ' + saved + '명만 저장됐어요.\n' +
             '「👥 학생」 탭에서 확인해 주세요.');
     }
-    gbAwardPlay('award');   /* 기본 시상식곡으로 시작 — 다른 곡은 시상식 줄에서 눌러 바꾼다 */
+    /* 결과 화면에서 이미 곡을 고르셨으면 그걸 그대로 둔다 — 골라둔 게 없을 때만 기본곡 */
+    if(!_gbAwardKey) gbAwardPlay('award');
     gbClear();
     await loadTeacherObs(); await loadStudents();
     closeGB();
