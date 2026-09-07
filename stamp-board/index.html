@@ -3091,7 +3091,11 @@ function gbToggleSnd(){
 function gbPickBgm(k){
   try{ localStorage.setItem('gb_bgm', k); }catch(e){}
   gbStopBgm();
-  if(k !== 'off' && gbSndOn() && GB && GB.ready && !GB.done) gbPlayBgm();
+  /* 예전에는 «골든벨이 돌고 있을 때»만 틀었다(GB.ready && !GB.done). 그래서 준비
+     화면이나 결과 화면에서 배경음 칩을 눌러도 아무 소리가 안 났다 — 시상식 단추는
+     바로 나는데 배경음만 안 나던 이유가 이것이다. 이제 소리가 켜져 있으면 누르는
+     즉시 튼다. 멈추려면 「끄기」. */
+  if(k !== 'off' && gbSndOn()) gbPlayBgm();
   renderGB();
 }
 
@@ -3120,11 +3124,13 @@ function gbPlayBgm(){
   a.loop = true; a.volume = gbBgmVol();
   _gbBgm = a;
   try{ var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+  gbNowBar();
 }
 function gbStopBgm(){
   if(!_gbBgm) return;
   try{ _gbBgm.pause(); _gbBgm.currentTime = 0; }catch(e){}
   _gbBgm = null;
+  gbNowBar();
 }
 /* ── 🏅 시상식 음악 ────────────────────────────────────────────────────────
    배경음과 다른 줄에 둔다. 시상식은 «틀어놓고 도장을 찍는» 순간이라 미리 골라두는
@@ -3139,33 +3145,122 @@ function gbAwardPlay(key){
   a.loop = true; a.volume = gbBgmVol();
   _gbAwardAud = a; _gbAwardKey = key;
   try{ a.currentTime = 0; var p = a.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
-  gbAwardFloat();
+  gbNowBar();
   renderGB();
 }
 function gbAwardStop(){
   if(_gbAwardAud){ try{ _gbAwardAud.pause(); _gbAwardAud.currentTime = 0; }catch(e){} }
   _gbAwardAud = null; _gbAwardKey = null;
-  gbAwardFloat();
+  gbNowBar();
 }
 function gbAwardOff(){ gbAwardStop(); renderGB(); }
 
-/* 도장을 찍으면 「도장 주기」 탭으로 넘어가서 골든벨 화면이 사라진다. 그때도
-   음악은 계속 나가야 하니, 어느 탭에 있든 멈출 수 있는 줄을 띄워 둔다. */
-function gbAwardFloat(){
-  var el = document.getElementById('gbAwardFloat');
-  if(!_gbAwardAud){ if(el) el.parentNode.removeChild(el); return; }
+/* ── ▶ 지금 나오는 소리 ────────────────────────────────────────────────────
+   배경음이든 시상식곡이든 한 줄에서 다룬다. 도장을 찍으면 「도장 주기」 탭으로
+   넘어가 골든벨 화면이 사라지므로, 이 줄은 어느 탭에서든 떠 있게 둔다.
+   재생 위치를 끌어 옮길 수 있다 — 긴 노래의 후렴부터 틀 때 쓴다.
+   ────────────────────────────────────────────────────────────────────────── */
+var _gbSeekIv = null, _gbSeekDrag = false, _gbNowTag = '';
+
+function gbNowAud(){ return _gbAwardAud || _gbBgm; }
+function gbNowName(){
+  var k, i;
+  if(_gbAwardAud){
+    k = _gbAwardKey;
+    return k === 'award' ? '기본 시상식' : ((gbuAt(k) || {}).name || '시상식 음악');
+  }
+  if(_gbBgm){
+    k = gbBgmKey();
+    for(i=0;i<GB_BGM_LIST.length;i++) if(GB_BGM_LIST[i].k === k) return GB_BGM_LIST[i].n;
+    return (gbuAt(k) || {}).name || '배경음';
+  }
+  return '';
+}
+function gbNowStop(){ if(_gbAwardAud) gbAwardOff(); else gbPickBgm('off'); }
+function gbNowToggle(){
+  var a = gbNowAud(); if(!a) return;
+  try{
+    if(a.paused){ var p = a.play(); if(p && p.catch) p.catch(function(){}); }
+    else a.pause();
+  }catch(e){}
+  gbSeekPaint();
+}
+function gbFmtT(s){
+  if(!isFinite(s) || s < 0) return '--:--';
+  s = Math.floor(s);
+  return Math.floor(s/60) + ':' + ('0' + (s % 60)).slice(-2);
+}
+
+function gbNowBar(){
+  var a = gbNowAud(), el = document.getElementById('gbNowBar');
+  if(!a){
+    if(el && el.parentNode) el.parentNode.removeChild(el);
+    _gbNowTag = '';
+    if(_gbSeekIv){ clearInterval(_gbSeekIv); _gbSeekIv = null; }
+    return;
+  }
   if(!el){
     el = document.createElement('div');
-    el.id = 'gbAwardFloat';
-    el.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:70;' +
-      'display:flex;align-items:center;gap:9px;padding:8px 10px 8px 15px;border-radius:999px;' +
-      'background:var(--card);border:2px solid var(--ac);box-shadow:0 6px 22px rgba(0,0,0,.18);' +
-      'font-size:12.5px;font-weight:800;max-width:92vw';
+    el.id = 'gbNowBar';
+    el.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:70;' +
+      'display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center;' +
+      'padding:9px 13px;border-radius:18px;background:var(--card);border:2px solid var(--ac);' +
+      'box-shadow:0 6px 22px rgba(0,0,0,.18);font-size:12px;font-weight:800;width:min(560px,94vw)';
     document.body.appendChild(el);
   }
-  var nm = _gbAwardKey === 'award' ? '기본 시상식' : ((gbuAt(_gbAwardKey) || {}).name || '시상식 음악');
-  el.innerHTML = '<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🏅 ' + esc(nm) + '</span>' +
-                 '<button class="chip sm" onclick="gbAwardOff()">■ 멈춤</button>';
+  /* 곡이 바뀔 때만 다시 그린다 — 끌고 있는 손잡이를 도로 뺏지 않으려고 */
+  var tag = _gbAwardAud ? ('a:' + _gbAwardKey) : ('b:' + gbBgmKey());
+  if(tag !== _gbNowTag){
+    _gbNowTag = tag;
+    el.innerHTML =
+      '<span style="flex:1 0 100%;text-align:center;white-space:nowrap;overflow:hidden;' +
+      'text-overflow:ellipsis">' + (_gbAwardAud ? '🏅 ' : '🎵 ') + esc(gbNowName()) + '</span>' +
+      '<b id="gbSeekCur" style="font-size:11.5px;color:var(--ac-d);min-width:34px;text-align:right">0:00</b>' +
+      '<input type="range" id="gbSeekBar" min="0" max="1000" step="1" value="0"' +
+      ' oninput="gbSeekInput(this)" onchange="gbSeekApply(this)"' +
+      ' style="flex:1;min-width:110px;accent-color:var(--ac)">' +
+      '<b id="gbSeekDur" style="font-size:11.5px;color:var(--mute);min-width:34px">--:--</b>' +
+      '<button class="chip sm" onclick="gbSeekBy(-10)">−10초</button>' +
+      '<button class="chip sm" onclick="gbSeekBy(10)">+10초</button>' +
+      '<button class="chip sm" id="gbSeekPlay" onclick="gbNowToggle()">⏸ 잠깐</button>' +
+      '<button class="chip sm" onclick="gbNowStop()">■ 멈춤</button>';
+  }
+  if(!_gbSeekIv) _gbSeekIv = setInterval(gbSeekPaint, 400);
+  gbSeekPaint();
+}
+
+function gbSeekPaint(){
+  var a = gbNowAud(), bar = document.getElementById('gbSeekBar');
+  if(!a || !bar){ if(_gbSeekIv){ clearInterval(_gbSeekIv); _gbSeekIv = null; } return; }
+  var cur = document.getElementById('gbSeekCur'),
+      dur = document.getElementById('gbSeekDur'),
+      pp  = document.getElementById('gbSeekPlay'),
+      d   = a.duration;
+  if(!_gbSeekDrag){                          /* 끄는 중에는 손잡이를 건드리지 않는다 */
+    bar.value = (isFinite(d) && d > 0) ? Math.round(a.currentTime / d * 1000) : 0;
+    if(cur) cur.textContent = gbFmtT(a.currentTime);
+  }
+  if(dur) dur.textContent = gbFmtT(d);
+  if(pp)  pp.textContent  = a.paused ? '▶ 이어서' : '⏸ 잠깐';
+}
+function gbSeekInput(el){
+  _gbSeekDrag = true;
+  var a = gbNowAud(), cur = document.getElementById('gbSeekCur');
+  if(a && cur && isFinite(a.duration)) cur.textContent = gbFmtT(a.duration * el.value / 1000);
+}
+function gbSeekApply(el){
+  var a = gbNowAud();
+  if(a && isFinite(a.duration) && a.duration > 0){
+    try{ a.currentTime = a.duration * el.value / 1000; }catch(e){}
+  }
+  _gbSeekDrag = false;
+  gbSeekPaint();
+}
+function gbSeekBy(sec){
+  var a = gbNowAud(); if(!a) return;
+  var lim = isFinite(a.duration) ? a.duration - 0.3 : 1e9;
+  try{ a.currentTime = Math.max(0, Math.min(lim, a.currentTime + sec)); }catch(e){}
+  gbSeekPaint();
 }
 function gbuBySlot(s){
   gbuLoad();
