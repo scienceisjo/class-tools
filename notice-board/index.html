@@ -219,6 +219,9 @@
   .listrow .t{font-weight:600}
   .listrow .loc{color:var(--sub);font-weight:600;margin-left:.4rem;font-size:1rem}
   .ttc .chg{font-weight:800}
+  /* 🔁 컴시간에서 결보강으로 바뀐 교시 */
+  .ttchgb{display:inline-flex;align-items:center;background:rgba(239,59,70,.12);color:var(--urgent);
+    font-size:.95rem;font-weight:900;border-radius:.4rem;padding:.05rem .45rem;margin-left:.45rem}
   .ttc .arrow{color:var(--accent);margin:0 .3rem}
   .ttc .who{color:var(--sub);font-weight:700;min-width:5rem;flex:0 0 auto}
 
@@ -284,6 +287,29 @@
   #offline.show{display:block}
   .scroller{animation:vscroll 30s linear infinite}
   @keyframes vscroll{0%,10%{transform:translateY(0)}90%,100%{transform:translateY(calc(-100% + 12rem))}}
+
+  /* ═══ 🏫 처음 여셨을 때 — 반 고르기 · 고정하기 ═══════════════ */
+  .setup{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+    background:rgba(15,23,42,.55);padding:2rem;backdrop-filter:blur(3px)}
+  .setup.show{display:flex}
+  .setup .sheet{background:#fff;border-radius:1.4rem;padding:2.2rem 2.6rem;max-width:64rem;width:100%;
+    max-height:92vh;overflow:auto;box-shadow:0 2rem 5rem rgba(0,0,0,.3)}
+  .setup h2{font-size:2.1rem;font-weight:900;margin-bottom:.5rem}
+  .setup .sub{font-size:1.3rem;color:var(--sub);margin-bottom:1.6rem;line-height:1.6}
+  .setup .grow{display:flex;align-items:center;gap:.9rem;margin-bottom:.7rem;flex-wrap:wrap}
+  .setup .glabel{font-size:1.35rem;font-weight:900;color:var(--accent);width:5.5rem;flex:0 0 auto}
+  .setup .cbtn{border:1.5px solid var(--line);background:#fff;color:var(--txt);border-radius:.7rem;
+    padding:.6rem 1.05rem;font-size:1.3rem;font-weight:800;font-family:inherit;cursor:pointer;min-width:3.6rem}
+  .setup .cbtn:hover{border-color:var(--accent);background:#eff6ff;color:var(--accent)}
+  .setup .foot{margin-top:1.6rem;padding-top:1.2rem;border-top:1px solid var(--line);
+    display:flex;gap:.8rem;align-items:center;flex-wrap:wrap}
+  .setup .ghost{border:1.5px solid var(--line);background:#fff;color:var(--sub);border-radius:.7rem;
+    padding:.7rem 1.3rem;font-size:1.2rem;font-weight:800;font-family:inherit;cursor:pointer}
+  .setup .prim{border:none;background:var(--accent);color:#fff;border-radius:.7rem;
+    padding:.85rem 1.7rem;font-size:1.35rem;font-weight:900;font-family:inherit;cursor:pointer}
+  .setup ol{margin:0 0 1.2rem 1.4rem;font-size:1.3rem;line-height:2}
+  .setup .kbd{display:inline-block;background:#eff6ff;color:var(--accent);font-weight:900;
+    border-radius:.4rem;padding:.05rem .55rem}
 
   /* ═══ 🎬 영상 보기 ═══════════════════════════════════════════ */
   /* 볼 영상이 있을 때만 머리말에 전환 단추가 나타납니다 */
@@ -404,6 +430,33 @@
       </section>
     </div>
   </main>
+
+  <!-- 🏫 처음 여셨을 때 : 반 고르기 -->
+  <div class="setup" id="startPick">
+    <div class="sheet">
+      <h2>🏫 어느 반 화면을 띄우실까요?</h2>
+      <div class="sub">고르시면 그 반 전용 화면이 열립니다.
+        급식·시간표·우리 반 공지·청소당번이 그 반 것으로 나옵니다.</div>
+      <div id="pickRows"></div>
+      <div class="foot">
+        <button class="ghost" onclick="skipPick()">전교 화면 그대로 보기</button>
+        <span style="font-size:1.15rem;color:var(--sub)">현관·복도 화면이라면 이쪽을 고르세요</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📌 반을 고르신 뒤 : 고정 안내 -->
+  <div class="setup" id="pinGuide">
+    <div class="sheet">
+      <h2 id="pinTitle">📌 마지막입니다 — 이 화면 고정하기</h2>
+      <div class="sub" id="pinSub">한 번 고정해두시면 다음부터는 아이콘만 누르면 바로 열립니다.</div>
+      <div id="pinBody"></div>
+      <div class="foot">
+        <button class="prim" id="pinDo" onclick="doPin()">📌 지금 고정하기</button>
+        <button class="ghost" onclick="closePin()">나중에 할게요</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 🎬 영상 보기 -->
   <section id="videoStage">
@@ -560,6 +613,96 @@ function gotoClass(v){
   if(!v) return;
   const base = location.href.split('?')[0].split('#')[0];
   location.href = (v==='__all') ? base : `${base}?class=${v}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🏫 처음 여셨을 때 — 반 고르고, 화면 고정하기
+   ───────────────────────────────────────────────────────────────
+   선생님이 하실 일은 두 번 누르는 것뿐입니다.
+     joo.is/해누리중공지 → 우리 반 누르기 → 고정하기
+   ═══════════════════════════════════════════════════════════════ */
+const LS_SETUP = 'hnr_board_setup';      // 이 기기에서 설정을 마쳤는지
+
+function buildStartPick(){
+  const box=$('pickRows'); if(!box) return;
+  const byGrade={};
+  Object.keys(TT_BASE).forEach(k=>{
+    const [g,c]=k.split('-').map(Number);
+    (byGrade[g] ||= []).push(c);
+  });
+  box.innerHTML = Object.keys(byGrade).sort().map(g=>
+    `<div class="grow"><span class="glabel">${g}학년</span>`
+    + byGrade[g].sort((a,b)=>a-b).map(c=>
+        `<button class="cbtn" onclick="pickClass('${g}-${c}')">${c}반</button>`).join('')
+    + `</div>`).join('');
+}
+function pickClass(key){
+  try{ localStorage.setItem(LS_SETUP, 'pin'); }catch(e){}   // 다음 화면에서 고정 안내
+  gotoClass(key);
+}
+function skipPick(){
+  try{ localStorage.setItem(LS_SETUP, 'done'); }catch(e){}
+  $('startPick').classList.remove('show');
+}
+
+/* 고정 안내 — 기기에 맞는 방법을 보여줍니다 */
+let pinPrompt = null;
+addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); pinPrompt = e; });
+
+function isPhone(){ return window.innerWidth < 900 || /android|iphone|ipad/i.test(navigator.userAgent); }
+function isIOSDev(){ return /iphone|ipad|ipod/i.test(navigator.userAgent)
+  || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }
+
+function openPin(){
+  const phone = isPhone();
+  $('pinTitle').textContent = phone ? '📱 마지막입니다 — 홈 화면에 추가' : '📌 마지막입니다 — 작업표시줄에 고정';
+  $('pinSub').textContent   = phone
+    ? '한 번 추가해두시면 다음부터는 아이콘만 누르면 바로 열립니다.'
+    : '한 번 고정해두시면 쉬는 시간에 아이콘만 누르면 바로 켜집니다.';
+  $('pinDo').textContent    = phone ? '📱 지금 추가하기' : '📌 지금 고정하기';
+  $('pinDo').style.display  = pinPrompt ? 'inline-block' : 'none';
+
+  const steps = pinPrompt
+    ? `<div class="sub">아래 단추를 누르시고 <span class="kbd">설치</span>를 고르시면 끝입니다.</div>`
+    : isIOSDev()
+      ? `<ol><li>화면 아래 <span class="kbd">공유 ⬆️</span></li>
+           <li><span class="kbd">홈 화면에 추가</span></li>
+           <li>오른쪽 위 <span class="kbd">추가</span></li></ol>`
+      : phone
+        ? `<ol><li>오른쪽 위 <span class="kbd">⋮</span></li>
+             <li><span class="kbd">홈 화면에 추가</span></li>
+             <li><span class="kbd">설치</span></li></ol>`
+        : `<ol><li>주소창 오른쪽 끝 <span class="kbd">⋮</span> 를 누릅니다</li>
+             <li><span class="kbd">캐스트, 저장 및 공유</span> → <span class="kbd">페이지를 앱으로 설치</span></li>
+             <li>창이 하나 열리면, 작업표시줄의 그 아이콘에 <span class="kbd">마우스 오른쪽</span> →
+                 <span class="kbd">작업 표시줄에 고정</span></li></ol>
+           <div class="sub" style="margin:0">웨일 브라우저는 <span class="kbd">⋮</span> →
+             <span class="kbd">바로가기 만들기</span> 입니다.</div>`;
+  $('pinBody').innerHTML = steps;
+  $('pinGuide').classList.add('show');
+}
+function doPin(){
+  if(!pinPrompt) return;
+  pinPrompt.prompt();
+  pinPrompt.userChoice.then(()=>{ pinPrompt=null; closePin(); });
+}
+function closePin(){
+  try{ localStorage.setItem(LS_SETUP, 'done'); }catch(e){}
+  $('pinGuide').classList.remove('show');
+}
+
+function runSetup(){
+  let state=''; try{ state = localStorage.getItem(LS_SETUP)||''; }catch(e){}
+  const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches)
+                     || window.navigator.standalone === true;
+  if(CLASS_MODE){
+    // 반을 고르고 넘어오셨으면 고정 안내를 한 번 띄웁니다
+    if(state==='pin' && !standalone) setTimeout(openPin, 600);
+    return;
+  }
+  if(state) return;                    // 이미 전교 화면으로 정하신 기기
+  buildStartPick();
+  $('startPick').classList.add('show');
 }
 
 function applyClassMode(){
@@ -1031,24 +1174,38 @@ function schoolDayFor(dateObj){
 
 /* 서버에 매일 갱신되는 시간표가 있으면 그걸 우선 쓴다 (없으면 내장표 사용) */
 let TT_LIVE = null;          // { '2-3': [월,화,수,목,금], ... }
+let TT_CHG  = null;          // 같은 모양 — 그날 바뀐 교시 번호들
 let ttLiveAt = null;         // 마지막 갱신 시각
 async function loadLiveTimetable(){
   try{
-    const { data, error } = await sb.from('timetables').select('class_key,weekday,periods,updated_at');
+    let { data, error } = await sb.from('timetables')
+      .select('class_key,weekday,periods,changed,updated_at');
+    if(error){   // changed 칸을 아직 안 만드셨어도 시간표는 나오게
+      ({ data, error } = await sb.from('timetables').select('class_key,weekday,periods,updated_at'));
+    }
     if(error || !data || !data.length) return;      // 아직 준비 전이면 내장표 그대로
-    const map={};
+    const map={}, chgMap={};
     let latest=null;
     data.forEach(r=>{
       (map[r.class_key] ||= [null,null,null,null,null])[r.weekday-1] = r.periods;
+      (chgMap[r.class_key] ||= [null,null,null,null,null])[r.weekday-1] = r.changed || [];
       if(!latest || r.updated_at > latest) latest = r.updated_at;
     });
-    TT_LIVE = map; ttLiveAt = latest;
+    TT_LIVE = map; TT_CHG = chgMap; ttLiveAt = latest;
     renderTTC(); renderWeekTT();
     if(!CLASS_MODE && typeof renderPickedWeek==='function' &&
        getComputedStyle($('weekBox')).display!=='none') renderPickedWeek();
   }catch(e){ /* 실패해도 내장표로 계속 동작 */ }
 }
 function ttSource(cls){ return (TT_LIVE && TT_LIVE[cls]) ? TT_LIVE[cls] : TT_BASE[cls]; }
+
+/* 🔁 그날 바뀐 교시 번호들 — 컴시간에서 결보강으로 바뀐 자리 */
+function ttChangedOn(dateObj){
+  if(!CLASS_MODE || !TT_CHG || !TT_CHG[CLASS_MODE]) return [];
+  const w = schoolDayFor(dateObj).getDay();      // 요일변경일이면 그 요일 기준
+  if(w<1 || w>5) return [];
+  return TT_CHG[CLASS_MODE][w-1] || [];
+}
 
 function ttBaseDay(dateObj){
   const w=dateObj.getDay();            // 월=1 … 금=5
@@ -1125,6 +1282,7 @@ function renderWeekTT(){
       const cell = (rows[i]||[]).find(r=>Number(r.PERIO)===p);
       let subj = ttSubject(schoolDayFor(d), p, cell ? cell.ITRT_CNTNT : '');  // 요일변경 반영
       let cls = isToday?'tdcol':'';
+      if(ttChangedOn(d).includes(p)) cls += ' chg';   // 결보강으로 바뀐 자리
       if(isToday){
         const c = myChg.find(x=>x.period===p);
         if(c){ subj = c.after_subj || subj; cls += ' chg'; }
@@ -1209,12 +1367,16 @@ function renderTTC(){
     const pNums=Object.keys(periods).map(Number).sort((a,b)=>a-b);
     if(!pNums.length && !myChg.length && !myLoc.length){
       box.innerHTML='<div class="empty">오늘 시간표 정보가 없습니다</div>'; return; }
+    const autoChg = ttChangedOn(new Date());   // 컴시간에서 바뀐 교시
     const extra=[];
     let html = pNums.map(p=>{
       const chg=myChg.find(c=>c.period===p), loc=myLoc.find(l=>l.period===p);
       let subj = chg
         ? `<s style="opacity:.45">${esc(chg.before_subj||periods[p])}</s><span class="arrow">→</span><span class="chg" style="color:var(--urgent)">${esc(chg.after_subj||'')}</span>`
         : esc(periods[p]);
+      // 결보강으로 바뀐 교시는 눈에 띄게 (선생님이 따로 올리지 않으셔도 자동)
+      if(!chg && autoChg.includes(p))
+        subj = `<span class="chg" style="color:var(--urgent)">${esc(periods[p])}</span><span class="ttchgb">🔁 변경</span>`;
       return `<div class="listrow ttc"><span class="who">${p}교시</span><span class="t">${subj}`
         +`${loc?` <span class="locpin">📍${esc(loc.location)}</span>`:''}`
         +`${chg&&chg.note?` <span class="loc">(${esc(chg.note)})</span>`:''}</span></div>`;
@@ -1421,7 +1583,7 @@ function renderDemo(){
 
 /* ── 부팅 + 주기적 새로고침 ── */
 async function boot(){
-  applyClassMode(); updatePeriod(); buildGoClass();
+  applyClassMode(); updatePeriod(); buildGoClass(); runSetup();
   if(DEMO){ renderDemo(); return; } // 데모: 정적 샘플만 (네트워크/실시간 없음)
   await loadConfig();
   await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadVideos(), loadLiveTimetable(), loadMeal(), loadWeather(), loadAir()]);

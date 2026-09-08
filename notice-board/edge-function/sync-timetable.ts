@@ -29,8 +29,17 @@ async function fetchComcigan() {
   return JSON.parse(json);
 }
 
+// 컴시간은 "바뀐 교시"를 ">6011" 처럼 앞에 기호를 붙인 문자열로 알려준다.
+// 그대로 나누면 숫자가 아니라서 과목이 빈칸이 되므로, 숫자만 뽑아낸다.
+function codeOf(v: unknown): number {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") return Number(v.replace(/[^0-9]/g, "")) || 0;
+  return 0;
+}
+
 // 코드값 → 과목명  (분리값으로 나눈 몫이 과목, 나머지가 교사)
-function subjectOf(code: number, subjects: string[], sep: number) {
+function subjectOf(v: unknown, subjects: string[], sep: number) {
+  const code = codeOf(v);
   if (!code) return "";
   return subjects[Math.floor(code / sep)] ?? "";
 }
@@ -38,7 +47,7 @@ function subjectOf(code: number, subjects: string[], sep: number) {
 function buildRows(d: any) {
   const subjects: string[] = d["자료492"];
   const sep: number        = d["분리"];
-  const base               = d["자료481"];   // 기본 시간표
+  const base               = d["자료481"];   // 원래 시간표
   const changed            = d["자료147"];   // 이번 주 변경 반영본
   const rows: any[] = [];
 
@@ -47,20 +56,28 @@ function buildRows(d: any) {
     const classCount = base[g][0];
     for (let c = 1; c <= classCount; c++) {
       for (let dy = 1; dy <= 5; dy++) {
-        // 변경본이 비어 있지 않으면 그것을, 아니면 기본표를 쓴다
+        // 변경본이 비어 있지 않으면 그것을, 아니면 원래 표를 쓴다
         const chgDay  = changed?.[g]?.[c]?.[dy];
         const baseDay = base[g][c][dy];
         const day = (chgDay && chgDay[0] > 0) ? chgDay : baseDay;
         if (!day || !day[0]) continue;
 
         const periods: string[] = [];
+        const chgList: number[] = [];   // 과목이 실제로 바뀐 교시
         for (let p = 1; p <= day[0]; p++) {
-          periods.push(subjectOf(day[p] ?? 0, subjects, sep));
+          const now = subjectOf(day[p], subjects, sep);
+          periods.push(now);
+          if (day === chgDay) {
+            const was = subjectOf(baseDay?.[p], subjects, sep);
+            // 교사만 바뀐 보강은 빼고, 과목이 달라진 교시만 알린다
+            if (was && now && was !== now) chgList.push(p);
+          }
         }
         rows.push({
           class_key: `${g}-${c}`,
           weekday: dy,
           periods,
+          changed: chgList,
           source: (chgDay && chgDay[0] > 0) ? "comcigan(변경반영)" : "comcigan",
           // DEFAULT now() 는 새로 넣을 때만 적용되므로, 갱신 시각을 직접 넣는다
           updated_at: new Date().toISOString(),
