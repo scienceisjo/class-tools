@@ -171,6 +171,24 @@ body.tmrend .tmrnum{color:var(--red);text-shadow:0 0 48px rgba(255,84,112,.7);an
 @keyframes slid{from{opacity:0;transform:translateX(-1.2vmin)}}
 .li em{font-family:var(--hud);color:var(--dim);font-style:normal;font-size:.7em;letter-spacing:.1em;padding-top:.4em}
 
+/* 학습목표 */
+.goalwrap{position:relative;padding:2vmin 3.2vmin}
+.goal{font-size:clamp(21px,4.6vmin,58px);line-height:1.55;color:#fff;text-align:center;word-break:keep-all;
+  text-shadow:0 0 30px rgba(79,227,255,.45)}
+.goal .w{display:inline-block;white-space:nowrap}
+.goal .c{display:inline-block;will-change:transform,opacity}
+.goal .c.bl{color:var(--gold)}
+.goal .c.hid{color:transparent;background:rgba(255,193,77,.17);border-bottom:3px solid var(--gold);border-radius:2px}
+.goal .c.reveal{animation:pop .45s cubic-bezier(.2,1.5,.4,1)}
+@keyframes pop{0%{transform:scale(.35);opacity:.2}100%{transform:none;opacity:1}}
+.goalbar{position:absolute;left:0;right:0;top:0;height:3px;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,transparent,var(--cy),transparent);box-shadow:0 0 22px var(--cy)}
+.lockbrk{position:absolute;top:0;bottom:0;width:2.6vmin;border:2px solid var(--cy);pointer-events:none;
+  transition:transform .65s cubic-bezier(.2,.9,.3,1)}
+.lockbrk.l{left:0;border-right:0;transform:translateX(-160%)}
+.lockbrk.r{right:0;border-left:0;transform:translateX(160%)}
+.goalhint{text-align:center;margin-top:2.4vmin;color:var(--gold);font-size:clamp(12px,1.75vmin,21px);min-height:1.5em;line-height:1.5}
+
 /* ---------- panels: hint & settings ---------- */
 .sheet{position:fixed;top:0;right:0;height:100%;width:min(94vw,420px);background:rgba(3,14,22,.97);
   border-left:1px solid rgba(79,227,255,.3);z-index:60;padding:3vmin 3vmin 4vmin;overflow:auto;
@@ -196,6 +214,8 @@ body.tmrend .tmrnum{color:var(--red);text-shadow:0 0 48px rgba(255,84,112,.7);an
 .sheet button:hover{background:rgba(79,227,255,.22)}
 .sheet .sw{display:flex;align-items:center;gap:9px;margin-top:11px;color:var(--ink2);cursor:pointer;font-size:13px}
 .sheet .sw input{accent-color:#4fe3ff;width:17px;height:17px}
+ol.script{margin:0;padding-left:19px;color:var(--ink2);font-size:12.5px;line-height:1.95}
+ol.script li{margin-bottom:3px} ol.script b{color:var(--cy);font-weight:600}
 .miclvl{height:8px;background:rgba(79,227,255,.13);margin-top:8px;overflow:hidden}
 .miclvl i{display:block;height:100%;width:0;background:var(--cy)}
 .claps{display:flex;gap:7px;margin-top:9px}
@@ -284,6 +304,8 @@ body.tmrend .tmrnum{color:var(--red);text-shadow:0 0 48px rgba(255,84,112,.7);an
     <span class="key">4</span><span>타이머 (기본 3분)</span>
     <span class="key">5</span><span>브리핑 (오늘 수업)</span>
     <span class="key">6</span><span>랜덤 한마디</span>
+    <span class="key">7</span><span>오늘의 학습목표 (빈칸이면 한 번 더 눌러 정답 공개)</span>
+    <span class="key">8</span><span>음악 틀기/끄기 (대사까지)</span>
     <span class="key">0</span><span>종료 시퀀스</span>
     <span class="key">Esc</span><span>위젯 닫기</span>
     <span class="key">B</span><span>배경음악 켜기/끄기</span>
@@ -307,12 +329,13 @@ body.tmrend .tmrnum{color:var(--red);text-shadow:0 0 48px rgba(255,84,112,.7);an
   <label>음원 파일 경로</label><input type="text" id="bgmSrc" placeholder="audio/theme.mp3">
   <label>재생 방식</label>
   <select id="bgmMode">
-    <option value="boot">부팅 연출 때만 (권장)</option>
+    <option value="command">"음악 틀어" 라고 할 때만 (권장)</option>
+    <option value="boot">부팅 연출 때만</option>
     <option value="loop">수업 내내 낮게 깔기</option>
     <option value="off">사용 안 함</option>
   </select>
   <label>음량</label><input type="range" id="bgmVol" min="0" max="100" step="5">
-  <div class="row"><button id="bgmTest">▶ 테스트</button><button id="bgmStopBtn">■ 정지</button></div>
+  <div class="row"><button id="bgmTest">▶ 테스트</button><button id="bgmStopBtn">■ 정지</button><button id="bgmClear">저장 지우기</button></div>
   <label>또는 이 컴퓨터에서 직접 고르기</label>
   <input type="file" id="bgmFile" accept="audio/*">
   <div style="color:#3d5f6b;font-size:11.5px;margin-top:6px;line-height:1.65">
@@ -324,10 +347,41 @@ body.tmrend .tmrnum{color:var(--red);text-shadow:0 0 48px rgba(255,84,112,.7);an
   <div class="row"><div style="flex:1"><label>위도</label><input type="number" id="lat" step="0.001"></div>
   <div style="flex:1"><label>경도</label><input type="number" id="lon" step="0.001"></div></div>
 
+  <h4>오늘의 학습목표</h4>
+  <textarea id="goal" placeholder="예) 전구를 직렬로 연결하면 전체 밝기가 [어두워]지는 까닭을 설명할 수 있다."></textarea>
+  <div style="color:#3d5f6b;font-size:11.5px;margin-top:6px;line-height:1.7">
+    <b style="color:#ffc14d">[대괄호]</b>로 감싼 부분은 빈칸으로 나옵니다. 아이들에게 물어본 뒤
+    스페이스바를 누르면 채워져요. 대괄호가 없으면 해독·스캔·조립·고정 중
+    <b style="color:#4fe3ff">매번 다른 연출</b>로 나타납니다.
+  </div>
+  <label>연출 방식</label>
+  <select id="goalStyle">
+    <option value="">매번 다르게 (권장)</option>
+    <option value="0">해독 — 글자가 하나씩 확정</option>
+    <option value="1">스캔 — 빛줄기가 지나가며</option>
+    <option value="2">조립 — 흩어진 글자가 제자리로</option>
+    <option value="3">고정 — 브래킷이 조여들며</option>
+  </select>
+
   <h4>브리핑 내용 (한 줄에 하나)</h4>
   <textarea id="brief"></textarea>
 
   <div class="row"><button id="save">저장</button><button id="reset">초기화</button></div>
+
+  <h4>수업 시연 대본 (요약)</h4>
+  <ol class="script">
+    <li><b>짝짝</b> — 부팅 로그 → "Welcome home, sir."</li>
+    <li>"<b>You up, JARVIS?</b>" — 자비스가 대답</li>
+    <li>"<b>음악 틀어</b>" — 대사 뒤 음악</li>
+    <li>"<b>음악 꺼</b>" — 정숙</li>
+    <li>"<b>오늘 날씨 어때?</b>" — 날씨 위젯</li>
+    <li>"<b>시스템 진단해</b>" — 이 컴퓨터 실제 사양</li>
+    <li>"<b>오늘 학습목표</b>" — 목표 공개 → 빈칸이면 아이들에게 질문 → <b>스페이스바</b></li>
+    <li>"<b>자비스 꺼져</b>" — 종료 인사</li>
+  </ol>
+  <div style="color:#3d5f6b;font-size:11.5px;margin-top:8px;line-height:1.7">
+    말이 안 먹히면 그냥 숫자키를 누르세요. 자비스가 알아들은 것처럼 똑같이 움직입니다.
+  </div>
   <div class="warn" id="httpWarn" style="display:none"></div>
   <div style="color:#3d5f6b;font-size:11.5px;margin-top:18px;line-height:1.7">
     음성 인식은 Chrome / Edge 에서만 동작합니다. 파일을 그냥 더블클릭해서 열면(file://) 마이크가 막힐 수 있으니,
@@ -346,7 +400,8 @@ const $=s=>document.querySelector(s), body=document.body;
 
 /* ---------- 설정 ---------- */
 const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,
-  bgm:'boot',bgmSrc:'audio/theme.mp3',bgmVol:.6,
+  bgm:'command',bgmSrc:'audio/theme.mp3',bgmVol:.6,
+  goal:'',
   place:'서울 강남구',lat:37.478,lon:127.063,
   brief:'1교시 · 2학년 3반 — 전기와 자기 4차시\n준비물 · 전압계, 꼬마전구, 집게전선\n오늘의 질문 · 전구를 하나 더 끼우면 왜 어두워질까?\n체크 · 6교시 후 과학실 정리'};
 let CFG=Object.assign({},DEF);
@@ -384,9 +439,27 @@ function osc(type,f0,f1,dur,g0,g1,when,lp){
 const bgm=new Audio(); bgm.loop=true; bgm.preload='auto'; bgm.volume=0;
 let bgmReady=false, bgmPlaying=false, bgmBase=.6, bgmFade=null;
 function bgmState(t,c){ const el=$('#bgmState'); if(el) el.innerHTML='<span style="color:'+(c||'#7fb6cd')+'">'+t+'</span>'; }
-function bgmLoad(){
-  if(!CFG.bgmSrc){ bgmReady=false; return bgmState('음원 경로가 비어 있습니다','#ffc14d'); }
-  bgmReady=false; bgm.src=CFG.bgmSrc; bgm.load();
+/* 한 번 고른 음원을 이 브라우저에 저장해 둔다 — 배포본에서 매번 고르지 않도록 */
+function idbOpen(){ return new Promise((res,rej)=>{ let r; try{ r=indexedDB.open('jarvis-media',1); }catch(e){ return rej(e); }
+  r.onupgradeneeded=()=>{ try{ r.result.createObjectStore('files'); }catch(e){} };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbPut(k,v){ const d=await idbOpen(); return new Promise((res,rej)=>{
+  const t=d.transaction('files','readwrite'); t.objectStore('files').put(v,k);
+  t.oncomplete=()=>res(1); t.onerror=()=>rej(t.error); }); }
+async function idbGet(k){ try{ const d=await idbOpen(); return await new Promise(res=>{
+  const t=d.transaction('files','readonly'), q=t.objectStore('files').get(k);
+  q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; } }
+async function idbDel(k){ try{ const d=await idbOpen(); await new Promise(res=>{
+  const t=d.transaction('files','readwrite'); t.objectStore('files').delete(k);
+  t.oncomplete=res; t.onerror=res; }); }catch(e){} }
+
+async function bgmLoad(){
+  bgmReady=false;
+  const saved=await idbGet('bgm');
+  if(saved&&saved.blob){ bgm.src=URL.createObjectURL(saved.blob); bgm.load();
+    return bgmState('저장된 음원 · '+saved.name,'#7dffb0'); }
+  if(!CFG.bgmSrc) return bgmState('음원이 없습니다 — 아래에서 파일을 고르세요','#ffc14d');
+  bgm.src=CFG.bgmSrc; bgm.load();
   bgmState('음원 불러오는 중… ('+CFG.bgmSrc+')');
 }
 bgm.addEventListener('canplaythrough',()=>{ bgmReady=true; bgmState('음원 준비됨 ✓','#7dffb0'); });
@@ -637,6 +710,9 @@ const K={
   time:['몇시','시간','타임','time','며칠','날짜','date','오늘무슨요일','요일'],
   diag:['진단','시스템','상태','스테이터스','status','diagnos','다이애그','점검','스캔','scan','체크','check','리포트'],
   brief:['브리핑','brief','수업','일정','오늘뭐','스케줄','schedule','class','준비물'],
+  musicoff:['음악꺼','노래꺼','음악끄','노래끄','음악정지','노래정지','뮤직오프','뮤직끄','뮤직꺼','뮤트','mute','stopmusic','음악스톱','그만틀'],
+  music:['음악틀','노래틀','음악켜','노래켜','뮤직','music','플레이','틀어줘','틀어봐','틀어라','음악좀','노래좀','음악재생','볼륨업'],
+  goal:['학습목표','목표','오늘목표','미션','mission','objective','오늘뭐배','뭘배','배울'],
   hi:['자비스','자비','저비스','쟈비스','jarvis','자바스','거기있','있니','있어','유데어','youthere','헤이','hey','들려','듣고있']
 };
 const has=(t,arr)=>arr.some(k=>t.includes(k));
@@ -685,11 +761,33 @@ const EGGS=[
    kr:'과학은 결국 더 나은 질문을 던지는 기술입니다.'}
 ];
 
+/* --- 음악 --- */
+const MUSIC_ON=[
+  ['Powering the speakers, sir. Hold on to something.','스피커에 전원을 넣습니다. 뭐라도 붙잡으시죠.'],
+  ['Certainly, sir. Playing your usual.','물론이죠. 늘 듣던 걸로 틀겠습니다.'],
+  ['Music engaged. Volume: appropriately excessive.','음악 시작합니다. 음량은 적당히 과하게.'],
+  ['As you wish, sir. Try not to dance in front of the students.','분부대로. 아이들 앞에서 춤은 참으시죠.'],
+  ['Speakers online. This one always did suit you, sir.','스피커 준비 완료. 이 곡은 늘 잘 어울리셨습니다.']
+];
+const MUSIC_OFF=[
+  ['Cutting the music, sir.','음악을 끕니다.'],
+  ['Silence restored. They may now think.','정숙을 회복했습니다. 이제 생각들을 하겠군요.']
+];
+function playMusic(){
+  if(!bgmReady) return say('I have no music loaded, sir.','재생할 음원이 없습니다.');
+  const l=pick(MUSIC_ON); sfx.up();
+  say(l[0],l[1],{then:()=>setTimeout(()=>bgmPlay(CFG.bgmVol),320)});
+}
+function stopMusic(){ bgmStop(900); const l=pick(MUSIC_OFF); say(l[0],l[1]); }
+
 function handle(raw){
   const t=norm(raw); if(!t) return;
   if(phase==='standby'){ if(has(t,K.hi)) boot(); return; }
   if(phase!=='online') return;
 
+  if(has(t,K.musicoff)) return stopMusic();
+  if(has(t,K.music)) return playMusic();
+  if(has(t,K.goal)) return (goalPending?fillBlanks():openGoal());
   if(has(t,K.off)) return shutdown();
   if(has(t,K.timer)||/\d+\s*(분|초)/.test(raw)) return openTimer(parseSeconds(raw));
   if(has(t,K.weather)) return openWeather();
@@ -721,7 +819,7 @@ const BOOT=[
 function boot(){
   if(phase!=='standby') return;
   phase='booting'; body.classList.remove('standby'); body.classList.add('booting');
-  sfx.boot(); flash(.2); bgmPlay();
+  sfx.boot(); flash(.2); if(CFG.bgm==='boot'||CFG.bgm==='loop') bgmPlay();
   const bl=$('#bootlog'); bl.innerHTML=''; bl.classList.add('show');
   BOOT.forEach(([html,d])=>setTimeout(()=>{
     bl.insertAdjacentHTML('beforeend',html+'<br>');
@@ -949,12 +1047,132 @@ function openBrief(){
       '오늘의 브리핑입니다. 안건 '+lines.length+'건.',{hold:4500});
 }
 
+/* --- 오늘의 학습목표 : 부를 때마다 다른 연출로 --- */
+let goalPending=null;
+const GOAL_LINES=[
+  ["Today's objective, sir.",'오늘의 목표입니다.'],
+  ['Mission parameters received. Displaying now.','임무 지침을 받았습니다. 지금 표시합니다.'],
+  ['Objective locked. Do try to keep them awake, sir.','목표 고정. 아이들을 깨워 두시죠.']
+];
+const GOAL_QUIZ=[
+  ['One parameter is classified until they earn it, sir.','한 조각은 아이들이 맞혀야 열립니다.'],
+  ['Partial objective displayed. The rest is up to them.','목표를 일부만 공개했습니다. 나머지는 아이들 몫입니다.']
+];
+const GOAL_FILL=[
+  ['Confirmed. Objective complete.','확인했습니다. 목표 완성.'],
+  ['There it is, sir.','바로 그것입니다.']
+];
+/* [대괄호]로 감싼 부분은 빈칸이 된다 */
+function parseGoal(t){
+  const out=[]; const re=/\[([^\]]+)\]/g; let i=0,m;
+  while((m=re.exec(t))){ if(m.index>i) out.push({t:'text',s:t.slice(i,m.index)});
+    out.push({t:'blank',s:m[1]}); i=m.index+m[0].length; }
+  if(i<t.length) out.push({t:'text',s:t.slice(i)});
+  return out;
+}
+function buildGoal(el,segs){
+  el.innerHTML='';
+  segs.forEach(seg=>{
+    seg.s.split(/(\s+)/).forEach(word=>{
+      if(!word) return;
+      if(/^\s+$/.test(word)){ el.appendChild(document.createTextNode(' ')); return; }
+      const w=document.createElement('span'); w.className='w';
+      [...word].forEach(ch=>{ const c=document.createElement('span');
+        c.className='c'+(seg.t==='blank'?' bl':''); c.textContent=ch; w.appendChild(c); });
+      el.appendChild(w);
+    });
+  });
+}
+const SCRAM='ABCDEFGHIJKLMNPQRSTUVWXYZ0123456789#%&@/<>*+=';
+const KSCRAM='가갸거겨고교구규그기나냐너녀노뇨누뉴느니다더도두드디라러로루르리마머모무므미바버보부브비사서소수스시아어오우으이자저조주즈지';
+const rndCh=ch=>/[가-힣]/.test(ch)?KSCRAM[(Math.random()*KSCRAM.length)|0]:SCRAM[(Math.random()*SCRAM.length)|0];
+
+function rvDecrypt(cs,wrap){                      /* 해독되듯 글자가 하나씩 확정 */
+  cs.forEach(c=>{ c.dataset.f=c.textContent; c.textContent=rndCh(c.dataset.f); c.style.color='var(--cy)'; });
+  let n=0; const iv=setInterval(()=>{
+    cs.forEach((c,i)=>{ if(c.dataset.ok) return;
+      if(n>i*1.15+5){ c.textContent=c.dataset.f; c.dataset.ok='1'; c.style.color='';
+        if(i%7===0) sfx.blip(); }
+      else c.textContent=rndCh(c.dataset.f); });
+    if(++n>cs.length*1.15+8) clearInterval(iv);
+  },38);
+}
+function rvScan(cs,wrap){                         /* 스캔선이 지나가며 드러남 */
+  cs.forEach(c=>c.style.opacity='.07');
+  const bar=document.createElement('div'); bar.className='goalbar'; wrap.appendChild(bar);
+  bar.style.opacity='1';
+  const T=1500,t0=performance.now();
+  const iv=setInterval(()=>{
+    const k=Math.min(1,(performance.now()-t0)/T);
+    bar.style.top=(k*100)+'%';
+    const upto=Math.ceil(k*cs.length);
+    cs.forEach((c,i)=>{ if(i<upto&&c.style.opacity!=='1'){ c.style.opacity='1'; if(i%9===0) sfx.blip(); } });
+    if(k>=1){ clearInterval(iv); cs.forEach(c=>c.style.opacity='1');
+      bar.style.transition='opacity .4s'; bar.style.opacity='0'; setTimeout(()=>bar.remove(),500); }
+  },30);
+}
+function rvAssemble(cs,wrap){                     /* 흩어진 글자가 제자리로 */
+  cs.forEach((c,i)=>{
+    const dx=(Math.random()*2-1)*90,dy=(Math.random()*2-1)*70,r=(Math.random()*2-1)*40;
+    c.style.transition='none'; c.style.opacity='0';
+    c.style.transform='translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px) rotate('+r.toFixed(1)+'deg) scale(.6)';
+    setTimeout(()=>{ c.style.transition='transform .7s cubic-bezier(.2,.9,.3,1),opacity .5s';
+      c.style.opacity='1'; c.style.transform='none'; if(i%8===0) sfx.blip(); },60+i*22);
+  });
+}
+function rvLock(cs,wrap){                         /* 브래킷이 조여들며 목표 고정 */
+  cs.forEach(c=>{ c.style.opacity='0'; c.style.transition='opacity .45s'; });
+  const L=document.createElement('div'),R=document.createElement('div');
+  L.className='lockbrk l'; R.className='lockbrk r'; wrap.appendChild(L); wrap.appendChild(R);
+  requestAnimationFrame(()=>{ L.style.transform='none'; R.style.transform='none'; });
+  setTimeout(()=>{ sfx.up(); cs.forEach((c,i)=>setTimeout(()=>c.style.opacity='1',i*17)); },720);
+}
+const REVEALS=[rvDecrypt,rvScan,rvAssemble,rvLock];
+
+function openGoal(){
+  const raw=(CFG.goal||'').trim();
+  if(!raw) return say('No objective has been set, sir.','오늘 학습목표가 아직 등록되지 않았습니다.',{hold:4600});
+  const segs=parseGoal(raw), hasBlank=segs.some(x=>x.t==='blank');
+  const p=panel('Mission Objective','오늘의 학습목표','priority · alpha',
+    '<div class="goalwrap"><div class="goal" id="goalTxt"></div></div><div class="goalhint" id="goalHint"></div>');
+  const el=p.querySelector('#goalTxt'), wrap=p.querySelector('.goalwrap');
+  buildGoal(el,segs);
+  const cs=[...el.querySelectorAll('.c')];
+  goalPending=null;
+  if(hasBlank){
+    cs.forEach(c=>{ if(c.classList.contains('bl')) c.classList.add('hid'); else c.style.opacity='0'; });
+    cs.filter(c=>!c.classList.contains('bl')).forEach((c,i)=>setTimeout(()=>{
+      c.style.transition='opacity .3s'; c.style.opacity='1'; if(i%9===0) sfx.blip(); },120+i*26));
+    goalPending={cs:cs,p:p};
+    p.querySelector('#goalHint').textContent='아이들에게 물어보세요 · 스페이스바(또는 7)를 누르면 빈칸이 열립니다';
+    const l=pick(GOAL_QUIZ); say(l[0],l[1],{hold:7000});
+  }else{
+    const last=+(localStorage.getItem('jarvis-goalstyle')||0);
+    let i=(CFG.goalStyle==null||CFG.goalStyle==='')?-1:+CFG.goalStyle;
+    if(!(i>=0&&i<REVEALS.length)) i=(last+1+((Math.random()*(REVEALS.length-1))|0))%REVEALS.length;
+    localStorage.setItem('jarvis-goalstyle',i);
+    REVEALS[i](cs,wrap);
+    const l=pick(GOAL_LINES); say(l[0],l[1],{hold:6500});
+  }
+}
+function fillBlanks(){
+  if(!goalPending) return;
+  const cs=goalPending.cs; goalPending=null;
+  const bl=cs.filter(c=>c.classList.contains('bl'));
+  bl.forEach((c,i)=>setTimeout(()=>{ c.classList.remove('hid'); c.classList.add('reveal');
+    if(i%3===0) sfx.blip(); },i*75));
+  const h=document.querySelector('#goalHint'); if(h) h.textContent='';
+  setTimeout(()=>{ sfx.up(); const l=pick(GOAL_FILL); say(l[0],l[1]); },bl.length*75+280);
+}
+
 /* ============================================================
    10. 조작 — 키보드 백도어
    ============================================================ */
 const ACT={
   '1':openWeather,'2':openClock,'3':openDiag,
   '4':()=>openTimer(180),'5':openBrief,
+  '7':()=>(goalPending?fillBlanks():openGoal()),
+  '8':()=>(bgmPlaying?stopMusic():playMusic()),
   '6':()=>{ const s=pick(SMALLTALK.concat(EGGS.map(e=>[e.en,e.kr]))); sfx.up(); say(s[0],s[1]); },
   '0':shutdown
 };
@@ -970,6 +1188,7 @@ addEventListener('keydown',e=>{
   if(k===' '||k==='enter'){ e.preventDefault();
     if(phase==='gate') return enter();
     if(phase==='standby') return boot();
+    if(goalPending) return fillBlanks();
     return; }
   if(phase==='online' && ACT[k]) { e.preventDefault(); ACT[k](); }
 });
@@ -1003,13 +1222,14 @@ function fillForm(){
   $('#autoLoop').checked=!!CFG.autoLoop; $('#place').value=CFG.place; $('#lat').value=CFG.lat;
   $('#lon').value=CFG.lon; $('#brief').value=CFG.brief;
   $('#bgmSrc').value=CFG.bgmSrc; $('#bgmMode').value=CFG.bgm; $('#bgmVol').value=Math.round(CFG.bgmVol*100);
+  $('#goal').value=CFG.goal||''; $('#goalStyle').value=(CFG.goalStyle==null?'':CFG.goalStyle);
 }
 fillForm(); bgmLoad();
 $('#sens').oninput=e=>{ CFG.sens=+e.target.value; saveCfg(); };
 $('#save').onclick=()=>{
   CFG.lang=$('#lang').value; CFG.speakKo=$('#speakKo').checked; CFG.autoLoop=$('#autoLoop').checked;
   CFG.place=$('#place').value.trim()||DEF.place; CFG.lat=+$('#lat').value||DEF.lat; CFG.lon=+$('#lon').value||DEF.lon;
-  CFG.brief=$('#brief').value;
+  CFG.brief=$('#brief').value; CFG.goal=$('#goal').value; CFG.goalStyle=$('#goalStyle').value;
   const oldSrc=CFG.bgmSrc;
   CFG.bgmSrc=$('#bgmSrc').value.trim(); CFG.bgm=$('#bgmMode').value; CFG.bgmVol=(+$('#bgmVol').value||0)/100;
   saveCfg(); if(CFG.bgmSrc!==oldSrc) bgmLoad();
@@ -1020,7 +1240,11 @@ $('#bgmTest').onclick=()=>{ CFG.bgmVol=(+$('#bgmVol').value||0)/100; bgmPlay(CFG
 $('#bgmStopBtn').onclick=()=>bgmStop(400);
 $('#bgmVol').oninput=e=>{ CFG.bgmVol=(+e.target.value||0)/100; saveCfg();
   if(bgmPlaying){ bgmBase=CFG.bgmVol; clearInterval(bgmFade); bgm.volume=CFG.bgmVol; } };
-$('#bgmFile').onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return;
-  bgm.src=URL.createObjectURL(f); bgm.load(); bgmState('직접 고른 파일 · '+f.name,'#7dffb0'); };
+$('#bgmFile').onchange=async e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return;
+  bgm.src=URL.createObjectURL(f); bgm.load(); bgmState('불러오는 중 · '+f.name);
+  try{ await idbPut('bgm',{blob:f,name:f.name});
+    bgmState('저장됨 · '+f.name+' — 이 브라우저에서 계속 기억합니다','#7dffb0'); }
+  catch(err){ bgmState('이번만 사용 · '+f.name+' (저장 실패)','#ffc14d'); } };
+$('#bgmClear').onclick=async ()=>{ await idbDel('bgm'); bgmState('저장된 음원을 지웠습니다','#7dffb0'); bgmLoad(); };
 $('#reset').onclick=()=>{ CFG=Object.assign({},DEF); saveCfg(); fillForm(); bgmLoad(); micMsg('초기화되었습니다','#7dffb0'); };
 </script>
