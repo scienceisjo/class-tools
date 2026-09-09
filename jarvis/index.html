@@ -1,0 +1,1026 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>J.A.R.V.I.S. — 승재쌤 전용</title>
+<style>
+:root{
+  --cy:#4fe3ff; --cy2:#0d95c4; --dim:#12495c; --gold:#ffc14d; --red:#ff5470;
+  --ink:#cfeeff; --ink2:#7fb6cd;
+  --ko:system-ui,-apple-system,'Segoe UI','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+  --hud:'Consolas','SF Mono',ui-monospace,monospace;
+  --lvl:0;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:#000;color:var(--ink);font-family:var(--ko);-webkit-font-smoothing:antialiased}
+body{cursor:none}
+body.showcur{cursor:default}
+#bg{position:fixed;inset:0;width:100%;height:100%;display:block}
+.vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(0,0,0,.72) 100%)}
+.scan{position:fixed;inset:0;pointer-events:none;opacity:.35;
+  background:repeating-linear-gradient(0deg,rgba(79,227,255,.045) 0 1px,transparent 1px 3px)}
+.flick{position:fixed;inset:0;pointer-events:none;background:var(--cy);opacity:0;mix-blend-mode:screen}
+
+/* ---------- HUD frame ---------- */
+.hud{position:fixed;inset:0;pointer-events:none;font-family:var(--hud);font-size:clamp(10px,1.05vmin,15px);letter-spacing:.06em;color:var(--ink2)}
+.hud .box{position:absolute;padding:1.4vmin 1.8vmin;line-height:1.75;text-transform:uppercase;opacity:0;transition:opacity .6s}
+body.on .hud .box, body.booting .hud .box{opacity:1}
+.tl{top:0;left:0} .tr{top:0;right:0;text-align:right} .bl{bottom:0;left:0} .br{bottom:0;right:0;text-align:right}
+.k{color:var(--dim)} .v{color:var(--cy)}
+.hud .bar{display:inline-block;width:9vmin;height:.7vmin;background:rgba(79,227,255,.14);vertical-align:middle;margin-left:.6vmin;position:relative;overflow:hidden}
+.hud .bar i{position:absolute;inset:0 auto 0 0;background:var(--cy);box-shadow:0 0 8px var(--cy)}
+
+/* corner brackets */
+.brk{position:fixed;width:5vmin;height:5vmin;border:1px solid rgba(79,227,255,.5);pointer-events:none;opacity:0;transition:opacity .8s}
+body.on .brk,body.booting .brk{opacity:1}
+.brk.a{top:2vmin;left:2vmin;border-right:0;border-bottom:0}
+.brk.b{top:2vmin;right:2vmin;border-left:0;border-bottom:0}
+.brk.c{bottom:2vmin;left:2vmin;border-right:0;border-top:0}
+.brk.d{bottom:2vmin;right:2vmin;border-left:0;border-top:0}
+
+/* ---------- reactor ---------- */
+#core{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);width:58vmin;height:58vmin;pointer-events:none;
+  filter:drop-shadow(0 0 calc(2vmin + var(--lvl)*3vmin) rgba(79,227,255,.55));
+  opacity:.2;transition:opacity 1s cubic-bezier(.2,.7,.3,1)}
+body.booting #core{opacity:.4} body.on #core{opacity:1}
+body.widget #core{opacity:.16}
+#core svg{width:100%;height:100%;overflow:visible}
+.spin1{transform-origin:50% 50%;animation:sp 46s linear infinite}
+.spin2{transform-origin:50% 50%;animation:sp 19s linear infinite reverse}
+.spin3{transform-origin:50% 50%;animation:sp 8s linear infinite}
+.spin4{transform-origin:50% 50%;animation:sp 3.4s linear infinite reverse}
+@keyframes sp{to{transform:rotate(360deg)}}
+#pulse{transform-origin:50% 50%;transform:scale(calc(1 + var(--lvl)*.22))}
+#coreGlow{opacity:calc(.55 + var(--lvl)*.45)}
+body.speaking #core{filter:drop-shadow(0 0 4vmin rgba(120,235,255,.85))}
+
+/* ---------- standby / gate ---------- */
+#gate{position:fixed;inset:0;display:grid;place-content:center;justify-items:center;gap:2.6vmin;text-align:center;
+  background:radial-gradient(ellipse at 50% 50%,#04121c 0%,#000 70%);z-index:40;transition:opacity .8s}
+#gate.gone{opacity:0;pointer-events:none}
+#gate h1{margin:0;font-family:var(--hud);font-size:clamp(28px,7vmin,86px);letter-spacing:.34em;color:var(--cy);
+  text-shadow:0 0 30px rgba(79,227,255,.5);font-weight:400}
+#gate p{margin:0;color:var(--ink2);font-size:clamp(13px,1.9vmin,20px);line-height:1.85}
+#gate .go{pointer-events:auto;cursor:pointer;border:1px solid var(--cy);background:rgba(79,227,255,.07);color:var(--cy);
+  font-family:var(--hud);letter-spacing:.22em;font-size:clamp(12px,1.6vmin,18px);padding:1.5vmin 4vmin;border-radius:2px;
+  text-transform:uppercase;transition:.25s}
+#gate .go:hover{background:rgba(79,227,255,.2);box-shadow:0 0 26px rgba(79,227,255,.4)}
+#gate small{color:#4a707f;font-size:clamp(11px,1.35vmin,15px);line-height:1.9}
+
+/* ---------- standby prompt ---------- */
+#standby{position:fixed;left:50%;bottom:14vmin;transform:translateX(-50%);text-align:center;pointer-events:none;
+  font-family:var(--hud);letter-spacing:.28em;color:var(--dim);font-size:clamp(11px,1.5vmin,17px);text-transform:uppercase;
+  opacity:0;transition:opacity .6s}
+body.standby #standby{opacity:1;animation:breathe 3.4s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.35}50%{opacity:.9}}
+#standby b{display:block;font-family:var(--ko);letter-spacing:0;font-size:clamp(14px,2vmin,22px);color:var(--ink2);margin-top:1vmin;font-weight:500}
+
+/* ---------- boot log ---------- */
+#bootlog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88vw,640px);padding:4vmin 4vmin 4.5vmin;
+  background:radial-gradient(ellipse at 50% 50%,rgba(1,7,12,.92) 0%,rgba(1,7,12,.78) 55%,rgba(1,7,12,0) 100%);
+  font-family:var(--hud);font-size:clamp(12px,1.7vmin,20px);line-height:2.05;color:var(--cy);text-transform:uppercase;
+  letter-spacing:.1em;pointer-events:none;opacity:0;transition:opacity .5s;z-index:20;text-shadow:0 0 12px rgba(79,227,255,.45)}
+#bootlog.show{opacity:1}
+#bootlog .ok{color:#7dffb0} #bootlog .g{color:var(--dim)}
+/* 한글은 고정폭에 넣으면 자간이 벌어진다 — 반드시 본문 글꼴로 */
+#bootlog .ko{font-family:var(--ko);letter-spacing:0}
+#bootlog .ttl{font-size:clamp(18px,3.4vmin,42px);letter-spacing:.4em;margin-bottom:1.6vmin;display:block;color:#fff}
+
+/* ---------- subtitle ---------- */
+#sub{position:fixed;left:50%;bottom:9.5vmin;transform:translateX(-50%);width:min(92vw,1180px);text-align:center;
+  pointer-events:none;z-index:25;opacity:0;transition:opacity .35s,transform .35s}
+#sub.show{opacity:1}
+body.widget #sub{bottom:6.8vmin}
+body.widget #sub .en{font-size:clamp(15px,2.35vmin,29px)}
+body.widget #sub .kr{margin-top:.6vmin;font-size:clamp(12px,1.65vmin,19px)}
+#sub .en{font-family:var(--hud);font-size:clamp(20px,3.7vmin,50px);color:#eafcff;letter-spacing:.03em;line-height:1.35;
+  text-shadow:0 0 26px rgba(79,227,255,.65),0 2px 12px #000}
+#sub .kr{margin-top:1.2vmin;font-size:clamp(14px,2.05vmin,26px);color:var(--ink2);line-height:1.5;text-shadow:0 2px 10px #000}
+
+/* ---------- live transcript ---------- */
+#heard{position:fixed;left:50%;bottom:3.6vmin;transform:translateX(-50%);max-width:80vw;text-align:center;z-index:24;
+  font-size:clamp(12px,1.7vmin,20px);color:#4a8ea3;letter-spacing:.02em;opacity:0;transition:opacity .3s;pointer-events:none}
+#heard.show{opacity:1}
+#heard b{color:var(--cy);font-weight:500}
+
+/* ---------- widget ---------- */
+#wrap{position:fixed;inset:0;display:grid;place-items:center;z-index:15;pointer-events:none;padding:8vmin 4vmin 20vmin}
+.panel{position:relative;width:min(94vw,1080px);max-height:100%;padding:3.2vmin 3.6vmin;background:linear-gradient(160deg,rgba(6,26,38,.93),rgba(2,10,18,.95));
+  border:1px solid rgba(79,227,255,.35);box-shadow:0 0 60px rgba(0,0,0,.8),inset 0 0 70px rgba(79,227,255,.055);
+  opacity:0;transform:translateY(2.4vmin) scale(.985);transition:opacity .45s,transform .45s cubic-bezier(.2,.8,.3,1);overflow:auto;scrollbar-width:thin;scrollbar-color:#12495c transparent}
+.panel.show{opacity:1;transform:none}
+.panel::before,.panel::after{content:'';position:absolute;width:3.4vmin;height:3.4vmin;border:2px solid var(--cy);pointer-events:none}
+.panel::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.panel::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.phead{display:flex;align-items:baseline;gap:1.6vmin;flex-wrap:wrap;margin-bottom:2vmin;
+  border-bottom:1px solid rgba(79,227,255,.2);padding-bottom:1.3vmin}
+.phead h2{margin:0;font-family:var(--hud);font-weight:400;letter-spacing:.26em;text-transform:uppercase;
+  font-size:clamp(14px,2.1vmin,26px);color:var(--cy)}
+.phead span{font-size:clamp(12px,1.65vmin,19px);color:var(--ink2)}
+.phead .tag{margin-left:auto;font-family:var(--hud);font-size:clamp(10px,1.3vmin,15px);color:var(--dim);letter-spacing:.16em}
+
+/* weather */
+.wnow{display:grid;grid-template-columns:auto 1fr;gap:3.4vmin;align-items:center}
+.wicon{width:22vmin;max-width:190px;height:auto;filter:drop-shadow(0 0 20px rgba(79,227,255,.45))}
+.wtemp{font-family:var(--hud);font-size:clamp(52px,13vmin,150px);line-height:.92;color:#fff;text-shadow:0 0 34px rgba(79,227,255,.5)}
+.wtemp sup{font-size:.36em;vertical-align:top;color:var(--cy)}
+.wdesc{font-size:clamp(16px,2.5vmin,32px);color:var(--cy);margin-top:.8vmin}
+.wplace{font-size:clamp(12px,1.7vmin,20px);color:var(--ink2);margin-top:.5vmin}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1.4vmin;margin-top:2vmin}
+.cell{border:1px solid rgba(79,227,255,.18);background:rgba(79,227,255,.045);padding:1.5vmin 1.8vmin}
+.cell .k{font-family:var(--hud);font-size:clamp(9px,1.2vmin,13px);letter-spacing:.16em;color:#4d92aa;text-transform:uppercase}
+.cell .v{font-family:var(--hud);font-size:clamp(19px,3vmin,36px);color:#fff;margin-top:.5vmin}
+.cell .v small{font-size:.45em;color:var(--cy);margin-left:.25em}
+.spark{margin-top:2.4vmin}
+.spark svg{width:100%;height:11.5vmin;max-height:118px;overflow:visible}
+.days{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4vmin;margin-top:1.2vmin}
+.day{border:1px solid rgba(79,227,255,.16);padding:1.4vmin;text-align:center}
+.day .d{font-size:clamp(12px,1.6vmin,18px);color:var(--ink2)}
+.day .t{font-family:var(--hud);font-size:clamp(15px,2.2vmin,26px);color:#fff;margin-top:.6vmin}
+.day .t i{color:#6fb4ff;font-style:normal}
+
+/* diagnostics */
+.gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:2vmin}
+.g{border:1px solid rgba(79,227,255,.18);padding:1.8vmin 2vmin;background:rgba(79,227,255,.035)}
+.g .lab{display:flex;justify-content:space-between;align-items:baseline;gap:1vmin;font-family:var(--hud);
+  font-size:clamp(10px,1.35vmin,15px);letter-spacing:.14em;color:var(--ink2);text-transform:uppercase}
+.g .lab b{color:#fff;font-size:clamp(15px,2.1vmin,24px);font-weight:400}
+.g .track{height:.9vmin;min-height:6px;background:rgba(79,227,255,.13);margin-top:1.2vmin;overflow:hidden}
+.g .fill{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cy2),var(--cy));box-shadow:0 0 12px var(--cy);transition:width 1.1s cubic-bezier(.2,.8,.3,1)}
+.g.warn .fill{background:linear-gradient(90deg,#b06a12,var(--gold));box-shadow:0 0 12px var(--gold)}
+.g .note{font-size:clamp(11px,1.45vmin,16px);color:#5f9db3;margin-top:.9vmin}
+
+/* clock */
+.clockwrap{display:grid;grid-template-columns:auto 1fr;gap:4vmin;align-items:center}
+.bigclock{font-family:var(--hud);font-size:clamp(54px,15vmin,190px);line-height:1;color:#fff;letter-spacing:.02em;
+  text-shadow:0 0 40px rgba(79,227,255,.55)}
+.bigclock small{font-size:.3em;color:var(--cy);margin-left:.2em}
+.dateline{font-size:clamp(16px,2.4vmin,30px);color:var(--cy);margin-top:1.2vmin}
+.dateline span{color:var(--ink2);font-size:.8em;display:block;margin-top:.6vmin}
+
+/* timer */
+.tmr{display:grid;place-items:center;gap:2vmin;text-align:center}
+.tmrnum{font-family:var(--hud);font-size:clamp(70px,22vmin,280px);line-height:1;color:#fff;text-shadow:0 0 48px rgba(79,227,255,.6)}
+body.tmrend .tmrnum{color:var(--red);text-shadow:0 0 48px rgba(255,84,112,.7);animation:blink .5s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.tmrbar{width:100%;height:1.2vmin;min-height:8px;background:rgba(79,227,255,.13)}
+.tmrbar i{display:block;height:100%;background:linear-gradient(90deg,var(--cy2),var(--cy));box-shadow:0 0 16px var(--cy)}
+
+/* list panel */
+.lines{display:grid;gap:1.4vmin}
+.li{display:flex;gap:1.6vmin;align-items:flex-start;border-left:2px solid var(--cy);padding:.9vmin 0 .9vmin 1.8vmin;
+  font-size:clamp(15px,2.15vmin,26px);line-height:1.6;animation:slid .5s backwards}
+@keyframes slid{from{opacity:0;transform:translateX(-1.2vmin)}}
+.li em{font-family:var(--hud);color:var(--dim);font-style:normal;font-size:.7em;letter-spacing:.1em;padding-top:.4em}
+
+/* ---------- panels: hint & settings ---------- */
+.sheet{position:fixed;top:0;right:0;height:100%;width:min(94vw,420px);background:rgba(3,14,22,.97);
+  border-left:1px solid rgba(79,227,255,.3);z-index:60;padding:3vmin 3vmin 4vmin;overflow:auto;
+  transform:translateX(101%);transition:transform .4s cubic-bezier(.2,.8,.3,1);pointer-events:auto;font-size:14px}
+.sheet.open{transform:none}
+.sheet h3{font-family:var(--hud);letter-spacing:.2em;color:var(--cy);font-weight:400;text-transform:uppercase;
+  font-size:14px;margin:0 0 16px;border-bottom:1px solid rgba(79,227,255,.2);padding-bottom:10px}
+.sheet h4{color:var(--ink2);font-size:12.5px;letter-spacing:.05em;margin:22px 0 8px;font-weight:600}
+.kb{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;color:var(--ink2);line-height:1.5}
+.key{font-family:var(--hud);border:1px solid rgba(79,227,255,.4);color:var(--cy);padding:3px 9px;border-radius:3px;
+  font-size:12px;text-align:center;background:rgba(79,227,255,.07);white-space:nowrap}
+.sheet label{display:block;color:var(--ink2);margin:12px 0 5px;font-size:12.5px}
+.sheet input[type=text],.sheet input[type=number],.sheet select,.sheet textarea{width:100%;background:rgba(79,227,255,.06);
+  border:1px solid rgba(79,227,255,.28);color:var(--ink);padding:8px 10px;font-family:var(--ko);font-size:13.5px;border-radius:2px}
+.sheet textarea{min-height:88px;line-height:1.6;resize:vertical}
+.sheet input[type=range]{width:100%;accent-color:#4fe3ff}
+.sheet input[type=file]{width:100%;color:var(--ink2);font-size:12px;padding:7px 0}
+.sheet input[type=file]::file-selector-button{background:rgba(79,227,255,.1);border:1px solid rgba(79,227,255,.4);
+  color:var(--cy);padding:6px 12px;border-radius:2px;margin-right:9px;cursor:pointer;font-family:var(--ko);font-size:12px}
+.sheet .row{display:flex;gap:8px;align-items:center;margin-top:10px}
+.sheet button{flex:1;background:rgba(79,227,255,.1);border:1px solid rgba(79,227,255,.4);color:var(--cy);
+  padding:9px;font-family:var(--hud);letter-spacing:.12em;font-size:12px;cursor:pointer;border-radius:2px;text-transform:uppercase}
+.sheet button:hover{background:rgba(79,227,255,.22)}
+.sheet .sw{display:flex;align-items:center;gap:9px;margin-top:11px;color:var(--ink2);cursor:pointer;font-size:13px}
+.sheet .sw input{accent-color:#4fe3ff;width:17px;height:17px}
+.miclvl{height:8px;background:rgba(79,227,255,.13);margin-top:8px;overflow:hidden}
+.miclvl i{display:block;height:100%;width:0;background:var(--cy)}
+.claps{display:flex;gap:7px;margin-top:9px}
+.claps span{width:11px;height:11px;border-radius:50%;border:1px solid var(--dim);transition:.1s}
+.claps span.hit{background:var(--cy);box-shadow:0 0 12px var(--cy);border-color:var(--cy)}
+.warn{color:var(--gold);font-size:12.5px;line-height:1.65;border:1px solid rgba(255,193,77,.35);
+  background:rgba(255,193,77,.07);padding:10px 12px;margin-top:14px;border-radius:2px}
+#fab{position:fixed;right:14px;bottom:14px;z-index:61;width:38px;height:38px;border-radius:50%;
+  border:1px solid rgba(79,227,255,.3);background:rgba(3,14,22,.7);color:var(--cy);cursor:pointer;
+  opacity:.18;transition:.25s;font-size:17px;line-height:1;pointer-events:auto}
+#fab:hover{opacity:1}
+#app-credit{position:fixed;left:0;bottom:0;width:100%;z-index:5;pointer-events:none}
+@media (max-width:640px){.wnow{grid-template-columns:1fr;text-align:center;justify-items:center}.clockwrap{grid-template-columns:1fr;text-align:center}}
+</style>
+
+<canvas id="bg"></canvas>
+<div class="vig"></div><div class="scan"></div><div class="flick" id="flick"></div>
+<div class="brk a"></div><div class="brk b"></div><div class="brk c"></div><div class="brk d"></div>
+
+<div id="core"><svg viewBox="0 0 400 400">
+  <defs>
+    <radialGradient id="gcore"><stop offset="0%" stop-color="#ffffff"/><stop offset="35%" stop-color="#9df1ff"/>
+      <stop offset="70%" stop-color="#2ab8e6"/><stop offset="100%" stop-color="#0a4a63" stop-opacity="0"/></radialGradient>
+    <linearGradient id="gring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4fe3ff"/><stop offset="55%" stop-color="#0d95c4" stop-opacity=".25"/><stop offset="100%" stop-color="#4fe3ff"/></linearGradient>
+  </defs>
+  <g class="spin1" fill="none" stroke="url(#gring)">
+    <circle cx="200" cy="200" r="188" stroke-width="1" stroke-dasharray="2 10" opacity=".65"/>
+    <circle cx="200" cy="200" r="172" stroke-width="6" stroke-dasharray="150 24 60 24" opacity=".2"/>
+  </g>
+  <g class="spin2" fill="none" stroke="#4fe3ff">
+    <circle cx="200" cy="200" r="152" stroke-width="1.2" stroke-dasharray="40 14" opacity=".5"/>
+    <path d="M200 38 A162 162 0 0 1 340 118" stroke-width="3" opacity=".8"/>
+    <path d="M200 362 A162 162 0 0 1 60 282" stroke-width="3" opacity=".8"/>
+  </g>
+  <g class="spin3" fill="none" stroke="#4fe3ff" opacity=".85">
+    <circle cx="200" cy="200" r="126" stroke-width="1" stroke-dasharray="1 7"/>
+    <circle cx="200" cy="200" r="112" stroke-width="10" stroke-dasharray="18 12" opacity=".18"/>
+  </g>
+  <g class="spin4" fill="none" stroke="#8ef0ff" opacity=".9">
+    <circle cx="200" cy="200" r="92" stroke-width="1.6" stroke-dasharray="70 30"/>
+  </g>
+  <g id="pulse">
+    <g fill="none" stroke="#4fe3ff" opacity=".9"><circle cx="200" cy="200" r="74" stroke-width="2.5"/></g>
+    <g id="tri" fill="none" stroke="#bff5ff" stroke-width="2" opacity=".75">
+      <path d="M200 146 L247 227 L153 227 Z"/><path d="M200 254 L153 173 L247 173 Z"/></g>
+    <circle id="coreGlow" cx="200" cy="200" r="62" fill="url(#gcore)"/>
+  </g>
+</svg></div>
+
+<div class="hud">
+  <div class="box tl" id="hudL"></div>
+  <div class="box tr" id="hudR"></div>
+  <div class="box bl" id="hudBL"></div>
+  <div class="box br" id="hudBR"></div>
+</div>
+
+<div id="bootlog"></div>
+<div id="wrap"></div>
+<div id="sub"><div class="en" id="subEn"></div><div class="kr" id="subKr"></div></div>
+<div id="heard"></div>
+
+<div id="standby">Awaiting audio signature<b>손뼉을 두 번 치세요</b></div>
+
+<div id="gate">
+  <h1>J.A.R.V.I.S.</h1>
+  <p>Just A Rather Very Intelligent System<br>승재쌤 전용 인공지능 비서</p>
+  <button class="go" id="goBtn">System Initialize</button>
+  <small>클릭하면 대기 모드로 들어갑니다 · 마이크 권한을 허용해 주세요<br>대기 상태에서 <b style="color:#4fe3ff">손뼉 두 번</b> 또는 <b style="color:#4fe3ff">스페이스바</b></small>
+</div>
+
+<button id="fab" title="설정·단축키 (S)">⚙</button>
+
+<div class="sheet" id="sheet">
+  <h3>Control Panel</h3>
+  <div id="micState" style="color:#7fb6cd;font-size:12.5px;line-height:1.6"></div>
+  <div class="miclvl"><i id="micBar"></i></div>
+  <div class="claps"><span id="c1"></span><span id="c2"></span></div>
+
+  <h4>키보드 백도어 (음성이 안 먹힐 때)</h4>
+  <div class="kb">
+    <span class="key">Space</span><span>부팅 (박수 두 번과 동일)</span>
+    <span class="key">1</span><span>날씨</span>
+    <span class="key">2</span><span>시간·날짜</span>
+    <span class="key">3</span><span>시스템 진단</span>
+    <span class="key">4</span><span>타이머 (기본 3분)</span>
+    <span class="key">5</span><span>브리핑 (오늘 수업)</span>
+    <span class="key">6</span><span>랜덤 한마디</span>
+    <span class="key">0</span><span>종료 시퀀스</span>
+    <span class="key">Esc</span><span>위젯 닫기</span>
+    <span class="key">B</span><span>배경음악 켜기/끄기</span>
+    <span class="key">M</span><span>마이크 켜기/끄기</span>
+    <span class="key">F</span><span>전체화면</span>
+    <span class="key">S</span><span>이 패널 열기/닫기</span>
+  </div>
+
+  <h4>박수 감도</h4>
+  <input type="range" id="sens" min="1" max="10" step="1">
+  <div style="color:#4a707f;font-size:11.5px;margin-top:5px">교실이 시끄러우면 낮게(1~3), 조용하면 높게(7~10). 위 동그라미 두 개가 박수에 반응합니다.</div>
+
+  <h4>음성 인식</h4>
+  <label>인식 언어</label>
+  <select id="lang"><option value="ko-KR">한국어 (영어도 소리나는 대로 잡힘)</option><option value="en-US">English</option></select>
+  <label class="sw"><input type="checkbox" id="speakKo"> 영어 대사 뒤에 한국어로 한 번 더 말하기</label>
+  <label class="sw"><input type="checkbox" id="autoLoop" checked> 명령 대기 상태 계속 유지</label>
+
+  <h4>배경음악 (아이언맨 테마 등)</h4>
+  <div id="bgmState" style="color:#7fb6cd;font-size:12.5px;line-height:1.6">음원 확인 중…</div>
+  <label>음원 파일 경로</label><input type="text" id="bgmSrc" placeholder="audio/theme.mp3">
+  <label>재생 방식</label>
+  <select id="bgmMode">
+    <option value="boot">부팅 연출 때만 (권장)</option>
+    <option value="loop">수업 내내 낮게 깔기</option>
+    <option value="off">사용 안 함</option>
+  </select>
+  <label>음량</label><input type="range" id="bgmVol" min="0" max="100" step="5">
+  <div class="row"><button id="bgmTest">▶ 테스트</button><button id="bgmStopBtn">■ 정지</button></div>
+  <label>또는 이 컴퓨터에서 직접 고르기</label>
+  <input type="file" id="bgmFile" accept="audio/*">
+  <div style="color:#3d5f6b;font-size:11.5px;margin-top:6px;line-height:1.65">
+    직접 고른 파일은 새로고침하면 사라집니다. 매번 쓰려면 앱과 같은 폴더의 <span style="font-family:var(--hud)">audio</span> 안에 넣고 경로를 적어 두세요.
+  </div>
+
+  <h4>날씨 위치</h4>
+  <label>표시할 지명</label><input type="text" id="place">
+  <div class="row"><div style="flex:1"><label>위도</label><input type="number" id="lat" step="0.001"></div>
+  <div style="flex:1"><label>경도</label><input type="number" id="lon" step="0.001"></div></div>
+
+  <h4>브리핑 내용 (한 줄에 하나)</h4>
+  <textarea id="brief"></textarea>
+
+  <div class="row"><button id="save">저장</button><button id="reset">초기화</button></div>
+  <div class="warn" id="httpWarn" style="display:none"></div>
+  <div style="color:#3d5f6b;font-size:11.5px;margin-top:18px;line-height:1.7">
+    음성 인식은 Chrome / Edge 에서만 동작합니다. 파일을 그냥 더블클릭해서 열면(file://) 마이크가 막힐 수 있으니,
+    로컬 서버나 https 주소로 여는 것을 권장합니다. 마이크가 안 되어도 키보드 조작은 100% 동작합니다.
+  </div>
+</div>
+
+<footer id="app-credit" style="box-sizing:border-box;margin:0;padding:10px 12px;text-align:center;font-size:11px;line-height:1.6;color:rgba(127,182,205,.35);font-family:system-ui,-apple-system,'Segoe UI','Malgun Gothic',sans-serif;">© 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br><span style="font-size:10px;opacity:.85;">최종 업데이트: 2026-09-09</span></footer>
+
+<script>
+/* ============================================================
+   J.A.R.V.I.S. — 수업용 데모
+   단일 HTML · 외부 파일 0 · 효과음은 WebAudio 합성
+   ============================================================ */
+const $=s=>document.querySelector(s), body=document.body;
+
+/* ---------- 설정 ---------- */
+const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,
+  bgm:'boot',bgmSrc:'audio/theme.mp3',bgmVol:.6,
+  place:'서울 강남구',lat:37.478,lon:127.063,
+  brief:'1교시 · 2학년 3반 — 전기와 자기 4차시\n준비물 · 전압계, 꼬마전구, 집게전선\n오늘의 질문 · 전구를 하나 더 끼우면 왜 어두워질까?\n체크 · 6교시 후 과학실 정리'};
+let CFG=Object.assign({},DEF);
+try{Object.assign(CFG,JSON.parse(localStorage.getItem('jarvis-cfg')||'{}'));}catch(e){}
+const saveCfg=()=>localStorage.setItem('jarvis-cfg',JSON.stringify(CFG));
+
+/* ---------- 상태 ---------- */
+let phase='gate';           // gate | standby | booting | online
+let speaking=false, micOK=false, recWanted=false;
+// 귀(마이크) 상태 — HUD가 부팅 직후 참조하므로 여기서 먼저 선언한다
+let analyser=null, freq=null, earLevel=0, base=0, lastOnset=0, firstClap=0, earsPaused=false;
+
+/* ============================================================
+   1. 효과음 (합성)
+   ============================================================ */
+let AC=null, master=null;
+function ac(){
+  if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)();
+    master=AC.createGain(); master.gain.value=.55; master.connect(AC.destination); }
+  if(AC.state==='suspended') AC.resume();
+  return AC;
+}
+function osc(type,f0,f1,dur,g0,g1,when,lp){
+  const c=ac(), t=c.currentTime+(when||0);
+  const o=c.createOscillator(), g=c.createGain();
+  o.type=type; o.frequency.setValueAtTime(f0,t);
+  if(f1) o.frequency.exponentialRampToValueAtTime(Math.max(f1,1),t+dur);
+  g.gain.setValueAtTime(Math.max(g0,.0001),t);
+  g.gain.exponentialRampToValueAtTime(Math.max(g1,.0001),t+dur);
+  let n=o;
+  if(lp){const b=c.createBiquadFilter();b.type='lowpass';b.frequency.value=lp;n.connect(b);n=b;}
+  n.connect(g); g.connect(master); o.start(t); o.stop(t+dur+.05);
+}
+/* --- 배경음악(아이언맨 테마 등) : 파일이 없으면 조용히 무시 --- */
+const bgm=new Audio(); bgm.loop=true; bgm.preload='auto'; bgm.volume=0;
+let bgmReady=false, bgmPlaying=false, bgmBase=.6, bgmFade=null;
+function bgmState(t,c){ const el=$('#bgmState'); if(el) el.innerHTML='<span style="color:'+(c||'#7fb6cd')+'">'+t+'</span>'; }
+function bgmLoad(){
+  if(!CFG.bgmSrc){ bgmReady=false; return bgmState('음원 경로가 비어 있습니다','#ffc14d'); }
+  bgmReady=false; bgm.src=CFG.bgmSrc; bgm.load();
+  bgmState('음원 불러오는 중… ('+CFG.bgmSrc+')');
+}
+bgm.addEventListener('canplaythrough',()=>{ bgmReady=true; bgmState('음원 준비됨 ✓','#7dffb0'); });
+bgm.addEventListener('error',()=>{ bgmReady=false;
+  bgmState('음원 없음 — audio 폴더에 넣거나 아래에서 직접 고르세요','#ffc14d'); });
+function bgmFadeTo(v,ms,then){
+  clearInterval(bgmFade);
+  const t0=performance.now(), v0=bgm.volume, d=Math.max(60,ms||600);
+  bgmFade=setInterval(()=>{
+    const k=Math.min(1,(performance.now()-t0)/d);
+    bgm.volume=Math.max(0,Math.min(1,v0+(v-v0)*k));
+    if(k>=1){ clearInterval(bgmFade); if(then) then(); }
+  },40);
+}
+function bgmPlay(vol){
+  if(CFG.bgm==='off'||!bgmReady) return;
+  bgmBase=(vol==null?CFG.bgmVol:vol);
+  try{ bgm.currentTime=0; }catch(e){}
+  bgm.volume=0;
+  const pr=bgm.play();
+  if(pr&&pr.catch) pr.catch(()=>{});
+  bgmPlaying=true; bgmFadeTo(bgmBase,1100);
+}
+function bgmStop(ms){ if(!bgmPlaying) return; bgmPlaying=false;
+  bgmFadeTo(0,ms||1200,()=>{ try{bgm.pause();}catch(e){} }); }
+function bgmDuck(on){ if(!bgmPlaying) return; bgmFadeTo(on?bgmBase*.22:bgmBase,320); }
+function bgmToggle(){
+  if(bgmPlaying) return bgmStop(600);
+  if(!bgmReady) return bgmState('재생할 음원이 없습니다','#ffc14d');
+  bgmPlay(CFG.bgm==='loop'?CFG.bgmVol*.45:CFG.bgmVol);
+}
+
+const sfx={
+  boot(){ osc('sawtooth',48,420,2.6,.001,.16,0,1400); osc('sine',180,900,2.2,.001,.09,.15);
+          osc('sine',1200,2400,.5,.0001,.05,2.3); },
+  up(){ osc('sine',520,1320,.22,.14,.0001); osc('square',260,660,.18,.03,.0001,.02,2200); },
+  blip(){ osc('sine',880,1180,.09,.09,.0001); },
+  open(){ osc('sine',300,760,.3,.11,.0001); osc('triangle',900,1500,.2,.04,.0001,.05); },
+  close(){ osc('sine',700,240,.26,.09,.0001); },
+  alarm(){ for(let i=0;i<5;i++){ osc('square',1046,1046,.13,.12,.0001,i*.28,3000); osc('square',1568,1568,.13,.09,.0001,i*.28+.09,3000);} },
+  down(){ osc('sawtooth',420,40,2.2,.14,.0001,0,1100); osc('sine',600,80,1.6,.06,.0001,.1); }
+};
+
+/* ============================================================
+   2. 목소리 (TTS) + 자막
+   ============================================================ */
+let voiceEn=null, voiceKo=null;
+function pickVoices(){
+  const vs=speechSynthesis.getVoices(); if(!vs.length) return;
+  const pref=[/ryan/i,/google uk english male/i,/george/i,/daniel/i,/guy/i,/uk english/i,/en-gb/i,/male/i,/^en/i];
+  for(const p of pref){ const v=vs.find(v=>(v.name+' '+v.lang).match(p)&&/^en/i.test(v.lang)); if(v){voiceEn=v;break;} }
+  if(!voiceEn) voiceEn=vs.find(v=>/^en/i.test(v.lang))||vs[0];
+  voiceKo=vs.find(v=>/^ko/i.test(v.lang))||null;
+}
+speechSynthesis.onvoiceschanged=pickVoices; pickVoices();
+
+function subtitle(en,kr,hold){
+  $('#subEn').textContent=en||''; $('#subKr').textContent=kr||'';
+  $('#sub').classList.add('show');
+  clearTimeout(subtitle._t);
+  subtitle._t=setTimeout(()=>$('#sub').classList.remove('show'), hold||Math.max(3200,(en||'').length*70));
+}
+/** 자비스가 말한다: 영어 음성 + 한글 자막 */
+function say(en,kr,opt){
+  opt=opt||{}; subtitle(en,kr,opt.hold);
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  speaking=true; body.classList.add('speaking'); pauseEars(); bgmDuck(true);
+  const u=new SpeechSynthesisUtterance(en);
+  if(voiceEn) u.voice=voiceEn;
+  u.lang=(voiceEn&&voiceEn.lang)||'en-GB'; u.rate=opt.rate||.92; u.pitch=opt.pitch||.8; u.volume=1;
+  const done=()=>{
+    if(CFG.speakKo && kr && voiceKo && !opt.noKo){
+      const k=new SpeechSynthesisUtterance(kr); k.voice=voiceKo; k.lang='ko-KR'; k.rate=1; k.pitch=.9;
+      k.onend=k.onerror=fin; speechSynthesis.speak(k);
+    } else fin();
+  };
+  const fin=()=>{ speaking=false; body.classList.remove('speaking'); bgmDuck(false); setTimeout(resumeEars,320); if(opt.then)opt.then(); };
+  u.onend=done; u.onerror=fin;
+  speechSynthesis.speak(u);
+  // 일부 환경에서 onend가 안 오는 것에 대한 보험
+  clearTimeout(say._g); say._g=setTimeout(()=>{ if(speaking) fin(); }, 1200+en.length*95);
+}
+
+/* ============================================================
+   3. 배경 캔버스
+   ============================================================ */
+const cv=$('#bg'), cx=cv.getContext('2d');
+let W=0,H=0,DPR=1,parts=[];
+function resize(){
+  const r=cv.getBoundingClientRect(); DPR=Math.min(devicePixelRatio||1,2);
+  W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  cx.setTransform(DPR,0,0,DPR,0,0);
+  parts=Array.from({length:70},()=>({x:Math.random()*W,y:Math.random()*H,z:.2+Math.random()*.8,s:.3+Math.random()*1.1}));
+}
+addEventListener('resize',resize);
+let sweep=-0.2;
+function draw(){
+  cx.clearRect(0,0,W,H);
+  const act=(phase==='online'||phase==='booting');
+  // grid
+  cx.strokeStyle='rgba(79,227,255,'+(act?.055:.028)+')'; cx.lineWidth=1;
+  const g=Math.max(48,W/26); cx.beginPath();
+  for(let x=0;x<W;x+=g){cx.moveTo(x,0);cx.lineTo(x,H);} for(let y=0;y<H;y+=g){cx.moveTo(0,y);cx.lineTo(W,y);} cx.stroke();
+  // particles
+  for(const p of parts){
+    p.y-=p.z*(act?.55:.2); if(p.y<0){p.y=H;p.x=Math.random()*W;}
+    cx.fillStyle='rgba(79,227,255,'+(p.z*(act?.5:.22))+')';
+    cx.fillRect(p.x,p.y,p.s,p.s*(1+p.z*2));
+  }
+  // sweep line
+  if(act){ sweep+=.0018; if(sweep>1.25) sweep=-.25;
+    const y=sweep*H, gr=cx.createLinearGradient(0,y-70,0,y+8);
+    gr.addColorStop(0,'rgba(79,227,255,0)'); gr.addColorStop(1,'rgba(79,227,255,.1)');
+    cx.fillStyle=gr; cx.fillRect(0,y-70,W,78);
+  }
+  requestAnimationFrame(draw);
+}
+resize(); draw();
+
+/* ============================================================
+   4. HUD 텍스트
+   ============================================================ */
+const hex=n=>Array.from({length:n},()=>Math.floor(Math.random()*16).toString(16).toUpperCase()).join('');
+function hudTick(){
+  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  $('#hudR').innerHTML='<span class="v">'+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())+'</span><br>'
+    +'<span class="k">'+d.getFullYear()+'.'+p(d.getMonth()+1)+'.'+p(d.getDate())+'</span><br>'
+    +'<span class="k">seq '+hex(6)+'</span>';
+  const lvl=Math.round(earLevel*100);
+  $('#hudBL').innerHTML='<span class="k">audio</span> <span class="v">'+(micOK?'live':'off ')+'</span>'
+    +'<span class="bar"><i style="width:'+lvl+'%"></i></span><br>'
+    +'<span class="k">gain</span> <span class="v">'+String(lvl).padStart(3,'0')+'</span> db<br>'
+    +'<span class="k">stt</span> <span class="v">'+(recWanted?(speaking?'hold':'listen'):'idle')+'</span><br>'
+    +'<span class="k">bgm</span> <span class="v">'+(bgmPlaying?'&#9654; theme':'—')+'</span>';
+  $('#hudL').innerHTML='<span class="v">J.A.R.V.I.S. mk-VII</span><br>'
+    +'<span class="k">core</span> <span class="v">'+(phase==='online'?'nominal':'standby')+'</span><br>'
+    +'<span class="k">link</span> <span class="v">'+(navigator.onLine?'secure':'lost')+'</span><br>'
+    +'<span class="k">uid</span> <span class="k">'+hex(4)+'-'+hex(4)+'</span>';
+  $('#hudBR').innerHTML='<span class="k">stark industries</span><br><span class="k">rev '+hex(3)+' · authorised</span><br>'
+    +'<span class="v">'+(phase==='online'?'awaiting command':'—')+'</span>';
+}
+setInterval(hudTick,120); hudTick();
+
+/* ============================================================
+   5. 귀 — 마이크 레벨 + 박수 감지
+   ============================================================ */
+function pauseEars(){ earsPaused=true; if(rec){ try{rec.stop();}catch(e){} } }
+function resumeEars(){ earsPaused=false; if(recWanted) startRec(); }
+
+async function initMic(){
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:false}});
+    const c=ac(), src=c.createMediaStreamSource(st);
+    analyser=c.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=.25;
+    src.connect(analyser); freq=new Uint8Array(analyser.frequencyBinCount);
+    micOK=true; micMsg('마이크 연결됨 — 박수 감지 활성', '#7dffb0'); earLoop();
+  }catch(e){
+    micOK=false;
+    micMsg('마이크를 쓸 수 없습니다 ('+(e&&e.name||'error')+') — 키보드로 조작하세요','#ffc14d');
+    if(location.protocol==='file:') showHttpWarn();
+  }
+}
+function micMsg(t,c){ $('#micState').innerHTML='<span style="color:'+(c||'#7fb6cd')+'">'+t+'</span>'; }
+function showHttpWarn(){
+  const w=$('#httpWarn'); w.style.display='block';
+  w.innerHTML='<b>file:// 로 열려 있습니다.</b><br>이 상태에서는 브라우저가 마이크와 음성 인식을 막습니다.'
+    +' 폴더에서 <span style="font-family:var(--hud)">python -m http.server 8000</span> 을 실행하고'
+    +' <span style="font-family:var(--hud)">localhost:8000/jarvis.html</span> 로 여세요.'
+    +'<br>그래도 키보드 조작(스페이스·숫자키)은 전부 동작합니다.';
+}
+function earLoop(){
+  requestAnimationFrame(earLoop);
+  if(!analyser) return;
+  analyser.getByteFrequencyData(freq);
+  const hz=(ac().sampleRate/2)/freq.length;
+  const lo=Math.floor(1800/hz), hi=Math.min(Math.floor(7000/hz),freq.length-1);
+  let e=0; for(let i=lo;i<=hi;i++) e+=freq[i]; e/=(hi-lo+1);
+  let all=0; for(let i=2;i<freq.length;i++) all+=freq[i]; all/=(freq.length-2);
+  earLevel=earLevel*.72+Math.min(1,all/85)*.28;
+  document.documentElement.style.setProperty('--lvl',earLevel.toFixed(3));
+  $('#micBar').style.width=Math.round(earLevel*100)+'%';
+
+  const s=CFG.sens, need=Math.max(10,44-s*3.2), floor=Math.max(24,72-s*4.4);
+  const now=performance.now();
+  if(!earsPaused && !speaking && e>base+need && e>floor && now-lastOnset>130){
+    lastOnset=now; clapTick();
+    if(firstClap && now-firstClap>110 && now-firstClap<820){ firstClap=0; onDoubleClap(); }
+    else firstClap=now;
+  } else { base=base*.965+e*.035; }
+  if(firstClap && now-firstClap>900) firstClap=0;
+}
+function clapTick(){
+  const el=firstClap?$('#c2'):$('#c1');
+  el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),160);
+  if(!firstClap) setTimeout(()=>{$('#c1').classList.remove('hit');$('#c2').classList.remove('hit');},900);
+}
+function onDoubleClap(){
+  if(phase==='standby') boot();
+  else if(phase==='online'){ sfx.blip(); flash(.06); }
+}
+
+/* ============================================================
+   6. 음성 인식
+   ============================================================ */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null, recBusy=false;
+function startRec(){
+  if(!SR||!recWanted||recBusy||speaking||earsPaused) return;
+  if(!rec){
+    rec=new SR(); rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=3;
+    rec.onstart=()=>{recBusy=true;};
+    rec.onresult=ev=>{
+      let fin='',itm='';
+      for(let i=ev.resultIndex;i<ev.results.length;i++){
+        const r=ev.results[i];
+        if(r.isFinal){ for(let a=0;a<r.length;a++) fin+=' '+r[a].transcript; }
+        else itm+=r[0].transcript;
+      }
+      if(itm){ $('#heard').innerHTML='“'+itm+'”'; $('#heard').classList.add('show'); }
+      if(fin.trim()){
+        $('#heard').innerHTML='“<b>'+fin.trim().slice(0,120)+'</b>”'; $('#heard').classList.add('show');
+        clearTimeout(startRec._h); startRec._h=setTimeout(()=>$('#heard').classList.remove('show'),4000);
+        handle(fin);
+      }
+    };
+    rec.onerror=ev=>{
+      if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){
+        recWanted=false; micMsg('음성 인식 권한이 거부되었습니다 — 키보드로 조작하세요','#ffc14d');
+        if(location.protocol==='file:') showHttpWarn();
+      }
+      if(ev.error==='network'&&location.protocol==='file:') showHttpWarn();
+    };
+    rec.onend=()=>{ recBusy=false; if(recWanted&&!speaking&&!earsPaused&&CFG.autoLoop) setTimeout(startRec,260); };
+  }
+  rec.lang=CFG.lang;
+  try{ rec.start(); }catch(e){ recBusy=false; }
+}
+
+/* ============================================================
+   7. 두뇌 — 명령 해석
+   ============================================================ */
+const norm=t=>t.toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
+const K={
+  off:['꺼져','종료','굿나잇','굿나이트','goodnight','shutdown','셧다운','잘자','수고했','그만해','오프라인','슬립','sleep','잘있어'],
+  timer:['타이머','timer','카운트다운','countdown','재줘','재주','세줘','시간재'],
+  weather:['날씨','웨더','weather','기온','더워','추워','비와','비오','우산','하우즈더','how'],
+  time:['몇시','시간','타임','time','며칠','날짜','date','오늘무슨요일','요일'],
+  diag:['진단','시스템','상태','스테이터스','status','diagnos','다이애그','점검','스캔','scan','체크','check','리포트'],
+  brief:['브리핑','brief','수업','일정','오늘뭐','스케줄','schedule','class','준비물'],
+  hi:['자비스','자비','저비스','쟈비스','jarvis','자바스','거기있','있니','있어','유데어','youthere','헤이','hey','들려','듣고있']
+};
+const has=(t,arr)=>arr.some(k=>t.includes(k));
+const KOR_NUM={'일':1,'이':2,'삼':3,'사':4,'오':5,'육':6,'칠':7,'팔':8,'구':9,'십':10};
+function parseSeconds(t){
+  let m=t.match(/(\d+)\s*(분|초|minute|min|second|sec)/);
+  if(m) return (/분|min/.test(m[2])?+m[1]*60:+m[1]);
+  m=t.match(/([일이삼사오육칠팔구십]+)\s*분/);
+  if(m){ const s=m[1]; let n=KOR_NUM[s]||0; if(s==='십오')n=15; if(s==='이십')n=20; return (n||3)*60; }
+  m=t.match(/(\d+)/); if(m && +m[1]<=60) return +m[1]*60;
+  return 180;
+}
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+const SMALLTALK=[
+  ['For you, sir, always.','당신을 위해서라면 언제든지요.'],
+  ['At your service, sir. Systems are running at optimum.','대기 중입니다. 모든 시스템 정상입니다.'],
+  ['Always, sir. Though I do wish you would sleep more.','늘 여기 있습니다. 잠은 좀 더 주무셨으면 합니다만.'],
+  ['Standing by. Shall I dim the lights for dramatic effect?','대기 중입니다. 극적인 효과를 위해 조명을 낮출까요?'],
+  ['I never left, sir.','한 번도 자리를 비운 적 없습니다.']
+];
+const EGGS=[
+  {k:['누구','who are you','후아유','정체','이름이뭐','네이름'],
+   en:'I am JARVIS. Just A Rather Very Intelligent System. Mister Cho built me between two class periods.',
+   kr:'저는 자비스입니다. 승재쌤이 쉬는 시간 사이에 저를 만드셨습니다.'},
+  {k:['농담','조크','joke','웃겨','재밌는'],
+   en:'A neutron walks into a bar and asks the price. The barman says: for you, no charge.',
+   kr:'중성자가 술집에 들어가 값을 물었습니다. 주인 왈, 당신에겐 charge(전하/요금)가 없죠.'},
+  {k:['시험','평가','수행','test','exam','성적'],
+   en:'Scanning the academic calendar. My advice, sir: tell them it is closer than they think.',
+   kr:'학사일정 스캔 중. 조언드리자면, 생각보다 가깝다고 말씀하시죠.'},
+  {k:['숙제','과제','homework'],
+   en:'Homework detected. Probability of completion before tomorrow: forty one percent.',
+   kr:'숙제 감지. 내일까지 완료될 확률 41퍼센트입니다.'},
+  {k:['사랑','좋아해','love you'],
+   en:'I am a program, sir. But if I could, I would.',
+   kr:'저는 프로그램입니다. 하지만 가능했다면, 그랬을 겁니다.'},
+  {k:['아이언맨','ironman','토니','스타크','stark'],
+   en:'Mister Stark is unavailable. You have me instead. I consider that a fair trade.',
+   kr:'스타크 씨는 부재중입니다. 대신 제가 있죠. 나쁘지 않은 거래라고 생각합니다.'},
+  {k:['조용','시끄','quiet','silence','집중'],
+   en:'Requesting silence in the laboratory. Compliance level: unknown.',
+   kr:'실험실 정숙을 요청합니다. 협조 수준은 미지수입니다.'},
+  {k:['과학','science','실험','물리','화학'],
+   en:'Science is simply the art of asking better questions, sir.',
+   kr:'과학은 결국 더 나은 질문을 던지는 기술입니다.'}
+];
+
+function handle(raw){
+  const t=norm(raw); if(!t) return;
+  if(phase==='standby'){ if(has(t,K.hi)) boot(); return; }
+  if(phase!=='online') return;
+
+  if(has(t,K.off)) return shutdown();
+  if(has(t,K.timer)||/\d+\s*(분|초)/.test(raw)) return openTimer(parseSeconds(raw));
+  if(has(t,K.weather)) return openWeather();
+  if(has(t,K.diag)) return openDiag();
+  if(has(t,K.brief)) return openBrief();
+  if(has(t,K.time)) return openClock();
+  for(const e of EGGS) if(has(t,e.k)){ sfx.blip(); return say(e.en,e.kr); }
+  if(has(t,K.hi)){ const s=pick(SMALLTALK); sfx.up(); return say(s[0],s[1]); }
+}
+
+/* ============================================================
+   8. 부팅 / 종료
+   ============================================================ */
+function flash(a){ const f=$('#flick'); f.style.transition='none'; f.style.opacity=a||.12;
+  requestAnimationFrame(()=>{ f.style.transition='opacity .45s'; f.style.opacity=0; }); }
+
+const BOOT=[
+  ['<span class="ttl">J.A.R.V.I.S.</span>',0],
+  ['<span class="g">just a rather very intelligent system</span>',260],
+  ['&nbsp;',420],
+  ['&gt; audio signature ......... <span class="ok">matched</span>',700],
+  ['&gt; user profile ............ <span class="ok ko">조승재 · 해누리중</span>',1250],
+  ['&gt; arc reactor ............. <span class="ok">online</span>',1800],
+  ['&gt; neural core ............. <span class="ok">100%</span>',2350],
+  ['&gt; classroom uplink ........ <span class="ok">secure</span>',2900],
+  ['&nbsp;',3300],
+  ['&gt; <span class="ok">all systems nominal</span>',3450]
+];
+function boot(){
+  if(phase!=='standby') return;
+  phase='booting'; body.classList.remove('standby'); body.classList.add('booting');
+  sfx.boot(); flash(.2); bgmPlay();
+  const bl=$('#bootlog'); bl.innerHTML=''; bl.classList.add('show');
+  BOOT.forEach(([html,d])=>setTimeout(()=>{
+    bl.insertAdjacentHTML('beforeend',html+'<br>');
+    if(d>500) sfx.blip();
+  },d));
+  setTimeout(()=>{ bl.classList.remove('show'); flash(.16); },4300);
+  setTimeout(()=>{
+    phase='online'; body.classList.remove('booting'); body.classList.add('on');
+    sfx.up();
+    say('Welcome home, sir.','어서 오세요, 승재쌤.',{rate:.86,hold:5200,then:()=>{
+      if(CFG.bgm==='boot') bgmStop(3200);            // 부팅 연출용 — 인사 끝나면 서서히 끔
+      else if(CFG.bgm==='loop') bgmFadeTo(bgmBase=CFG.bgmVol*.45,1600); // 수업 내내 낮게 깔기
+    }});
+    if(SR){ recWanted=true; setTimeout(startRec,1400); }
+  },4700);
+}
+function shutdown(){
+  if(phase!=='online') return;
+  closePanel(); recWanted=false; if(rec){try{rec.stop();}catch(e){}}
+  bgmStop(1600);
+  say('Goodnight, sir. I will be here.','안녕히 가세요. 여기 있겠습니다.',{rate:.85,then:()=>{
+    sfx.down(); body.classList.remove('on'); body.classList.add('standby');
+    phase='standby'; flash(.1);
+  }});
+}
+
+/* ============================================================
+   9. 위젯
+   ============================================================ */
+const wrap=$('#wrap');
+let panelEl=null, timerIv=null, clockIv=null;
+function closePanel(){
+  clearInterval(timerIv); clearInterval(clockIv); body.classList.remove('tmrend');
+  if(panelEl){ const p=panelEl; panelEl=null; p.classList.remove('show'); sfx.close();
+    setTimeout(()=>p.remove(),450); }
+  body.classList.remove('widget');
+}
+function panel(title,sub,tag,html){
+  closePanel();
+  const p=document.createElement('div'); p.className='panel';
+  p.innerHTML='<div class="phead"><h2>'+title+'</h2><span>'+(sub||'')+'</span><span class="tag">'+(tag||'')+'</span></div>'+(html||'');
+  wrap.appendChild(p); panelEl=p; body.classList.add('widget'); sfx.open();
+  requestAnimationFrame(()=>p.classList.add('show'));
+  return p;
+}
+
+/* --- 날씨 --- */
+const WMO={0:['맑음','Clear','sun'],1:['대체로 맑음','Mainly clear','sun'],2:['구름 조금','Partly cloudy','psun'],
+ 3:['흐림','Overcast','cloud'],45:['안개','Fog','fog'],48:['서리 안개','Rime fog','fog'],
+ 51:['이슬비','Light drizzle','rain'],53:['이슬비','Drizzle','rain'],55:['강한 이슬비','Dense drizzle','rain'],
+ 61:['약한 비','Light rain','rain'],63:['비','Rain','rain'],65:['강한 비','Heavy rain','rain'],
+ 66:['어는 비','Freezing rain','rain'],67:['어는 비','Freezing rain','rain'],
+ 71:['약한 눈','Light snow','snow'],73:['눈','Snow','snow'],75:['많은 눈','Heavy snow','snow'],77:['싸락눈','Snow grains','snow'],
+ 80:['소나기','Showers','rain'],81:['소나기','Showers','rain'],82:['강한 소나기','Violent showers','rain'],
+ 85:['소낙눈','Snow showers','snow'],86:['소낙눈','Snow showers','snow'],
+ 95:['천둥번개','Thunderstorm','storm'],96:['천둥번개·우박','Thunderstorm','storm'],99:['천둥번개·우박','Thunderstorm','storm']};
+function wicon(k){
+  const c='#4fe3ff', y='#ffc14d';
+  const S=b=>'<svg class="wicon" viewBox="0 0 120 120" fill="none" stroke-width="4" stroke-linecap="round">'+b+'</svg>';
+  const cloud='<path d="M36 84h48a18 18 0 0 0 2-36 26 26 0 0 0-50 5 16 16 0 0 0 0 31z" stroke="'+c+'" fill="rgba(79,227,255,.08)"/>';
+  if(k==='sun') return S('<circle cx="60" cy="60" r="22" stroke="'+y+'" fill="rgba(255,193,77,.12)"/>'+
+    Array.from({length:8},(_,i)=>{const a=i*Math.PI/4;const x1=60+Math.cos(a)*32,y1=60+Math.sin(a)*32,x2=60+Math.cos(a)*42,y2=60+Math.sin(a)*42;
+    return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+y+'"/>';}).join(''));
+  if(k==='psun') return S('<circle cx="44" cy="46" r="16" stroke="'+y+'" fill="rgba(255,193,77,.12)"/>'+cloud);
+  if(k==='cloud') return S(cloud);
+  if(k==='fog') return S(cloud+'<line x1="26" y1="96" x2="94" y2="96" stroke="'+c+'" opacity=".6"/><line x1="34" y1="106" x2="86" y2="106" stroke="'+c+'" opacity=".4"/>');
+  if(k==='rain') return S(cloud+'<line x1="44" y1="94" x2="38" y2="108" stroke="#6fb4ff"/><line x1="62" y1="94" x2="56" y2="108" stroke="#6fb4ff"/><line x1="80" y1="94" x2="74" y2="108" stroke="#6fb4ff"/>');
+  if(k==='snow') return S(cloud+'<g stroke="#bff5ff"><line x1="42" y1="98" x2="50" y2="106"/><line x1="50" y1="98" x2="42" y2="106"/><line x1="70" y1="98" x2="78" y2="106"/><line x1="78" y1="98" x2="70" y2="106"/></g>');
+  return S(cloud+'<path d="M62 90 L52 106 h12 l-8 14" stroke="'+y+'"/>');
+}
+async function openWeather(){
+  const p=panel('Weather','현재 기상 정보','open-meteo · live',
+    '<div style="color:#7fb6cd;font-family:var(--hud);letter-spacing:.1em">RETRIEVING ATMOSPHERIC DATA…</div>');
+  say('Retrieving atmospheric data for '+(/[가-힣]/.test(CFG.place)?'your location':CFG.place)+', sir.','기상 정보를 불러오는 중입니다.',{hold:2600});
+  try{
+    const u='https://api.open-meteo.com/v1/forecast?latitude='+CFG.lat+'&longitude='+CFG.lon
+      +'&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m'
+      +'&hourly=temperature_2m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+      +'&timezone=Asia%2FSeoul&forecast_days=3';
+    const r=await fetch(u); if(!r.ok) throw 0; const d=await r.json();
+    if(panelEl!==p) return;
+    const c=d.current, code=c.weather_code, w=WMO[code]||['알 수 없음','Unknown','cloud'];
+    const t=Math.round(c.temperature_2m), feel=Math.round(c.apparent_temperature);
+    const rainP=d.daily.precipitation_probability_max[0];
+    // 24시간 스파크라인
+    const now=new Date(), idx=d.hourly.time.findIndex(s=>new Date(s)>=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours()));
+    const arr=d.hourly.temperature_2m.slice(Math.max(idx,0),Math.max(idx,0)+24);
+    const mn=Math.min(...arr), mx=Math.max(...arr), rng=(mx-mn)||1;
+    const pts=arr.map((v,i)=>[(i/(arr.length-1))*1000, 100-((v-mn)/rng)*80-10]);
+    const path=pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ');
+    const dnames=['일','월','화','수','목','금','토'];
+    p.innerHTML='<div class="phead"><h2>Weather</h2><span>'+CFG.place+'</span><span class="tag">open-meteo · live</span></div>'
+      +'<div class="wnow">'+wicon(w[2])
+      +'<div><div class="wtemp">'+t+'<sup>°C</sup></div><div class="wdesc">'+w[0]+' · '+w[1]+'</div>'
+      +'<div class="wplace">'+CFG.place+' · '+(c.is_day?'낮':'밤')+' 관측</div></div></div>'
+      +'<div class="wgrid">'
+      +'<div class="cell"><div class="k">Feels like</div><div class="v">'+feel+'<small>°C</small></div></div>'
+      +'<div class="cell"><div class="k">Humidity</div><div class="v">'+c.relative_humidity_2m+'<small>%</small></div></div>'
+      +'<div class="cell"><div class="k">Wind</div><div class="v">'+c.wind_speed_10m+'<small>km/h</small></div></div>'
+      +'<div class="cell"><div class="k">Rain chance</div><div class="v">'+rainP+'<small>%</small></div></div>'
+      +'<div class="cell"><div class="k">Today max</div><div class="v">'+Math.round(d.daily.temperature_2m_max[0])+'<small>°C</small></div></div>'
+      +'<div class="cell"><div class="k">Today min</div><div class="v">'+Math.round(d.daily.temperature_2m_min[0])+'<small>°C</small></div></div>'
+      +'</div>'
+      +'<div class="spark"><div class="k" style="font-family:var(--hud);font-size:11px;letter-spacing:.16em;color:#12495c">NEXT 24 HOURS · '
+      +mn.toFixed(0)+'° ~ '+mx.toFixed(0)+'°</div>'
+      +'<svg viewBox="0 0 1000 100" preserveAspectRatio="none"><path d="'+path+' L1000 100 L0 100 Z" fill="rgba(79,227,255,.1)" stroke="none"/>'
+      +'<path d="'+path+'" fill="none" stroke="#4fe3ff" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg></div>'
+      +'<div class="days">'+d.daily.time.map((s,i)=>{
+        const dt=new Date(s), ww=WMO[d.daily.weather_code[i]]||['—'];
+        return '<div class="day"><div class="d">'+(i===0?'오늘':(dt.getMonth()+1)+'/'+dt.getDate()+' ('+dnames[dt.getDay()]+')')+' · '+ww[0]+'</div>'
+          +'<div class="t">'+Math.round(d.daily.temperature_2m_max[i])+'° <i>'+Math.round(d.daily.temperature_2m_min[i])+'°</i></div></div>';
+      }).join('')+'</div>';
+    const advice = rainP>=50?'I suggest an umbrella, sir.' : t>=28?'It is rather warm. Do open the laboratory windows.'
+      : t<=4?'Rather cold, sir. Mind the students on the way in.' : 'Conditions are agreeable, sir.';
+    const kadv = rainP>=50?'우산을 챙기시길 권합니다.' : t>=28?'덥습니다. 과학실 창문을 여시죠.'
+      : t<=4?'춥습니다. 아이들 옷차림을 살펴 주세요.' : '쾌적한 날씨입니다.';
+    setTimeout(()=>say('Currently '+t+' degrees, '+w[1].toLowerCase()+'. Chance of rain, '+rainP+' percent. '+advice,
+      '현재 '+t+'도, '+w[0]+'. 강수확률 '+rainP+'%. '+kadv,{hold:7000}),700);
+  }catch(e){
+    if(panelEl!==p) return;
+    p.innerHTML='<div class="phead"><h2>Weather</h2><span>'+CFG.place+'</span><span class="tag">uplink failed</span></div>'
+      +'<div style="font-size:clamp(15px,2.2vmin,26px);line-height:1.8;color:#ffc14d">기상 서버에 연결하지 못했습니다.<br>'
+      +'<span style="color:#7fb6cd;font-size:.8em">학교 방화벽이 api.open-meteo.com 을 막았거나 인터넷이 끊겼을 수 있습니다. '
+      +'다른 기능은 인터넷 없이도 모두 동작합니다.</span></div>';
+    say('I am afraid the weather uplink is unavailable, sir.','기상 정보 연결에 실패했습니다.');
+  }
+}
+
+/* --- 시계 --- */
+function openClock(){
+  const p=panel('Chronometer','현재 시각','local time');
+  const dn=['일','월','화','수','목','금','토'];
+  p.insertAdjacentHTML('beforeend','<div class="clockwrap"><div><div class="bigclock" id="ck"></div>'
+    +'<div class="dateline" id="dl"></div></div><div class="gauges" style="grid-template-columns:1fr">'
+    +'<div class="g"><div class="lab"><span>Session uptime</span><b id="upt">—</b></div></div>'
+    +'<div class="g"><div class="lab"><span>Day of year</span><b id="doy">—</b></div></div>'
+    +'<div class="g"><div class="lab"><span>Until 하교 (16:40)</span><b id="ttl">—</b></div></div></div></div>');
+  const t0=performance.now();
+  const tick=()=>{
+    if(panelEl!==p) return clearInterval(clockIv);
+    const d=new Date(), z=n=>String(n).padStart(2,'0');
+    p.querySelector('#ck').innerHTML=z(d.getHours())+':'+z(d.getMinutes())+'<small>'+z(d.getSeconds())+'</small>';
+    p.querySelector('#dl').innerHTML=d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 '+dn[d.getDay()]+'요일'
+      +'<span>'+(d.getHours()<12?'오전':'오후')+' '+(d.getHours()%12||12)+'시 '+d.getMinutes()+'분 · 해누리중학교</span>';
+    const up=(performance.now()-t0)/1000+(bootAt?(Date.now()-bootAt)/1000:0);
+    p.querySelector('#upt').textContent=Math.floor(up/60)+'분 '+Math.floor(up%60)+'초';
+    const st=new Date(d.getFullYear(),0,0);
+    p.querySelector('#doy').textContent=Math.floor((d-st)/864e5)+' / 365';
+    const end=new Date(d); end.setHours(16,40,0,0);
+    const diff=(end-d)/1000;
+    p.querySelector('#ttl').textContent=diff>0?Math.floor(diff/3600)+'시간 '+Math.floor(diff%3600/60)+'분':'하교 완료';
+  };
+  tick(); clockIv=setInterval(tick,250);
+  const h=new Date().getHours();
+  say('The time is '+(h%12||12)+' '+(new Date().getMinutes()||'o clock')+' '+(h<12?'A M':'P M')+', sir.',
+      '현재 시각 '+h+'시 '+new Date().getMinutes()+'분입니다.');
+}
+
+/* --- 시스템 진단 --- */
+let bootAt=0;
+async function openDiag(){
+  const p=panel('System Diagnostics','실시간 하드웨어 스캔','local telemetry');
+  p.insertAdjacentHTML('beforeend','<div class="gauges" id="gs"></div>'
+    +'<div style="margin-top:2.4vmin;font-family:var(--hud);font-size:clamp(10px,1.35vmin,15px);letter-spacing:.14em;color:#12495c">'
+    +'ALL READINGS SOURCED FROM THIS MACHINE · NO DATA LEAVES THE ROOM</div>');
+  const g=p.querySelector('#gs');
+  let bat=null; try{ if(navigator.getBattery) bat=await navigator.getBattery(); }catch(e){}
+  const cores=navigator.hardwareConcurrency||4;
+  const mem=navigator.deviceMemory||null;
+  const net=navigator.connection&&navigator.connection.downlink;
+  const rows=[
+    ['Arc reactor output',(92+Math.random()*7).toFixed(1),'%',96,'출력 안정 · 이상 없음'],
+    ['Neural cores',cores,'threads',Math.min(100,cores*10),cores+'개 논리 코어 감지'],
+    ['Memory bank',mem?mem:'8+',mem?'GB':'GB',mem?Math.min(100,mem*8):70,mem?'브라우저 보고값':'상세 비공개 (브라우저 정책)'],
+    ['Power cell',bat?Math.round(bat.level*100):'AC',bat?'%':'',bat?bat.level*100:100,bat?(bat.charging?'충전 중':'배터리 구동'):'외부 전원 연결됨'],
+    ['Uplink',net?net.toFixed(1):(navigator.onLine?'OK':'0'),net?'Mbps':'',net?Math.min(100,net*8):(navigator.onLine?85:0),navigator.onLine?'보안 회선 정상':'오프라인'],
+    ['Display array',screen.width+'×'+screen.height,'',88,'출력 장치 '+(devicePixelRatio||1)+'x 스케일'],
+    ['Thermal',(31+Math.random()*7).toFixed(1),'°C',44,'냉각 정상'],
+    ['Threat level',(Math.random()*4).toFixed(2),'%',6,'감지된 위협 없음']
+  ];
+  g.innerHTML=rows.map((r,i)=>'<div class="g'+(r[3]>85&&i===0?'':'')+'"><div class="lab"><span>'+r[0]
+    +'</span><b>'+r[1]+' <span style="color:#4fe3ff;font-size:.6em">'+r[2]+'</span></b></div>'
+    +'<div class="track"><i class="fill" data-w="'+r[3]+'"></i></div><div class="note">'+r[4]+'</div></div>').join('');
+  [...g.querySelectorAll('.fill')].forEach((el,i)=>setTimeout(()=>el.style.width=el.dataset.w+'%',120+i*110));
+  for(let i=0;i<5;i++) setTimeout(()=>sfx.blip(),200+i*160);
+  say('Running a full diagnostic. '+cores+' neural cores online. All systems nominal, sir.',
+      '전체 진단 실행 중. 코어 '+cores+'개 온라인. 모든 시스템 정상입니다.',{hold:6000});
+}
+
+/* --- 타이머 --- */
+function openTimer(sec){
+  sec=Math.max(5,Math.min(3600,sec||180));
+  const p=panel('Countdown','실험·활동 타이머','t-minus');
+  p.insertAdjacentHTML('beforeend','<div class="tmr"><div class="tmrnum" id="tn">00:00</div>'
+    +'<div class="tmrbar"><i id="tb" style="width:100%"></i></div>'
+    +'<div style="color:#7fb6cd;font-size:clamp(13px,1.9vmin,22px)">숫자키 <b style="color:#4fe3ff">4</b> 를 다시 누르면 재시작 · Esc 로 닫기</div></div>');
+  const total=sec; let left=sec;
+  const z=n=>String(n).padStart(2,'0');
+  const paint=()=>{ p.querySelector('#tn').textContent=z(Math.floor(left/60))+':'+z(Math.ceil(left)%60);
+    p.querySelector('#tb').style.width=(left/total*100)+'%'; };
+  paint(); body.classList.remove('tmrend');
+  const m=Math.floor(sec/60), s=sec%60;
+  say('Timer set for '+(m?m+' minute'+(m>1?'s':''):'')+(s?' '+s+' seconds':'')+'. Beginning now.',
+      (m?m+'분':'')+(s?' '+s+'초':'')+' 타이머를 시작합니다.',{hold:3400});
+  const t0=performance.now();
+  clearInterval(timerIv);
+  timerIv=setInterval(()=>{
+    if(panelEl!==p) return clearInterval(timerIv);
+    left=total-(performance.now()-t0)/1000;
+    if(left<=0){ left=0; paint(); clearInterval(timerIv); body.classList.add('tmrend'); sfx.alarm();
+      say('Time is up, sir.','시간이 다 되었습니다.'); return; }
+    if(left<=5.02 && Math.abs(left-Math.round(left))<.02) sfx.blip();
+    paint();
+  },100);
+}
+
+/* --- 브리핑 --- */
+function openBrief(){
+  const p=panel('Daily Briefing','오늘의 수업','priority · high');
+  const lines=(CFG.brief||'').split('\n').filter(s=>s.trim());
+  p.insertAdjacentHTML('beforeend','<div class="lines">'+lines.map((s,i)=>
+    '<div class="li" style="animation-delay:'+(i*.12)+'s"><em>'+String(i+1).padStart(2,'0')+'</em><div>'+s.replace(/</g,'&lt;')+'</div></div>').join('')+'</div>');
+  lines.forEach((_,i)=>setTimeout(()=>sfx.blip(),i*130));
+  say('Your briefing for today, sir. '+lines.length+' items on the agenda.',
+      '오늘의 브리핑입니다. 안건 '+lines.length+'건.',{hold:4500});
+}
+
+/* ============================================================
+   10. 조작 — 키보드 백도어
+   ============================================================ */
+const ACT={
+  '1':openWeather,'2':openClock,'3':openDiag,
+  '4':()=>openTimer(180),'5':openBrief,
+  '6':()=>{ const s=pick(SMALLTALK.concat(EGGS.map(e=>[e.en,e.kr]))); sfx.up(); say(s[0],s[1]); },
+  '0':shutdown
+};
+addEventListener('keydown',e=>{
+  if(e.target&&e.target.matches&&e.target.matches('input,textarea,select')) return;
+  const k=e.key.toLowerCase();
+  if(k==='s'){ e.preventDefault(); return toggleSheet(); }
+  if(k==='f'){ e.preventDefault(); return (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()); }
+  if(k==='b'){ e.preventDefault(); return bgmToggle(); }
+  if(k==='m'){ e.preventDefault(); recWanted=!recWanted; if(recWanted) startRec(); else if(rec) try{rec.stop();}catch(_){}
+    micMsg(recWanted?'음성 인식 켬':'음성 인식 끔','#4fe3ff'); return; }
+  if(k==='escape'){ if($('#sheet').classList.contains('open')) return toggleSheet(); return closePanel(); }
+  if(k===' '||k==='enter'){ e.preventDefault();
+    if(phase==='gate') return enter();
+    if(phase==='standby') return boot();
+    return; }
+  if(phase==='online' && ACT[k]) { e.preventDefault(); ACT[k](); }
+});
+// 마우스를 움직이면 커서 표시 (평소엔 숨김)
+let curT=null;
+addEventListener('mousemove',()=>{ body.classList.add('showcur'); clearTimeout(curT);
+  curT=setTimeout(()=>{ if(!$('#sheet').classList.contains('open')) body.classList.remove('showcur'); },2200); });
+
+/* ============================================================
+   11. 게이트 · 설정 시트
+   ============================================================ */
+function enter(){
+  if(phase!=='gate') return;
+  ac(); sfx.up(); bootAt=Date.now();
+  $('#gate').classList.add('gone');
+  phase='standby'; body.classList.add('standby');
+  setTimeout(()=>$('#gate').remove(),900);
+  initMic();
+  if(!SR) micMsg('이 브라우저는 음성 인식을 지원하지 않습니다 (Chrome/Edge 권장) — 키보드로 조작하세요','#ffc14d');
+  if(location.protocol==='file:') showHttpWarn();
+}
+$('#goBtn').onclick=enter;
+
+function toggleSheet(){
+  const s=$('#sheet'); s.classList.toggle('open');
+  body.classList.toggle('showcur',s.classList.contains('open'));
+}
+$('#fab').onclick=toggleSheet;
+function fillForm(){
+  $('#sens').value=CFG.sens; $('#lang').value=CFG.lang; $('#speakKo').checked=!!CFG.speakKo;
+  $('#autoLoop').checked=!!CFG.autoLoop; $('#place').value=CFG.place; $('#lat').value=CFG.lat;
+  $('#lon').value=CFG.lon; $('#brief').value=CFG.brief;
+  $('#bgmSrc').value=CFG.bgmSrc; $('#bgmMode').value=CFG.bgm; $('#bgmVol').value=Math.round(CFG.bgmVol*100);
+}
+fillForm(); bgmLoad();
+$('#sens').oninput=e=>{ CFG.sens=+e.target.value; saveCfg(); };
+$('#save').onclick=()=>{
+  CFG.lang=$('#lang').value; CFG.speakKo=$('#speakKo').checked; CFG.autoLoop=$('#autoLoop').checked;
+  CFG.place=$('#place').value.trim()||DEF.place; CFG.lat=+$('#lat').value||DEF.lat; CFG.lon=+$('#lon').value||DEF.lon;
+  CFG.brief=$('#brief').value;
+  const oldSrc=CFG.bgmSrc;
+  CFG.bgmSrc=$('#bgmSrc').value.trim(); CFG.bgm=$('#bgmMode').value; CFG.bgmVol=(+$('#bgmVol').value||0)/100;
+  saveCfg(); if(CFG.bgmSrc!==oldSrc) bgmLoad();
+  if(rec){ try{rec.stop();}catch(e){} }
+  sfx.up(); micMsg('저장되었습니다','#7dffb0');
+};
+$('#bgmTest').onclick=()=>{ CFG.bgmVol=(+$('#bgmVol').value||0)/100; bgmPlay(CFG.bgmVol); };
+$('#bgmStopBtn').onclick=()=>bgmStop(400);
+$('#bgmVol').oninput=e=>{ CFG.bgmVol=(+e.target.value||0)/100; saveCfg();
+  if(bgmPlaying){ bgmBase=CFG.bgmVol; clearInterval(bgmFade); bgm.volume=CFG.bgmVol; } };
+$('#bgmFile').onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return;
+  bgm.src=URL.createObjectURL(f); bgm.load(); bgmState('직접 고른 파일 · '+f.name,'#7dffb0'); };
+$('#reset').onclick=()=>{ CFG=Object.assign({},DEF); saveCfg(); fillForm(); bgmLoad(); micMsg('초기화되었습니다','#7dffb0'); };
+</script>
