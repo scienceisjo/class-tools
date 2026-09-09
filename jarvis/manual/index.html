@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>자비스 사용 안내 — 손뼉 두 번에 깨어나는 수업 도입 도우미</title>
+<style>
+:root{--cy:#0d95c4;--cy2:#4fe3ff;--ink:#1c2830;--ink2:#5c6f7b;--line:#dfe6ea;--bg:#f6f8fa;--gold:#c98a12;--red:#c93a52}
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard",system-ui,-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  font-size:15.5px;line-height:1.8;word-break:keep-all;-webkit-font-smoothing:antialiased}
+.hero{background:#04121c;color:#cfeeff;padding:52px 20px 44px}
+.hero .in{max-width:860px;margin:0 auto}
+.hero .brand{font-family:Consolas,"SF Mono",ui-monospace,monospace;letter-spacing:.42em;color:var(--cy2);font-size:30px;
+  text-shadow:0 0 22px rgba(79,227,255,.45)}
+.hero h1{margin:14px 0 8px;font-size:26px;font-weight:700;color:#fff;letter-spacing:-.01em}
+.hero p{margin:0;color:#8fbdd2;font-size:15px}
+.hero .link{display:inline-block;margin-top:22px;background:rgba(79,227,255,.1);border:1px solid rgba(79,227,255,.45);
+  color:var(--cy2);padding:10px 16px;border-radius:6px;font-family:Consolas,ui-monospace,monospace;font-size:14px;text-decoration:none;letter-spacing:.02em}
+.hero small{display:block;margin-top:10px;color:#6f9cb1;font-size:13px}
+main{max-width:860px;margin:0 auto;padding:36px 20px 60px}
+h2{font-size:20px;margin:46px 0 14px;padding-left:14px;border-left:4px solid var(--cy);letter-spacing:-.01em}
+h2:first-of-type{margin-top:8px}
+h3{font-size:16.5px;margin:26px 0 8px;color:var(--ink)}
+p{margin:0 0 12px}
+.lead{font-size:16.5px;color:#34434d}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin:16px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card.blue{border-color:#bfe3f2;background:#f2fafd}
+.card.gold{border-color:#f0d9a6;background:#fffaf0}
+.card h3{margin-top:0}
+ol.steps{margin:0;padding-left:0;list-style:none;counter-reset:s}
+ol.steps li{position:relative;padding:8px 0 8px 46px;counter-increment:s;border-bottom:1px dashed var(--line)}
+ol.steps li:last-child{border-bottom:0}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:9px;width:30px;height:30px;border-radius:50%;
+  background:var(--cy);color:#fff;font-weight:700;display:grid;place-items:center;font-size:14px}
+table{width:100%;border-collapse:collapse;background:#fff;margin:12px 0 6px;font-size:14.5px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+th{background:#eef5f8;color:#2b3d48;font-weight:700;font-size:13.5px}
+tr:last-child td{border-bottom:0}
+td.say{color:#0b6b8f;font-weight:600}
+.key{display:inline-block;font-family:Consolas,"SF Mono",ui-monospace,monospace;background:#fff;border:1px solid #b9c7cf;border-bottom-width:2px;
+  border-radius:5px;padding:1px 8px;font-size:13px;color:#1f2f3a;white-space:nowrap;margin:0 1px}
+.jv{font-family:Consolas,"SF Mono",ui-monospace,monospace;color:#0b6b8f;font-size:14px}
+.tip{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-left:4px solid var(--gold);
+  padding:12px 16px;border-radius:8px;margin:14px 0;font-size:14.5px}
+.tip.red{border-left-color:var(--red)}
+.tip b{color:#7a5300}.tip.red b{color:var(--red)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.qa{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:10px 0}
+.qa b{display:block;color:#0b4e6a;margin-bottom:4px}
+.qa p{margin:0;color:#3d4c55;font-size:14.5px}
+code{font-family:Consolas,"SF Mono",ui-monospace,monospace;background:#eef2f5;padding:1px 6px;border-radius:4px;font-size:13.5px}
+.ex{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;font-size:15px;margin:8px 0}
+.ex .bl{color:var(--gold);border-bottom:2px solid var(--gold);padding:0 3px;font-weight:700}
+.muted{color:var(--ink2);font-size:14px}
+footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center;font-size:12.5px;line-height:1.6;color:#8a8f98;
+  font-family:system-ui,-apple-system,'Segoe UI','Malgun Gothic',sans-serif;border-top:1px solid rgba(128,128,128,.25)}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}.hero .brand{font-size:22px}body{font-size:15px}}
+@media print{.hero{background:#04121c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card,table,.qa{break-inside:avoid}h2{break-after:avoid}a{color:inherit}}
+</style>
+</head>
+<body>
+
+<div class="hero"><div class="in">
+  <div class="brand">J.A.R.V.I.S.</div>
+  <h1>자비스 사용 안내</h1>
+  <p>손뼉 두 번에 깨어나는 수업 도입 도우미 — 아이언맨의 인공지능 비서를 우리 교실로</p>
+  <a class="link" href="https://scienceisjo.github.io/class-tools/jarvis/">scienceisjo.github.io/class-tools/jarvis/</a>
+  <small>크롬 또는 엣지에서 여세요 · 마이크가 달린 컴퓨터(노트북·전자칠판)면 됩니다 · 설치 없음 · 무료</small>
+</div></div>
+
+<main>
+
+<h2>3분 요약</h2>
+<div class="card blue">
+<ol class="steps">
+  <li>위 주소를 열고 <b>SYSTEM INITIALIZE</b>를 누릅니다. 마이크 권한을 물으면 <b>허용</b>.</li>
+  <li><span class="key">Ctrl</span>+<span class="key">Alt</span>+<span class="key">J</span> 로 <b>교사 콘솔</b>을 열어
+      <b>이름</b>을 넣고, <b>음악</b> 탭에서 곡 파일을 한 번 고르고, <b>학습목표</b>를 적은 뒤 <span class="key">Esc</span>.</li>
+  <li><span class="key">F</span> 로 전체화면. 아이들이 들어오면 아무 말 없이 <b>손뼉을 두 번</b> 치세요.</li>
+</ol>
+</div>
+<p class="muted">2번은 처음 한 번만 하면 됩니다(이 브라우저가 기억합니다). 학습목표만 수업마다 바꿔 주세요.</p>
+
+<h2>이게 뭔가요</h2>
+<p class="lead">수업 시작 3~5분을 위한 도구입니다. 손뼉을 두 번 치면 화면이 켜지며 <span class="jv">"Welcome home, sir."</span> 하고 인사하고,
+말로 부르면 날씨·시간·음악·타이머를 띄워 줍니다. 마지막에 <b>"오늘 학습목표"</b>라고 하면 그날의 목표가 매번 다른 연출로 공개됩니다.
+영어 음성으로 말하고 한글 자막이 함께 뜹니다.</p>
+<div class="tip"><span>💡</span><div><b>핵심은 "안 망하는 구조"입니다.</b> 교실이 시끄러워 말을 못 알아들어도 <b>숫자키</b>를 누르면 똑같이 움직입니다.
+아이들은 눈치채지 못합니다. 아래 표의 "안 되면" 열을 봐 두세요.</div></div>
+
+<h2>수업 시연 순서</h2>
+<table>
+<tr><th style="width:34%">내가 하는 것</th><th>자비스</th><th style="width:15%">안 되면</th></tr>
+<tr><td class="say">👏👏 손뼉 두 번</td><td>부팅 로그가 흐르고 <span class="jv">"Welcome home, sir."</span><br><span class="muted">치고 나서 화면을 보지 말고 아이들을 보세요. 4초의 정적이 효과입니다.</span></td><td><span class="key">Space</span></td></tr>
+<tr><td class="say">"You up, JARVIS?"<br><span class="muted">또는 "자비스, 있냐?"</span></td><td><span class="jv">"For you, sir, always."</span> 등 무작위 한마디</td><td><span class="key">6</span></td></tr>
+<tr><td class="say">"음악 틀어"</td><td>멋 부린 한마디 뒤에 음악. 5~10초만 두세요.</td><td><span class="key">8</span></td></tr>
+<tr><td class="say">"음악 꺼"</td><td><span class="jv">"Silence restored. They may now think."</span><br><span class="muted">"들었지? 생각하래." 한마디 얹으면 수업 분위기로 넘어갑니다.</span></td><td><span class="key">8</span></td></tr>
+<tr><td class="say">"오늘 날씨 어때?"</td><td>실시간 기온·강수확률 위젯 + 한마디</td><td><span class="key">1</span></td></tr>
+<tr><td class="say">"시스템 진단해" <span class="muted">(선택)</span></td><td>이 컴퓨터의 <b>진짜</b> 사양이 스캔됩니다 — "코어 22개. 니들 폰보다 좋아."</td><td><span class="key">3</span></td></tr>
+<tr><td class="say">"오늘 학습목표"</td><td>목표가 연출과 함께 공개. 빈칸을 넣어 뒀다면 아이들에게 물어본 뒤 <span class="key">Space</span>로 정답 공개</td><td><span class="key">7</span></td></tr>
+<tr><td class="say">"고마워 자비스, 이제 꺼져"</td><td><span class="jv">"Goodnight, sir. I will be here."</span></td><td><span class="key">0</span></td></tr>
+</table>
+<p class="muted">이 순서는 교사 콘솔 → <b>시연 대본</b> 탭에서 내 수업에 맞게 고칠 수 있습니다.</p>
+
+<h2>말로 부르는 명령</h2>
+<p>정확한 문장이 아니어도 됩니다. 낱말이 들어 있으면 알아듣습니다.</p>
+<table>
+<tr><th style="width:26%">이렇게 말하면</th><th>이렇게 합니다</th><th style="width:12%">키</th></tr>
+<tr><td class="say">자비스 / 있냐 / You there?</td><td>대답만 합니다 (여러 대사 중 무작위)</td><td><span class="key">6</span></td></tr>
+<tr><td class="say">날씨 / 기온 / 비 와?</td><td>날씨 위젯 (현재·24시간·3일)</td><td><span class="key">1</span></td></tr>
+<tr><td class="say">몇 시야 / 날짜</td><td>시계 위젯</td><td><span class="key">2</span></td></tr>
+<tr><td class="say">시스템 진단 / 상태 점검</td><td>하드웨어 진단 화면</td><td><span class="key">3</span></td></tr>
+<tr><td class="say">3분 타이머 / 5분 재줘</td><td>카운트다운 (숫자를 알아듣습니다, 기본 3분)</td><td><span class="key">4</span></td></tr>
+<tr><td class="say">오늘 브리핑 / 수업 일정</td><td>콘솔에 적어 둔 브리핑 목록</td><td><span class="key">5</span></td></tr>
+<tr><td class="say">학습목표 / 오늘 목표 / 미션</td><td>오늘의 학습목표 공개</td><td><span class="key">7</span></td></tr>
+<tr><td class="say">음악 틀어 / 음악 꺼</td><td>음악 켜기·끄기 (대사와 함께)</td><td><span class="key">8</span></td></tr>
+<tr><td class="say">소리 높여 / 소리 줄여</td><td>전체 소리 크기 (처음엔 중간 50%)</td><td><span class="key">↑</span> <span class="key">↓</span></td></tr>
+<tr><td class="say">자비스 꺼져 / 굿나잇</td><td>종료 인사 후 대기 상태로</td><td><span class="key">0</span></td></tr>
+</table>
+<div class="card gold"><h3>숨겨 둔 대답</h3>
+<p style="margin:0">"너 누구야" · "농담해봐" · "아이언맨 어딨어" · "숙제" · "시험" · "조용히 해" · "사랑해" · "과학이 뭐야" — 각각 다른 대사가 나옵니다. 아이들이 시켜 보게 해도 좋습니다.</p></div>
+
+<h2>키보드 (말이 안 먹힐 때)</h2>
+<div class="grid2">
+<table>
+<tr><th style="width:36%">키</th><th>동작</th></tr>
+<tr><td><span class="key">Space</span></td><td>부팅 · 학습목표 빈칸 공개</td></tr>
+<tr><td><span class="key">1</span>~<span class="key">8</span></td><td>위 표의 명령 (1 날씨 · 2 시간 · 3 진단 · 4 타이머 · 5 브리핑 · 6 한마디 · 7 학습목표 · 8 음악)</td></tr>
+<tr><td><span class="key">0</span></td><td>종료</td></tr>
+<tr><td><span class="key">Esc</span></td><td>위젯 닫기</td></tr>
+</table>
+<table>
+<tr><th style="width:36%">키</th><th>동작</th></tr>
+<tr><td><span class="key">↑</span> <span class="key">↓</span></td><td>소리 크기</td></tr>
+<tr><td><span class="key">B</span></td><td>음악만 조용히 켜기/끄기 (대사 없이)</td></tr>
+<tr><td><span class="key">M</span></td><td>마이크 켜기/끄기</td></tr>
+<tr><td><span class="key">F</span></td><td>전체화면</td></tr>
+<tr><td><span class="key">Ctrl</span>+<span class="key">Alt</span>+<span class="key">J</span></td><td>교사 콘솔 (숨은 단축키)</td></tr>
+</table>
+</div>
+
+<h2>오늘의 학습목표 넣기</h2>
+<p>교사 콘솔 → <b>오늘의 학습목표</b> 탭에 목표를 적어 두면, "학습목표"라고 부를 때 <b>해독 · 스캔 · 조립 · 고정</b> 네 가지 연출 중 하나로 나타납니다. 직전에 쓴 연출은 피하니 매 차시 다르게 보입니다.</p>
+<h3>빈칸 퀴즈 만들기</h3>
+<p>낱말을 <b>[대괄호]</b>로 감싸면 금색 빈칸이 됩니다. 자비스가 <span class="jv">"One parameter is classified until they earn it."</span> 하고 멈추면, 아이들에게 물어본 뒤 <span class="key">Space</span>를 누르세요. 글자가 톡 튀어나오며 채워집니다.</p>
+<div class="ex">전지를 직렬로 연결하면 전구가 더 <b>[밝아]</b>지는 까닭을 설명할 수 있다.</div>
+<div class="ex">↓ 화면에는 이렇게: &nbsp;전지를 직렬로 연결하면 전구가 더 <span class="bl">&nbsp;&nbsp;&nbsp;&nbsp;</span>지는 까닭을 설명할 수 있다.</div>
+<div class="tip"><span>💡</span><div>학습목표를 <b>읽어 주는</b> 대신 <b>맞히게</b> 하는 장치입니다. 빈칸은 핵심 개념어 하나만 두는 게 가장 잘 먹힙니다.</div></div>
+
+<h2>교사 콘솔 (Ctrl + Alt + J)</h2>
+<p>학생에게 보이지 않는 설정 화면입니다. 고치는 즉시 저장되고, <span class="key">Esc</span>로 닫습니다. 콘솔이 열려 있는 동안엔 숫자키가 먹지 않습니다.</p>
+<table>
+<tr><th style="width:24%">탭</th><th>여기서 하는 것</th></tr>
+<tr><td><b>기본 · 이름</b></td><td>선생님 이름(한글 자막), 영어 호칭(기본 sir → Professor, boss 등), 부팅 로그 프로필, 첫 화면 부제, 날씨 위치(위도·경도)</td></tr>
+<tr><td><b>오늘의 학습목표</b></td><td>목표 입력, 연출 방식, 미리보기</td></tr>
+<tr><td><b>자비스 대사</b></td><td>인사·대답·음악·학습목표·소리·종료 등 모든 대사. 한 줄에 하나, <code>영어 | 한글</code> 꼴. <code>{name}</code>은 내 이름, <code>{sir}</code>는 영어 호칭으로 바뀝니다. ▶들어보기로 바로 확인</td></tr>
+<tr><td><b>음악</b></td><td>파일 고르기(한 번 고르면 이 브라우저가 기억), 재생 방식, 음량</td></tr>
+<tr><td><b>음성 · 마이크</b></td><td>전체 소리 크기, 말하기 속도(기본 1.15배, 빠릿하게 하려면 1.3), 박수 감도, 인식 언어</td></tr>
+<tr><td><b>브리핑</b></td><td>"오늘 브리핑"에 읽어 줄 항목 (한 줄에 하나)</td></tr>
+<tr><td><b>시연 대본 · 단축키</b></td><td>시연 순서 편집 (<code>내가 하는 것 | 자비스 | 백업키</code>), 단축키 표</td></tr>
+<tr><td><b>저장 · 나눠주기</b></td><td>설정을 파일로 내려받기 / 불러오기 / 초기화</td></tr>
+</table>
+
+<h2>막힐 때</h2>
+<div class="qa"><b>마이크 권한 창이 안 떠요 / 박수를 못 알아채요</b>
+<p>주소창 왼쪽 자물쇠(🔒) → 마이크 → <b>허용</b>. 크롬·엣지가 아니면 음성 인식이 안 됩니다. 그래도 안 되면 <span class="key">Space</span>로 부팅하고 숫자키로 진행하세요 — 아이들은 모릅니다.</p></div>
+<div class="qa"><b>파일을 더블클릭해서 열었더니 마이크가 안 돼요</b>
+<p>브라우저가 <code>file://</code>에서는 마이크를 막습니다. 위의 웹 주소로 여세요.</p></div>
+<div class="qa"><b>말을 잘 못 알아들어요</b>
+<p>교실 소음이 크면 그렇습니다. 음악이 나오는 동안엔 특히 안 되니 "음악 꺼" 다음에 다음 명령을 하세요. 영어로 말할 때는 "자비스"만 비슷하게 들려도 반응합니다. 급하면 숫자키.</p></div>
+<div class="qa"><b>박수에 반응이 없거나, 아무 소리에나 켜져요</b>
+<p>콘솔 → 음성·마이크 → <b>박수 감도</b>를 조절하세요. 동그라미 두 개가 박수에 켜지는지 보면서 맞추면 됩니다. 시끄러운 교실은 낮게(1~3).</p></div>
+<div class="qa"><b>목소리가 너무 작아요 / 안 나요</b>
+<p><span class="key">↑</span>를 몇 번 누르세요(처음엔 중간 50%로 시작합니다). 그래도 안 나면 컴퓨터 자체 볼륨을 확인하세요. 영어 목소리가 아예 없으면 Windows 설정 → 시간 및 언어 → 음성에서 영어(영국) 음성을 추가하면 훨씬 자비스답습니다.</p></div>
+<div class="qa"><b>음악이 안 나와요</b>
+<p>콘솔 → 음악 탭에서 파일을 다시 고르세요. 고른 파일은 <b>그 컴퓨터의 그 브라우저</b>만 기억하므로, 다른 컴퓨터에서는 다시 골라야 합니다. 저작권 있는 곡은 공개 웹에 올리지 마세요.</p></div>
+<div class="qa"><b>설정이 사라졌어요</b>
+<p>브라우저 데이터를 지우면 함께 지워집니다. 콘솔 → 저장·나눠주기에서 <b>설정 내려받기</b>로 파일을 받아 두면 언제든 불러올 수 있습니다.</p></div>
+
+<h2>동료 선생님께 나눠주기</h2>
+<p>링크만 보내면 됩니다. 내 대사·학습목표까지 그대로 주고 싶으면 콘솔 → 저장·나눠주기에서 <b>설정 내려받기</b>로 받은 <code>jarvis-설정.json</code>을 함께 보내세요. 받은 분은 같은 탭의 <b>설정 불러오기</b>로 넣으면 끝입니다. (음악 파일은 저작권 때문에 포함되지 않습니다.)</p>
+<div class="tip red"><span>⚠️</span><div><b>수업 전 30초 점검</b> — 웹 주소로 열렸는지 · SYSTEM INITIALIZE를 눌러 대기 화면(리액터가 희미하게 도는 화면)인지 · 콘솔이 닫혀 있는지 · 오늘 학습목표가 오늘 것인지.</div></div>
+
+</main>
+
+<footer id="app-credit">© 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br><span style="font-size:11px;opacity:.85;">최종 업데이트: 2026-09-09</span></footer>
+</body>
+</html>

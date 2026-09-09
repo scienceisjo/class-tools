@@ -11,6 +11,7 @@
 - **🌲 이삼한 친구들의 숲:** https://scienceisjo.github.io/class-tools/memory-village/
 - **📄 PDF 만능 도구:** https://scienceisjo.github.io/class-tools/pdf-tool/
 - **🤖 자비스(수업 도입 데모):** https://scienceisjo.github.io/class-tools/jarvis/
+  - 📖 사용 안내(선생님께 나눠주는 매뉴얼): https://scienceisjo.github.io/class-tools/jarvis/manual/
 
 ## 도구 목록
 

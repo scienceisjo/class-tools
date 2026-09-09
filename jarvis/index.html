@@ -101,6 +101,16 @@ body.widget #sub .kr{margin-top:.6vmin;font-size:clamp(12px,1.65vmin,19px)}
 #heard.show{opacity:1}
 #heard b{color:var(--cy);font-weight:500}
 
+/* ---------- volume hud ---------- */
+#volhud{position:fixed;left:50%;top:6.5vmin;transform:translateX(-50%);display:flex;align-items:center;gap:1.6vmin;
+  font-family:var(--hud);letter-spacing:.22em;text-transform:uppercase;color:var(--ink2);font-size:clamp(11px,1.5vmin,17px);
+  padding:1.2vmin 2.4vmin;border:1px solid rgba(79,227,255,.35);background:rgba(3,14,22,.88);z-index:30;
+  opacity:0;transition:opacity .25s;pointer-events:none}
+#volhud.show{opacity:1}
+#volhud .vbar{width:26vmin;height:.9vmin;min-height:6px;background:rgba(79,227,255,.15);overflow:hidden}
+#volhud .vbar i{display:block;height:100%;width:50%;background:var(--cy);box-shadow:0 0 10px var(--cy);transition:width .2s}
+#volhud b{color:var(--cy);font-weight:400;min-width:3.4em;text-align:right}
+
 /* ---------- widget ---------- */
 #wrap{position:fixed;inset:0;display:grid;place-items:center;z-index:15;pointer-events:none;padding:8vmin 4vmin 20vmin}
 .panel{position:relative;width:min(94vw,1080px);max-height:100%;padding:3.2vmin 3.6vmin;background:linear-gradient(160deg,rgba(6,26,38,.93),rgba(2,10,18,.95));
@@ -277,6 +287,13 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
     <circle cx="200" cy="200" r="188" stroke-width="1" stroke-dasharray="2 10" opacity=".65"/>
     <circle cx="200" cy="200" r="172" stroke-width="6" stroke-dasharray="150 24 60 24" opacity=".2"/>
   </g>
+  <g class="spin2" fill="none">
+    <circle cx="200" cy="200" r="166" stroke="#4fe3ff" stroke-width="9" stroke-dasharray="1.6 4.6" opacity=".26"/>
+  </g>
+  <g class="spin1" fill="none">
+    <circle cx="200" cy="200" r="140" stroke="#4fe3ff" stroke-width="16" stroke-dasharray="3 11.5" opacity=".15"/>
+    <path d="M62 200 A138 138 0 0 1 103 103" stroke="#ffc14d" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+  </g>
   <g class="spin2" fill="none" stroke="#4fe3ff">
     <circle cx="200" cy="200" r="152" stroke-width="1.2" stroke-dasharray="40 14" opacity=".5"/>
     <path d="M200 38 A162 162 0 0 1 340 118" stroke-width="3" opacity=".8"/>
@@ -308,6 +325,7 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
 <div id="wrap"></div>
 <div id="sub"><div class="en" id="subEn"></div><div class="kr" id="subKr"></div></div>
 <div id="heard"></div>
+<div id="volhud"><span>volume</span><div class="vbar"><i></i></div><b>50%</b></div>
 
 <div id="standby">Awaiting audio signature<b>손뼉을 두 번 치세요</b></div>
 
@@ -317,7 +335,8 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
   <button class="go" id="goBtn">System Initialize</button>
   <small>클릭하면 대기 모드로 들어갑니다 · 마이크 권한을 허용해 주세요<br>
   대기 상태에서 <b style="color:#4fe3ff">손뼉 두 번</b> 또는 <b style="color:#4fe3ff">스페이스바</b><br>
-  <span style="opacity:.75">교사 설정 · <b style="color:#4fe3ff">Ctrl + Alt + J</b></span></small>
+  <span style="opacity:.75">소리 크기 <b style="color:#4fe3ff">↑ ↓</b> · 교사 설정 <b style="color:#4fe3ff">Ctrl + Alt + J</b>
+  · <a href="manual/" target="_blank" rel="noopener" style="color:#4fe3ff;pointer-events:auto">사용 안내</a></span></small>
 </div>
 
 <button id="fab" title="교사 콘솔 (Ctrl+Alt+J)">&#9881;</button>
@@ -327,6 +346,7 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
     <b>TEACHER CONSOLE</b>
     <em>교사용 설정 — 수업 시작 전에 닫아 주세요</em>
     <div class="sp"><span id="toast"></span>
+      <a class="btn" href="manual/" target="_blank" rel="noopener" style="text-decoration:none">사용 안내</a>
       <button class="btn" id="consClose">닫기 (Esc)</button></div>
   </div>
   <div class="consbody">
@@ -437,6 +457,15 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
         <div class="fld" style="margin-top:18px"><label>박수 감도</label>
           <input type="range" id="sens" data-cfg="sens" min="1" max="10" step="1">
           <div class="hint">교실이 시끄러우면 낮게(1~3), 조용하면 높게(7~10). 위 동그라미 두 개가 박수에 반응하는지 보며 맞추세요.</div></div>
+        <div class="fld"><label>전체 소리 크기 <b id="volNum" style="color:#4fe3ff"></b></label>
+          <input type="range" id="vol" min="10" max="100" step="5">
+          <div class="hint">처음엔 중간(50%)에서 시작합니다. 수업 중에는 <b style="color:#4fe3ff">↑ ↓</b> 키나
+            "소리 높여 / 소리 줄여" 로 바꾸면 자비스가 대답하며 바꿉니다. 목소리·효과음·음악에 모두 걸립니다.</div></div>
+        <div class="fld"><label>자비스 말하기 속도 <b id="rateNum" style="color:#4fe3ff"></b></label>
+          <input type="range" id="rate" min="70" max="170" step="5">
+          <div class="hint">기본 1.15배. 진짜 자비스처럼 빠릿하게 하려면 1.2~1.4 쯤이 좋습니다.
+            너무 빠르면 아이들이 자막을 못 따라오니 자막도 함께 보세요.</div>
+          <div class="rowb"><button class="btn mini" data-play="welcome">▶ 이 속도로 들어보기</button></div></div>
         <div class="fld"><label>음성 인식 언어</label>
           <select data-cfg="lang">
             <option value="ko-KR">한국어 (영어도 소리나는 대로 잡힘)</option>
@@ -459,20 +488,19 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
       <section data-p="script">
         <h3>Demo Script</h3>
         <p class="lead">아이들 앞에서 이 순서로 하면 됩니다. 말이 안 먹히면 옆의 숫자키를 누르세요 — 아이들은 눈치채지 못합니다.</p>
-        <ol class="script">
-          <li><b>짝짝</b> (손뼉 두 번) — 부팅 로그 → "Welcome home." <span style="color:#3d5f6b">백업 Space</span></li>
-          <li>"<b>You up, JARVIS?</b>" — 자비스가 대답 <span style="color:#3d5f6b">백업 6</span></li>
-          <li>"<b>음악 틀어</b>" — 대사 뒤 음악 <span style="color:#3d5f6b">백업 8</span></li>
-          <li>"<b>음악 꺼</b>" — 정숙 <span style="color:#3d5f6b">백업 8</span></li>
-          <li>"<b>오늘 날씨 어때?</b>" — 날씨 위젯 <span style="color:#3d5f6b">백업 1</span></li>
-          <li>"<b>시스템 진단해</b>" — 이 컴퓨터 실제 사양 <span style="color:#3d5f6b">백업 3</span></li>
-          <li>"<b>오늘 학습목표</b>" — 목표 공개 → 빈칸이면 아이들에게 질문 → <b>스페이스바</b> <span style="color:#3d5f6b">백업 7</span></li>
-          <li>"<b>자비스 꺼져</b>" — 종료 인사 <span style="color:#3d5f6b">백업 0</span></li>
-        </ol>
+        <div id="scriptView"></div>
+        <div class="fld" style="margin-top:24px">
+          <label>대본 고치기 — 한 줄에 한 단계,
+            <b style="color:#4fe3ff">내가 하는 것 | 자비스가 하는 것 | 백업키</b> 순서로 (칸은 세로줄 | 로 나눔)</label>
+          <textarea class="big" data-cfg="script"></textarea>
+          <div class="rowb"><button class="btn mini" id="scriptDef">기본 대본으로 되돌리기</button></div>
+          <div class="hint">쌤 수업 흐름에 맞게 순서를 바꾸거나 단계를 빼도 됩니다. 고치면 위 목록이 바로 바뀝니다.</div>
+        </div>
         <h3 style="margin-top:32px">Keys</h3>
         <div class="kb">
           <span class="key">Ctrl+Alt+J</span><span>이 교사 콘솔 열기/닫기 (숨은 단축키)</span>
           <span class="key">Space</span><span>부팅 · 학습목표 빈칸 공개</span>
+          <span class="key">↑ ↓</span><span>소리 크기 (자비스가 대답하며 바꿈)</span>
           <span class="key">1</span><span>날씨</span>
           <span class="key">2</span><span>시간 · 날짜</span>
           <span class="key">3</span><span>시스템 진단</span>
@@ -523,6 +551,7 @@ const $=s=>document.querySelector(s), body=document.body;
 /* ---------- 설정 ---------- */
 const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,
   name:'선생님',sir:'sir',owner:'',tagline:'',lines:{},goalStyle:'',
+  vol:.5,rate:1.15,script:'짝짝 (손뼉 두 번) | 부팅 로그가 흐르고 "Welcome home." | Space\n"You up, JARVIS?" | 자비스가 대답 | 6\n"음악 틀어" | 멋 부린 한마디 뒤에 음악 | 8\n"음악 꺼" | 정숙 — 여기서 수업 분위기로 전환 | 8\n"오늘 날씨 어때?" | 실시간 날씨 위젯 | 1\n"시스템 진단해" | 이 컴퓨터의 진짜 사양 | 3\n"오늘 학습목표" | 목표 공개 → 빈칸이면 아이들에게 질문 → 스페이스바 | 7\n"자비스 꺼져" | 종료 인사 | 0',
   bgm:'command',bgmSrc:'audio/theme.mp3',bgmVol:.6,
   goal:'',
   place:'서울 강남구',lat:37.478,lon:127.063,
@@ -543,7 +572,7 @@ let analyser=null, freq=null, earLevel=0, base=0, lastOnset=0, firstClap=0, ears
 let AC=null, master=null;
 function ac(){
   if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)();
-    master=AC.createGain(); master.gain.value=.55; master.connect(AC.destination); }
+    master=AC.createGain(); master.gain.value=.25+.65*mvol(); master.connect(AC.destination); }
   if(AC.state==='suspended') AC.resume();
   return AC;
 }
@@ -558,6 +587,31 @@ function osc(type,f0,f1,dur,g0,g1,when,lp){
   if(lp){const b=c.createBiquadFilter();b.type='lowpass';b.frequency.value=lp;n.connect(b);n=b;}
   n.connect(g); g.connect(master); o.start(t); o.stop(t+dur+.05);
 }
+/* --- 전체 소리 크기 : 목소리·효과음·음악에 모두 걸린다. 처음엔 중간(50%) --- */
+function mvol(){ return Math.max(.1,Math.min(1,+CFG.vol||.5)); }
+function bgmMul(){ return .35+.65*mvol(); }
+function applyVolume(){
+  if(master) master.gain.value=.25+.65*mvol();
+  if(bgmPlaying&&!speaking){ clearInterval(bgmFade); bgm.volume=Math.min(1,bgmBase*bgmMul()); }
+  const el=$('#vol'); if(el) el.value=Math.round(mvol()*100);
+  const n=$('#volNum'); if(n) n.textContent=Math.round(mvol()*100)+'%';
+}
+function showVol(){
+  const h=$('#volhud'); if(!h) return;
+  h.querySelector('i').style.width=Math.round(mvol()*100)+'%';
+  h.querySelector('b').textContent=Math.round(mvol()*100)+'%';
+  h.classList.add('show'); clearTimeout(showVol._t);
+  showVol._t=setTimeout(()=>h.classList.remove('show'),1700);
+}
+function volStep(d){
+  const before=mvol();
+  const v=Math.round(Math.max(.1,Math.min(1,before+d))*20)/20;
+  CFG.vol=v; saveCfg(); applyVolume(); showVol();
+  if(v===before){ if(phase==='online') sayLine('volLimit',{hold:2600}); return; }
+  sfx.blip();
+  if(phase==='online') sayLine(d>0?'volUp':'volDown',{hold:2400});
+}
+
 /* --- 배경음악(아이언맨 테마 등) : 파일이 없으면 조용히 무시 --- */
 const bgm=new Audio(); bgm.loop=true; bgm.preload='auto'; bgm.volume=0;
 let bgmReady=false, bgmPlaying=false, bgmBase=.6, bgmFade=null;
@@ -589,7 +643,7 @@ bgm.addEventListener('canplaythrough',()=>{ bgmReady=true; bgmState('음원 준�
 bgm.addEventListener('error',()=>{ bgmReady=false;
   bgmState('음원 없음 — audio 폴더에 넣거나 아래에서 직접 고르세요','#ffc14d'); });
 function bgmFadeTo(v,ms,then){
-  clearInterval(bgmFade);
+  clearInterval(bgmFade); v=Math.min(1,v*bgmMul());
   const t0=performance.now(), v0=bgm.volume, d=Math.max(60,ms||600);
   bgmFade=setInterval(()=>{
     const k=Math.min(1,(performance.now()-t0)/d);
@@ -643,7 +697,8 @@ function subtitle(en,kr,hold){
   $('#subEn').textContent=en||''; $('#subKr').textContent=kr||'';
   $('#sub').classList.add('show');
   clearTimeout(subtitle._t);
-  subtitle._t=setTimeout(()=>$('#sub').classList.remove('show'), hold||Math.max(3200,(en||'').length*70));
+  subtitle._t=setTimeout(()=>$('#sub').classList.remove('show'),
+    hold||Math.max(2800,(en||'').length*70/(+CFG.rate||1.15)));
 }
 /** 자비스가 말한다: 영어 음성 + 한글 자막 */
 function say(en,kr,opt){
@@ -653,10 +708,12 @@ function say(en,kr,opt){
   speaking=true; body.classList.add('speaking'); pauseEars(); bgmDuck(true);
   const u=new SpeechSynthesisUtterance(en);
   if(voiceEn) u.voice=voiceEn;
-  u.lang=(voiceEn&&voiceEn.lang)||'en-GB'; u.rate=opt.rate||.92; u.pitch=opt.pitch||.8; u.volume=1;
+  u.lang=(voiceEn&&voiceEn.lang)||'en-GB';
+  u.rate=opt.rate||(+CFG.rate||1.15); u.pitch=opt.pitch||.8; u.volume=mvol();
   const done=()=>{
     if(CFG.speakKo && kr && voiceKo && !opt.noKo){
-      const k=new SpeechSynthesisUtterance(kr); k.voice=voiceKo; k.lang='ko-KR'; k.rate=1; k.pitch=.9;
+      const k=new SpeechSynthesisUtterance(kr); k.voice=voiceKo; k.lang='ko-KR';
+      k.rate=Math.min(1.6,(+CFG.rate||1.15)); k.pitch=.9; k.volume=mvol();
       k.onend=k.onerror=fin; speechSynthesis.speak(k);
     } else fin();
   };
@@ -664,7 +721,8 @@ function say(en,kr,opt){
   u.onend=done; u.onerror=fin;
   speechSynthesis.speak(u);
   // 일부 환경에서 onend가 안 오는 것에 대한 보험
-  clearTimeout(say._g); say._g=setTimeout(()=>{ if(speaking) fin(); }, 1200+en.length*95);
+  clearTimeout(say._g);
+  say._g=setTimeout(()=>{ if(speaking) fin(); }, 1200+en.length*95/(+CFG.rate||1.15));
 }
 
 /* ============================================================
@@ -676,22 +734,60 @@ function resize(){
   const r=cv.getBoundingClientRect(); DPR=Math.min(devicePixelRatio||1,2);
   W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
   cx.setTransform(DPR,0,0,DPR,0,0);
-  parts=Array.from({length:70},()=>({x:Math.random()*W,y:Math.random()*H,z:.2+Math.random()*.8,s:.3+Math.random()*1.1}));
+  parts=Array.from({length:170},()=>({x:Math.random()*W,y:Math.random()*H,z:.2+Math.random()*.8,s:.3+Math.random()*1.3}));
 }
 addEventListener('resize',resize);
-let sweep=-0.2;
+let sweep=-0.2, rings=[], lastT=performance.now();
+/* 자비스가 말하는 동안의 '목소리 파형' — TTS 는 파형을 내주지 않으므로
+   말소리처럼 보이는 음절 단위 봉우리를 만든다 (속도 설정을 따른다) */
+let speechLevel=0, spT=0, spNext=0, spTarget=0;
+function speechEnvelope(dt){
+  if(speaking){
+    spT+=dt;
+    if(spT>=spNext){
+      const r=(+CFG.rate||1.15);
+      spTarget=.45+Math.random()*.55;
+      spNext=spT+(.08+Math.random()*.15)/r;
+      if(Math.random()<.14){ spNext+=.22/r; spTarget*=.3; }     // 낱말 사이 숨
+      if(spTarget>.72&&rings.length<7) rings.push({r:0,a:.45}); // 센 음절마다 파동 고리
+    }
+    speechLevel+=(spTarget-speechLevel)*Math.min(1,dt*24);
+  }else{
+    speechLevel+=(0-speechLevel)*Math.min(1,dt*7); spT=0; spNext=0;
+  }
+}
 function draw(){
+  const now=performance.now(), dt=Math.min(.05,(now-lastT)/1000); lastT=now;
+  speechEnvelope(dt);
+  const sp=speechLevel, t=now/1000;
+  document.documentElement.style.setProperty('--lvl',Math.max(earLevel,sp*.9).toFixed(3));
   cx.clearRect(0,0,W,H);
   const act=(phase==='online'||phase==='booting');
   // grid
   cx.strokeStyle='rgba(79,227,255,'+(act?.055:.028)+')'; cx.lineWidth=1;
   const g=Math.max(48,W/26); cx.beginPath();
   for(let x=0;x<W;x+=g){cx.moveTo(x,0);cx.lineTo(x,H);} for(let y=0;y<H;y+=g){cx.moveTo(0,y);cx.lineTo(W,y);} cx.stroke();
-  // particles
+  // 말할 때 리액터에서 퍼져 나가는 파동 고리
+  const cxp=W/2, cyp=H*.46;
+  for(let i=rings.length-1;i>=0;i--){
+    const q=rings[i]; q.r+=dt*440; q.a-=dt*.5;
+    if(q.a<=0){ rings.splice(i,1); continue; }
+    cx.strokeStyle='rgba(79,227,255,'+q.a.toFixed(3)+')'; cx.lineWidth=1.2;
+    cx.beginPath(); cx.arc(cxp,cyp,q.r,0,Math.PI*2); cx.stroke();
+  }
+  // 별들 — 말하는 파동을 따라 울렁인다
   for(const p of parts){
     p.y-=p.z*(act?.55:.2); if(p.y<0){p.y=H;p.x=Math.random()*W;}
-    cx.fillStyle='rgba(79,227,255,'+(p.z*(act?.5:.22))+')';
-    cx.fillRect(p.x,p.y,p.s,p.s*(1+p.z*2));
+    let px=p.x, py=p.y;
+    if(sp>.02){
+      const dx=p.x-cxp, dy=p.y-cyp, d=Math.hypot(dx,dy)||1;
+      const wave=Math.sin(d/34-t*11)*sp*(6+p.z*7);
+      px+=dx/d*wave; py+=dy/d*wave;
+    }
+    const a=p.z*((act?.5:.22)+sp*.6);
+    cx.fillStyle=(sp>.3?'rgba(170,242,255,':'rgba(79,227,255,')+a.toFixed(3)+')';
+    const sz=p.s*(1+sp*1.5);
+    cx.fillRect(px,py,sz,sz*(1+p.z*2));
   }
   // sweep line
   if(act){ sweep+=.0018; if(sweep>1.25) sweep=-.25;
@@ -763,7 +859,6 @@ function earLoop(){
   let e=0; for(let i=lo;i<=hi;i++) e+=freq[i]; e/=(hi-lo+1);
   let all=0; for(let i=2;i<freq.length;i++) all+=freq[i]; all/=(freq.length-2);
   earLevel=earLevel*.72+Math.min(1,all/85)*.28;
-  document.documentElement.style.setProperty('--lvl',earLevel.toFixed(3));
   $('#micBar').style.width=Math.round(earLevel*100)+'%';
 
   const s=CFG.sens, need=Math.max(10,44-s*3.2), floor=Math.max(24,72-s*4.4);
@@ -834,7 +929,9 @@ const K={
   diag:['진단','시스템','상태','스테이터스','status','diagnos','다이애그','점검','스캔','scan','체크','check','리포트'],
   brief:['브리핑','brief','수업','일정','오늘뭐','스케줄','schedule','class','준비물'],
   musicoff:['음악꺼','노래꺼','음악끄','노래끄','음악정지','노래정지','뮤직오프','뮤직끄','뮤직꺼','뮤트','mute','stopmusic','음악스톱','그만틀'],
-  music:['음악틀','노래틀','음악켜','노래켜','뮤직','music','플레이','틀어줘','틀어봐','틀어라','음악좀','노래좀','음악재생','볼륨업'],
+  music:['음악틀','노래틀','음악켜','노래켜','뮤직','music','플레이','틀어줘','틀어봐','틀어라','음악좀','노래좀','음악재생'],
+  volup:['소리높','소리키','소리올','소리크게','볼륨업','볼륨올','볼륨높','볼륨키','크게해','더크게','volumeup','louder','turnitup'],
+  voldown:['소리낮','소리줄','소리내려','소리작게','볼륨다운','볼륨줄','볼륨낮','볼륨내려','작게해','더작게','volumedown','quieter','turnitdown'],
   goal:['학습목표','목표','오늘목표','미션','mission','objective','오늘뭐배','뭘배','배울'],
   hi:['자비스','자비','저비스','쟈비스','jarvis','자바스','거기있','있니','있어','유데어','youthere','헤이','hey','들려','듣고있']
 };
@@ -883,7 +980,15 @@ const LINEDEF={
     'Confirmed. Objective complete.|확인했습니다. 목표 완성.',
     'There it is, {sir}.|바로 그것입니다.']},
   bye:{t:'종료 인사',d:'"자비스 꺼져" 라고 하면',v:[
-    'Goodnight, {sir}. I will be here.|안녕히 가세요. 여기 있겠습니다.']}
+    'Goodnight, {sir}. I will be here.|안녕히 가세요. 여기 있겠습니다.']},
+  volUp:{t:'소리를 키울 때',d:'"소리 높여" 또는 ↑ 키',v:[
+    'Volume up, {sir}.|소리를 키웁니다.',
+    'Louder it is.|더 크게 하겠습니다.']},
+  volDown:{t:'소리를 줄일 때',d:'"소리 줄여" 또는 ↓ 키',v:[
+    'Volume down, {sir}.|소리를 줄입니다.',
+    'Quieter. As you wish.|조용히. 분부대로.']},
+  volLimit:{t:'소리 한계에 닿았을 때',d:'더 못 키우거나 못 줄일 때',v:[
+    "That's as far as it goes, {sir}.|여기가 한계입니다."]}
 };
 const fmt=s=>String(s==null?'':s)
   .replace(/\{sir\}/g,(CFG.sir||'sir'))
@@ -934,6 +1039,8 @@ function handle(raw){
 
   if(has(t,K.musicoff)) return stopMusic();
   if(has(t,K.music)) return playMusic();
+  if(has(t,K.volup)) return volStep(.15);
+  if(has(t,K.voldown)) return volStep(-.15);
   if(has(t,K.goal)) return (goalPending?fillBlanks():openGoal());
   if(has(t,K.off)) return shutdown();
   if(has(t,K.timer)||/\d+\s*(분|초)/.test(raw)) return openTimer(parseSeconds(raw));
@@ -976,7 +1083,7 @@ function boot(){
   setTimeout(()=>{
     phase='online'; body.classList.remove('booting'); body.classList.add('on');
     sfx.up();
-    sayLine('welcome',{rate:.86,hold:5200,then:()=>{
+    sayLine('welcome',{hold:5200,then:()=>{
       if(CFG.bgm==='boot') bgmStop(3200);            // 부팅 연출용 — 인사 끝나면 서서히 끔
       else if(CFG.bgm==='loop') bgmFadeTo(bgmBase=CFG.bgmVol*.45,1600); // 수업 내내 낮게 깔기
     }});
@@ -987,7 +1094,7 @@ function shutdown(){
   if(phase!=='online') return;
   closePanel(); recWanted=false; if(rec){try{rec.stop();}catch(e){}}
   bgmStop(1600);
-  sayLine('bye',{rate:.85,then:()=>{
+  sayLine('bye',{then:()=>{
     sfx.down(); body.classList.remove('on'); body.classList.add('standby');
     phase='standby'; flash(.1);
   }});
@@ -1318,6 +1425,8 @@ addEventListener('keydown',e=>{
   if(k==='escape'&&consOpen){ e.preventDefault(); return closeCons(); }
   if(e.target&&e.target.matches&&e.target.matches('input,textarea,select')) return;
   if(consOpen) return;
+  if(k==='arrowup'||k==='+'||k==='='){ e.preventDefault(); return volStep(.15); }
+  if(k==='arrowdown'||k==='-'||k==='_'){ e.preventDefault(); return volStep(-.15); }
   if(k==='f'){ e.preventDefault(); return (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()); }
   if(k==='b'){ e.preventDefault(); return bgmToggle(); }
   if(k==='m'){ e.preventDefault(); recWanted=!recWanted; if(recWanted) startRec(); else if(rec) try{rec.stop();}catch(_){}
@@ -1388,6 +1497,7 @@ function bindCfg(){
       if((k==='lat'||k==='lon')&&!isFinite(v)) v=DEF[k];
       CFG[k]=v; saveCfg(); toast('저장됨');
       if(k==='name'||k==='tagline') applyIdentity();
+      if(k==='script') renderScript();
       if(k==='bgmSrc') bgmLoad();
       if(k==='lang'&&rec){ try{ rec.stop(); }catch(e){} }
     };
@@ -1400,6 +1510,8 @@ function fillCfg(){
     if(el.type==='checkbox') el.checked=!!v; else el.value=(v==null?'':v);
   });
   $('#bgmVol').value=Math.round((CFG.bgmVol||0)*100);
+  $('#rate').value=Math.round((+CFG.rate||1.15)*100);
+  rateShow(); renderScript(); applyVolume();
 }
 
 /* 대사 편집칸은 사전에서 자동 생성 */
@@ -1438,6 +1550,28 @@ cons.addEventListener('click',e=>{
     saveCfg(); fillLines(); toast('기본값으로 되돌렸습니다'); }
 });
 
+/* 대본 그리기 */
+const esc=t=>String(t==null?'':t).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+function renderScript(){
+  const box=$('#scriptView'); if(!box) return;
+  const raw=(CFG.script==null?DEF.script:CFG.script);
+  const rows=String(raw).split('\n').map(x=>x.trim()).filter(Boolean);
+  box.innerHTML=rows.length
+    ? '<ol class="script">'+rows.map(l=>{
+        const c=l.split('|').map(x=>x.trim());
+        return '<li><b>'+esc(c[0])+'</b>'+(c[1]?' — '+esc(c[1]):'')
+          +(c[2]?' <span style="color:#3d5f6b">백업 '+esc(c[2])+'</span>':'')+'</li>'; }).join('')+'</ol>'
+    : '<div class="hint">대본이 비어 있습니다.</div>';
+}
+$('#scriptDef').onclick=()=>{ CFG.script=DEF.script; saveCfg();
+  const ta=document.querySelector('[data-cfg=script]'); if(ta) ta.value=DEF.script;
+  renderScript(); toast('기본 대본으로 되돌렸습니다'); };
+
+/* 말하기 속도 */
+function rateShow(){ const n=$('#rateNum'); if(n) n.textContent='×'+(+CFG.rate||1.15).toFixed(2); }
+$('#rate').oninput=e=>{ CFG.rate=(+e.target.value||115)/100; saveCfg(); rateShow(); toast('저장됨'); };
+$('#vol').oninput=e=>{ CFG.vol=(+e.target.value||50)/100; saveCfg(); applyVolume(); toast('저장됨'); };
+
 /* 미리보기 */
 function previewGoal(){
   closeCons();
@@ -1452,7 +1586,7 @@ $('#briefPrev').onclick=()=>{ closeCons(); if(phase==='online') openBrief(); els
 $('#bgmTest').onclick=()=>{ CFG.bgmVol=(+$('#bgmVol').value||0)/100; saveCfg(); bgmPlay(CFG.bgmVol); };
 $('#bgmStopBtn').onclick=()=>bgmStop(400);
 $('#bgmVol').oninput=e=>{ CFG.bgmVol=(+e.target.value||0)/100; saveCfg(); toast('저장됨');
-  if(bgmPlaying){ bgmBase=CFG.bgmVol; clearInterval(bgmFade); bgm.volume=CFG.bgmVol; } };
+  if(bgmPlaying){ bgmBase=CFG.bgmVol; clearInterval(bgmFade); bgm.volume=Math.min(1,CFG.bgmVol*bgmMul()); } };
 $('#bgmFile').onchange=async e=>{
   const f=e.target.files&&e.target.files[0]; if(!f) return;
   bgm.src=URL.createObjectURL(f); bgm.load(); bgmState('불러오는 중 · '+f.name);
