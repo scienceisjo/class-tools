@@ -1,6 +1,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>J.A.R.V.I.S.</title>
+<title>자비스 — 손뼉 두 번에 깨어나는 수업 도입 도우미</title>
+<meta name="description" content="손뼉 두 번이면 깨어나 "Welcome home." 하고 인사하는 아이언맨의 인공지능 비서. 말로 날씨·음악·타이머를 부르고, 오늘의 학습목표를 매번 다른 연출로 공개합니다. 어느 선생님이든 이름만 넣으면 자기 자비스가 됩니다. 크롬·엣지, 설치 없음.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="자비스 — 손뼉 두 번에 깨어나는 수업 도입 도우미">
+<meta property="og:description" content="손뼉 두 번이면 깨어나 "Welcome home." 하고 인사하는 아이언맨의 인공지능 비서. 말로 날씨·음악·타이머를 부르고, 오늘의 학습목표를 매번 다른 연출로 공개합니다. 어느 선생님이든 이름만 넣으면 자기 자비스가 됩니다. 크롬·엣지, 설치 없음.">
+<meta property="og:url" content="https://scienceisjo.github.io/class-tools/jarvis/">
+<meta property="og:site_name" content="class-tools">
+<meta name="twitter:card" content="summary">
 <style>
 :root{
   --cy:#4fe3ff; --cy2:#0d95c4; --dim:#12495c; --gold:#ffc14d; --red:#ff5470;
@@ -1479,7 +1486,6 @@ function toast(t){ const el=$('#toast'); if(!el) return; el.textContent=t; el.cl
 /* 이름·부제를 화면에 반영 */
 function applyIdentity(){
   const n=CFG.name||'선생님';
-  document.title='J.A.R.V.I.S. — '+n;
   const g=$('#gateSub'); if(g) g.textContent=CFG.tagline||(n+' 전용 인공지능 비서');
 }
 
