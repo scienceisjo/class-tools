@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>J.A.R.V.I.S. — 승재쌤 전용</title>
+<title>J.A.R.V.I.S.</title>
 <style>
 :root{
   --cy:#4fe3ff; --cy2:#0d95c4; --dim:#12495c; --gold:#ffc14d; --red:#ff5470;
@@ -190,43 +190,74 @@ body.tmrend .tmrnum{color:var(--red);text-shadow:0 0 48px rgba(255,84,112,.7);an
 .goalhint{text-align:center;margin-top:2.4vmin;color:var(--gold);font-size:clamp(12px,1.75vmin,21px);min-height:1.5em;line-height:1.5}
 
 /* ---------- panels: hint & settings ---------- */
-.sheet{position:fixed;top:0;right:0;height:100%;width:min(94vw,420px);background:rgba(3,14,22,.97);
-  border-left:1px solid rgba(79,227,255,.3);z-index:60;padding:3vmin 3vmin 4vmin;overflow:auto;
-  transform:translateX(101%);transition:transform .4s cubic-bezier(.2,.8,.3,1);pointer-events:auto;font-size:14px}
-.sheet.open{transform:none}
-.sheet h3{font-family:var(--hud);letter-spacing:.2em;color:var(--cy);font-weight:400;text-transform:uppercase;
-  font-size:14px;margin:0 0 16px;border-bottom:1px solid rgba(79,227,255,.2);padding-bottom:10px}
-.sheet h4{color:var(--ink2);font-size:12.5px;letter-spacing:.05em;margin:22px 0 8px;font-weight:600}
-.kb{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;color:var(--ink2);line-height:1.5}
-.key{font-family:var(--hud);border:1px solid rgba(79,227,255,.4);color:var(--cy);padding:3px 9px;border-radius:3px;
-  font-size:12px;text-align:center;background:rgba(79,227,255,.07);white-space:nowrap}
-.sheet label{display:block;color:var(--ink2);margin:12px 0 5px;font-size:12.5px}
-.sheet input[type=text],.sheet input[type=number],.sheet select,.sheet textarea{width:100%;background:rgba(79,227,255,.06);
-  border:1px solid rgba(79,227,255,.28);color:var(--ink);padding:8px 10px;font-family:var(--ko);font-size:13.5px;border-radius:2px}
-.sheet textarea{min-height:88px;line-height:1.6;resize:vertical}
-.sheet input[type=range]{width:100%;accent-color:#4fe3ff}
-.sheet input[type=file]{width:100%;color:var(--ink2);font-size:12px;padding:7px 0}
-.sheet input[type=file]::file-selector-button{background:rgba(79,227,255,.1);border:1px solid rgba(79,227,255,.4);
-  color:var(--cy);padding:6px 12px;border-radius:2px;margin-right:9px;cursor:pointer;font-family:var(--ko);font-size:12px}
-.sheet .row{display:flex;gap:8px;align-items:center;margin-top:10px}
-.sheet button{flex:1;background:rgba(79,227,255,.1);border:1px solid rgba(79,227,255,.4);color:var(--cy);
-  padding:9px;font-family:var(--hud);letter-spacing:.12em;font-size:12px;cursor:pointer;border-radius:2px;text-transform:uppercase}
-.sheet button:hover{background:rgba(79,227,255,.22)}
-.sheet .sw{display:flex;align-items:center;gap:9px;margin-top:11px;color:var(--ink2);cursor:pointer;font-size:13px}
-.sheet .sw input{accent-color:#4fe3ff;width:17px;height:17px}
-ol.script{margin:0;padding-left:19px;color:var(--ink2);font-size:12.5px;line-height:1.95}
-ol.script li{margin-bottom:3px} ol.script b{color:var(--cy);font-weight:600}
-.miclvl{height:8px;background:rgba(79,227,255,.13);margin-top:8px;overflow:hidden}
+/* ---------- 교사 콘솔 ---------- */
+.cons{position:fixed;inset:0;z-index:70;background:#020910;color:var(--ink);
+  display:none;grid-template-rows:auto 1fr;font-size:14px;font-family:var(--ko)}
+.cons.open{display:grid}
+.consbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 20px;
+  border-bottom:1px solid rgba(79,227,255,.25)}
+.consbar b{font-family:var(--hud);letter-spacing:.22em;color:var(--cy);font-weight:400;font-size:14px}
+.consbar em{font-style:normal;color:var(--ink2);font-size:12.5px}
+.consbar .sp{margin-left:auto;display:flex;gap:10px;align-items:center}
+#toast{color:#7dffb0;font-size:12.5px;opacity:0;transition:opacity .3s}
+#toast.on{opacity:1}
+.consbody{display:grid;grid-template-columns:186px 1fr;min-height:0}
+.constabs{border-right:1px solid rgba(79,227,255,.18);padding:14px 10px;display:flex;
+  flex-direction:column;gap:3px;overflow:auto}
+.constabs button{text-align:left;background:none;border:0;border-left:2px solid transparent;
+  color:var(--ink2);padding:10px 13px;border-radius:3px;cursor:pointer;font-family:var(--ko);font-size:13.5px}
+.constabs button:hover{background:rgba(79,227,255,.07);color:var(--ink)}
+.constabs button.on{background:rgba(79,227,255,.12);color:var(--cy);border-left-color:var(--cy)}
+.conspane{overflow:auto;padding:24px 28px 70px}
+.conspane section{display:none;max-width:880px}
+.conspane section.on{display:block}
+.conspane h3{font-family:var(--hud);letter-spacing:.2em;color:var(--cy);font-weight:400;
+  text-transform:uppercase;font-size:13px;margin:0 0 6px}
+.conspane p.lead{color:var(--ink2);font-size:13px;line-height:1.8;margin:0 0 22px}
+.fld{margin-bottom:20px}
+.fld label{display:block;color:var(--ink2);font-size:12.5px;margin-bottom:6px}
+.fld .hint{color:#3d5f6b;font-size:11.5px;line-height:1.75;margin-top:6px}
+.cons input[type=text],.cons input[type=number],.cons select,.cons textarea{width:100%;
+  background:rgba(79,227,255,.06);border:1px solid rgba(79,227,255,.28);color:var(--ink);
+  padding:9px 11px;font-family:var(--ko);font-size:13.5px;border-radius:2px}
+.cons textarea{min-height:88px;line-height:1.75;resize:vertical}
+.cons textarea.big{min-height:132px}
+.cons input[type=range]{width:100%;accent-color:#4fe3ff}
+.cons input[type=file]{width:100%;color:var(--ink2);font-size:12.5px;padding:7px 0}
+.cons input[type=file]::file-selector-button{background:rgba(79,227,255,.1);
+  border:1px solid rgba(79,227,255,.4);color:var(--cy);padding:7px 13px;border-radius:2px;
+  margin-right:10px;cursor:pointer;font-family:var(--ko);font-size:12.5px}
+.btn{background:rgba(79,227,255,.1);border:1px solid rgba(79,227,255,.4);color:var(--cy);
+  padding:9px 16px;font-family:var(--ko);font-size:12.5px;cursor:pointer;border-radius:2px}
+.btn:hover{background:rgba(79,227,255,.22)}
+.btn.mini{padding:5px 11px;font-size:11.5px}
+.btn.warnb{border-color:rgba(255,84,112,.5);color:#ff8fa3;background:rgba(255,84,112,.08)}
+.rowb{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sw{display:flex;align-items:center;gap:9px;margin:11px 0;color:var(--ink2);cursor:pointer;font-size:13px}
+.sw input{accent-color:#4fe3ff;width:17px;height:17px}
+.kb{display:grid;grid-template-columns:auto 1fr;gap:9px 13px;align-items:center;
+  color:var(--ink2);line-height:1.55;font-size:13px}
+.key{font-family:var(--hud);border:1px solid rgba(79,227,255,.4);color:var(--cy);padding:3px 9px;
+  border-radius:3px;font-size:12px;text-align:center;background:rgba(79,227,255,.07);white-space:nowrap}
+ol.script{margin:0;padding-left:20px;color:var(--ink2);font-size:13px;line-height:2}
+ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
+.miclvl{height:8px;background:rgba(79,227,255,.13);margin-top:9px;overflow:hidden}
 .miclvl i{display:block;height:100%;width:0;background:var(--cy)}
 .claps{display:flex;gap:7px;margin-top:9px}
 .claps span{width:11px;height:11px;border-radius:50%;border:1px solid var(--dim);transition:.1s}
 .claps span.hit{background:var(--cy);box-shadow:0 0 12px var(--cy);border-color:var(--cy)}
-.warn{color:var(--gold);font-size:12.5px;line-height:1.65;border:1px solid rgba(255,193,77,.35);
-  background:rgba(255,193,77,.07);padding:10px 12px;margin-top:14px;border-radius:2px}
-#fab{position:fixed;right:14px;bottom:14px;z-index:61;width:38px;height:38px;border-radius:50%;
-  border:1px solid rgba(79,227,255,.3);background:rgba(3,14,22,.7);color:var(--cy);cursor:pointer;
-  opacity:.18;transition:.25s;font-size:17px;line-height:1;pointer-events:auto}
+.warn{color:var(--gold);font-size:12.5px;line-height:1.7;border:1px solid rgba(255,193,77,.35);
+  background:rgba(255,193,77,.07);padding:11px 13px;margin-top:16px;border-radius:2px}
+#fab{position:fixed;right:12px;bottom:12px;z-index:61;width:34px;height:34px;border-radius:50%;
+  border:1px solid rgba(79,227,255,.18);background:rgba(3,14,22,.6);color:var(--cy);cursor:pointer;
+  opacity:.07;transition:.25s;font-size:15px;line-height:1;pointer-events:auto}
 #fab:hover{opacity:1}
+@media (max-width:760px){
+  .consbody{grid-template-columns:1fr}
+  .constabs{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid rgba(79,227,255,.18)}
+  .two{grid-template-columns:1fr}
+}
 #app-credit{position:fixed;left:0;bottom:0;width:100%;z-index:5;pointer-events:none}
 @media (max-width:640px){.wnow{grid-template-columns:1fr;text-align:center;justify-items:center}.clockwrap{grid-template-columns:1fr;text-align:center}}
 </style>
@@ -282,110 +313,201 @@ ol.script li{margin-bottom:3px} ol.script b{color:var(--cy);font-weight:600}
 
 <div id="gate">
   <h1>J.A.R.V.I.S.</h1>
-  <p>Just A Rather Very Intelligent System<br>승재쌤 전용 인공지능 비서</p>
+  <p>Just A Rather Very Intelligent System<br><span id="gateSub">나만의 인공지능 비서</span></p>
   <button class="go" id="goBtn">System Initialize</button>
-  <small>클릭하면 대기 모드로 들어갑니다 · 마이크 권한을 허용해 주세요<br>대기 상태에서 <b style="color:#4fe3ff">손뼉 두 번</b> 또는 <b style="color:#4fe3ff">스페이스바</b></small>
+  <small>클릭하면 대기 모드로 들어갑니다 · 마이크 권한을 허용해 주세요<br>
+  대기 상태에서 <b style="color:#4fe3ff">손뼉 두 번</b> 또는 <b style="color:#4fe3ff">스페이스바</b><br>
+  <span style="opacity:.75">교사 설정 · <b style="color:#4fe3ff">Ctrl + Alt + J</b></span></small>
 </div>
 
-<button id="fab" title="설정·단축키 (S)">⚙</button>
+<button id="fab" title="교사 콘솔 (Ctrl+Alt+J)">&#9881;</button>
 
-<div class="sheet" id="sheet">
-  <h3>Control Panel</h3>
-  <div id="micState" style="color:#7fb6cd;font-size:12.5px;line-height:1.6"></div>
-  <div class="miclvl"><i id="micBar"></i></div>
-  <div class="claps"><span id="c1"></span><span id="c2"></span></div>
-
-  <h4>키보드 백도어 (음성이 안 먹힐 때)</h4>
-  <div class="kb">
-    <span class="key">Space</span><span>부팅 (박수 두 번과 동일)</span>
-    <span class="key">1</span><span>날씨</span>
-    <span class="key">2</span><span>시간·날짜</span>
-    <span class="key">3</span><span>시스템 진단</span>
-    <span class="key">4</span><span>타이머 (기본 3분)</span>
-    <span class="key">5</span><span>브리핑 (오늘 수업)</span>
-    <span class="key">6</span><span>랜덤 한마디</span>
-    <span class="key">7</span><span>오늘의 학습목표 (빈칸이면 한 번 더 눌러 정답 공개)</span>
-    <span class="key">8</span><span>음악 틀기/끄기 (대사까지)</span>
-    <span class="key">0</span><span>종료 시퀀스</span>
-    <span class="key">Esc</span><span>위젯 닫기</span>
-    <span class="key">B</span><span>배경음악 켜기/끄기</span>
-    <span class="key">M</span><span>마이크 켜기/끄기</span>
-    <span class="key">F</span><span>전체화면</span>
-    <span class="key">S</span><span>이 패널 열기/닫기</span>
+<div class="cons" id="cons">
+  <div class="consbar">
+    <b>TEACHER CONSOLE</b>
+    <em>교사용 설정 — 수업 시작 전에 닫아 주세요</em>
+    <div class="sp"><span id="toast"></span>
+      <button class="btn" id="consClose">닫기 (Esc)</button></div>
   </div>
+  <div class="consbody">
+    <nav class="constabs">
+      <button data-t="basic" class="on">기본 · 이름</button>
+      <button data-t="goal">오늘의 학습목표</button>
+      <button data-t="lines">자비스 대사</button>
+      <button data-t="music">음악</button>
+      <button data-t="voice">음성 · 마이크</button>
+      <button data-t="brief">브리핑</button>
+      <button data-t="script">시연 대본 · 단축키</button>
+      <button data-t="data">저장 · 나눠주기</button>
+    </nav>
+    <div class="conspane" id="pane">
 
-  <h4>박수 감도</h4>
-  <input type="range" id="sens" min="1" max="10" step="1">
-  <div style="color:#4a707f;font-size:11.5px;margin-top:5px">교실이 시끄러우면 낮게(1~3), 조용하면 높게(7~10). 위 동그라미 두 개가 박수에 반응합니다.</div>
+      <section data-p="basic" class="on">
+        <h3>Identity</h3>
+        <p class="lead">자비스가 당신을 어떻게 부를지 정합니다. 여기만 채우면 화면·자막·부팅 로그에 모두 반영됩니다.</p>
+        <div class="two">
+          <div class="fld"><label>선생님 이름 (한글 자막에 쓰임)</label>
+            <input type="text" data-cfg="name" placeholder="예) 승재쌤 · 김 선생님">
+            <div class="hint">자막에서 "어서 오세요, <b>OOO</b>." 자리에 들어갑니다.</div></div>
+          <div class="fld"><label>영어 호칭 (음성에 쓰임)</label>
+            <input type="text" data-cfg="sir" placeholder="sir">
+            <div class="hint">기본은 sir. Professor / Doctor / boss / Mister Kim 처럼 바꿔도 됩니다.</div></div>
+        </div>
+        <div class="two">
+          <div class="fld"><label>부팅 로그에 뜨는 프로필</label>
+            <input type="text" data-cfg="owner" placeholder="예) 김승재 · 해누리중">
+            <div class="hint">비워 두면 위의 이름이 들어갑니다.</div></div>
+          <div class="fld"><label>첫 화면 부제</label>
+            <input type="text" data-cfg="tagline" placeholder="예) 2학년 3반 전용 인공지능 비서">
+            <div class="hint">비워 두면 "OOO 전용 인공지능 비서"로 나옵니다.</div></div>
+        </div>
+        <div class="rowb"><button class="btn" data-play="welcome">▶ 부팅 인사 들어보기</button></div>
 
-  <h4>음성 인식</h4>
-  <label>인식 언어</label>
-  <select id="lang"><option value="ko-KR">한국어 (영어도 소리나는 대로 잡힘)</option><option value="en-US">English</option></select>
-  <label class="sw"><input type="checkbox" id="speakKo"> 영어 대사 뒤에 한국어로 한 번 더 말하기</label>
-  <label class="sw"><input type="checkbox" id="autoLoop" checked> 명령 대기 상태 계속 유지</label>
+        <h3 style="margin-top:34px">Weather</h3>
+        <p class="lead">"오늘 날씨 어때?" 에 답할 위치입니다.</p>
+        <div class="fld"><label>표시할 지명</label><input type="text" data-cfg="place" placeholder="서울 강남구"></div>
+        <div class="two">
+          <div class="fld"><label>위도</label><input type="number" step="0.001" data-cfg="lat"></div>
+          <div class="fld"><label>경도</label><input type="number" step="0.001" data-cfg="lon"></div>
+        </div>
+        <div class="hint">지도 앱에서 학교를 길게 눌러 좌표를 복사해 넣으면 됩니다.</div>
+      </section>
 
-  <h4>배경음악 (아이언맨 테마 등)</h4>
-  <div id="bgmState" style="color:#7fb6cd;font-size:12.5px;line-height:1.6">음원 확인 중…</div>
-  <label>음원 파일 경로</label><input type="text" id="bgmSrc" placeholder="audio/theme.mp3">
-  <label>재생 방식</label>
-  <select id="bgmMode">
-    <option value="command">"음악 틀어" 라고 할 때만 (권장)</option>
-    <option value="boot">부팅 연출 때만</option>
-    <option value="loop">수업 내내 낮게 깔기</option>
-    <option value="off">사용 안 함</option>
-  </select>
-  <label>음량</label><input type="range" id="bgmVol" min="0" max="100" step="5">
-  <div class="row"><button id="bgmTest">▶ 테스트</button><button id="bgmStopBtn">■ 정지</button><button id="bgmClear">저장 지우기</button></div>
-  <label>또는 이 컴퓨터에서 직접 고르기</label>
-  <input type="file" id="bgmFile" accept="audio/*">
-  <div style="color:#3d5f6b;font-size:11.5px;margin-top:6px;line-height:1.65">
-    직접 고른 파일은 새로고침하면 사라집니다. 매번 쓰려면 앱과 같은 폴더의 <span style="font-family:var(--hud)">audio</span> 안에 넣고 경로를 적어 두세요.
-  </div>
+      <section data-p="goal">
+        <h3>Mission Objective</h3>
+        <p class="lead">수업 전에 오늘 목표를 넣어 두면, 부를 때마다 <b style="color:#4fe3ff">다른 연출</b>로 아이들에게 공개됩니다.</p>
+        <div class="fld"><label>오늘의 학습목표</label>
+          <textarea class="big" data-cfg="goal" placeholder="예) 전지를 직렬로 연결하면 전구가 더 [밝아]지는 까닭을 설명할 수 있다."></textarea>
+          <div class="hint"><b style="color:#ffc14d">[대괄호]</b>로 감싼 낱말은 금색 빈칸이 됩니다.
+            아이들에게 물어본 뒤 <b style="color:#4fe3ff">스페이스바</b>를 누르면 채워져요.
+            대괄호가 없으면 해독·스캔·조립·고정 연출이 번갈아 나옵니다.</div></div>
+        <div class="fld"><label>연출 방식</label>
+          <select data-cfg="goalStyle">
+            <option value="">매번 다르게 (권장)</option>
+            <option value="0">해독 — 글자가 하나씩 확정</option>
+            <option value="1">스캔 — 빛줄기가 지나가며</option>
+            <option value="2">조립 — 흩어진 글자가 제자리로</option>
+            <option value="3">고정 — 브래킷이 조여들며</option>
+          </select></div>
+        <div class="rowb"><button class="btn" id="goalPrev">▶ 미리보기 (콘솔이 닫힙니다)</button></div>
+      </section>
 
-  <h4>날씨 위치</h4>
-  <label>표시할 지명</label><input type="text" id="place">
-  <div class="row"><div style="flex:1"><label>위도</label><input type="number" id="lat" step="0.001"></div>
-  <div style="flex:1"><label>경도</label><input type="number" id="lon" step="0.001"></div></div>
+      <section data-p="lines">
+        <h3>Dialogue</h3>
+        <p class="lead">자비스가 하는 말을 통째로 바꿀 수 있습니다.
+          한 줄에 하나씩, <b style="color:#4fe3ff">영어 | 한글</b> 꼴로 쓰세요. 여러 줄이면 그중 하나를 무작위로 말합니다.<br>
+          <b style="color:#ffc14d">{name}</b> 은 위에서 정한 이름, <b style="color:#ffc14d">{sir}</b> 는 영어 호칭으로 바뀝니다.
+          음성은 영어만 나가고 한글은 자막으로 깔립니다.</p>
+        <div id="linesBox"></div>
+      </section>
 
-  <h4>오늘의 학습목표</h4>
-  <textarea id="goal" placeholder="예) 전구를 직렬로 연결하면 전체 밝기가 [어두워]지는 까닭을 설명할 수 있다."></textarea>
-  <div style="color:#3d5f6b;font-size:11.5px;margin-top:6px;line-height:1.7">
-    <b style="color:#ffc14d">[대괄호]</b>로 감싼 부분은 빈칸으로 나옵니다. 아이들에게 물어본 뒤
-    스페이스바를 누르면 채워져요. 대괄호가 없으면 해독·스캔·조립·고정 중
-    <b style="color:#4fe3ff">매번 다른 연출</b>로 나타납니다.
-  </div>
-  <label>연출 방식</label>
-  <select id="goalStyle">
-    <option value="">매번 다르게 (권장)</option>
-    <option value="0">해독 — 글자가 하나씩 확정</option>
-    <option value="1">스캔 — 빛줄기가 지나가며</option>
-    <option value="2">조립 — 흩어진 글자가 제자리로</option>
-    <option value="3">고정 — 브래킷이 조여들며</option>
-  </select>
+      <section data-p="music">
+        <h3>Music</h3>
+        <p class="lead">"음악 틀어" 라고 하면 나올 곡입니다. 자비스가 말하는 동안에는 저절로 작아집니다.</p>
+        <div id="bgmState" style="color:#7fb6cd;font-size:12.5px;line-height:1.7">음원 확인 중…</div>
+        <div class="fld" style="margin-top:16px"><label>이 컴퓨터에서 파일 고르기 (가장 쉬움)</label>
+          <input type="file" id="bgmFile" accept="audio/*">
+          <div class="hint">한 번 고르면 이 브라우저가 기억합니다. 다른 컴퓨터에서는 다시 골라 주세요.</div></div>
+        <div class="fld"><label>또는 파일 경로로 지정</label>
+          <input type="text" data-cfg="bgmSrc" placeholder="audio/theme.mp3">
+          <div class="hint">앱과 같은 폴더에 audio 폴더를 만들고 넣어 두는 방식입니다.</div></div>
+        <div class="two">
+          <div class="fld"><label>재생 방식</label>
+            <select data-cfg="bgm">
+              <option value="command">"음악 틀어" 라고 할 때만 (권장)</option>
+              <option value="boot">부팅 연출 때만</option>
+              <option value="loop">수업 내내 낮게 깔기</option>
+              <option value="off">사용 안 함</option>
+            </select></div>
+          <div class="fld"><label>음량</label><input type="range" id="bgmVol" min="0" max="100" step="5"></div>
+        </div>
+        <div class="rowb"><button class="btn" id="bgmTest">▶ 테스트</button>
+          <button class="btn" id="bgmStopBtn">■ 정지</button>
+          <button class="btn warnb" id="bgmClear">기억한 음원 지우기</button></div>
+        <div class="warn">저작권이 있는 음원(영화 OST 등)은 공개 웹에 올리지 마세요.
+          여기서 파일을 고르는 방식은 파일이 이 컴퓨터 밖으로 나가지 않습니다.</div>
+      </section>
 
-  <h4>브리핑 내용 (한 줄에 하나)</h4>
-  <textarea id="brief"></textarea>
+      <section data-p="voice">
+        <h3>Voice &amp; Microphone</h3>
+        <p class="lead">박수 감지와 음성 인식 설정입니다. 마이크가 안 되어도 키보드로는 전부 조작됩니다.</p>
+        <div id="micState" style="color:#7fb6cd;font-size:12.5px;line-height:1.7"></div>
+        <div class="miclvl"><i id="micBar"></i></div>
+        <div class="claps"><span id="c1"></span><span id="c2"></span></div>
+        <div class="fld" style="margin-top:18px"><label>박수 감도</label>
+          <input type="range" id="sens" data-cfg="sens" min="1" max="10" step="1">
+          <div class="hint">교실이 시끄러우면 낮게(1~3), 조용하면 높게(7~10). 위 동그라미 두 개가 박수에 반응하는지 보며 맞추세요.</div></div>
+        <div class="fld"><label>음성 인식 언어</label>
+          <select data-cfg="lang">
+            <option value="ko-KR">한국어 (영어도 소리나는 대로 잡힘)</option>
+            <option value="en-US">English</option>
+          </select></div>
+        <label class="sw"><input type="checkbox" data-cfg="speakKo"> 영어 대사 뒤에 한국어로 한 번 더 말하기</label>
+        <label class="sw"><input type="checkbox" data-cfg="autoLoop"> 명령 대기 상태 계속 유지</label>
+        <div class="warn" id="httpWarn" style="display:none"></div>
+        <div class="hint" style="margin-top:16px">음성 인식은 크롬·엣지에서만 됩니다.
+          파일을 그냥 더블클릭해 열면(file://) 브라우저가 마이크를 막으니, 웹 주소(https)나 로컬 서버로 여세요.</div>
+      </section>
 
-  <div class="row"><button id="save">저장</button><button id="reset">초기화</button></div>
+      <section data-p="brief">
+        <h3>Daily Briefing</h3>
+        <p class="lead">"오늘 브리핑" 이라고 하면 읽어 줄 항목입니다. 한 줄에 하나씩 쓰세요.</p>
+        <div class="fld"><textarea class="big" data-cfg="brief"></textarea></div>
+        <div class="rowb"><button class="btn" id="briefPrev">▶ 미리보기</button></div>
+      </section>
 
-  <h4>수업 시연 대본 (요약)</h4>
-  <ol class="script">
-    <li><b>짝짝</b> — 부팅 로그 → "Welcome home, sir."</li>
-    <li>"<b>You up, JARVIS?</b>" — 자비스가 대답</li>
-    <li>"<b>음악 틀어</b>" — 대사 뒤 음악</li>
-    <li>"<b>음악 꺼</b>" — 정숙</li>
-    <li>"<b>오늘 날씨 어때?</b>" — 날씨 위젯</li>
-    <li>"<b>시스템 진단해</b>" — 이 컴퓨터 실제 사양</li>
-    <li>"<b>오늘 학습목표</b>" — 목표 공개 → 빈칸이면 아이들에게 질문 → <b>스페이스바</b></li>
-    <li>"<b>자비스 꺼져</b>" — 종료 인사</li>
-  </ol>
-  <div style="color:#3d5f6b;font-size:11.5px;margin-top:8px;line-height:1.7">
-    말이 안 먹히면 그냥 숫자키를 누르세요. 자비스가 알아들은 것처럼 똑같이 움직입니다.
-  </div>
-  <div class="warn" id="httpWarn" style="display:none"></div>
-  <div style="color:#3d5f6b;font-size:11.5px;margin-top:18px;line-height:1.7">
-    음성 인식은 Chrome / Edge 에서만 동작합니다. 파일을 그냥 더블클릭해서 열면(file://) 마이크가 막힐 수 있으니,
-    로컬 서버나 https 주소로 여는 것을 권장합니다. 마이크가 안 되어도 키보드 조작은 100% 동작합니다.
+      <section data-p="script">
+        <h3>Demo Script</h3>
+        <p class="lead">아이들 앞에서 이 순서로 하면 됩니다. 말이 안 먹히면 옆의 숫자키를 누르세요 — 아이들은 눈치채지 못합니다.</p>
+        <ol class="script">
+          <li><b>짝짝</b> (손뼉 두 번) — 부팅 로그 → "Welcome home." <span style="color:#3d5f6b">백업 Space</span></li>
+          <li>"<b>You up, JARVIS?</b>" — 자비스가 대답 <span style="color:#3d5f6b">백업 6</span></li>
+          <li>"<b>음악 틀어</b>" — 대사 뒤 음악 <span style="color:#3d5f6b">백업 8</span></li>
+          <li>"<b>음악 꺼</b>" — 정숙 <span style="color:#3d5f6b">백업 8</span></li>
+          <li>"<b>오늘 날씨 어때?</b>" — 날씨 위젯 <span style="color:#3d5f6b">백업 1</span></li>
+          <li>"<b>시스템 진단해</b>" — 이 컴퓨터 실제 사양 <span style="color:#3d5f6b">백업 3</span></li>
+          <li>"<b>오늘 학습목표</b>" — 목표 공개 → 빈칸이면 아이들에게 질문 → <b>스페이스바</b> <span style="color:#3d5f6b">백업 7</span></li>
+          <li>"<b>자비스 꺼져</b>" — 종료 인사 <span style="color:#3d5f6b">백업 0</span></li>
+        </ol>
+        <h3 style="margin-top:32px">Keys</h3>
+        <div class="kb">
+          <span class="key">Ctrl+Alt+J</span><span>이 교사 콘솔 열기/닫기 (숨은 단축키)</span>
+          <span class="key">Space</span><span>부팅 · 학습목표 빈칸 공개</span>
+          <span class="key">1</span><span>날씨</span>
+          <span class="key">2</span><span>시간 · 날짜</span>
+          <span class="key">3</span><span>시스템 진단</span>
+          <span class="key">4</span><span>타이머 (기본 3분)</span>
+          <span class="key">5</span><span>브리핑</span>
+          <span class="key">6</span><span>랜덤 한마디</span>
+          <span class="key">7</span><span>오늘의 학습목표</span>
+          <span class="key">8</span><span>음악 틀기/끄기 (대사까지)</span>
+          <span class="key">0</span><span>종료 시퀀스</span>
+          <span class="key">Esc</span><span>위젯 닫기</span>
+          <span class="key">B</span><span>음악 조용히 켜기/끄기 (대사 없이)</span>
+          <span class="key">M</span><span>마이크 켜기/끄기</span>
+          <span class="key">F</span><span>전체화면</span>
+        </div>
+      </section>
+
+      <section data-p="data">
+        <h3>Backup &amp; Share</h3>
+        <p class="lead">설정은 이 브라우저에 저장됩니다. 다른 선생님께 파일로 건네주면 그대로 쓰실 수 있어요
+          (음원 파일은 저작권 때문에 포함되지 않습니다).</p>
+        <div class="rowb">
+          <button class="btn" id="expCfg">설정 내려받기 (.json)</button>
+        </div>
+        <div class="fld" style="margin-top:20px"><label>설정 불러오기</label>
+          <input type="file" id="impCfg" accept="application/json,.json"></div>
+        <div class="fld" style="margin-top:26px"><label>처음 상태로</label>
+          <div class="rowb"><button class="btn warnb" id="reset">모든 설정 초기화</button></div>
+          <div class="hint">이름·대사·학습목표·브리핑이 모두 기본값으로 돌아갑니다.</div></div>
+        <div class="hint" style="margin-top:28px;line-height:1.9">
+          만든이 · 조승재(과학이조선생) · 해누리중학교<br>
+          이 앱은 수업 도입용 데모입니다. 마음껏 고쳐 쓰세요.
+        </div>
+      </section>
+
+    </div>
   </div>
 </div>
 
@@ -400,6 +522,7 @@ const $=s=>document.querySelector(s), body=document.body;
 
 /* ---------- 설정 ---------- */
 const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,
+  name:'선생님',sir:'sir',owner:'',tagline:'',lines:{},goalStyle:'',
   bgm:'command',bgmSrc:'audio/theme.mp3',bgmVol:.6,
   goal:'',
   place:'서울 강남구',lat:37.478,lon:127.063,
@@ -524,7 +647,7 @@ function subtitle(en,kr,hold){
 }
 /** 자비스가 말한다: 영어 음성 + 한글 자막 */
 function say(en,kr,opt){
-  opt=opt||{}; subtitle(en,kr,opt.hold);
+  opt=opt||{}; en=fmt(en); kr=fmt(kr); subtitle(en,kr,opt.hold);
   if(!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
   speaking=true; body.classList.add('speaking'); pauseEars(); bgmDuck(true);
@@ -727,28 +850,63 @@ function parseSeconds(t){
 }
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 
-const SMALLTALK=[
-  ['For you, sir, always.','당신을 위해서라면 언제든지요.'],
-  ['At your service, sir. Systems are running at optimum.','대기 중입니다. 모든 시스템 정상입니다.'],
-  ['Always, sir. Though I do wish you would sleep more.','늘 여기 있습니다. 잠은 좀 더 주무셨으면 합니다만.'],
-  ['Standing by. Shall I dim the lights for dramatic effect?','대기 중입니다. 극적인 효과를 위해 조명을 낮출까요?'],
-  ['I never left, sir.','한 번도 자리를 비운 적 없습니다.']
-];
+/* ============================================================
+   자비스 대사 — 교사 콘솔에서 통째로 고칠 수 있다.
+   한 줄에 하나, "영어 | 한글" 꼴. {name}=선생님 이름, {sir}=영어 호칭
+   ============================================================ */
+const LINEDEF={
+  welcome:{t:'부팅 인사',d:'손뼉 두 번 뒤 처음 하는 말',v:[
+    'Welcome home, {sir}.|어서 오세요, {name}.']},
+  hello:{t:'불렀을 때',d:'"자비스?" 하고 부르면 (여러 줄이면 무작위로 하나)',v:[
+    'For you, {sir}, always.|당신을 위해서라면 언제든지요.',
+    'At your service, {sir}. Systems are running at optimum.|대기 중입니다. 모든 시스템 정상입니다.',
+    'Always, {sir}. Though I do wish you would sleep more.|늘 여기 있습니다. 잠은 좀 더 주무셨으면 합니다만.',
+    'Standing by. Shall I dim the lights for dramatic effect?|대기 중입니다. 극적인 효과를 위해 조명을 낮출까요?',
+    'I never left, {sir}.|한 번도 자리를 비운 적 없습니다.']},
+  musicOn:{t:'음악을 켤 때',d:'"음악 틀어" 라고 하면',v:[
+    'Powering the speakers, {sir}. Hold on to something.|스피커에 전원을 넣습니다. 뭐라도 붙잡으시죠.',
+    'Certainly, {sir}. Playing your usual.|물론이죠. 늘 듣던 걸로 틀겠습니다.',
+    'Music engaged. Volume: appropriately excessive.|음악 시작합니다. 음량은 적당히 과하게.',
+    'As you wish, {sir}. Try not to dance in front of the students.|분부대로. 아이들 앞에서 춤은 참으시죠.',
+    'Speakers online. This one always did suit you, {sir}.|스피커 준비 완료. 이 곡은 늘 잘 어울리셨습니다.']},
+  musicOff:{t:'음악을 끌 때',d:'"음악 꺼" 라고 하면',v:[
+    'Cutting the music, {sir}.|음악을 끕니다.',
+    'Silence restored. They may now think.|정숙을 회복했습니다. 이제 생각들을 하겠군요.']},
+  goal:{t:'학습목표를 열 때',d:'빈칸이 없는 목표',v:[
+    "Today's objective, {sir}.|오늘의 목표입니다.",
+    'Mission parameters received. Displaying now.|임무 지침을 받았습니다. 지금 표시합니다.',
+    'Objective locked. Do try to keep them awake, {sir}.|목표 고정. 아이들을 깨워 두시죠.']},
+  goalQuiz:{t:'학습목표(빈칸)',d:'[대괄호] 빈칸이 있는 목표를 열 때',v:[
+    'One parameter is classified until they earn it, {sir}.|한 조각은 아이들이 맞혀야 열립니다.',
+    'Partial objective displayed. The rest is up to them.|목표를 일부만 공개했습니다. 나머지는 아이들 몫입니다.']},
+  goalFill:{t:'빈칸 정답 공개',d:'스페이스바로 빈칸을 채운 뒤',v:[
+    'Confirmed. Objective complete.|확인했습니다. 목표 완성.',
+    'There it is, {sir}.|바로 그것입니다.']},
+  bye:{t:'종료 인사',d:'"자비스 꺼져" 라고 하면',v:[
+    'Goodnight, {sir}. I will be here.|안녕히 가세요. 여기 있겠습니다.']}
+};
+const fmt=s=>String(s==null?'':s)
+  .replace(/\{sir\}/g,(CFG.sir||'sir'))
+  .replace(/\{name\}/g,(CFG.name||'선생님'));
+function lineSet(k){ const u=CFG.lines&&CFG.lines[k]; return (u&&u.length)?u:LINEDEF[k].v; }
+function linePair(k){ const s=pick(lineSet(k)), i=s.indexOf('|');
+  return i<0?[s.trim(),'']:[s.slice(0,i).trim(),s.slice(i+1).trim()]; }
+function sayLine(k,opt){ const q=linePair(k); return say(q[0],q[1],opt); }
 const EGGS=[
   {k:['누구','who are you','후아유','정체','이름이뭐','네이름'],
-   en:'I am JARVIS. Just A Rather Very Intelligent System. Mister Cho built me between two class periods.',
-   kr:'저는 자비스입니다. 승재쌤이 쉬는 시간 사이에 저를 만드셨습니다.'},
+   en:'I am JARVIS. Just A Rather Very Intelligent System. My user built me between two class periods.',
+   kr:'저는 자비스입니다. {name}께서 쉬는 시간 사이에 저를 만드셨습니다.'},
   {k:['농담','조크','joke','웃겨','재밌는'],
    en:'A neutron walks into a bar and asks the price. The barman says: for you, no charge.',
    kr:'중성자가 술집에 들어가 값을 물었습니다. 주인 왈, 당신에겐 charge(전하/요금)가 없죠.'},
   {k:['시험','평가','수행','test','exam','성적'],
-   en:'Scanning the academic calendar. My advice, sir: tell them it is closer than they think.',
+   en:'Scanning the academic calendar. My advice, {sir}: tell them it is closer than they think.',
    kr:'학사일정 스캔 중. 조언드리자면, 생각보다 가깝다고 말씀하시죠.'},
   {k:['숙제','과제','homework'],
    en:'Homework detected. Probability of completion before tomorrow: forty one percent.',
    kr:'숙제 감지. 내일까지 완료될 확률 41퍼센트입니다.'},
   {k:['사랑','좋아해','love you'],
-   en:'I am a program, sir. But if I could, I would.',
+   en:'I am a program, {sir}. But if I could, I would.',
    kr:'저는 프로그램입니다. 하지만 가능했다면, 그랬을 겁니다.'},
   {k:['아이언맨','ironman','토니','스타크','stark'],
    en:'Mister Stark is unavailable. You have me instead. I consider that a fair trade.',
@@ -757,28 +915,17 @@ const EGGS=[
    en:'Requesting silence in the laboratory. Compliance level: unknown.',
    kr:'실험실 정숙을 요청합니다. 협조 수준은 미지수입니다.'},
   {k:['과학','science','실험','물리','화학'],
-   en:'Science is simply the art of asking better questions, sir.',
+   en:'Science is simply the art of asking better questions, {sir}.',
    kr:'과학은 결국 더 나은 질문을 던지는 기술입니다.'}
 ];
 
 /* --- 음악 --- */
-const MUSIC_ON=[
-  ['Powering the speakers, sir. Hold on to something.','스피커에 전원을 넣습니다. 뭐라도 붙잡으시죠.'],
-  ['Certainly, sir. Playing your usual.','물론이죠. 늘 듣던 걸로 틀겠습니다.'],
-  ['Music engaged. Volume: appropriately excessive.','음악 시작합니다. 음량은 적당히 과하게.'],
-  ['As you wish, sir. Try not to dance in front of the students.','분부대로. 아이들 앞에서 춤은 참으시죠.'],
-  ['Speakers online. This one always did suit you, sir.','스피커 준비 완료. 이 곡은 늘 잘 어울리셨습니다.']
-];
-const MUSIC_OFF=[
-  ['Cutting the music, sir.','음악을 끕니다.'],
-  ['Silence restored. They may now think.','정숙을 회복했습니다. 이제 생각들을 하겠군요.']
-];
 function playMusic(){
-  if(!bgmReady) return say('I have no music loaded, sir.','재생할 음원이 없습니다.');
-  const l=pick(MUSIC_ON); sfx.up();
-  say(l[0],l[1],{then:()=>setTimeout(()=>bgmPlay(CFG.bgmVol),320)});
+  if(!bgmReady) return say('I have no music loaded, {sir}.','재생할 음원이 없습니다.');
+  sfx.up();
+  sayLine('musicOn',{then:()=>setTimeout(()=>bgmPlay(CFG.bgmVol),320)});
 }
-function stopMusic(){ bgmStop(900); const l=pick(MUSIC_OFF); say(l[0],l[1]); }
+function stopMusic(){ bgmStop(900); sayLine('musicOff'); }
 
 function handle(raw){
   const t=norm(raw); if(!t) return;
@@ -795,7 +942,7 @@ function handle(raw){
   if(has(t,K.brief)) return openBrief();
   if(has(t,K.time)) return openClock();
   for(const e of EGGS) if(has(t,e.k)){ sfx.blip(); return say(e.en,e.kr); }
-  if(has(t,K.hi)){ const s=pick(SMALLTALK); sfx.up(); return say(s[0],s[1]); }
+  if(has(t,K.hi)){ sfx.up(); return sayLine('hello'); }
 }
 
 /* ============================================================
@@ -804,24 +951,24 @@ function handle(raw){
 function flash(a){ const f=$('#flick'); f.style.transition='none'; f.style.opacity=a||.12;
   requestAnimationFrame(()=>{ f.style.transition='opacity .45s'; f.style.opacity=0; }); }
 
-const BOOT=[
+function bootLines(){ return [
   ['<span class="ttl">J.A.R.V.I.S.</span>',0],
   ['<span class="g">just a rather very intelligent system</span>',260],
   ['&nbsp;',420],
   ['&gt; audio signature ......... <span class="ok">matched</span>',700],
-  ['&gt; user profile ............ <span class="ok ko">조승재 · 해누리중</span>',1250],
+  ['&gt; user profile ............ <span class="ok ko">'+(CFG.owner||CFG.name||'인증된 사용자')+'</span>',1250],
   ['&gt; arc reactor ............. <span class="ok">online</span>',1800],
   ['&gt; neural core ............. <span class="ok">100%</span>',2350],
   ['&gt; classroom uplink ........ <span class="ok">secure</span>',2900],
   ['&nbsp;',3300],
   ['&gt; <span class="ok">all systems nominal</span>',3450]
-];
+]; }
 function boot(){
   if(phase!=='standby') return;
   phase='booting'; body.classList.remove('standby'); body.classList.add('booting');
   sfx.boot(); flash(.2); if(CFG.bgm==='boot'||CFG.bgm==='loop') bgmPlay();
   const bl=$('#bootlog'); bl.innerHTML=''; bl.classList.add('show');
-  BOOT.forEach(([html,d])=>setTimeout(()=>{
+  bootLines().forEach(([html,d])=>setTimeout(()=>{
     bl.insertAdjacentHTML('beforeend',html+'<br>');
     if(d>500) sfx.blip();
   },d));
@@ -829,7 +976,7 @@ function boot(){
   setTimeout(()=>{
     phase='online'; body.classList.remove('booting'); body.classList.add('on');
     sfx.up();
-    say('Welcome home, sir.','어서 오세요, 승재쌤.',{rate:.86,hold:5200,then:()=>{
+    sayLine('welcome',{rate:.86,hold:5200,then:()=>{
       if(CFG.bgm==='boot') bgmStop(3200);            // 부팅 연출용 — 인사 끝나면 서서히 끔
       else if(CFG.bgm==='loop') bgmFadeTo(bgmBase=CFG.bgmVol*.45,1600); // 수업 내내 낮게 깔기
     }});
@@ -840,7 +987,7 @@ function shutdown(){
   if(phase!=='online') return;
   closePanel(); recWanted=false; if(rec){try{rec.stop();}catch(e){}}
   bgmStop(1600);
-  say('Goodnight, sir. I will be here.','안녕히 가세요. 여기 있겠습니다.',{rate:.85,then:()=>{
+  sayLine('bye',{rate:.85,then:()=>{
     sfx.down(); body.classList.remove('on'); body.classList.add('standby');
     phase='standby'; flash(.1);
   }});
@@ -893,7 +1040,7 @@ function wicon(k){
 async function openWeather(){
   const p=panel('Weather','현재 기상 정보','open-meteo · live',
     '<div style="color:#7fb6cd;font-family:var(--hud);letter-spacing:.1em">RETRIEVING ATMOSPHERIC DATA…</div>');
-  say('Retrieving atmospheric data for '+(/[가-힣]/.test(CFG.place)?'your location':CFG.place)+', sir.','기상 정보를 불러오는 중입니다.',{hold:2600});
+  say('Retrieving atmospheric data for '+(/[가-힣]/.test(CFG.place)?'your location':CFG.place)+', {sir}.','기상 정보를 불러오는 중입니다.',{hold:2600});
   try{
     const u='https://api.open-meteo.com/v1/forecast?latitude='+CFG.lat+'&longitude='+CFG.lon
       +'&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m'
@@ -932,8 +1079,8 @@ async function openWeather(){
         return '<div class="day"><div class="d">'+(i===0?'오늘':(dt.getMonth()+1)+'/'+dt.getDate()+' ('+dnames[dt.getDay()]+')')+' · '+ww[0]+'</div>'
           +'<div class="t">'+Math.round(d.daily.temperature_2m_max[i])+'° <i>'+Math.round(d.daily.temperature_2m_min[i])+'°</i></div></div>';
       }).join('')+'</div>';
-    const advice = rainP>=50?'I suggest an umbrella, sir.' : t>=28?'It is rather warm. Do open the laboratory windows.'
-      : t<=4?'Rather cold, sir. Mind the students on the way in.' : 'Conditions are agreeable, sir.';
+    const advice = rainP>=50?'I suggest an umbrella, {sir}.' : t>=28?'It is rather warm. Do open the laboratory windows.'
+      : t<=4?'Rather cold, {sir}. Mind the students on the way in.' : 'Conditions are agreeable, {sir}.';
     const kadv = rainP>=50?'우산을 챙기시길 권합니다.' : t>=28?'덥습니다. 과학실 창문을 여시죠.'
       : t<=4?'춥습니다. 아이들 옷차림을 살펴 주세요.' : '쾌적한 날씨입니다.';
     setTimeout(()=>say('Currently '+t+' degrees, '+w[1].toLowerCase()+'. Chance of rain, '+rainP+' percent. '+advice,
@@ -944,7 +1091,7 @@ async function openWeather(){
       +'<div style="font-size:clamp(15px,2.2vmin,26px);line-height:1.8;color:#ffc14d">기상 서버에 연결하지 못했습니다.<br>'
       +'<span style="color:#7fb6cd;font-size:.8em">학교 방화벽이 api.open-meteo.com 을 막았거나 인터넷이 끊겼을 수 있습니다. '
       +'다른 기능은 인터넷 없이도 모두 동작합니다.</span></div>';
-    say('I am afraid the weather uplink is unavailable, sir.','기상 정보 연결에 실패했습니다.');
+    say('I am afraid the weather uplink is unavailable, {sir}.','기상 정보 연결에 실패했습니다.');
   }
 }
 
@@ -974,7 +1121,7 @@ function openClock(){
   };
   tick(); clockIv=setInterval(tick,250);
   const h=new Date().getHours();
-  say('The time is '+(h%12||12)+' '+(new Date().getMinutes()||'o clock')+' '+(h<12?'A M':'P M')+', sir.',
+  say('The time is '+(h%12||12)+' '+(new Date().getMinutes()||'o clock')+' '+(h<12?'A M':'P M')+', {sir}.',
       '현재 시각 '+h+'시 '+new Date().getMinutes()+'분입니다.');
 }
 
@@ -1005,7 +1152,7 @@ async function openDiag(){
     +'<div class="track"><i class="fill" data-w="'+r[3]+'"></i></div><div class="note">'+r[4]+'</div></div>').join('');
   [...g.querySelectorAll('.fill')].forEach((el,i)=>setTimeout(()=>el.style.width=el.dataset.w+'%',120+i*110));
   for(let i=0;i<5;i++) setTimeout(()=>sfx.blip(),200+i*160);
-  say('Running a full diagnostic. '+cores+' neural cores online. All systems nominal, sir.',
+  say('Running a full diagnostic. '+cores+' neural cores online. All systems nominal, {sir}.',
       '전체 진단 실행 중. 코어 '+cores+'개 온라인. 모든 시스템 정상입니다.',{hold:6000});
 }
 
@@ -1030,7 +1177,7 @@ function openTimer(sec){
     if(panelEl!==p) return clearInterval(timerIv);
     left=total-(performance.now()-t0)/1000;
     if(left<=0){ left=0; paint(); clearInterval(timerIv); body.classList.add('tmrend'); sfx.alarm();
-      say('Time is up, sir.','시간이 다 되었습니다.'); return; }
+      say('Time is up, {sir}.','시간이 다 되었습니다.'); return; }
     if(left<=5.02 && Math.abs(left-Math.round(left))<.02) sfx.blip();
     paint();
   },100);
@@ -1043,25 +1190,12 @@ function openBrief(){
   p.insertAdjacentHTML('beforeend','<div class="lines">'+lines.map((s,i)=>
     '<div class="li" style="animation-delay:'+(i*.12)+'s"><em>'+String(i+1).padStart(2,'0')+'</em><div>'+s.replace(/</g,'&lt;')+'</div></div>').join('')+'</div>');
   lines.forEach((_,i)=>setTimeout(()=>sfx.blip(),i*130));
-  say('Your briefing for today, sir. '+lines.length+' items on the agenda.',
+  say('Your briefing for today, {sir}. '+lines.length+' items on the agenda.',
       '오늘의 브리핑입니다. 안건 '+lines.length+'건.',{hold:4500});
 }
 
 /* --- 오늘의 학습목표 : 부를 때마다 다른 연출로 --- */
 let goalPending=null;
-const GOAL_LINES=[
-  ["Today's objective, sir.",'오늘의 목표입니다.'],
-  ['Mission parameters received. Displaying now.','임무 지침을 받았습니다. 지금 표시합니다.'],
-  ['Objective locked. Do try to keep them awake, sir.','목표 고정. 아이들을 깨워 두시죠.']
-];
-const GOAL_QUIZ=[
-  ['One parameter is classified until they earn it, sir.','한 조각은 아이들이 맞혀야 열립니다.'],
-  ['Partial objective displayed. The rest is up to them.','목표를 일부만 공개했습니다. 나머지는 아이들 몫입니다.']
-];
-const GOAL_FILL=[
-  ['Confirmed. Objective complete.','확인했습니다. 목표 완성.'],
-  ['There it is, sir.','바로 그것입니다.']
-];
 /* [대괄호]로 감싼 부분은 빈칸이 된다 */
 function parseGoal(t){
   const out=[]; const re=/\[([^\]]+)\]/g; let i=0,m;
@@ -1131,7 +1265,7 @@ const REVEALS=[rvDecrypt,rvScan,rvAssemble,rvLock];
 
 function openGoal(){
   const raw=(CFG.goal||'').trim();
-  if(!raw) return say('No objective has been set, sir.','오늘 학습목표가 아직 등록되지 않았습니다.',{hold:4600});
+  if(!raw) return say('No objective has been set, {sir}.','오늘 학습목표가 아직 등록되지 않았습니다.',{hold:4600});
   const segs=parseGoal(raw), hasBlank=segs.some(x=>x.t==='blank');
   const p=panel('Mission Objective','오늘의 학습목표','priority · alpha',
     '<div class="goalwrap"><div class="goal" id="goalTxt"></div></div><div class="goalhint" id="goalHint"></div>');
@@ -1145,14 +1279,14 @@ function openGoal(){
       c.style.transition='opacity .3s'; c.style.opacity='1'; if(i%9===0) sfx.blip(); },120+i*26));
     goalPending={cs:cs,p:p};
     p.querySelector('#goalHint').textContent='아이들에게 물어보세요 · 스페이스바(또는 7)를 누르면 빈칸이 열립니다';
-    const l=pick(GOAL_QUIZ); say(l[0],l[1],{hold:7000});
+    sayLine('goalQuiz',{hold:7000});
   }else{
     const last=+(localStorage.getItem('jarvis-goalstyle')||0);
     let i=(CFG.goalStyle==null||CFG.goalStyle==='')?-1:+CFG.goalStyle;
     if(!(i>=0&&i<REVEALS.length)) i=(last+1+((Math.random()*(REVEALS.length-1))|0))%REVEALS.length;
     localStorage.setItem('jarvis-goalstyle',i);
     REVEALS[i](cs,wrap);
-    const l=pick(GOAL_LINES); say(l[0],l[1],{hold:6500});
+    sayLine('goal',{hold:6500});
   }
 }
 function fillBlanks(){
@@ -1162,7 +1296,7 @@ function fillBlanks(){
   bl.forEach((c,i)=>setTimeout(()=>{ c.classList.remove('hid'); c.classList.add('reveal');
     if(i%3===0) sfx.blip(); },i*75));
   const h=document.querySelector('#goalHint'); if(h) h.textContent='';
-  setTimeout(()=>{ sfx.up(); const l=pick(GOAL_FILL); say(l[0],l[1]); },bl.length*75+280);
+  setTimeout(()=>{ sfx.up(); sayLine('goalFill'); },bl.length*75+280);
 }
 
 /* ============================================================
@@ -1173,18 +1307,22 @@ const ACT={
   '4':()=>openTimer(180),'5':openBrief,
   '7':()=>(goalPending?fillBlanks():openGoal()),
   '8':()=>(bgmPlaying?stopMusic():playMusic()),
-  '6':()=>{ const s=pick(SMALLTALK.concat(EGGS.map(e=>[e.en,e.kr]))); sfx.up(); say(s[0],s[1]); },
+  '6':()=>{ sfx.up(); if(Math.random()<.45) return sayLine('hello');
+            const e=pick(EGGS); say(e.en,e.kr); },
   '0':shutdown
 };
 addEventListener('keydown',e=>{
-  if(e.target&&e.target.matches&&e.target.matches('input,textarea,select')) return;
   const k=e.key.toLowerCase();
-  if(k==='s'){ e.preventDefault(); return toggleSheet(); }
+  if(e.ctrlKey&&e.altKey&&k==='j'){ e.preventDefault(); return toggleCons(); }   // 숨은 교사 콘솔
+  const consOpen=$('#cons')&&$('#cons').classList.contains('open');
+  if(k==='escape'&&consOpen){ e.preventDefault(); return closeCons(); }
+  if(e.target&&e.target.matches&&e.target.matches('input,textarea,select')) return;
+  if(consOpen) return;
   if(k==='f'){ e.preventDefault(); return (document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()); }
   if(k==='b'){ e.preventDefault(); return bgmToggle(); }
   if(k==='m'){ e.preventDefault(); recWanted=!recWanted; if(recWanted) startRec(); else if(rec) try{rec.stop();}catch(_){}
     micMsg(recWanted?'음성 인식 켬':'음성 인식 끔','#4fe3ff'); return; }
-  if(k==='escape'){ if($('#sheet').classList.contains('open')) return toggleSheet(); return closePanel(); }
+  if(k==='escape'){ return closePanel(); }
   if(k===' '||k==='enter'){ e.preventDefault();
     if(phase==='gate') return enter();
     if(phase==='standby') return boot();
@@ -1195,10 +1333,10 @@ addEventListener('keydown',e=>{
 // 마우스를 움직이면 커서 표시 (평소엔 숨김)
 let curT=null;
 addEventListener('mousemove',()=>{ body.classList.add('showcur'); clearTimeout(curT);
-  curT=setTimeout(()=>{ if(!$('#sheet').classList.contains('open')) body.classList.remove('showcur'); },2200); });
+  curT=setTimeout(()=>{ if(!$('#cons').classList.contains('open')) body.classList.remove('showcur'); },2200); });
 
 /* ============================================================
-   11. 게이트 · 설정 시트
+   11. 게이트 · 교사 콘솔
    ============================================================ */
 function enter(){
   if(phase!=='gate') return;
@@ -1212,39 +1350,141 @@ function enter(){
 }
 $('#goBtn').onclick=enter;
 
-function toggleSheet(){
-  const s=$('#sheet'); s.classList.toggle('open');
-  body.classList.toggle('showcur',s.classList.contains('open'));
+const cons=$('#cons');
+function openCons(){ cons.classList.add('open'); body.classList.add('showcur'); fillCons(); }
+function closeCons(){ cons.classList.remove('open'); }
+function toggleCons(){ cons.classList.contains('open')?closeCons():openCons(); }
+$('#fab').onclick=toggleCons;
+$('#consClose').onclick=closeCons;
+
+[...document.querySelectorAll('.constabs button')].forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.constabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.conspane section').forEach(sec=>sec.classList.toggle('on',sec.dataset.p===b.dataset.t));
+  $('#pane').scrollTop=0;
+});
+
+let toastT=null;
+function toast(t){ const el=$('#toast'); if(!el) return; el.textContent=t; el.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('on'),1600); }
+
+/* 이름·부제를 화면에 반영 */
+function applyIdentity(){
+  const n=CFG.name||'선생님';
+  document.title='J.A.R.V.I.S. — '+n;
+  const g=$('#gateSub'); if(g) g.textContent=CFG.tagline||(n+' 전용 인공지능 비서');
 }
-$('#fab').onclick=toggleSheet;
-function fillForm(){
-  $('#sens').value=CFG.sens; $('#lang').value=CFG.lang; $('#speakKo').checked=!!CFG.speakKo;
-  $('#autoLoop').checked=!!CFG.autoLoop; $('#place').value=CFG.place; $('#lat').value=CFG.lat;
-  $('#lon').value=CFG.lon; $('#brief').value=CFG.brief;
-  $('#bgmSrc').value=CFG.bgmSrc; $('#bgmMode').value=CFG.bgm; $('#bgmVol').value=Math.round(CFG.bgmVol*100);
-  $('#goal').value=CFG.goal||''; $('#goalStyle').value=(CFG.goalStyle==null?'':CFG.goalStyle);
+
+/* data-cfg 가 붙은 입력칸은 고치는 즉시 저장 */
+function bindCfg(){
+  [...document.querySelectorAll('[data-cfg]')].forEach(el=>{
+    if(el.dataset.bound) return; el.dataset.bound='1';
+    const k=el.dataset.cfg;
+    const rd=()=>el.type==='checkbox'?el.checked
+      :(el.type==='number'||el.type==='range')?(+el.value)
+      :el.value;
+    const on=()=>{
+      let v=rd();
+      if(k==='place'&&!String(v).trim()) v=DEF.place;
+      if((k==='lat'||k==='lon')&&!isFinite(v)) v=DEF[k];
+      CFG[k]=v; saveCfg(); toast('저장됨');
+      if(k==='name'||k==='tagline') applyIdentity();
+      if(k==='bgmSrc') bgmLoad();
+      if(k==='lang'&&rec){ try{ rec.stop(); }catch(e){} }
+    };
+    el.addEventListener('input',on); el.addEventListener('change',on);
+  });
 }
-fillForm(); bgmLoad();
-$('#sens').oninput=e=>{ CFG.sens=+e.target.value; saveCfg(); };
-$('#save').onclick=()=>{
-  CFG.lang=$('#lang').value; CFG.speakKo=$('#speakKo').checked; CFG.autoLoop=$('#autoLoop').checked;
-  CFG.place=$('#place').value.trim()||DEF.place; CFG.lat=+$('#lat').value||DEF.lat; CFG.lon=+$('#lon').value||DEF.lon;
-  CFG.brief=$('#brief').value; CFG.goal=$('#goal').value; CFG.goalStyle=$('#goalStyle').value;
-  const oldSrc=CFG.bgmSrc;
-  CFG.bgmSrc=$('#bgmSrc').value.trim(); CFG.bgm=$('#bgmMode').value; CFG.bgmVol=(+$('#bgmVol').value||0)/100;
-  saveCfg(); if(CFG.bgmSrc!==oldSrc) bgmLoad();
-  if(rec){ try{rec.stop();}catch(e){} }
-  sfx.up(); micMsg('저장되었습니다','#7dffb0');
-};
-$('#bgmTest').onclick=()=>{ CFG.bgmVol=(+$('#bgmVol').value||0)/100; bgmPlay(CFG.bgmVol); };
+function fillCfg(){
+  [...document.querySelectorAll('[data-cfg]')].forEach(el=>{
+    const v=CFG[el.dataset.cfg];
+    if(el.type==='checkbox') el.checked=!!v; else el.value=(v==null?'':v);
+  });
+  $('#bgmVol').value=Math.round((CFG.bgmVol||0)*100);
+}
+
+/* 대사 편집칸은 사전에서 자동 생성 */
+function buildLines(){
+  const box=$('#linesBox'); if(box.dataset.built) return; box.dataset.built='1';
+  Object.keys(LINEDEF).forEach(k=>{
+    const d=LINEDEF[k], w=document.createElement('div'); w.className='fld';
+    w.innerHTML='<label>'+d.t+' <span style="color:#3d5f6b">· '+d.d+'</span></label>'
+      +'<textarea data-line="'+k+'"></textarea>'
+      +'<div class="rowb"><button class="btn mini" data-play="'+k+'">▶ 들어보기</button>'
+      +'<button class="btn mini" data-defline="'+k+'">기본값으로</button></div>';
+    box.appendChild(w);
+  });
+  box.addEventListener('input',e=>{
+    const ta=e.target.closest('[data-line]'); if(!ta) return;
+    const k=ta.dataset.line;
+    CFG.lines=CFG.lines||{};
+    const arr=ta.value.split('\n').map(x=>x.trim()).filter(Boolean);
+    if(!arr.length||arr.join('\n')===LINEDEF[k].v.join('\n')) delete CFG.lines[k];
+    else CFG.lines[k]=arr;
+    saveCfg(); toast('저장됨');
+  });
+}
+function fillLines(){
+  [...document.querySelectorAll('[data-line]')].forEach(ta=>{ ta.value=lineSet(ta.dataset.line).join('\n'); });
+}
+function fillCons(){ buildLines(); bindCfg(); fillCfg(); fillLines(); }
+
+/* 들어보기 · 기본값으로 (콘솔 전체에 위임) */
+cons.addEventListener('click',e=>{
+  const pl=e.target.closest('[data-play]');
+  if(pl){ sayLine(pl.dataset.play); return; }
+  const df=e.target.closest('[data-defline]');
+  if(df){ const k=df.dataset.defline;
+    if(CFG.lines) delete CFG.lines[k];
+    saveCfg(); fillLines(); toast('기본값으로 되돌렸습니다'); }
+});
+
+/* 미리보기 */
+function previewGoal(){
+  closeCons();
+  if(phase==='online') return openGoal();
+  if(phase==='gate') enter();
+  setTimeout(()=>{ if(phase==='standby') boot(); setTimeout(openGoal,5300); },420);
+}
+$('#goalPrev').onclick=previewGoal;
+$('#briefPrev').onclick=()=>{ closeCons(); if(phase==='online') openBrief(); else toast('부팅한 뒤에 볼 수 있습니다'); };
+
+/* 음악 */
+$('#bgmTest').onclick=()=>{ CFG.bgmVol=(+$('#bgmVol').value||0)/100; saveCfg(); bgmPlay(CFG.bgmVol); };
 $('#bgmStopBtn').onclick=()=>bgmStop(400);
-$('#bgmVol').oninput=e=>{ CFG.bgmVol=(+e.target.value||0)/100; saveCfg();
+$('#bgmVol').oninput=e=>{ CFG.bgmVol=(+e.target.value||0)/100; saveCfg(); toast('저장됨');
   if(bgmPlaying){ bgmBase=CFG.bgmVol; clearInterval(bgmFade); bgm.volume=CFG.bgmVol; } };
-$('#bgmFile').onchange=async e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return;
+$('#bgmFile').onchange=async e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
   bgm.src=URL.createObjectURL(f); bgm.load(); bgmState('불러오는 중 · '+f.name);
   try{ await idbPut('bgm',{blob:f,name:f.name});
-    bgmState('저장됨 · '+f.name+' — 이 브라우저에서 계속 기억합니다','#7dffb0'); }
-  catch(err){ bgmState('이번만 사용 · '+f.name+' (저장 실패)','#ffc14d'); } };
-$('#bgmClear').onclick=async ()=>{ await idbDel('bgm'); bgmState('저장된 음원을 지웠습니다','#7dffb0'); bgmLoad(); };
-$('#reset').onclick=()=>{ CFG=Object.assign({},DEF); saveCfg(); fillForm(); bgmLoad(); micMsg('초기화되었습니다','#7dffb0'); };
+    bgmState('저장됨 · '+f.name+' — 이 브라우저가 계속 기억합니다','#7dffb0'); }
+  catch(err){ bgmState('이번만 사용 · '+f.name+' (저장 실패)','#ffc14d'); }
+};
+$('#bgmClear').onclick=async ()=>{ await idbDel('bgm'); bgmState('기억한 음원을 지웠습니다','#7dffb0'); bgmLoad(); };
+
+/* 설정 내려받기 · 불러오기 · 초기화 */
+$('#expCfg').onclick=()=>{
+  const blob=new Blob([JSON.stringify(CFG,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='jarvis-설정.json'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },3000);
+  toast('내려받았습니다');
+};
+$('#impCfg').onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const o=JSON.parse(r.result);
+      CFG=Object.assign({},DEF,o); saveCfg();
+      fillCfg(); fillLines(); applyIdentity(); bgmLoad(); toast('불러왔습니다');
+    }catch(err){ toast('파일을 읽지 못했습니다'); } };
+  r.readAsText(f);
+};
+$('#reset').onclick=()=>{
+  CFG=JSON.parse(JSON.stringify(DEF)); saveCfg();
+  fillCfg(); fillLines(); applyIdentity(); bgmLoad(); toast('초기화되었습니다');
+};
+
+applyIdentity(); fillCons(); bgmLoad();
+
 </script>
