@@ -87,7 +87,7 @@ footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center
 <ol class="steps">
   <li>위 주소를 열고 <b>SYSTEM INITIALIZE</b>를 누릅니다. 마이크 권한을 물으면 <b>허용</b>.</li>
   <li><span class="key">Ctrl</span>+<span class="key">Alt</span>+<span class="key">J</span> 로 <b>교사 콘솔</b>을 열어
-      <b>이름</b>을 넣고, <b>음악</b> 탭에서 곡 파일을 한 번 고르고, <b>학습목표</b>를 적은 뒤 <span class="key">Esc</span>.</li>
+      <b>이름</b>을 넣고, <b>음악</b> 탭에서 곡 파일을 고르고(여러 개 한꺼번에 됩니다), <b>학습목표</b>를 적은 뒤 <span class="key">Esc</span>.</li>
   <li><span class="key">F</span> 로 전체화면. 아이들이 들어오면 아무 말 없이 <b>손뼉을 두 번</b> 치세요.</li>
 </ol>
 </div>
@@ -144,6 +144,8 @@ footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center
 <table>
 <tr><th style="width:36%">키</th><th>동작</th></tr>
 <tr><td><span class="key">↑</span> <span class="key">↓</span></td><td>소리 크기</td></tr>
+<tr><td><span class="key">←</span> <span class="key">→</span></td><td><b>노래 구간 건너뛰기</b> — 10초씩. <span class="key">Shift</span>를 함께 누르면 30초씩</td></tr>
+<tr><td><span class="key">[</span> <span class="key">]</span></td><td><b>이전 곡 / 다음 곡</b></td></tr>
 <tr><td><span class="key">B</span></td><td>음악만 조용히 켜기/끄기 (대사 없이)</td></tr>
 <tr><td><span class="key">M</span></td><td>마이크 켜기/끄기</td></tr>
 <tr><td><span class="key">F</span></td><td>전체화면</td></tr>
@@ -166,7 +168,7 @@ footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center
 <tr><td><b>기본 · 이름</b></td><td>선생님 이름(한글 자막), 영어 호칭(기본 sir → Professor, boss 등), 부팅 로그 프로필, 첫 화면 부제, 날씨 위치(위도·경도)</td></tr>
 <tr><td><b>오늘의 학습목표</b></td><td>목표 입력, 연출 방식, 미리보기</td></tr>
 <tr><td><b>자비스 대사</b></td><td>인사·대답·음악·학습목표·소리·종료 등 모든 대사. 한 줄에 하나, <code>영어 | 한글</code> 꼴. <code>{name}</code>은 내 이름, <code>{sir}</code>는 영어 호칭으로 바뀝니다. ▶들어보기로 바로 확인</td></tr>
-<tr><td><b>음악</b></td><td>파일 고르기(한 번 고르면 이 브라우저가 기억), 재생 방식, 음량</td></tr>
+<tr><td><b>음악</b></td><td><b>곡 목록</b> — 여러 곡을 넣어 두고 ▶ 로 골라 틀기, ✕ 로 빼기. 재생 방식, 음량. 고른 파일은 이 브라우저가 기억합니다</td></tr>
 <tr><td><b>음성 · 마이크</b></td><td>전체 소리 크기, 말하기 속도(기본 1.15배, 빠릿하게 하려면 1.3), 박수 감도, 인식 언어</td></tr>
 <tr><td><b>브리핑</b></td><td>"오늘 브리핑"에 읽어 줄 항목 (한 줄에 하나)</td></tr>
 <tr><td><b>시연 대본 · 단축키</b></td><td>시연 순서 편집 (<code>내가 하는 것 | 자비스 | 백업키</code>), 단축키 표</td></tr>
@@ -184,6 +186,15 @@ footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center
 <p>콘솔 → 음성·마이크 → <b>박수 감도</b>를 조절하세요. 동그라미 두 개가 박수에 켜지는지 보면서 맞추면 됩니다. 시끄러운 교실은 낮게(1~3).</p></div>
 <div class="qa"><b>목소리가 너무 작아요 / 안 나요</b>
 <p><span class="key">↑</span>를 몇 번 누르세요(처음엔 중간 50%로 시작합니다). 그래도 안 나면 컴퓨터 자체 볼륨을 확인하세요. 영어 목소리가 아예 없으면 Windows 설정 → 시간 및 언어 → 음성에서 영어(영국) 음성을 추가하면 훨씬 자비스답습니다.</p></div>
+<div class="qa"><b>노래를 여러 개 넣고 골라 틀 수 있나요</b>
+<p>네. 콘솔 → 음악 탭에서 파일을 <b>여러 개 한꺼번에</b> 고르면 목록에 쌓입니다. 목록의 ▶ 를 누르면 그 곡으로 바뀌고,
+수업 중에는 <span class="key">[</span> <span class="key">]</span> 로 곡을 넘깁니다. 말로 <b>"다음 곡"</b> 이라고 해도 됩니다.
+곡이 끝나면 다음 곡으로 넘어갑니다(한 곡뿐이면 반복).</p></div>
+
+<div class="qa"><b>노래 앞부분을 건너뛰고 싶어요</b>
+<p><span class="key">←</span> <span class="key">→</span> 로 10초씩, <span class="key">Shift</span>와 함께 누르면 30초씩 건너뜁니다.
+화면 위에 곡 이름과 진행 막대가 잠깐 떠서 어디쯤인지 보입니다. 말로는 <b>"앞으로 감아"</b> · <b>"처음부터"</b>.</p></div>
+
 <div class="qa"><b>음악이 안 나와요</b>
 <p>콘솔 → 음악 탭에서 파일을 다시 고르세요. 고른 파일은 <b>그 컴퓨터의 그 브라우저</b>만 기억하므로, 다른 컴퓨터에서는 다시 골라야 합니다. 저작권 있는 곡은 공개 웹에 올리지 마세요.</p></div>
 <div class="qa"><b>설정이 사라졌어요</b>
