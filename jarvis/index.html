@@ -482,6 +482,8 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
             <option value="en-US">English</option>
           </select></div>
         <label class="sw"><input type="checkbox" data-cfg="speakKo"> 영어 대사 뒤에 한국어로 한 번 더 말하기</label>
+        <label class="sw"><input type="checkbox" data-cfg="readAloud"> 학습목표·브리핑 내용을 한국어 음성으로 읽어주기</label>
+        <div class="hint" id="koVoice" style="margin:-4px 0 10px 26px"></div>
         <label class="sw"><input type="checkbox" data-cfg="autoLoop"> 명령 대기 상태 계속 유지</label>
         <div class="warn" id="httpWarn" style="display:none"></div>
         <div class="hint" style="margin-top:16px">음성 인식은 크롬·엣지에서만 됩니다.
@@ -559,7 +561,7 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
 const $=s=>document.querySelector(s), body=document.body;
 
 /* ---------- 설정 ---------- */
-const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,
+const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,readAloud:true,
   name:'선생님',sir:'sir',owner:'',tagline:'',lines:{},goalStyle:'',
   vol:.5,rate:1.15,script:'짝짝 (손뼉 두 번) | 부팅 로그가 흐르고 "Welcome home." | Space\n"You up, JARVIS?" | 자비스가 대답 | 6\n"음악 틀어" | 멋 부린 한마디 뒤에 음악 | 8\n"음악 꺼" | 정숙 — 여기서 수업 분위기로 전환 | 8\n"오늘 날씨 어때?" | 실시간 날씨 위젯 | 1\n"시스템 진단해" | 이 컴퓨터의 진짜 사양 | 3\n"오늘 학습목표" | 목표 공개 → 빈칸이면 아이들에게 질문 → 스페이스바 | 7\n"자비스 꺼져" | 종료 인사 | 0',
   bgm:'command',bgmSrc:'audio/theme.mp3',bgmVol:.6,
@@ -700,6 +702,7 @@ function pickVoices(){
   for(const p of pref){ const v=vs.find(v=>(v.name+' '+v.lang).match(p)&&/^en/i.test(v.lang)); if(v){voiceEn=v;break;} }
   if(!voiceEn) voiceEn=vs.find(v=>/^en/i.test(v.lang))||vs[0];
   voiceKo=vs.find(v=>/^ko/i.test(v.lang))||null;
+  const kv=$('#koVoice'); if(kv) kv.textContent=voiceKo?'한국어 음성: '+voiceKo.name:'이 브라우저에는 한국어 음성이 없어 자막만 나옵니다 (엣지 권장)';
 }
 speechSynthesis.onvoiceschanged=pickVoices; pickVoices();
 
@@ -711,6 +714,8 @@ function subtitle(en,kr,hold){
     hold||Math.max(2800,(en||'').length*70/(+CFG.rate||1.15)));
 }
 /** 자비스가 말한다: 영어 음성 + 한글 자막 */
+/* 화면용 글을 읽기용으로: [빈칸] 표시·가운뎃점·줄표 정리 */
+const forSpeech=t=>String(t||'').replace(/\[([^\]]+)\]/g,'$1').replace(/[·•—–]+/g,', ').replace(/\s+/g,' ').trim();
 function say(en,kr,opt){
   opt=opt||{}; en=fmt(en); kr=fmt(kr); subtitle(en,kr,opt.hold);
   if(!('speechSynthesis' in window)) return;
@@ -720,19 +725,23 @@ function say(en,kr,opt){
   if(voiceEn) u.voice=voiceEn;
   u.lang=(voiceEn&&voiceEn.lang)||'en-GB';
   u.rate=opt.rate||(+CFG.rate||1.15); u.pitch=opt.pitch||.8; u.volume=mvol();
+  const koSpeak=(text,next)=>{            // 한국어 음성 한 토막
+    const k=new SpeechSynthesisUtterance(text); k.voice=voiceKo; k.lang='ko-KR';
+    k.rate=Math.min(1.6,(+CFG.rate||1.15)); k.pitch=.9; k.volume=mvol();
+    k.onend=k.onerror=next; speechSynthesis.speak(k);
+  };
+  const readTxt=(opt.read&&voiceKo&&CFG.readAloud!==false)?String(opt.read).trim():'';
+  const readPart=()=>{ if(readTxt){ subtitle('',readTxt,Math.max(3000,readTxt.length*150)); koSpeak(readTxt,fin); } else fin(); };
   const done=()=>{
-    if(CFG.speakKo && kr && voiceKo && !opt.noKo){
-      const k=new SpeechSynthesisUtterance(kr); k.voice=voiceKo; k.lang='ko-KR';
-      k.rate=Math.min(1.6,(+CFG.rate||1.15)); k.pitch=.9; k.volume=mvol();
-      k.onend=k.onerror=fin; speechSynthesis.speak(k);
-    } else fin();
+    if(CFG.speakKo && kr && voiceKo && !opt.noKo) koSpeak(kr,readPart);
+    else readPart();
   };
   const fin=()=>{ speaking=false; body.classList.remove('speaking'); bgmDuck(false); setTimeout(resumeEars,320); if(opt.then)opt.then(); };
   u.onend=done; u.onerror=fin;
   speechSynthesis.speak(u);
   // 일부 환경에서 onend가 안 오는 것에 대한 보험
   clearTimeout(say._g);
-  say._g=setTimeout(()=>{ if(speaking) fin(); }, 1200+en.length*95/(+CFG.rate||1.15));
+  say._g=setTimeout(()=>{ if(speaking) fin(); }, 1200+(en.length*95+(opt.read?String(opt.read).length*150:0))/(+CFG.rate||1.15));
 }
 
 /* ============================================================
@@ -1304,11 +1313,12 @@ function openTimer(sec){
 function openBrief(){
   const p=panel('Daily Briefing','오늘의 수업','priority · high');
   const lines=(CFG.brief||'').split('\n').filter(s=>s.trim());
+  const briefRead=lines.map((t,i)=>(i+1)+'번, '+forSpeech(t)).join('. ');
   p.insertAdjacentHTML('beforeend','<div class="lines">'+lines.map((s,i)=>
     '<div class="li" style="animation-delay:'+(i*.12)+'s"><em>'+String(i+1).padStart(2,'0')+'</em><div>'+s.replace(/</g,'&lt;')+'</div></div>').join('')+'</div>');
   lines.forEach((_,i)=>setTimeout(()=>sfx.blip(),i*130));
   say('Your briefing for today, {sir}. '+lines.length+' items on the agenda.',
-      '오늘의 브리핑입니다. 안건 '+lines.length+'건.',{hold:4500});
+      '오늘의 브리핑입니다. 안건 '+lines.length+'건.',{read:briefRead,hold:4500});
 }
 
 /* --- 오늘의 학습목표 : 부를 때마다 다른 연출로 --- */
@@ -1396,14 +1406,14 @@ function openGoal(){
       c.style.transition='opacity .3s'; c.style.opacity='1'; if(i%9===0) sfx.blip(); },120+i*26));
     goalPending={cs:cs,p:p};
     p.querySelector('#goalHint').textContent='아이들에게 물어보세요 · 스페이스바(또는 7)를 누르면 빈칸이 열립니다';
-    sayLine('goalQuiz',{hold:7000});
+    sayLine('goalQuiz',{hold:7000,read:forSpeech(raw.replace(/\[[^\]]+\]/g,' 빈칸 '))});
   }else{
     const last=+(localStorage.getItem('jarvis-goalstyle')||0);
     let i=(CFG.goalStyle==null||CFG.goalStyle==='')?-1:+CFG.goalStyle;
     if(!(i>=0&&i<REVEALS.length)) i=(last+1+((Math.random()*(REVEALS.length-1))|0))%REVEALS.length;
     localStorage.setItem('jarvis-goalstyle',i);
     REVEALS[i](cs,wrap);
-    sayLine('goal',{hold:6500});
+    sayLine('goal',{hold:6500,read:forSpeech(raw)});
   }
 }
 function fillBlanks(){
@@ -1413,7 +1423,7 @@ function fillBlanks(){
   bl.forEach((c,i)=>setTimeout(()=>{ c.classList.remove('hid'); c.classList.add('reveal');
     if(i%3===0) sfx.blip(); },i*75));
   const h=document.querySelector('#goalHint'); if(h) h.textContent='';
-  setTimeout(()=>{ sfx.up(); sayLine('goalFill'); },bl.length*75+280);
+  setTimeout(()=>{ sfx.up(); sayLine('goalFill',{read:forSpeech(CFG.goal)}); },bl.length*75+280);
 }
 
 /* ============================================================
