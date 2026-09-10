@@ -461,6 +461,17 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
       <section data-p="voice">
         <h3>Voice &amp; Microphone</h3>
         <p class="lead">박수 감지와 음성 인식 설정입니다. 마이크가 안 되어도 키보드로는 전부 조작됩니다.</p>
+        <div class="fld"><label>자비스 목소리 (영어)</label>
+          <div class="rowb" style="margin-top:0"><select id="voiceEnSel" style="flex:1"></select><button class="btn" id="voiceEnTest">▶ 들어보기</button></div>
+          <div class="hint">★ 표시가 자비스와 닮은 목소리입니다. 목록은 <b>브라우저와 컴퓨터에 깔린 음성</b>이라 기기마다 다릅니다.
+            가장 비슷한 건 <b>엣지</b>에서 열었을 때 나오는 <b>Microsoft Ryan Online (Natural) – English (United Kingdom)</b>,
+            크롬에서는 <b>Google UK English Male</b>입니다.</div></div>
+        <div class="fld"><label>읽어주기 목소리 (한국어)</label>
+          <div class="rowb" style="margin-top:0"><select id="voiceKoSel" style="flex:1"></select><button class="btn" id="voiceKoTest">▶ 들어보기</button></div></div>
+        <div class="fld"><label>음높이 <span id="pitchNum" style="color:#4fe3ff;font-family:var(--hud)"></span></label>
+          <input type="range" id="pitch" min="50" max="130" step="5">
+          <div class="hint">낮출수록 묵직해집니다. 기본 ×0.80. (일부 자연 음성은 음높이를 무시합니다)</div></div>
+        <div class="fld" style="margin-top:-6px"><div class="hint" id="voiceNow"></div></div>
         <div id="micState" style="color:#7fb6cd;font-size:12.5px;line-height:1.7"></div>
         <div class="miclvl"><i id="micBar"></i></div>
         <div class="claps"><span id="c1"></span><span id="c2"></span></div>
@@ -483,7 +494,6 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
           </select></div>
         <label class="sw"><input type="checkbox" data-cfg="speakKo"> 영어 대사 뒤에 한국어로 한 번 더 말하기</label>
         <label class="sw"><input type="checkbox" data-cfg="readAloud"> 학습목표·브리핑 내용을 한국어 음성으로 읽어주기</label>
-        <div class="hint" id="koVoice" style="margin:-4px 0 10px 26px"></div>
         <label class="sw"><input type="checkbox" data-cfg="autoLoop"> 명령 대기 상태 계속 유지</label>
         <div class="warn" id="httpWarn" style="display:none"></div>
         <div class="hint" style="margin-top:16px">음성 인식은 크롬·엣지에서만 됩니다.
@@ -561,7 +571,7 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
 const $=s=>document.querySelector(s), body=document.body;
 
 /* ---------- 설정 ---------- */
-const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,readAloud:true,
+const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,readAloud:true,voiceEn:'',voiceKo:'',pitch:.8,
   name:'선생님',sir:'sir',owner:'',tagline:'',lines:{},goalStyle:'',
   vol:.5,rate:1.15,script:'짝짝 (손뼉 두 번) | 부팅 로그가 흐르고 "Welcome home." | Space\n"You up, JARVIS?" | 자비스가 대답 | 6\n"음악 틀어" | 멋 부린 한마디 뒤에 음악 | 8\n"음악 꺼" | 정숙 — 여기서 수업 분위기로 전환 | 8\n"오늘 날씨 어때?" | 실시간 날씨 위젯 | 1\n"시스템 진단해" | 이 컴퓨터의 진짜 사양 | 3\n"오늘 학습목표" | 목표 공개 → 빈칸이면 아이들에게 질문 → 스페이스바 | 7\n"자비스 꺼져" | 종료 인사 | 0',
   bgm:'command',bgmSrc:'audio/theme.mp3',bgmVol:.6,
@@ -698,11 +708,15 @@ const sfx={
 let voiceEn=null, voiceKo=null;
 function pickVoices(){
   const vs=speechSynthesis.getVoices(); if(!vs.length) return;
-  const pref=[/ryan/i,/google uk english male/i,/george/i,/daniel/i,/guy/i,/uk english/i,/en-gb/i,/male/i,/^en/i];
-  for(const p of pref){ const v=vs.find(v=>(v.name+' '+v.lang).match(p)&&/^en/i.test(v.lang)); if(v){voiceEn=v;break;} }
-  if(!voiceEn) voiceEn=vs.find(v=>/^en/i.test(v.lang))||vs[0];
-  voiceKo=vs.find(v=>/^ko/i.test(v.lang))||null;
-  const kv=$('#koVoice'); if(kv) kv.textContent=voiceKo?'한국어 음성: '+voiceKo.name:'이 브라우저에는 한국어 음성이 없어 자막만 나옵니다 (엣지 권장)';
+  const byName=n=>n&&vs.find(v=>v.name===n);
+  voiceEn=byName(CFG.voiceEn)||null;                       // 콘솔에서 고른 목소리 우선
+  if(!voiceEn){
+    const pref=[/ryan/i,/google uk english male/i,/george/i,/thomas/i,/daniel/i,/guy/i,/uk english/i,/en-gb/i,/male/i,/^en/i];
+    for(const p of pref){ const v=vs.find(v=>(v.name+' '+v.lang).match(p)&&/^en/i.test(v.lang)); if(v){voiceEn=v;break;} }
+    if(!voiceEn) voiceEn=vs.find(v=>/^en/i.test(v.lang))||vs[0];
+  }
+  voiceKo=byName(CFG.voiceKo)||vs.find(v=>/^ko/i.test(v.lang))||null;
+  if($('#voiceEnSel')&&$('#cons')&&$('#cons').classList.contains('open')) fillVoices();
 }
 speechSynthesis.onvoiceschanged=pickVoices; pickVoices();
 
@@ -724,7 +738,7 @@ function say(en,kr,opt){
   const u=new SpeechSynthesisUtterance(en);
   if(voiceEn) u.voice=voiceEn;
   u.lang=(voiceEn&&voiceEn.lang)||'en-GB';
-  u.rate=opt.rate||(+CFG.rate||1.15); u.pitch=opt.pitch||.8; u.volume=mvol();
+  u.rate=opt.rate||(+CFG.rate||1.15); u.pitch=opt.pitch||(+CFG.pitch||.8); u.volume=mvol();
   const koSpeak=(text,next)=>{            // 한국어 음성 한 토막
     const k=new SpeechSynthesisUtterance(text); k.voice=voiceKo; k.lang='ko-KR';
     k.rate=Math.min(1.6,(+CFG.rate||1.15)); k.pitch=.9; k.volume=mvol();
@@ -1480,7 +1494,7 @@ function enter(){
 $('#goBtn').onclick=enter;
 
 const cons=$('#cons');
-function openCons(){ cons.classList.add('open'); body.classList.add('showcur'); fillCons(); }
+function openCons(){ fillVoices(); pitchShow(); if($('#pitch')) $('#pitch').value=Math.round((+CFG.pitch||.8)*100); cons.classList.add('open'); body.classList.add('showcur'); fillCons(); }
 function closeCons(){ cons.classList.remove('open'); }
 function toggleCons(){ cons.classList.contains('open')?closeCons():openCons(); }
 $('#fab').onclick=toggleCons;
@@ -1589,6 +1603,27 @@ $('#scriptDef').onclick=()=>{ CFG.script=DEF.script; saveCfg();
 /* 말하기 속도 */
 function rateShow(){ const n=$('#rateNum'); if(n) n.textContent='×'+(+CFG.rate||1.15).toFixed(2); }
 $('#rate').oninput=e=>{ CFG.rate=(+e.target.value||115)/100; saveCfg(); rateShow(); toast('저장됨'); };
+/* 목소리 고르기 */
+function fillVoices(){
+  const vs=speechSynthesis.getVoices();
+  const escV=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const star=/ryan|google uk english male|george|thomas|daniel|oliver/i;
+  const en=vs.filter(v=>/^en/i.test(v.lang)).sort((x,y)=>
+    (star.test(y.name)-star.test(x.name))||(/gb/i.test(y.lang)-/gb/i.test(x.lang))||x.name.localeCompare(y.name));
+  const ko=vs.filter(v=>/^ko/i.test(v.lang));
+  const opts=(list,cur)=>'<option value="">자동 선택'+(list.length?'':' — 이 브라우저에 음성이 없습니다')+'</option>'
+    +list.map(v=>'<option value="'+escV(v.name)+'"'+(v.name===cur?' selected':'')+'>'
+      +(star.test(v.name)?'★ ':'')+escV(v.name)+' — '+v.lang+'</option>').join('');
+  const e1=$('#voiceEnSel'), e2=$('#voiceKoSel'); if(!e1||!e2) return;
+  e1.innerHTML=opts(en,CFG.voiceEn||''); e2.innerHTML=opts(ko,CFG.voiceKo||'');
+  const now=$('#voiceNow'); if(now) now.textContent='지금 쓰는 목소리 — 영어: '+(voiceEn?voiceEn.name:'없음')+' · 한국어: '+(voiceKo?voiceKo.name:'없음');
+}
+function pitchShow(){ const n=$('#pitchNum'); if(n) n.textContent='×'+(+CFG.pitch||.8).toFixed(2); }
+$('#voiceEnSel').onchange=e=>{ CFG.voiceEn=e.target.value; saveCfg(); pickVoices(); fillVoices(); toast('저장됨'); };
+$('#voiceKoSel').onchange=e=>{ CFG.voiceKo=e.target.value; saveCfg(); pickVoices(); fillVoices(); toast('저장됨'); };
+$('#voiceEnTest').onclick=()=>sayLine('hello');
+$('#voiceKoTest').onclick=()=>say('Korean voice check, {sir}.','',{read:'안녕하세요, 저는 자비스입니다. 오늘 수업도 잘 부탁드립니다.'});
+$('#pitch').oninput=e=>{ CFG.pitch=(+e.target.value||80)/100; saveCfg(); pitchShow(); toast('저장됨'); };
 $('#vol').oninput=e=>{ CFG.vol=(+e.target.value||50)/100; saveCfg(); applyVolume(); toast('저장됨'); };
 
 /* 미리보기 */
