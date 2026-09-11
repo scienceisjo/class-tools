@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>오늘 급식 — 나이스 급식 위젯과 만드는 법</title>
-<meta name="description" content="학교 이름만 넣으면 이번 주 급식이 뜹니다. 아래에는 나이스 교육정보 개방포털 급식 API를 키 없이 가져오는 방법과 바이브코딩 프롬프트가 있습니다.">
+<meta name="description" content="학교 이름만 넣으면 이번 주 급식이 뜹니다! 아래에는 나이스 교육정보 개방포털 급식 API를 키 없이 가져오는 방법과 바이브코딩 프롬프트가 있습니다!">
 <meta property="og:title" content="오늘 급식 — 나이스 급식 위젯과 만드는 법">
-<meta property="og:description" content="학교 이름만 넣으면 이번 주 급식. 내 학교 코드가 박힌 API 주소와 프롬프트까지 자동으로.">
+<meta property="og:description" content="학교 이름만 넣으면 이번 주 급식! 내 학교 코드가 박힌 API 주소와 프롬프트까지 자동으로!">
 <meta property="og:type" content="website">
 <style>
 :root{--cy:#0d95c4;--cy2:#4fe3ff;--ink:#1c2830;--ink2:#5c6f7b;--line:#dfe6ea;--bg:#f6f8fa;--gold:#c98a12;--today:#fff7e0}
@@ -16,11 +16,13 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard",sys
   font-size:15.5px;line-height:1.75;word-break:keep-all;-webkit-font-smoothing:antialiased}
 .hero{background:#04121c;color:#cfeeff;padding:44px 20px 36px}
 .hero .in{max-width:900px;margin:0 auto}
+.hero .salute{font-size:14px;color:#ffc14d;letter-spacing:.06em;margin-bottom:8px}
 .hero h1{margin:0 0 6px;font-size:28px;font-weight:700;color:#fff;letter-spacing:-.01em}
 .hero p{margin:0;color:#8fbdd2;font-size:15px}
 main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
 h2{font-size:20px;margin:44px 0 12px;padding-left:14px;border-left:4px solid var(--cy);letter-spacing:-.01em}
 h2:first-of-type{margin-top:4px}
+h2 b{color:var(--cy);margin-right:6px}
 p{margin:0 0 12px}
 .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -47,6 +49,9 @@ button:disabled{opacity:.5;cursor:default}
 label.sw{display:inline-flex;align-items:center;gap:7px;font-size:14px;color:var(--ink2);cursor:pointer;margin-left:auto}
 .tip{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-left:4px solid var(--gold);padding:12px 16px;border-radius:8px;margin:14px 0;font-size:14.5px}
 .tip b{color:#7a5300}
+.brief{background:#fff;border:1px solid var(--line);border-left:4px solid var(--cy);border-radius:8px;padding:14px 18px;margin:14px 0;font-size:15.5px;line-height:1.85}
+.brief b{color:#0b4e6a}
+.brief .q{color:var(--gold);font-weight:700}
 code,pre{font-family:Consolas,"SF Mono",ui-monospace,monospace}
 code{background:#eef2f5;padding:1px 6px;border-radius:4px;font-size:13.5px}
 pre{background:#0f1c26;color:#cfeeff;padding:14px 16px;border-radius:10px;overflow:auto;font-size:13px;line-height:1.6;margin:8px 0 4px;white-space:pre-wrap;word-break:break-all}
@@ -66,77 +71,89 @@ tr:last-child td{border-bottom:0}
 .alg span b{color:var(--cy);margin-right:4px}
 textarea{width:100%;min-height:200px;border:1px solid #b9c7cf;border-radius:8px;padding:12px;font-family:inherit;font-size:14px;line-height:1.65;resize:vertical}
 .muted{color:var(--ink2);font-size:14px}
+.end{margin-top:36px;text-align:center;font-size:17px;font-weight:700;color:#0b4e6a}
 footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center;font-size:12.5px;line-height:1.6;color:#8a8f98;
   font-family:system-ui,-apple-system,'Segoe UI','Malgun Gothic',sans-serif;border-top:1px solid rgba(128,128,128,.25)}
-@media print{.hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}.card,.day{break-inside:avoid}button.ghost,.copy,#q,#find{display:none}}
+@media print{.hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}.card,.day,.brief{break-inside:avoid}button.ghost,.copy,#q,#find{display:none}}
 </style>
 </head>
 <body>
 
 <div class="hero"><div class="in">
-  <h1>오늘 급식</h1>
-  <p>학교 이름만 넣으면 이번 주 급식이 뜹니다 · 나이스 교육정보 개방포털 · 설치 없음 · 키 없음 · 무료</p>
+  <div class="salute">🫡 충성! 급식 API 브리핑 시작하겠습니다!</div>
+  <h1>오늘 급식!</h1>
+  <p>학교 이름만 넣으면 이번 주 급식이 뜹니다! 나이스 교육정보 개방포털입니다! 설치 없습니다! 키 없습니다! 무료입니다!</p>
 </div></div>
 
 <main>
 
-<h2>우리 학교 찾기</h2>
+<h2><b>하나!</b> 우리 학교를 찾는다!</h2>
+<div class="brief">정식 이름으로 넣으십시오! "서울○○초" 아닙니다! "<b>서울○○초등학교</b>"입니다! 목록이 뜨면 우리 학교를 <b>클릭</b>하시면 됩니다! 끝입니다!</div>
 <div class="card">
-  <div class="row"><input type="text" id="q" placeholder="예) 해누리중학교 · 서울○○초등학교 (정식 이름으로)"><button id="find">찾기</button></div>
+  <div class="row"><input type="text" id="q" placeholder="예) 해누리중학교 · 서울○○초등학교 — 정식 이름으로!"><button id="find">찾기!</button></div>
   <div class="res" id="res"></div>
-  <div class="now" id="now">아직 고른 학교가 없습니다.</div>
+  <div class="now" id="now">아직 고른 학교가 없습니다! 위에 넣으십시오!</div>
 </div>
 
 <div id="mealArea" hidden>
 <div class="weeknav">
-  <button class="ghost" id="prev">‹ 지난주</button>
+  <button class="ghost" id="prev">‹ 지난주!</button>
   <b id="weekLabel"></b>
-  <button class="ghost" id="next">다음주 ›</button>
+  <button class="ghost" id="next">다음주! ›</button>
 </div>
 <div class="row" style="margin-bottom:8px"><span class="muted" id="status"></span>
-  <label class="sw"><input type="checkbox" id="alg"> 알레르기 번호 보기</label></div>
+  <label class="sw"><input type="checkbox" id="alg"> 알레르기 번호 보기!</label></div>
 <div class="week" id="week"></div>
-<div class="tip"><span>🔗</span><div><b>이 주소를 학급 홈이나 즐겨찾기에 붙이세요.</b> 학교가 주소에 들어 있어서 어느 컴퓨터에서 열어도 바로 우리 학교 급식이 나옵니다.
-  <div class="row" style="margin-top:6px"><input type="text" id="share" readonly><button class="ghost" id="copyShare">복사</button></div></div></div>
+<div class="tip"><span>🔗</span><div><b>이 주소를 학급 홈이나 즐겨찾기에 붙이십시오!</b> 학교가 주소 안에 들어 있습니다! 어느 컴퓨터에서 열어도 우리 학교 급식이 바로 나옵니다! 저장 필요 없습니다!
+  <div class="row" style="margin-top:6px"><input type="text" id="share" readonly><button class="ghost" id="copyShare">복사!</button></div></div></div>
 </div>
 
-<h2>이렇게 가져옵니다 — 직접 만들 때</h2>
-<p>나이스 교육정보 개방포털(<a href="https://open.neis.go.kr" target="_blank" rel="noopener">open.neis.go.kr</a>)이 급식을 공개 API로 내줍니다.
-<b>인증키 없이도 됩니다.</b> 브라우저에서 바로 불러도 막지 않아서(CORS 허용) 서버 없이 HTML 한 장으로 끝납니다. 두 번만 부르면 돼요.</p>
+<h2><b>둘!</b> API가 무엇인가!</h2>
+<div class="brief">
+<span class="q">그렇다면 API는 무엇일까요?</span><br>
+<b>API는 프로그램끼리 말을 주고받는 창구입니다!</b><br>
+식당에 가면 주방에 직접 들어가지 않습니다! 주문서에 적어서 내면 음식이 나옵니다! <b>그 주문서가 API입니다!</b><br>
+나이스 급식 API도 똑같습니다! 주소 한 줄에 <b>학교 코드</b>와 <b>날짜</b>를 적어서 보내면, 나이스가 <b>그날 급식</b>을 돌려줍니다!<br>
+사람이 보기 좋은 홈페이지 대신, <b>프로그램이 읽기 좋은 글자(JSON)</b>로 답이 옵니다! 그것이 API입니다! 이상입니다!
+</div>
+
+<h2><b>셋!</b> 이렇게 가져온다!</h2>
+<p>나이스 교육정보 개방포털(<a href="https://open.neis.go.kr" target="_blank" rel="noopener">open.neis.go.kr</a>)이 급식을 공개 API로 내줍니다!
+<b>인증키 없이도 됩니다!</b> 브라우저에서 바로 불러도 막지 않습니다(CORS 허용)! 서버 없이 HTML 한 장으로 끝납니다! 딱 두 번만 부르면 됩니다!</p>
 
 <div class="card">
 <ol class="steps">
-  <li><b>학교 코드 찾기</b> — 이름으로 물어보면 교육청 코드와 학교 코드를 줍니다. 위에서 학교를 고르면 아래 주소에 <b>우리 학교 코드가 채워집니다.</b>
-    <div class="copy"><button class="ghost" data-copy="u1">주소 복사</button></div>
+  <li><b>학교 코드를 찾는다!</b> 이름으로 물어보면 교육청 코드와 학교 코드를 줍니다! 위에서 학교를 고르셨으면 아래 주소에 <b>우리 학교 코드가 이미 채워져 있습니다!</b>
+    <div class="copy"><button class="ghost" data-copy="u1">주소 복사!</button></div>
     <pre id="u1">https://open.neis.go.kr/hub/schoolInfo?Type=json&amp;SCHUL_NM=<b>학교이름</b></pre>
-    <p class="muted">응답의 <code>schoolInfo[1].row[0]</code>에서 <code>ATPT_OFCDC_SC_CODE</code>(교육청)와 <code>SD_SCHUL_CODE</code>(학교)를 꺼냅니다.</p></li>
-  <li><b>급식 가져오기</b> — 코드 두 개와 날짜(<code>YYYYMMDD</code>)를 넣습니다. 기간으로 받으려면 <code>MLSV_FROM_YMD</code>·<code>MLSV_TO_YMD</code>.
-    <div class="copy"><button class="ghost" data-copy="u2">주소 복사</button></div>
-    <pre id="u2">https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&amp;ATPT_OFCDC_SC_CODE=<b>교육청코드</b>&amp;SD_SCHUL_CODE=<b>학교코드</b>&amp;MLSV_YMD=<b>20260911</b></pre>
-    <p class="muted">주소창에 그대로 붙여 넣어도 결과가 보입니다. 먼저 눈으로 확인해 보세요.</p></li>
-  <li><b>응답 읽기</b> — 쓸 만한 칸은 이것뿐입니다.
+    <p class="muted">응답의 <code>schoolInfo[1].row[0]</code>에서 <code>ATPT_OFCDC_SC_CODE</code>(교육청)와 <code>SD_SCHUL_CODE</code>(학교)를 꺼내면 됩니다!</p></li>
+  <li><b>급식을 가져온다!</b> 코드 두 개와 날짜(<code>YYYYMMDD</code>)를 넣습니다! 기간으로 받으려면 <code>MLSV_FROM_YMD</code>·<code>MLSV_TO_YMD</code>입니다!
+    <div class="copy"><button class="ghost" data-copy="u2">주소 복사!</button></div>
+    <pre id="u2">https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&amp;ATPT_OFCDC_SC_CODE=<b>교육청코드</b>&amp;SD_SCHUL_CODE=<b>학교코드</b>&amp;MLSV_YMD=<b>20260912</b></pre>
+    <p class="muted"><b>주소창에 그대로 붙여 보십시오!</b> 급식이 글자로 나옵니다! 눈으로 먼저 확인하는 것입니다! 그 순간 "아, 이게 API구나!" 하시게 됩니다!</p></li>
+  <li><b>응답을 읽는다!</b> 쓸 만한 칸은 이것뿐입니다!
     <table>
       <tr><th style="width:30%">칸</th><th>뜻</th></tr>
-      <tr><td><code>DDISH_NM</code></td><td>메뉴. 음식 사이가 <code>&lt;br/&gt;</code>로 나뉘고, 뒤에 <code>(1.2.5)</code> 같은 알레르기 번호가 붙습니다 → 나누고, 괄호는 지우거나 따로 표시</td></tr>
-      <tr><td><code>MMEAL_SC_CODE</code></td><td>1 조식 · <b>2 중식</b> · 3 석식 (<code>MMEAL_SC_NM</code>은 한글 이름)</td></tr>
-      <tr><td><code>CAL_INFO</code></td><td>열량, 예 <code>683.4 Kcal</code></td></tr>
-      <tr><td><code>MLSV_YMD</code></td><td>날짜 <code>20260911</code></td></tr>
-      <tr><td><code>RESULT.CODE</code></td><td><code>INFO-200</code>이면 그날 급식 없음(주말·방학). 오류가 아닙니다</td></tr>
+      <tr><td><code>DDISH_NM</code></td><td>메뉴입니다! 음식 사이가 <code>&lt;br/&gt;</code>로 나뉘고, 뒤에 <code>(1.2.5)</code> 같은 알레르기 번호가 붙습니다! 나누고, 괄호는 지우거나 따로 표시하면 됩니다!</td></tr>
+      <tr><td><code>MMEAL_SC_CODE</code></td><td>1 조식 · <b>2 중식</b> · 3 석식입니다! (<code>MMEAL_SC_NM</code>은 한글 이름!)</td></tr>
+      <tr><td><code>CAL_INFO</code></td><td>열량입니다! 예) <code>683.4 Kcal</code></td></tr>
+      <tr><td><code>MLSV_YMD</code></td><td>날짜입니다! <code>20260912</code></td></tr>
+      <tr><td><code>RESULT.CODE</code></td><td><code>INFO-200</code>이면 그날 급식 없음입니다! 주말·방학입니다! <b>고장 아닙니다!</b></td></tr>
     </table></li>
 </ol>
 </div>
 
-<div class="tip"><span>💡</span><div><b>키는 언제 필요한가요.</b> 교실 하나가 하루 몇 번 부르는 정도는 키 없이 충분합니다. 학교 전체가 쓰는 앱처럼 호출이 많아지면
-개방포털에서 무료 인증키를 받아 주소 끝에 <code>&amp;KEY=발급받은키</code>만 붙이면 됩니다.</div></div>
+<div class="tip"><span>💡</span><div><b>키는 언제 필요한가!</b> 교실 하나가 하루 몇 번 부르는 정도는 키 없이 충분합니다! 학교 전체가 쓰는 앱처럼 호출이 많아지면
+개방포털에서 무료 인증키를 받아 주소 끝에 <code>&amp;KEY=발급받은키</code>만 붙이면 됩니다! 끝입니다!</div></div>
 
-<h2>바이브코딩 프롬프트 — 붙여 넣기만 하세요</h2>
-<p>클로드·챗GPT에 아래를 그대로 붙이면 우리 학교 급식 위젯을 만들어 줍니다. 학교를 고르면 <b>코드가 채워진 상태</b>로 나옵니다.</p>
+<h2><b>넷!</b> 붙여 넣기만 하면 된다!</h2>
+<p>클로드·챗GPT에 아래를 그대로 붙이십시오! 우리 학교 급식 위젯을 만들어 줍니다! 학교를 고르셨으면 <b>코드가 채워진 상태</b>입니다! 복사! 붙이기! 끝입니다!</p>
 <div class="card">
-  <div class="copy"><button class="ghost" id="copyPrompt">프롬프트 복사</button></div>
+  <div class="copy"><button class="ghost" id="copyPrompt">프롬프트 복사!</button></div>
   <textarea id="prompt" readonly></textarea>
 </div>
 
-<h2>알레르기 번호표</h2>
+<h2><b>다섯!</b> 알레르기 번호표!</h2>
 <div class="alg">
   <span><b>1</b>난류</span><span><b>2</b>우유</span><span><b>3</b>메밀</span><span><b>4</b>땅콩</span><span><b>5</b>대두</span>
   <span><b>6</b>밀</span><span><b>7</b>고등어</span><span><b>8</b>게</span><span><b>9</b>새우</span><span><b>10</b>돼지고기</span>
@@ -144,11 +161,21 @@ footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center
   <span><b>16</b>쇠고기</span><span><b>17</b>오징어</span><span><b>18</b>조개류</span><span><b>19</b>잣</span>
 </div>
 
-<p class="muted" style="margin-top:28px">같은 API로 <a href="../jarvis/">자비스</a>가 "오늘 급식 뭐야?"에 답합니다. 자비스 안에서는 교사 콘솔 → 기본 → School Meal에서 학교를 한 번 찾아 두면 됩니다.</p>
+<h2><b>여섯!</b> 자비스에 넣는 법!</h2>
+<div class="brief">
+같은 API입니다! <a href="../jarvis/">자비스</a>는 "오늘 급식 뭐야?" 하면 읽어 줍니다! 넣는 법은 4단계, 30초입니다!<br>
+1. <b>Ctrl + Alt + J</b> — 교사 콘솔을 엽니다!<br>
+2. <b>기본 · 이름</b> 탭 → 맨 아래 <b>School Meal</b>!<br>
+3. 학교 이름 넣고 <b>찾기</b>! 정식 이름입니다!<br>
+4. 목록에서 우리 학교 <b>클릭</b>! 등록 완료입니다!<br>
+이제 "<b>자비스, 오늘 급식 뭐야?</b>" 하시면 됩니다! 말이 안 먹히면 <b>L</b> 키입니다! 아이들은 모릅니다!
+</div>
+
+<div class="end">이상! 급식 API 브리핑 마치겠습니다! 충성! 🫡</div>
 
 </main>
 
-<footer id="app-credit">© 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br><span style="font-size:11px;opacity:.85;">최종 업데이트: 2026-09-11</span></footer>
+<footer id="app-credit">© 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br><span style="font-size:11px;opacity:.85;">최종 업데이트: 2026-09-12</span></footer>
 
 <script>
 const $=s=>document.querySelector(s);
@@ -174,13 +201,13 @@ async function findSchool(name){
 }
 $('#find').onclick=async()=>{
   const q=$('#q').value.trim(), box=$('#res'); if(!q) return;
-  box.innerHTML='<span class="muted">찾는 중…</span>';
+  box.innerHTML='<span class="muted">찾는 중입니다!</span>';
   try{
     const list=await findSchool(q);
-    if(!list.length){ box.innerHTML='<span class="muted">찾지 못했습니다. 정식 이름(예: ○○초등학교)으로 넣어 보세요.</span>'; return; }
+    if(!list.length){ box.innerHTML='<span class="muted">찾지 못했습니다! 정식 이름으로 다시 넣으십시오! 예) ○○초등학교!</span>'; return; }
     box.innerHTML=list.map((x,i)=>'<button data-i="'+i+'">'+esc(x.name)+'<small>'+esc(x.office)+' · '+esc(x.addr)+'</small></button>').join('');
     box.onclick=e=>{ const b=e.target.closest('[data-i]'); if(!b) return; setSchool(list[+b.dataset.i]); box.innerHTML=''; };
-  }catch(err){ box.innerHTML='<span class="muted">나이스 서버에 연결하지 못했습니다. 잠시 뒤 다시 해 보세요.</span>'; }
+  }catch(err){ box.innerHTML='<span class="muted">나이스 서버 연결 실패입니다! 잠시 뒤 다시 하십시오!</span>'; }
 };
 $('#q').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#find').click(); });
 
@@ -193,26 +220,26 @@ async function loadWeek(){
   if(!school) return;
   const from=new Date(weekStart), to=new Date(weekStart); to.setDate(to.getDate()+4);
   $('#weekLabel').textContent=(from.getMonth()+1)+'월 '+from.getDate()+'일 ~ '+(to.getMonth()+1)+'월 '+to.getDate()+'일';
-  $('#status').textContent='불러오는 중…';
+  $('#status').textContent='불러오는 중입니다!';
   const week=$('#week'); week.innerHTML='';
   let rows=[];
   try{
     const r=await fetch(NEIS+'mealServiceDietInfo?Type=json&pSize=50&ATPT_OFCDC_SC_CODE='+encodeURIComponent(school.atpt)
       +'&SD_SCHUL_CODE='+encodeURIComponent(school.schul)+'&MLSV_FROM_YMD='+ymd(from)+'&MLSV_TO_YMD='+ymd(to));
     const j=await r.json(); rows=(j.mealServiceDietInfo&&j.mealServiceDietInfo[1]&&j.mealServiceDietInfo[1].row)||[];
-    $('#status').textContent=rows.length?esc(school.name)+' · 중식 기준':'이 주에는 급식 정보가 없습니다 (주말·방학이거나 아직 등록 전)';
-  }catch(e){ $('#status').textContent='나이스 서버에 연결하지 못했습니다.'; }
+    $('#status').textContent=rows.length?esc(school.name)+' · 중식 기준입니다!':'이 주에는 급식이 없습니다! 주말·방학이거나 아직 등록 전입니다! 고장 아닙니다!';
+  }catch(e){ $('#status').textContent='나이스 서버 연결 실패입니다!'; }
   const keepAl=$('#alg').checked, today=ymd(new Date());
   for(let i=0;i<5;i++){
     const d=new Date(weekStart); d.setDate(d.getDate()+i); const key=ymd(d);
     const day=rows.filter(x=>x.MLSV_YMD===key);
     const lunch=day.find(x=>x.MMEAL_SC_CODE==='2')||day[0];
     const el=document.createElement('div'); el.className='day'+(key===today?' today':'');
-    let inner='<div class="d"><span>'+(d.getMonth()+1)+'/'+d.getDate()+' ('+DN[d.getDay()]+')</span>'+(key===today?'<small>오늘</small>':'')+'</div>';
+    let inner='<div class="d"><span>'+(d.getMonth()+1)+'/'+d.getDate()+' ('+DN[d.getDay()]+')</span>'+(key===today?'<small>오늘!</small>':'')+'</div>';
     if(lunch){
       const dishes=String(lunch.DDISH_NM||'').split(/<br\s*\/?>/i).map(x=>clean(x,keepAl)).filter(Boolean);
       inner+='<ul>'+dishes.map(x=>'<li>'+x+'</li>').join('')+'</ul><div class="kcal">'+esc(lunch.CAL_INFO||'')+'</div>';
-    } else inner+='<div class="none">급식 없음</div>';
+    } else inner+='<div class="none">급식 없음!</div>';
     el.innerHTML=inner; week.appendChild(el);
   }
 }
@@ -246,14 +273,15 @@ function fillDev(){
 function render(){
   fillDev();
   if(school){
-    $('#now').innerHTML='고른 학교 · <b>'+esc(school.name)+'</b> <span class="muted">(교육청 '+esc(school.atpt)+' · 학교 '+esc(school.schul)+')</span>';
+    $('#now').innerHTML='고른 학교! <b>'+esc(school.name)+'</b> <span class="muted">(교육청 '+esc(school.atpt)+' · 학교 '+esc(school.schul)+')</span>';
     $('#mealArea').hidden=false; $('#share').value=location.href;
     weekStart=weekStart||monday(new Date()); loadWeek();
   }
 }
-document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{ navigator.clipboard.writeText($('#'+b.dataset.copy).textContent).then(()=>{ b.textContent='복사됨 ✓'; setTimeout(()=>b.textContent='주소 복사',1500); }); });
-$('#copyPrompt').onclick=()=>navigator.clipboard.writeText($('#prompt').value).then(()=>{ $('#copyPrompt').textContent='복사됨 ✓'; setTimeout(()=>$('#copyPrompt').textContent='프롬프트 복사',1500); });
-$('#copyShare').onclick=()=>navigator.clipboard.writeText($('#share').value).then(()=>{ $('#copyShare').textContent='복사됨 ✓'; setTimeout(()=>$('#copyShare').textContent='복사',1500); });
+const done=(b,txt)=>{ const o=b.textContent; b.textContent='복사 완료!'; setTimeout(()=>b.textContent=o,1500); };
+document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>navigator.clipboard.writeText($('#'+b.dataset.copy).textContent).then(()=>done(b)));
+$('#copyPrompt').onclick=()=>navigator.clipboard.writeText($('#prompt').value).then(()=>done($('#copyPrompt')));
+$('#copyShare').onclick=()=>navigator.clipboard.writeText($('#share').value).then(()=>done($('#copyShare')));
 
 loadSchool(); render();
 </script>
