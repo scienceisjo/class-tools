@@ -110,7 +110,8 @@ footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center
 <tr><td class="say">"오늘 날씨 어때?"</td><td>실시간 기온·강수확률 위젯 + 한마디</td><td><span class="key">1</span></td></tr>
 <tr><td class="say">"시스템 진단해" <span class="muted">(선택)</span></td><td>이 컴퓨터의 <b>진짜</b> 사양이 스캔됩니다 — "코어 22개. 니들 폰보다 좋아."</td><td><span class="key">3</span></td></tr>
 <tr><td class="say">"오늘 학습목표"</td><td>목표가 연출과 함께 공개. 빈칸을 넣어 뒀다면 아이들에게 물어본 뒤 <span class="key">Space</span>로 정답 공개</td><td><span class="key">7</span></td></tr>
-<tr><td class="say">"고마워 자비스, 이제 꺼져"</td><td><span class="jv">"Goodnight, sir. I will be here."</span></td><td><span class="key">0</span></td></tr>
+<tr><td class="say">"오늘의 명언" <span class="muted">(선택)</span></td><td>명언 하나가 연출과 함께 뜨고 자비스가 한국어로 읽어 줍니다. 하루에 하나, 다시 부르면 다른 것</td><td><span class="key">9</span></td></tr>
+<tr><td class="say">"자비스, 오늘도 고생했어"</td><td><span class="jv">"It was a pleasure, sir. Rest well."</span></td><td><span class="key">0</span></td></tr>
 </table>
 <p class="muted">이 순서는 교사 콘솔 → <b>시연 대본</b> 탭에서 내 수업에 맞게 고칠 수 있습니다.</p>
 
@@ -127,7 +128,8 @@ footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center
 <tr><td class="say">학습목표 / 오늘 목표 / 미션</td><td>오늘의 학습목표 공개</td><td><span class="key">7</span></td></tr>
 <tr><td class="say">음악 틀어 / 음악 꺼</td><td>음악 켜기·끄기 (대사와 함께)</td><td><span class="key">8</span></td></tr>
 <tr><td class="say">소리 높여 / 소리 줄여</td><td>전체 소리 크기 (처음엔 중간 50%)</td><td><span class="key">↑</span> <span class="key">↓</span></td></tr>
-<tr><td class="say">자비스 꺼져 / 굿나잇</td><td>종료 인사 후 대기 상태로</td><td><span class="key">0</span></td></tr>
+<tr><td class="say">오늘의 명언</td><td>명언 + 읽어주기 (하루 하나, 다시 부르면 다른 것)</td><td><span class="key">9</span></td></tr>
+<tr><td class="say">자비스 고생했어 / 수고했어</td><td>종료 인사 후 대기 상태로</td><td><span class="key">0</span></td></tr>
 </table>
 <div class="card gold"><h3>숨겨 둔 대답</h3>
 <p style="margin:0">"너 누구야" · "농담해봐" · "아이언맨 어딨어" · "숙제" · "시험" · "조용히 해" · "사랑해" · "과학이 뭐야" — 각각 다른 대사가 나옵니다. 아이들이 시켜 보게 해도 좋습니다.</p></div>
@@ -137,7 +139,7 @@ footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center
 <table>
 <tr><th style="width:36%">키</th><th>동작</th></tr>
 <tr><td><span class="key">Space</span></td><td>부팅 · 학습목표 빈칸 공개</td></tr>
-<tr><td><span class="key">1</span>~<span class="key">8</span></td><td>위 표의 명령 (1 날씨 · 2 시간 · 3 진단 · 4 타이머 · 5 브리핑 · 6 한마디 · 7 학습목표 · 8 음악)</td></tr>
+<tr><td><span class="key">1</span>~<span class="key">9</span></td><td>위 표의 명령 (1 날씨 · 2 시간 · 3 진단 · 4 타이머 · 5 브리핑 · 6 한마디 · 7 학습목표 · 8 음악 · 9 명언)</td></tr>
 <tr><td><span class="key">0</span></td><td>종료</td></tr>
 <tr><td><span class="key">Esc</span></td><td>위젯 닫기</td></tr>
 </table>
@@ -165,6 +167,7 @@ footer#app-credit{width:100%;margin:40px 0 0;padding:14px 12px;text-align:center
 <p>학생에게 보이지 않는 설정 화면입니다. 고치는 즉시 저장되고, <span class="key">Esc</span>로 닫습니다. 콘솔이 열려 있는 동안엔 숫자키가 먹지 않습니다.</p>
 <table>
 <tr><th style="width:24%">탭</th><th>여기서 하는 것</th></tr>
+<tr><td><b>오늘의 명언</b></td><td>하루 하나/무작위 고르기, 내 명언 보태기(명언 | 출처 | 영어), 기본 명언 40여 개</td></tr>
 <tr><td><b>기본 · 이름</b></td><td>선생님 이름(한글 자막), 영어 호칭(기본 sir → Professor, boss 등), 부팅 로그 프로필, 첫 화면 부제, 날씨 위치(위도·경도)</td></tr>
 <tr><td><b>오늘의 학습목표</b></td><td>목표 입력, 연출 방식, 미리보기</td></tr>
 <tr><td><b>자비스 대사</b></td><td>인사·대답·음악·학습목표·소리·종료 등 모든 대사. 한 줄에 하나, <code>영어 | 한글</code> 꼴. <code>{name}</code>은 내 이름, <code>{sir}</code>는 영어 호칭으로 바뀝니다. ▶들어보기로 바로 확인</td></tr>

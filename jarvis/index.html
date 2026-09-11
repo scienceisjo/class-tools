@@ -222,6 +222,10 @@ body.tmrend .tmrnum{color:var(--red);text-shadow:0 0 48px rgba(255,84,112,.7);an
 .lockbrk.l{left:0;border-right:0;transform:translateX(-160%)}
 .lockbrk.r{right:0;border-left:0;transform:translateX(160%)}
 .goalhint{text-align:center;margin-top:2.4vmin;color:var(--gold);font-size:clamp(12px,1.75vmin,21px);min-height:1.5em;line-height:1.5}
+.goal.qtext{font-size:clamp(20px,4.1vmin,54px);line-height:1.62}
+.qby{text-align:right;margin-top:2vmin;padding-right:3vmin;color:var(--gold);font-size:clamp(14px,2.1vmin,26px);opacity:0;transition:opacity .8s}
+.qen{text-align:center;margin-top:1.4vmin;color:var(--ink2);font-family:var(--hud);letter-spacing:.02em;font-size:clamp(11px,1.6vmin,19px);opacity:0;transition:opacity .8s 0.3s}
+.qby.show,.qen.show{opacity:1}
 
 /* ---------- panels: hint & settings ---------- */
 /* ---------- 교사 콘솔 ---------- */
@@ -389,6 +393,7 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
       <button data-t="music">음악</button>
       <button data-t="voice">음성 · 마이크</button>
       <button data-t="brief">브리핑</button>
+      <button data-t="quote">오늘의 명언</button>
       <button data-t="script">시연 대본 · 단축키</button>
       <button data-t="data">저장 · 나눠주기</button>
     </nav>
@@ -536,6 +541,23 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
         <div class="rowb"><button class="btn" id="briefPrev">▶ 미리보기</button></div>
       </section>
 
+      <section data-p="quote">
+        <h3>Thought of the Day</h3>
+        <p class="lead">"오늘의 명언" 이라고 하면 명언 하나가 학습목표처럼 연출과 함께 뜨고, 자비스가 한국어로 읽어 줍니다.
+          과학·배움에 관한 명언 40여 개가 기본으로 들어 있고, 아래에 직접 보탤 수 있습니다.</p>
+        <div class="fld"><label>고르는 방식</label>
+          <select data-cfg="quoteMode">
+            <option value="daily">하루에 하나 — 같은 날엔 어느 반이든 같은 명언 (권장)</option>
+            <option value="random">부를 때마다 무작위</option>
+          </select>
+          <div class="hint">명언이 떠 있을 때 다시 부르면(또는 <b>9</b> 를 한 번 더 누르면) 다른 명언이 나옵니다.</div></div>
+        <div class="fld"><label>내 명언 보태기 — 한 줄에 하나, <b style="color:#4fe3ff">명언 | 출처 | 영어 원문(선택)</b></label>
+          <textarea class="big" data-cfg="quotes" placeholder="예) 중요한 것은 질문을 멈추지 않는 것이다. | 알베르트 아인슈타인 | The important thing is not to stop questioning."></textarea>
+          <div class="hint">내 명언이 먼저 나오고, 기본 명언이 그 뒤에 이어집니다.</div></div>
+        <label class="sw"><input type="checkbox" data-cfg="quoteDefaults"> 기본 명언도 함께 쓰기</label>
+        <div class="rowb"><button class="btn" id="quotePrev">▶ 미리보기 (콘솔이 닫힙니다)</button></div>
+      </section>
+
       <section data-p="script">
         <h3>Demo Script</h3>
         <p class="lead">아이들 앞에서 이 순서로 하면 됩니다. 말이 안 먹히면 옆의 숫자키를 누르세요 — 아이들은 눈치채지 못합니다.</p>
@@ -560,6 +582,7 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
           <span class="key">6</span><span>랜덤 한마디</span>
           <span class="key">7</span><span>오늘의 학습목표</span>
           <span class="key">8</span><span>음악 틀기/끄기 (대사까지)</span>
+          <span class="key">9</span><span>오늘의 명언 (한 번 더 누르면 다른 명언)</span>
           <span class="key">0</span><span>종료 시퀀스</span>
           <span class="key">Esc</span><span>위젯 닫기</span>
           <span class="key">←</span><span>10초 뒤로 (Shift 30초)</span>
@@ -606,9 +629,10 @@ const $=s=>document.querySelector(s), body=document.body;
 /* ---------- 설정 ---------- */
 const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,readAloud:true,voiceEn:'',voiceKo:'',pitch:.8,
   name:'선생님',sir:'sir',owner:'',tagline:'',lines:{},goalStyle:'',
-  vol:.5,rate:1.15,script:'짝짝 (손뼉 두 번) | 부팅 로그가 흐르고 "Welcome home." | Space\n"You up, JARVIS?" | 자비스가 대답 | 6\n"음악 틀어" | 멋 부린 한마디 뒤에 음악 | 8\n"음악 꺼" | 정숙 — 여기서 수업 분위기로 전환 | 8\n"오늘 날씨 어때?" | 실시간 날씨 위젯 | 1\n"시스템 진단해" | 이 컴퓨터의 진짜 사양 | 3\n"오늘 학습목표" | 목표 공개 → 빈칸이면 아이들에게 질문 → 스페이스바 | 7\n"자비스 꺼져" | 종료 인사 | 0',
+  vol:.5,rate:1.15,script:'짝짝 (손뼉 두 번) | 부팅 로그가 흐르고 "Welcome home." | Space\n"You up, JARVIS?" | 자비스가 대답 | 6\n"음악 틀어" | 멋 부린 한마디 뒤에 음악 | 8\n"음악 꺼" | 정숙 — 여기서 수업 분위기로 전환 | 8\n"오늘 날씨 어때?" | 실시간 날씨 위젯 | 1\n"시스템 진단해" | 이 컴퓨터의 진짜 사양 | 3\n"오늘 학습목표" | 목표 공개 → 빈칸이면 아이들에게 질문 → 스페이스바 | 7\n"오늘의 명언" | 명언 하나가 뜨고 자비스가 읽어 줌 | 9\n"자비스, 고생했어" | 종료 인사 | 0',
   bgm:'command',bgmSrc:'audio/theme.mp3',bgmVol:.6,tracks:[],trackIdx:0,
   goal:'',
+  quoteMode:'daily',quotes:'',quoteDefaults:true,
   place:'서울 강남구',lat:37.478,lon:127.063,
   brief:'1교시 · 2학년 3반 — 전기와 자기 4차시\n준비물 · 전압계, 꼬마전구, 집게전선\n오늘의 질문 · 전구를 하나 더 끼우면 왜 어두워질까?\n체크 · 6교시 후 과학실 정리'};
 let CFG=Object.assign({},DEF);
@@ -1051,7 +1075,7 @@ function startRec(){
    ============================================================ */
 const norm=t=>t.toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
 const K={
-  off:['꺼져','종료','굿나잇','굿나이트','goodnight','shutdown','셧다운','잘자','수고했','그만해','오프라인','슬립','sleep','잘있어'],
+  off:['고생했','고생많','고생하셨','수고많','수고하셨','꺼져','종료','굿나잇','굿나이트','goodnight','shutdown','셧다운','잘자','수고했','그만해','오프라인','슬립','sleep','잘있어'],
   timer:['타이머','timer','카운트다운','countdown','재줘','재주','세줘','시간재'],
   weather:['날씨','웨더','weather','기온','더워','추워','비와','비오','우산','하우즈더','how'],
   time:['몇시','시간','타임','time','며칠','날짜','date','오늘무슨요일','요일'],
@@ -1066,6 +1090,7 @@ const K={
   music:['음악틀','노래틀','음악켜','노래켜','뮤직','music','플레이','틀어줘','틀어봐','틀어라','음악좀','노래좀','음악재생'],
   volup:['소리높','소리키','소리올','소리크게','볼륨업','볼륨올','볼륨높','볼륨키','크게해','더크게','volumeup','louder','turnitup'],
   voldown:['소리낮','소리줄','소리내려','소리작게','볼륨다운','볼륨줄','볼륨낮','볼륨내려','작게해','더작게','volumedown','quieter','turnitdown'],
+  quote:['명언','좋은말','격언','quote','한마디해','오늘의한마디','지혜','wisdom'],
   goal:['학습목표','목표','오늘목표','미션','mission','objective','오늘뭐배','뭘배','배울'],
   hi:['자비스','자비','저비스','쟈비스','jarvis','자바스','거기있','있니','있어','유데어','youthere','헤이','hey','들려','듣고있']
 };
@@ -1116,8 +1141,14 @@ const LINEDEF={
   goalFill:{t:'빈칸 정답 공개',d:'스페이스바로 빈칸을 채운 뒤',v:[
     'Confirmed. Objective complete.|확인했습니다. 목표 완성.',
     'There it is, {sir}.|바로 그것입니다.']},
-  bye:{t:'종료 인사',d:'"자비스 꺼져" 라고 하면',v:[
-    'Goodnight, {sir}. I will be here.|안녕히 가세요. 여기 있겠습니다.']},
+  bye:{t:'종료 인사',d:'"자비스, 고생했어" 라고 하면',v:[
+    'It was a pleasure, {sir}. Rest well.|저야말로 즐거웠습니다. 편히 쉬세요.',
+    'Goodnight, {sir}. I will be here.|안녕히 가세요. 여기 있겠습니다.',
+    'Anytime, {sir}. Powering down.|언제든지요. 전원을 내립니다.']},
+  quote:{t:'명언을 열 때',d:'"오늘의 명언" 이라고 하면 (뒤에 한국어로 명언을 읽어 줍니다)',v:[
+    'A thought for today, {sir}.|오늘의 한마디입니다.',
+    'From the archive, {sir}. Someone wiser than me once said:|기록 보관소에서 하나 꺼냈습니다. 저보다 현명한 분의 말입니다.',
+    'Words worth keeping in a lab coat pocket, {sir}.|실험복 주머니에 넣어 둘 만한 말입니다.']},
   volUp:{t:'소리를 키울 때',d:'"소리 높여" 또는 ↑ 키',v:[
     'Volume up, {sir}.|소리를 키웁니다.',
     'Louder it is.|더 크게 하겠습니다.']},
@@ -1183,6 +1214,7 @@ function handle(raw){
   if(has(t,K.music)) return playMusic();
   if(has(t,K.volup)) return volStep(.15);
   if(has(t,K.voldown)) return volStep(-.15);
+  if(has(t,K.quote)) return openQuote();
   if(has(t,K.goal)) return (goalPending?fillBlanks():openGoal());
   if(has(t,K.off)) return shutdown();
   if(has(t,K.timer)||/\d+\s*(분|초)/.test(raw)) return openTimer(parseSeconds(raw));
@@ -1539,6 +1571,89 @@ function openGoal(){
     sayLine('goal',{hold:6500,read:forSpeech(raw)});
   }
 }
+/* --- 오늘의 명언 : "한글 | 출처 | 영어 원문" --- */
+const QUOTES=`중요한 것은 질문을 멈추지 않는 것이다. | 알베르트 아인슈타인 | The important thing is not to stop questioning.
+상상력은 지식보다 중요하다. | 알베르트 아인슈타인 | Imagination is more important than knowledge.
+실수를 한 번도 해 본 적 없는 사람은, 새로운 것을 시도해 본 적이 없는 사람이다. | 알베르트 아인슈타인 | Anyone who has never made a mistake has never tried anything new.
+나는 특별히 똑똑한 게 아니다. 문제에 더 오래 매달릴 뿐이다. | 알베르트 아인슈타인 | It's not that I'm so smart, it's just that I stay with problems longer.
+우주에서 가장 이해할 수 없는 일은, 우주가 이해될 수 있다는 것이다. | 알베르트 아인슈타인 | The most incomprehensible thing about the universe is that it is comprehensible.
+어제에서 배우고, 오늘을 살고, 내일을 바라라. | 알베르트 아인슈타인 | Learn from yesterday, live for today, hope for tomorrow.
+논리는 A에서 B로 데려다주지만, 상상력은 어디로든 데려다준다. | 알베르트 아인슈타인 | Logic will get you from A to B. Imagination will take you everywhere.
+모든 것은 가능한 한 단순하게 만들어야 한다. 그러나 그보다 더 단순하게는 안 된다. | 알베르트 아인슈타인 (전해지는 말) | Everything should be made as simple as possible, but not simpler.
+인생에서 두려워할 것은 없다. 이해해야 할 것이 있을 뿐이다. | 마리 퀴리 | Nothing in life is to be feared, it is only to be understood.
+나는 실패하지 않았다. 되지 않는 방법 만 가지를 찾았을 뿐이다. | 토머스 에디슨 | I have not failed. I've just found 10,000 ways that won't work.
+천재는 1퍼센트의 영감과 99퍼센트의 땀이다. | 토머스 에디슨 | Genius is one percent inspiration and ninety-nine percent perspiration.
+우리는 별의 먼지로 만들어졌다. | 칼 세이건 | We are made of star stuff.
+어딘가에서, 놀라운 무언가가 알려지기를 기다리고 있다. | 칼 세이건 | Somewhere, something incredible is waiting to be known.
+과학은 지식의 덩어리라기보다 생각하는 방법이다. | 칼 세이건 | Science is a way of thinking much more than it is a body of knowledge.
+우리는 우주가 스스로를 알아 가는 방법이다. | 칼 세이건 | We are a way for the cosmos to know itself.
+지구는 광대한 우주라는 무대 위의 아주 작은 무대다. | 칼 세이건 | The Earth is a very small stage in a vast cosmic arena.
+내가 남들보다 멀리 보았다면, 그것은 거인들의 어깨 위에 서 있었기 때문이다. | 아이작 뉴턴 | If I have seen further, it is by standing on the shoulders of giants.
+첫 번째 원칙은 자기 자신을 속이지 않는 것이다. 그리고 자신은 가장 속이기 쉬운 사람이다. | 리처드 파인만 | The first principle is that you must not fool yourself, and you are the easiest person to fool.
+과학에서 가장 설레는 말은 '유레카!'가 아니라 '어, 이상하네…'이다. | 아이작 아시모프 | The most exciting phrase to hear in science is not "Eureka!" but "That's funny…"
+관찰의 영역에서, 기회는 준비된 마음에만 찾아온다. | 루이 파스퇴르 | In the fields of observation, chance favors only the prepared mind.
+과학의 위대한 비극은, 아름다운 가설이 추한 사실 하나에 무너지는 것이다. | 토머스 헉슬리 | The great tragedy of science: the slaying of a beautiful hypothesis by an ugly fact.
+지식은 힘이다. | 프랜시스 베이컨 | Knowledge itself is power.
+신중한 질문 하나는 지혜의 절반이다. | 프랜시스 베이컨 | A prudent question is one-half of wisdom.
+과학은 정리된 지식이고, 지혜는 정리된 삶이다. | 임마누엘 칸트 | Science is organized knowledge. Wisdom is organized life.
+배움에는 왕도가 없다. | 유클리드 | There is no royal road to geometry.
+나는 내가 아무것도 모른다는 것을 안다. | 소크라테스 | I know that I know nothing.
+아는 것을 안다 하고 모르는 것을 모른다 하는 것, 그것이 곧 아는 것이다. | 공자 |
+천 리 길도 한 걸음에서 시작된다. | 노자 | A journey of a thousand miles begins with a single step.
+자연은 서두르지 않지만, 모든 것을 이룬다. | 노자 | Nature does not hurry, yet everything is accomplished.
+배움은 물을 거슬러 배를 젓는 것과 같아서, 나아가지 않으면 물러난다. | 중국 격언 |
+지식에 대한 투자가 가장 좋은 이자를 낳는다. | 벤저민 프랭클린 | An investment in knowledge pays the best interest.
+말해 주면 잊고, 가르쳐 주면 기억하고, 함께 해 보면 배운다. | 벤저민 프랭클린 (전해지는 말) | Tell me and I forget, teach me and I may remember, involve me and I learn.
+배우기를 멈추는 사람은 스무 살이든 여든 살이든 늙은 것이다. | 헨리 포드 | Anyone who stops learning is old, whether at twenty or eighty.
+할 수 있다고 생각하든 할 수 없다고 생각하든, 당신이 옳다. | 헨리 포드 | Whether you think you can, or you think you can't, you're right.
+호기심은 배움이라는 촛불의 심지다. | 윌리엄 아서 워드 | Curiosity is the wick in the candle of learning.
+가르치는 것은 두 번 배우는 것이다. | 조제프 주베르 | To teach is to learn twice.
+교육은 양동이를 채우는 일이 아니라 불을 붙이는 일이다. | 전해지는 말 | Education is not the filling of a pail, but the lighting of a fire.
+나는 생각한다, 고로 존재한다. | 르네 데카르트 | Cogito, ergo sum.
+의심은 지혜의 시작이다. | 르네 데카르트 | Doubt is the origin of wisdom.
+측정할 수 없다면, 개선할 수도 없다. | 켈빈 경 (전해지는 말) | If you cannot measure it, you cannot improve it.
+달을 향해 쏘아라. 빗나가더라도 별들 사이에 닿을 것이다. | 노먼 빈센트 필 | Shoot for the moon. Even if you miss, you'll land among the stars.
+빨리 가려면 혼자 가고, 멀리 가려면 함께 가라. | 아프리카 속담 | If you want to go fast, go alone. If you want to go far, go together.
+어둠을 저주하기보다 촛불 하나를 켜는 것이 낫다. | 격언 | It is better to light a candle than to curse the darkness.
+오늘 걷지 않으면, 내일은 뛰어야 한다. | 격언 |`.split('\n').map(x=>x.trim()).filter(Boolean);
+function quotePool(){
+  const mine=(CFG.quotes||'').split('\n').map(x=>x.trim()).filter(Boolean);
+  const base=(CFG.quoteDefaults===false)?[]:QUOTES;
+  const all=mine.concat(base); return all.length?all:QUOTES;
+}
+function parseQuote(line){ const c=line.split('|').map(x=>x.trim()); return {ko:c[0]||'',by:c[1]||'',en:c[2]||''}; }
+let quoteLast=-1;
+function pickQuote(another){
+  const pool=quotePool(); if(!pool.length) return null;
+  let i;
+  if(CFG.quoteMode==='random'||another){
+    do{ i=(Math.random()*pool.length)|0; }while(pool.length>1&&i===quoteLast);
+  }else{
+    const d=new Date(), doy=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);
+    i=(doy+d.getFullYear())%pool.length;                       // 같은 날엔 같은 명언
+  }
+  quoteLast=i; return parseQuote(pool[i]);
+}
+function openQuote(){
+  const again=!!(panelEl&&panelEl.querySelector('#qTxt'));   // 이미 떠 있으면 다른 명언
+  const q=pickQuote(again);
+  if(!q) return say('The archive is empty, {sir}.','명언 목록이 비어 있습니다.');
+  const p=panel('Thought of the Day','오늘의 명언',CFG.quoteMode==='random'?'archive · random':'archive · daily',
+    '<div class="goalwrap"><div class="goal qtext" id="qTxt"></div></div><div class="qby" id="qBy"></div><div class="qen" id="qEn"></div>');
+  const el=p.querySelector('#qTxt'), wrap=p.querySelector('.goalwrap');
+  buildGoal(el,[{t:'text',s:'“'+q.ko+'”'}]);
+  const cs=[...el.querySelectorAll('.c')];
+  const last=+(localStorage.getItem('jarvis-quotestyle')||0);
+  const i=(last+1+((Math.random()*(REVEALS.length-1))|0))%REVEALS.length;
+  localStorage.setItem('jarvis-quotestyle',i);
+  REVEALS[i](cs,wrap);
+  setTimeout(()=>{ if(panelEl!==p) return;
+    const b=p.querySelector('#qBy'); b.textContent=q.by?'— '+q.by:''; b.classList.add('show');
+    const e=p.querySelector('#qEn'); if(q.en){ e.textContent=q.en; e.classList.add('show'); } },1700);
+  const by=q.by.replace(/\s*\(.*?\)\s*/g,'').trim();                        // 괄호 주석은 읽지 않는다
+  const readBy=(by&&by!=='전해지는 말')?'. '+by:'';
+  sayLine('quote',{hold:7000,read:forSpeech(q.ko).replace(/[.。!?…]+$/,'')+readBy});
+}
 function fillBlanks(){
   if(!goalPending) return;
   const cs=goalPending.cs; goalPending=null;
@@ -1557,6 +1672,7 @@ const ACT={
   '4':()=>openTimer(180),'5':openBrief,
   '7':()=>(goalPending?fillBlanks():openGoal()),
   '8':()=>(bgmPlaying?stopMusic():playMusic()),
+  '9':openQuote,
   '6':()=>{ sfx.up(); if(Math.random()<.45) return sayLine('hello');
             const e=pick(EGGS); say(e.en,e.kr); },
   '0':shutdown
@@ -1757,6 +1873,13 @@ function previewGoal(){
   setTimeout(()=>{ if(phase==='standby') boot(); setTimeout(openGoal,5300); },420);
 }
 $('#goalPrev').onclick=previewGoal;
+function previewQuote(){
+  closeCons();
+  if(phase==='online') return openQuote();
+  if(phase==='gate') enter();
+  setTimeout(()=>{ if(phase==='standby') boot(); setTimeout(openQuote,5300); },420);
+}
+$('#quotePrev').onclick=previewQuote;
 $('#briefPrev').onclick=()=>{ closeCons(); if(phase==='online') openBrief(); else toast('부팅한 뒤에 볼 수 있습니다'); };
 
 /* 음악 */
