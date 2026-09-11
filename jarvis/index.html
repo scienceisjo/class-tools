@@ -47,7 +47,7 @@ body.on .brk,body.booting .brk{opacity:1}
 .brk.d{bottom:2vmin;right:2vmin;border-left:0;border-top:0}
 
 /* ---------- reactor ---------- */
-#core{position:fixed;left:50%;top:57%;transform:translate(-50%,-50%);width:44vmin;height:44vmin;pointer-events:none;
+#core{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:58vmin;height:58vmin;pointer-events:none;
   filter:drop-shadow(0 0 calc(2vmin + var(--lvl)*3vmin) rgba(79,227,255,.55));
   opacity:.2;transition:opacity 1s cubic-bezier(.2,.7,.3,1)}
 body.booting #core{opacity:.4} body.on #core{opacity:1}
@@ -57,8 +57,10 @@ body.widget #core{opacity:.16}
 .spin2{transform-origin:50% 50%;animation:sp 19s linear infinite reverse}
 .spin3{transform-origin:50% 50%;animation:sp 8s linear infinite}
 .spin4{transform-origin:50% 50%;animation:sp 3.4s linear infinite reverse}
+.spin5{transform-origin:50% 50%;animation:sp 34s linear infinite reverse}
+.spin6{transform-origin:50% 50%;animation:sp 90s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-#pulse{transform-origin:50% 50%;transform:scale(calc(1 + var(--lvl)*.22))}
+#pulse{transform-origin:50% 50%;transform:scale(calc(1 + var(--lvl)*.16))}
 #coreGlow{opacity:calc(.55 + var(--lvl)*.45)}
 body.speaking #core{filter:drop-shadow(0 0 4vmin rgba(120,235,255,.85))}
 
@@ -76,7 +78,7 @@ body.speaking #core{filter:drop-shadow(0 0 4vmin rgba(120,235,255,.85))}
 #gate small{color:#4a707f;font-size:clamp(11px,1.35vmin,15px);line-height:1.9}
 
 /* ---------- standby prompt ---------- */
-#standby{position:fixed;left:50%;bottom:8.5vmin;transform:translateX(-50%);text-align:center;pointer-events:none;
+#standby{position:fixed;left:50%;bottom:6vmin;transform:translateX(-50%);text-align:center;pointer-events:none;
   font-family:var(--hud);letter-spacing:.28em;color:var(--dim);font-size:clamp(11px,1.5vmin,17px);text-transform:uppercase;
   opacity:0;transition:opacity .6s}
 body.standby #standby{opacity:1;animation:breathe 3.4s ease-in-out infinite}
@@ -336,12 +338,19 @@ body.nz-r #core{filter:hue-rotate(165deg) saturate(1.4) drop-shadow(0 0 4vmin rg
 .confetti i{position:absolute;top:-3vmin;width:1.1vmin;height:1.8vmin;opacity:.95;animation:fall 3.2s linear infinite}
 @keyframes fall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(110vmin) rotate(720deg)}}
 .mealhead{display:flex;align-items:baseline;gap:1.6vmin;flex-wrap:wrap;margin-bottom:1.6vmin}
-.mealhead .d{font-family:var(--hud);color:var(--cy);font-size:clamp(12px,1.6vmin,18px);letter-spacing:.14em}
+.mealhead .d{font-family:var(--ko);color:var(--cy);font-size:clamp(13px,1.8vmin,21px);font-weight:600}
 .mealhead .k{color:var(--ink2);font-size:clamp(12px,1.6vmin,18px)}
 .meallist{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2vmin}
 .meallist div{border:1px solid rgba(79,227,255,.18);background:rgba(79,227,255,.045);padding:1.6vmin 2vmin;
   font-size:clamp(17px,2.7vmin,34px);color:#fff;line-height:1.35}
 .meallist div small{display:block;color:var(--ink2);font-size:.5em;margin-top:.3em}
+.mealweek{display:grid;grid-template-columns:repeat(5,1fr);gap:1vmin}
+.mealweek>div{border:1px solid rgba(79,227,255,.18);background:rgba(79,227,255,.045);padding:1.2vmin 1.3vmin;font-size:clamp(11px,1.55vmin,19px);line-height:1.5;color:#dff6ff;min-width:0}
+.mealweek>div.today{border-color:rgba(255,193,77,.6);background:rgba(255,193,77,.08)}
+.mealweek b{display:block;font-family:var(--ko);color:var(--cy);font-size:clamp(11px,1.5vmin,17px);font-weight:600;margin-bottom:.6vmin}
+.mealweek span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mealweek i{color:var(--dim);font-style:normal}
+@media (max-width:760px){.mealweek{grid-template-columns:repeat(2,1fr)}}
 .schoolres{margin-top:8px;display:grid;gap:6px}
 .schoolres button{text-align:left;background:rgba(79,227,255,.06);border:1px solid rgba(79,227,255,.28);color:var(--ink);padding:8px 10px;border-radius:2px;cursor:pointer;font-family:var(--ko);font-size:13px}
 .schoolres button:hover{background:rgba(79,227,255,.16)}
@@ -384,11 +393,6 @@ body.nz-r #core{filter:hue-rotate(165deg) saturate(1.4) drop-shadow(0 0 4vmin rg
 .hbars i{display:block;height:100%;width:50%;background:var(--cy);box-shadow:0 0 6px rgba(79,227,255,.6);transition:width 1.2s}
 .wavesvg{width:100%;height:5vmin;margin-top:1vmin;display:block}
 .wavesvg polyline{fill:none;stroke:var(--cy);stroke-width:1.5;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 3px rgba(79,227,255,.7))}
-#helm{position:fixed;left:50%;top:5vmin;height:28vmin;width:auto;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity 1s;
-  filter:drop-shadow(0 0 8px rgba(79,227,255,.25))}
-#helm .eyes{animation:eyeglow 3.2s ease-in-out infinite}
-@keyframes eyeglow{0%,100%{opacity:.7}50%{opacity:1}}
-#torso{position:fixed;left:50%;top:31vmin;width:88vmin;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity 1s}
 .ruler{position:fixed;left:24vmin;right:24vmin;height:1.3vmin;pointer-events:none;opacity:0;transition:opacity 1s;background-repeat:repeat-x;
   background-image:repeating-linear-gradient(90deg,rgba(79,227,255,.45) 0 1px,transparent 1px 2.5vmin),
                    repeating-linear-gradient(90deg,rgba(79,227,255,.16) 0 1px,transparent 1px .5vmin);
@@ -396,14 +400,13 @@ body.nz-r #core{filter:hue-rotate(165deg) saturate(1.4) drop-shadow(0 0 4vmin rg
 .ruler.top{top:1.4vmin;background-position:0 100%,0 100%}
 .ruler.bot{bottom:1.4vmin;background-position:0 0,0 0}
 /* 상태별 밝기: 대기땐 희미, 켜지면 또렷, 위젯 뜨면 뒤로 */
-body.standby .hex,body.standby .orn,body.standby #helm,body.standby #torso,body.standby .ruler{opacity:.28}
-body.booting .hex,body.booting .orn,body.booting #helm,body.booting #torso,body.booting .ruler{opacity:.55}
-body.on .hex{opacity:.9} body.on .orn,body.on .ruler{opacity:1} body.on #helm{opacity:.62} body.on #torso{opacity:.42}
-body.widget .orn,body.widget #helm,body.widget #torso,body.widget .ruler{opacity:.14}
-body.nosuit #helm,body.nosuit #torso{display:none}
+body.standby .hex,body.standby .orn,body.standby .ruler{opacity:.28}
+body.booting .hex,body.booting .orn,body.booting .ruler{opacity:.55}
+body.on .hex{opacity:.9} body.on .orn,body.on .ruler{opacity:1}
+body.widget .orn,body.widget .ruler{opacity:.14}
 body.ornlite .orn,body.ornlite .ruler{display:none}
-body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.ornoff #torso{display:none}
-@media (max-width:760px),(max-aspect-ratio:1/1){.orn,.ruler,#torso{display:none}}
+body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex{display:none}
+@media (max-width:760px),(max-aspect-ratio:1/1){.orn,.ruler{display:none}}
 </style>
 
 <canvas id="bg"></canvas>
@@ -416,67 +419,76 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
       <stop offset="70%" stop-color="#2ab8e6"/><stop offset="100%" stop-color="#0a4a63" stop-opacity="0"/></radialGradient>
     <linearGradient id="gring" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#4fe3ff"/><stop offset="55%" stop-color="#0d95c4" stop-opacity=".25"/><stop offset="100%" stop-color="#4fe3ff"/></linearGradient>
+    <linearGradient id="gtri" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#8ff0ff"/><stop offset="100%" stop-color="#1aa8d8"/></linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>
   </defs>
+  <!-- 바깥 눈금 · 방사선 -->
+  <g class="spin6" fill="none" stroke="#4fe3ff" stroke-width="1" opacity=".16">
+    <line x1="200.0" y1="116.0" x2="200.0" y2="8.0"/>
+    <line x1="242.0" y1="127.3" x2="296.0" y2="33.7"/>
+    <line x1="272.7" y1="158.0" x2="366.3" y2="104.0"/>
+    <line x1="284.0" y1="200.0" x2="392.0" y2="200.0"/>
+    <line x1="272.7" y1="242.0" x2="366.3" y2="296.0"/>
+    <line x1="242.0" y1="272.7" x2="296.0" y2="366.3"/>
+    <line x1="200.0" y1="284.0" x2="200.0" y2="392.0"/>
+    <line x1="158.0" y1="272.7" x2="104.0" y2="366.3"/>
+    <line x1="127.3" y1="242.0" x2="33.7" y2="296.0"/>
+    <line x1="116.0" y1="200.0" x2="8.0" y2="200.0"/>
+    <line x1="127.3" y1="158.0" x2="33.7" y2="104.0"/>
+    <line x1="158.0" y1="127.3" x2="104.0" y2="33.7"/>
+  </g>
   <g class="spin1" fill="none" stroke="url(#gring)">
-    <circle cx="200" cy="200" r="188" stroke-width="1" stroke-dasharray="2 10" opacity=".65"/>
-    <circle cx="200" cy="200" r="172" stroke-width="6" stroke-dasharray="150 24 60 24" opacity=".2"/>
-  </g>
-  <g class="spin2" fill="none">
-    <circle cx="200" cy="200" r="166" stroke="#4fe3ff" stroke-width="9" stroke-dasharray="1.6 4.6" opacity=".26"/>
-  </g>
-  <g class="spin1" fill="none">
-    <circle cx="200" cy="200" r="140" stroke="#4fe3ff" stroke-width="16" stroke-dasharray="3 11.5" opacity=".15"/>
-    <path d="M62 200 A138 138 0 0 1 103 103" stroke="#ffc14d" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+    <circle cx="200" cy="200" r="194" stroke-width="1" stroke-dasharray="1.5 4.6" opacity=".7"/>
+    <circle cx="200" cy="200" r="184" stroke-width="7" stroke-dasharray="66 14 22 14 8 14" opacity=".28"/>
   </g>
   <g class="spin2" fill="none" stroke="#4fe3ff">
-    <circle cx="200" cy="200" r="152" stroke-width="1.2" stroke-dasharray="40 14" opacity=".5"/>
-    <path d="M200 38 A162 162 0 0 1 340 118" stroke-width="3" opacity=".8"/>
-    <path d="M200 362 A162 162 0 0 1 60 282" stroke-width="3" opacity=".8"/>
+    <circle cx="200" cy="200" r="174" stroke-width="1.4" stroke-dasharray="90 24 12 24" opacity=".55"/>
+    <path d="M200 26 A174 174 0 0 1 350 113" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+    <path d="M200 374 A174 174 0 0 1 50 287" stroke-width="3" stroke-linecap="round" opacity=".85"/>
   </g>
-  <g class="spin3" fill="none" stroke="#4fe3ff" opacity=".85">
-    <circle cx="200" cy="200" r="126" stroke-width="1" stroke-dasharray="1 7"/>
-    <circle cx="200" cy="200" r="112" stroke-width="10" stroke-dasharray="18 12" opacity=".18"/>
+  <!-- 코일 10개 (금색) -->
+  <g class="spin5" fill="rgba(255,193,77,.08)" stroke="#ffc14d" stroke-width="1.6" opacity=".9">
+    <g transform="rotate(0 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
+    <g transform="rotate(36 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
+    <g transform="rotate(72 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
+    <g transform="rotate(108 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
+    <g transform="rotate(144 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
+    <g transform="rotate(180 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
+    <g transform="rotate(216 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
+    <g transform="rotate(252 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
+    <g transform="rotate(288 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
+    <g transform="rotate(324 200 200)"><rect x="186" y="34" width="28" height="44" rx="5"/><line x1="192" y1="42" x2="192" y2="70"/><line x1="200" y1="42" x2="200" y2="70"/><line x1="208" y1="42" x2="208" y2="70"/></g>
   </g>
-  <g class="spin4" fill="none" stroke="#8ef0ff" opacity=".9">
-    <circle cx="200" cy="200" r="92" stroke-width="1.6" stroke-dasharray="70 30"/>
+  <g class="spin5" fill="#8ef0ff" opacity=".8"><circle cx="247.0" cy="55.4" r="3.2"/><circle cx="323.0" cy="110.7" r="3.2"/><circle cx="352.0" cy="200.0" r="3.2"/><circle cx="323.0" cy="289.3" r="3.2"/><circle cx="247.0" cy="344.6" r="3.2"/><circle cx="153.0" cy="344.6" r="3.2"/><circle cx="77.0" cy="289.3" r="3.2"/><circle cx="48.0" cy="200.0" r="3.2"/><circle cx="77.0" cy="110.7" r="3.2"/><circle cx="153.0" cy="55.4" r="3.2"/></g>
+  <!-- 중간 고리 -->
+  <g class="spin3" fill="none" stroke="#4fe3ff">
+    <circle cx="200" cy="200" r="126" stroke-width="1" stroke-dasharray="1 5" opacity=".8"/>
+    <circle cx="200" cy="200" r="118" stroke-width="12" stroke-dasharray="3 9" opacity=".14"/>
   </g>
+  <g class="spin4" fill="none" stroke="#bff5ff" stroke-width="2.2" stroke-linecap="round" opacity=".85">
+    <circle cx="200" cy="200" r="104" stroke-dasharray="46 22 12 22"/>
+  </g>
+  <!-- 육각 프레임 -->
+  <g fill="none" stroke="#4fe3ff" stroke-width="1.6" opacity=".7">
+    <polygon points="296.0,200.0 248.0,283.1 152.0,283.1 104.0,200.0 152.0,116.9 248.0,116.9"/><polygon points="272.7,242.0 200.0,284.0 127.3,242.0 127.3,158.0 200.0,116.0 272.7,158.0" opacity=".5"/>
+  </g>
+  <g class="spin2" fill="none" stroke="#4fe3ff" stroke-width="5" stroke-dasharray="2 12" opacity=".25">
+    <circle cx="200" cy="200" r="86"/>
+  </g>
+  <!-- 코어 (마크 VI 삼각) -->
   <g id="pulse">
-    <g fill="none" stroke="#4fe3ff" opacity=".9"><circle cx="200" cy="200" r="74" stroke-width="2.5"/></g>
-    <g id="tri" fill="none" stroke="#bff5ff" stroke-width="2" opacity=".75">
-      <path d="M200 146 L247 227 L153 227 Z"/><path d="M200 254 L153 173 L247 173 Z"/></g>
-    <circle id="coreGlow" cx="200" cy="200" r="62" fill="url(#gcore)"/>
+    <circle cx="200" cy="200" r="74" fill="none" stroke="#4fe3ff" stroke-width="2.4" opacity=".9"/>
+    <polygon points="200.0,138.0 253.7,231.0 146.3,231.0" fill="#4fe3ff" opacity=".55" filter="url(#soft)"/>
+    <polygon points="200.0,138.0 253.7,231.0 146.3,231.0" fill="url(#gtri)" stroke="#eafcff" stroke-width="2" stroke-linejoin="round" opacity=".95"/>
+    <polygon points="200.0,160.0 234.6,220.0 165.4,220.0" fill="none" stroke="#04121c" stroke-width="2.5" stroke-linejoin="round" opacity=".55"/>
+    <circle id="coreGlow" cx="200" cy="200" r="30" fill="url(#gcore)"/>
+    <circle cx="200" cy="200" r="7" fill="#ffffff"/>
   </g>
 </svg></div>
 
 <div class="hex"></div>
 <div class="ruler top"></div><div class="ruler bot"></div>
-<svg id="helm" viewBox="0 0 200 240" aria-hidden="true">
-  <defs><filter id="eg" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>
-  <g fill="none" stroke="#4fe3ff" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
-    <path d="M58 206 C44 178 42 132 46 92 C49 58 68 22 100 16 C132 22 151 58 154 92 C158 132 156 178 142 206 C130 220 114 226 100 226 C86 226 70 220 58 206 Z"/>
-    <path d="M72 58 C64 90 60 140 66 190 C78 206 90 212 100 213 C110 212 122 206 134 190 C140 140 136 90 128 58 C118 52 108 50 100 50 C92 50 82 52 72 58 Z" opacity=".8"/>
-    <path d="M100 22 V48" opacity=".55"/>
-    <path d="M67 140 L73 176 M133 140 L127 176" opacity=".6"/>
-    <path d="M86 180 H114 M100 190 V213" opacity=".7"/>
-    <path d="M52 100 C40 104 36 120 40 134 M148 100 C160 104 164 120 160 134" opacity=".45"/>
-  </g>
-  <g class="eyes">
-    <polygon points="62,104 91,100 93,112 66,117" fill="#4fe3ff" opacity=".85" filter="url(#eg)"/>
-    <polygon points="109,100 138,104 134,117 107,112" fill="#4fe3ff" opacity=".85" filter="url(#eg)"/>
-    <polygon points="62,104 91,100 93,112 66,117" fill="#e8fbff"/>
-    <polygon points="109,100 138,104 134,117 107,112" fill="#e8fbff"/>
-  </g>
-</svg>
-<svg id="torso" viewBox="0 0 400 220" aria-hidden="true">
-  <g fill="none" stroke="#4fe3ff" stroke-width="1.3" stroke-linecap="round">
-    <path d="M200 30 C160 24 118 34 84 62 C56 86 36 122 26 170"/>
-    <path d="M200 30 C240 24 282 34 316 62 C344 86 364 122 374 170"/>
-    <path d="M150 52 C128 92 118 140 120 200" opacity=".6"/>
-    <path d="M250 52 C272 92 282 140 280 200" opacity=".6"/>
-    <path d="M60 78 L34 96 M340 78 L366 96" opacity=".5"/>
-    <path d="M96 150 H124 M276 150 H304" opacity=".4"/>
-  </g>
-</svg>
 <div class="orn" id="ornL">
   <div class="ornbox"><div class="olab">Reactor output</div>
     <svg class="dial" viewBox="0 0 120 120">
@@ -579,10 +591,8 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
         <p class="lead">화면 장식입니다. 전자칠판이 버벅이면 줄이세요.</p>
         <div class="two">
           <div class="fld"><label>HUD 장식</label>
-            <select data-cfg="orn"><option value="full">전부 — 계기판·헬멧·데이터 (기본)</option>
-              <option value="lite">헬멧만</option><option value="off">끄기 — 리액터만</option></select></div>
-          <div class="fld"><label>헬멧 실루엣</label>
-            <select data-cfg="suit"><option value="on">보이기</option><option value="off">숨기기</option></select></div>
+            <select data-cfg="orn"><option value="full">전부 — 계기판·데이터·육각 메시 (기본)</option>
+              <option value="lite">가볍게 — 육각 메시만</option><option value="off">끄기 — 리액터만</option></select></div>
         </div>
 
         <h3 style="margin-top:34px">Weather</h3>
@@ -814,7 +824,7 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
           <div class="rowb"><button class="btn warnb" id="reset">모든 설정 초기화</button></div>
           <div class="hint">이름·대사·학습목표·브리핑이 모두 기본값으로 돌아갑니다.</div></div>
         <div class="hint" style="margin-top:28px;line-height:1.9">
-          만든이 · 조승재(과학이조선생) · 해누리중학교<br>
+          제작 · 토니 스타크와 같은 기술력을 가진 선생님<br>
           이 앱은 수업 도입용 데모입니다. 마음껏 고쳐 쓰세요.
         </div>
       </section>
@@ -823,7 +833,7 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
   </div>
 </div>
 
-<footer id="app-credit" style="box-sizing:border-box;margin:0;padding:10px 12px;text-align:center;font-size:11px;line-height:1.6;color:rgba(127,182,205,.35);font-family:system-ui,-apple-system,'Segoe UI','Malgun Gothic',sans-serif;">© 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br><span style="font-size:10px;opacity:.85;">최종 업데이트: 2026-09-09</span></footer>
+<footer id="app-credit" style="box-sizing:border-box;margin:0;padding:10px 12px;text-align:center;font-size:11px;line-height:1.6;color:rgba(127,182,205,.35);font-family:system-ui,-apple-system,'Segoe UI','Malgun Gothic',sans-serif;">제작 · 토니 스타크와 같은 기술력을 가진 선생님<br><span style="font-size:10px;opacity:.85;">최종 업데이트: 2026-09-12</span></footer>
 
 <script>
 /* ============================================================
@@ -834,7 +844,7 @@ const $=s=>document.querySelector(s), body=document.body;
 
 /* ---------- 설정 ---------- */
 const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,readAloud:true,voiceEn:'',voiceKo:'',pitch:.8,
-  name:'선생님',sir:'sir',owner:'',tagline:'',lines:{},goalStyle:'',orn:'full',suit:'on',
+  name:'선생님',sir:'sir',owner:'',tagline:'',lines:{},goalStyle:'',orn:'full',
   vol:.5,rate:1.15,script:'짝짝 (손뼉 두 번) | 부팅 로그가 흐르고 "Welcome home." | Space\n"You up, JARVIS?" | 자비스가 대답 | 6\n"음악 틀어" | 멋 부린 한마디 뒤에 음악 | 8\n"음악 꺼" | 정숙 — 여기서 수업 분위기로 전환 | 8\n"오늘 날씨 어때?" | 실시간 날씨 위젯 | 1\n"시스템 진단해" | 이 컴퓨터의 진짜 사양 | 3\n"오늘 학습목표" | 목표 공개 → 빈칸이면 아이들에게 질문 → 스페이스바 | 7\n"오늘의 명언" | 명언 하나가 뜨고 자비스가 읽어 줌 | 9\n"자비스, 고생했어" | 종료 인사 | 0',
   bgm:'command',bgmSrc:'audio/theme.mp3',bgmVol:.6,tracks:[],trackIdx:0,
   goal:'',
@@ -1326,7 +1336,7 @@ const K={
   pick:['뽑아','뽑을','뽑기','당번','추첨','제비','발표자','발표할','랜덤','random','pick','누가할','누가발표','한명','한사람'],
   quiet:['조용히시켜','조용히해','조용좀','정숙','시끄러워','quiet','shh','쉿'],
   bday:['생일','birthday','축하해'],
-  meal:['급식','점심뭐','점심메뉴','오늘메뉴','밥뭐','밥먹','메뉴','lunch','식단','내일급식','내일점심'],
+  meal:['급식','점심뭐','점심메뉴','오늘메뉴','밥뭐','밥먹','메뉴','lunch','식단','내일급식','내일점심','뭐나와','뭐나오'],
   goal:['학습목표','목표','오늘목표','미션','mission','objective','오늘뭐배','뭘배','배울'],
   hi:['자비스','자비','저비스','쟈비스','jarvis','자바스','거기있','있니','있어','유데어','youthere','헤이','hey','들려','듣고있']
 };
@@ -1480,7 +1490,7 @@ function handle(raw){
   if(has(t,K.music)) return playMusic();
   if(has(t,K.volup)) return volStep(.15);
   if(has(t,K.voldown)) return volStep(-.15);
-  if(has(t,K.meal)) return openMeal(t.includes('내일')?1:0);
+  if(has(t,K.meal)) return openMeal(parseMealDate(raw));
   if(has(t,K.bday)){ const who=rosterList().find(r=>t.includes(norm(r.name))); return openBirthday(who?[who.name]:null); }
   if(has(t,K.quiet)) return sayLine('noise');
   if(has(t,K.pick)) return startPick(t.includes('모둠')||t.includes('팀')?'group':'person',parseCount(raw));
@@ -2057,24 +2067,71 @@ async function findSchool(name){
   return rows.map(x=>({name:x.SCHUL_NM,atpt:x.ATPT_OFCDC_SC_CODE,schul:x.SD_SCHUL_CODE,office:x.ATPT_OFCDC_SC_NM,addr:x.ORG_RDNMA||''}));
 }
 const cleanDish=t=>String(t||'').replace(/\([\d.\s]+\)/g,'').replace(/\s+/g,' ').trim();
-async function openMeal(offset){
+/* "금요일 급식" "모레 급식" "다음 주 월요일" "15일" "이번 주" 를 날짜로 */
+const DN=['일','월','화','수','목','금','토'];
+function parseMealDate(raw){
+  const t=String(raw||'').replace(/\s+/g,''), today=new Date(); today.setHours(0,0,0,0);
+  const d=new Date(today); let label='오늘', week=false;
+  const nextWeek=/다음주|담주/.test(t), thisWeek=/이번주|금주/.test(t), lastWeek=/지난주|저번주/.test(t);
+  let m;
+  if(/모레/.test(t)){ d.setDate(d.getDate()+2); label='모레'; }
+  else if(/글피/.test(t)){ d.setDate(d.getDate()+3); label='글피'; }
+  else if(/내일/.test(t)){ d.setDate(d.getDate()+1); label='내일'; }
+  else if(/어제/.test(t)){ d.setDate(d.getDate()-1); label='어제'; }
+  else if((m=/([월화수목금토일])요일|([월화수목금])욜/.exec(t))){
+    const wd=DN.indexOf(m[1]||m[2]);
+    const mon=new Date(today); mon.setDate(today.getDate()-((today.getDay()+6)%7));   // 이번 주 월요일
+    d.setTime(mon.getTime()); d.setDate(mon.getDate()+((wd+6)%7));
+    if(nextWeek) d.setDate(d.getDate()+7);
+    else if(lastWeek) d.setDate(d.getDate()-7);
+    else if(!thisWeek && d<today) d.setDate(d.getDate()+7);                              // 지난 요일이면 다음 주 그 요일
+    label=(nextWeek?'다음 주 ':lastWeek?'지난 주 ':'')+DN[wd]+'요일';
+  }
+  else if((m=/(\d{1,2})월(\d{1,2})일/.exec(t))){ d.setMonth(+m[1]-1,+m[2]); label=m[1]+'월 '+m[2]+'일'; }
+  else if((m=/(\d{1,2})일/.exec(t))&&+m[1]>=1&&+m[1]<=31){ d.setDate(+m[1]); if(d<today) d.setMonth(d.getMonth()+1); label=m[1]+'일'; }
+  else if(nextWeek||thisWeek||lastWeek){ week=true; const mon=new Date(today); mon.setDate(today.getDate()-((today.getDay()+6)%7));
+    if(nextWeek) mon.setDate(mon.getDate()+7); if(lastWeek) mon.setDate(mon.getDate()-7);
+    d.setTime(mon.getTime()); label=nextWeek?'다음 주':lastWeek?'지난 주':'이번 주'; }
+  return {date:d,label:label,week:week};
+}
+const ymdOf=d=>d.getFullYear()+''+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+const dateKo=d=>(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+DN[d.getDay()]+')';
+
+async function openMeal(q){
   if(!CFG.atpt||!CFG.schul) return say('No school is registered, {sir}.','학교가 등록되지 않았습니다. 교사 콘솔 기본 탭에서 학교를 찾아 주세요.',{hold:5200});
-  const d=new Date(); d.setDate(d.getDate()+(offset||0));
-  const ymd=d.getFullYear()+''+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
-  const label=(offset?'내일':'오늘')+' · '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+['일','월','화','수','목','금','토'][d.getDay()]+')';
-  const p=panel('School Meal','오늘의 급식','neis · open data',
-    '<div class="mealhead"><span class="d">'+escT(ymd)+'</span><span class="k">'+escT(CFG.schoolName||'')+' · 불러오는 중…</span></div>');
+  q=q||parseMealDate('');
+  const sub=q.week?q.label+' 급식':(q.label+'의 급식');
+  const p=panel('School Meal',sub,'neis · open data',
+    '<div class="mealhead"><span class="d">'+escT(q.week?ymdOf(q.date)+' ~':ymdOf(q.date))+'</span><span class="k">'+escT(CFG.schoolName||'')+' · 불러오는 중…</span></div>');
+  const base=NEIS+'mealServiceDietInfo?Type=json&pSize=50&ATPT_OFCDC_SC_CODE='+encodeURIComponent(CFG.atpt)+'&SD_SCHUL_CODE='+encodeURIComponent(CFG.schul);
   try{
-    const r=await fetch(NEIS+'mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE='+encodeURIComponent(CFG.atpt)
-      +'&SD_SCHUL_CODE='+encodeURIComponent(CFG.schul)+'&MLSV_YMD='+ymd);
-    const j=await r.json(); if(panelEl!==p) return;
-    const rows=(j.mealServiceDietInfo&&j.mealServiceDietInfo[1]&&j.mealServiceDietInfo[1].row)||[];
+    let rows=[];
+    if(q.week){
+      const to=new Date(q.date); to.setDate(to.getDate()+4);
+      const r=await fetch(base+'&MLSV_FROM_YMD='+ymdOf(q.date)+'&MLSV_TO_YMD='+ymdOf(to)); const j=await r.json();
+      rows=(j.mealServiceDietInfo&&j.mealServiceDietInfo[1]&&j.mealServiceDietInfo[1].row)||[];
+      if(panelEl!==p) return;
+      if(!rows.length){ p.querySelector('.mealhead .k').textContent=q.label+' · 급식 없음'; return sayLine('mealNone'); }
+      p.querySelector('.mealhead').innerHTML='<span class="d">'+escT(q.label)+' · '+escT(dateKo(q.date))+' ~ '+escT(dateKo(to))+'</span><span class="k">'+escT(CFG.schoolName)+' · 중식</span>';
+      const firsts=[]; let html='<div class="mealweek">';
+      for(let i=0;i<5;i++){ const dd=new Date(q.date); dd.setDate(dd.getDate()+i); const key=ymdOf(dd);
+        const day=rows.filter(x=>x.MLSV_YMD===key); const lunch=day.find(x=>x.MMEAL_SC_CODE==='2')||day[0];
+        const dishes=lunch?String(lunch.DDISH_NM||'').split(/<br\s*\/?>/i).map(cleanDish).filter(Boolean):[];
+        if(dishes[0]) firsts.push(DN[dd.getDay()]+'요일 '+dishes[0]);
+        html+='<div'+(key===ymdOf(new Date())?' class="today"':'')+'><b>'+DN[dd.getDay()]+' '+(dd.getMonth()+1)+'/'+dd.getDate()+'</b>'
+          +(dishes.length?dishes.map(x=>'<span>'+escT(x)+'</span>').join(''):'<i>급식 없음</i>')+'</div>'; }
+      p.insertAdjacentHTML('beforeend',html+'</div>');
+      return sayLine('meal',{read:q.label+' 급식입니다. '+firsts.join(', ')});
+    }
+    const r=await fetch(base+'&MLSV_YMD='+ymdOf(q.date)); const j=await r.json();
+    if(panelEl!==p) return;
+    rows=(j.mealServiceDietInfo&&j.mealServiceDietInfo[1]&&j.mealServiceDietInfo[1].row)||[];
     const lunch=rows.find(x=>x.MMEAL_SC_CODE==='2')||rows[0];
-    if(!lunch){ p.querySelector('.mealhead .k').textContent=label+' · 급식 없음'; return sayLine('mealNone'); }
+    if(!lunch){ p.querySelector('.mealhead .k').textContent=q.label+' · '+dateKo(q.date)+' · 급식 없음'; return sayLine('mealNone'); }
     const dishes=String(lunch.DDISH_NM||'').split(/<br\s*\/?>/i).map(cleanDish).filter(Boolean);
-    p.querySelector('.mealhead').innerHTML='<span class="d">'+escT(label)+'</span><span class="k">'+escT(lunch.SCHUL_NM||CFG.schoolName)+' · '+escT(lunch.MMEAL_SC_NM)+' · '+escT(lunch.CAL_INFO||'')+'</span>';
-    p.insertAdjacentHTML('beforeend','<div class="meallist">'+dishes.map((x,i)=>'<div>'+escT(x)+'</div>').join('')+'</div>');
-    sayLine('meal',{read:dishes.join(', ')});
+    p.querySelector('.mealhead').innerHTML='<span class="d">'+escT(q.label)+' · '+escT(dateKo(q.date))+'</span><span class="k">'+escT(lunch.SCHUL_NM||CFG.schoolName)+' · '+escT(lunch.MMEAL_SC_NM)+' · '+escT(lunch.CAL_INFO||'')+'</span>';
+    p.insertAdjacentHTML('beforeend','<div class="meallist">'+dishes.map(x=>'<div>'+escT(x)+'</div>').join('')+'</div>');
+    sayLine('meal',{read:(q.label==='오늘'?'':q.label+' 급식입니다. ')+dishes.join(', ')});
   }catch(e){
     if(panelEl!==p) return;
     p.querySelector('.mealhead .k').textContent='급식 서버에 연결하지 못했습니다';
@@ -2101,7 +2158,7 @@ const ACT={
   '7':()=>(goalPending?fillBlanks():openGoal()),
   '8':()=>(bgmPlaying?stopMusic():playMusic()),
   '9':openQuote,
-  'p':()=>startPick('person',1),'g':()=>startPick('group',1),'l':()=>openMeal(0),
+  'p':()=>startPick('person',1),'g':()=>startPick('group',1),'l':()=>openMeal(parseMealDate('')),
   '6':()=>{ sfx.up(); if(Math.random()<.45) return sayLine('hello');
             const e=pick(EGGS); say(e.en,e.kr); },
   '0':shutdown
@@ -2199,7 +2256,7 @@ function bindCfg(){
       if((k==='lat'||k==='lon')&&!isFinite(v)) v=DEF[k];
       CFG[k]=v; saveCfg(); toast('저장됨');
       if(k==='name'||k==='tagline') applyIdentity();
-      if(k==='orn'||k==='suit') applyDisplay();
+      if(k==='orn') applyDisplay();
       if(k==='script') renderScript();
       if(k==='bgmSrc') bgmLoad();
       if(k==='lang'&&rec){ try{ rec.stop(); }catch(e){} }
@@ -2420,7 +2477,6 @@ $('#reset').onclick=()=>{
 
 function applyDisplay(){
   body.classList.toggle('ornlite',CFG.orn==='lite'); body.classList.toggle('ornoff',CFG.orn==='off');
-  body.classList.toggle('nosuit',CFG.suit==='off');
 }
 applyDisplay(); applyIdentity(); fillCons(); bgmLoad();
 
