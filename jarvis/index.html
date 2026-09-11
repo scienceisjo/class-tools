@@ -306,6 +306,46 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
 #app-credit{position:fixed;left:0;bottom:0;width:100%;z-index:5;pointer-events:none}
 @media (max-width:640px){.wnow{grid-template-columns:1fr;text-align:center;justify-items:center}.clockwrap{grid-template-columns:1fr;text-align:center}}
 
+/* ---------- 교실 도우미 ---------- */
+.pickwrap{text-align:center;padding:2vmin 0 1vmin}
+.pickbig{font-size:clamp(40px,11vmin,140px);line-height:1.15;color:#fff;font-weight:700;letter-spacing:-.01em;
+  text-shadow:0 0 40px rgba(79,227,255,.55);min-height:1.2em}
+.pickbig .nm{display:inline-block;margin:0 .25em}
+.pickbig.spin{color:var(--cy);text-shadow:0 0 22px rgba(79,227,255,.7)}
+.pickbig.land .nm{animation:pop .55s cubic-bezier(.2,1.5,.4,1)}
+.picksub{margin-top:1.6vmin;color:var(--ink2);font-size:clamp(14px,2.2vmin,26px);line-height:1.6}
+.picksub b{color:var(--gold);font-weight:600}
+.pickmem{margin-top:1.2vmin;color:#eafcff;font-size:clamp(15px,2.6vmin,32px);line-height:1.7}
+#noiseLight{position:fixed;left:2.6vmin;bottom:15vmin;z-index:12;display:flex;flex-direction:column;align-items:center;gap:.9vmin;
+  padding:1.1vmin .9vmin;border:1px solid rgba(79,227,255,.22);background:rgba(3,14,22,.6);pointer-events:none;
+  opacity:0;transition:opacity .6s}
+#noiseLight.show{opacity:1} body.widget #noiseLight{opacity:.35}
+#noiseLight i{width:2.1vmin;height:2.1vmin;border-radius:50%;background:#123;border:1px solid rgba(255,255,255,.08);transition:.25s}
+#noiseLight[data-st=g] i.g{background:#39e675;box-shadow:0 0 12px #39e675}
+#noiseLight[data-st=y] i.y{background:#ffc14d;box-shadow:0 0 12px #ffc14d}
+#noiseLight[data-st=r] i.r{background:#ff5470;box-shadow:0 0 14px #ff5470;animation:blink .5s steps(2) infinite}
+#noiseLight em{font-family:var(--hud);font-style:normal;font-size:clamp(7px,.95vmin,11px);letter-spacing:.18em;color:var(--dim)}
+body.nz-y #core{filter:hue-rotate(-150deg) drop-shadow(0 0 3vmin rgba(255,193,77,.55))}
+body.nz-r #core{filter:hue-rotate(165deg) saturate(1.4) drop-shadow(0 0 4vmin rgba(255,84,112,.7))}
+.bdaywrap{text-align:center;padding:2vmin 0}
+.bdaycake{font-size:clamp(50px,12vmin,150px);line-height:1;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-1.5vmin) rotate(3deg)}}
+.bdayname{font-size:clamp(34px,8vmin,100px);color:#fff;font-weight:700;margin-top:1.5vmin;text-shadow:0 0 40px rgba(255,193,77,.6)}
+.bdaymsg{font-size:clamp(16px,3vmin,38px);color:var(--gold);margin-top:1vmin}
+.confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.confetti i{position:absolute;top:-3vmin;width:1.1vmin;height:1.8vmin;opacity:.95;animation:fall 3.2s linear infinite}
+@keyframes fall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(110vmin) rotate(720deg)}}
+.mealhead{display:flex;align-items:baseline;gap:1.6vmin;flex-wrap:wrap;margin-bottom:1.6vmin}
+.mealhead .d{font-family:var(--hud);color:var(--cy);font-size:clamp(12px,1.6vmin,18px);letter-spacing:.14em}
+.mealhead .k{color:var(--ink2);font-size:clamp(12px,1.6vmin,18px)}
+.meallist{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2vmin}
+.meallist div{border:1px solid rgba(79,227,255,.18);background:rgba(79,227,255,.045);padding:1.6vmin 2vmin;
+  font-size:clamp(17px,2.7vmin,34px);color:#fff;line-height:1.35}
+.meallist div small{display:block;color:var(--ink2);font-size:.5em;margin-top:.3em}
+.schoolres{margin-top:8px;display:grid;gap:6px}
+.schoolres button{text-align:left;background:rgba(79,227,255,.06);border:1px solid rgba(79,227,255,.28);color:var(--ink);padding:8px 10px;border-radius:2px;cursor:pointer;font-family:var(--ko);font-size:13px}
+.schoolres button:hover{background:rgba(79,227,255,.16)}
+
 /* ---------- 아이언맨 HUD 장식 ---------- */
 .hex{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 1.2s;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='34.64' height='60' viewBox='0 0 34.64 60'><g fill='none' stroke='%234fe3ff' stroke-opacity='.11' stroke-width='1'><polygon points='17.32,0 34.64,10 34.64,30 17.32,40 0,30 0,10'/><polygon points='0,30 17.32,40 17.32,60 0,70 -17.32,60 -17.32,40'/><polygon points='34.64,30 51.96,40 51.96,60 34.64,70 17.32,60 17.32,40'/></g></svg>");
@@ -462,6 +502,7 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
     <svg class="wavesvg" viewBox="0 0 200 60" preserveAspectRatio="none"><polyline id="wave" points="0,30 200,30"/></svg></div>
 </div>
 
+<div id="noiseLight"><em>NOISE</em><i class="r"></i><i class="y"></i><i class="g"></i></div>
 <div class="hud">
   <div class="box tl" id="hudL"></div>
   <div class="box tr" id="hudR"></div>
@@ -507,6 +548,7 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
       <button data-t="voice">음성 · 마이크</button>
       <button data-t="brief">브리핑</button>
       <button data-t="quote">오늘의 명언</button>
+      <button data-t="class">우리 반</button>
       <button data-t="script">시연 대본 · 단축키</button>
       <button data-t="data">저장 · 나눠주기</button>
     </nav>
@@ -551,6 +593,13 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
           <div class="fld"><label>경도</label><input type="number" step="0.001" data-cfg="lon"></div>
         </div>
         <div class="hint">지도 앱에서 학교를 길게 눌러 좌표를 복사해 넣으면 됩니다.</div>
+
+        <h3 style="margin-top:34px">School Meal</h3>
+        <p class="lead">"오늘 급식 뭐야?" 에 답하려면 학교를 한 번 찾아 두세요. 나이스 교육정보 개방포털에서 키 없이 바로 가져옵니다.</p>
+        <div class="fld"><label>학교 이름으로 찾기</label>
+          <div class="rowb" style="margin-top:0"><input type="text" id="schoolQ" placeholder="예) 해누리중학교" style="flex:1"><button class="btn" id="schoolFind">찾기</button></div>
+          <div class="schoolres" id="schoolRes"></div>
+          <div class="hint" id="schoolNow" style="margin-top:8px"></div></div>
       </section>
 
       <section data-p="goal">
@@ -651,6 +700,19 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
           </select></div>
         <label class="sw"><input type="checkbox" data-cfg="speakKo"> 영어 대사 뒤에 한국어로 한 번 더 말하기</label>
         <label class="sw"><input type="checkbox" data-cfg="readAloud"> 학습목표·브리핑 내용을 한국어 음성으로 읽어주기</label>
+
+        <h3 style="margin-top:34px">Noise Light</h3>
+        <p class="lead">교실 소음을 초록·노랑·빨강으로 보여 주고, 빨강이 이어지면 자비스가 한마디 합니다. 자비스가 말하거나 음악이 나올 땐 재지 않습니다.</p>
+        <div class="two">
+          <div class="fld"><label>소음 신호등</label>
+            <select data-cfg="noise"><option value="on">켜기</option><option value="off">끄기</option></select></div>
+          <div class="fld"><label>경고까지 빨강 지속 (초)</label><input type="number" min="1" max="30" data-cfg="noiseHold"></div>
+        </div>
+        <div class="fld"><label>예민함 <span class="hint" style="display:inline">— 높일수록 작은 소리에도 노랑·빨강</span></label>
+          <input type="range" min="1" max="10" step="1" data-cfg="noiseLevel">
+          <div class="miclvl"><i id="nzNow" style="background:#ffc14d"></i></div>
+          <div class="hint">위 막대가 지금 소음입니다. 평소 수업 소리에서 초록, 떠들 때 빨강이 되도록 맞추세요.</div></div>
+        <label class="sw"><input type="checkbox" data-cfg="noiseWarn"> 빨강이 이어지면 자비스가 조용히 하라고 말하기</label>
         <label class="sw"><input type="checkbox" data-cfg="autoLoop"> 명령 대기 상태 계속 유지</label>
         <div class="warn" id="httpWarn" style="display:none"></div>
         <div class="hint" style="margin-top:16px">음성 인식은 크롬·엣지에서만 됩니다.
@@ -681,6 +743,24 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
         <div class="rowb"><button class="btn" id="quotePrev">▶ 미리보기 (콘솔이 닫힙니다)</button></div>
       </section>
 
+      <section data-p="class">
+        <h3>Our Class</h3>
+        <p class="lead">발표자·모둠 뽑기와 생일 축하에 쓰는 명단입니다. <b style="color:#7dffb0">이 브라우저에만 저장되고 어디로도 보내지 않으며</b>,
+          설정 파일을 내보낼 때도 빠집니다.</p>
+        <div class="fld"><label>명단 — 한 줄에 한 명, <b style="color:#4fe3ff">이름 | 모둠 | 생일(월일)</b> (모둠·생일은 없어도 됩니다)</label>
+          <textarea class="big" data-cfg="roster" placeholder="김민준 | 1 | 03-15&#10;이서연 | 1 | 11-02&#10;박도윤 | 2&#10;최지우 | 2 | 07-21"></textarea>
+          <div class="hint">"발표할 사람 뽑아줘" → 이름이 드르륵 돌다가 멈춥니다. <b style="color:#ffc14d">도는 동안 숫자키를 누르면 그 모둠에서 뽑힙니다</b> — 아이들은 모릅니다.
+            "모둠 뽑아줘" 는 모둠 번호로, "당번 세 명 뽑아줘" 는 여러 명. 키보드는 <b>P</b>(사람) · <b>G</b>(모둠).</div></div>
+        <div class="two">
+          <div class="fld"><label>모둠 수 (명단에 모둠 번호가 없을 때)</label><input type="number" min="0" max="9" data-cfg="groups"></div>
+          <div class="fld"><label>생일 곡 (재생목록에서)</label><select id="bdayTrack"></select></div>
+        </div>
+        <label class="sw"><input type="checkbox" data-cfg="pickNoRepeat"> 오늘 이미 뽑힌 사람은 빼고 뽑기</label>
+        <div class="rowb"><button class="btn" id="pickPrev">▶ 사람 뽑기</button><button class="btn" id="pickPrevG">▶ 모둠 뽑기</button>
+          <button class="btn" id="bdayPrev">🎂 오늘 생일</button><button class="btn warnb" id="pickReset">오늘 뽑힌 기록 지우기</button></div>
+        <div class="hint" style="margin-top:12px">생일은 부팅 인사 뒤에 하루 한 번 저절로 축하합니다. "OO 생일 축하해줘" 라고 하면 그날이 아니어도 축하합니다.</div>
+      </section>
+
       <section data-p="script">
         <h3>Demo Script</h3>
         <p class="lead">아이들 앞에서 이 순서로 하면 됩니다. 말이 안 먹히면 옆의 숫자키를 누르세요 — 아이들은 눈치채지 못합니다.</p>
@@ -706,6 +786,9 @@ body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.orno
           <span class="key">7</span><span>오늘의 학습목표</span>
           <span class="key">8</span><span>음악 틀기/끄기 (대사까지)</span>
           <span class="key">9</span><span>오늘의 명언 (한 번 더 누르면 다른 명언)</span>
+          <span class="key">P</span><span>발표자 뽑기 — 도는 동안 숫자키 = 그 모둠에서</span>
+          <span class="key">G</span><span>모둠 뽑기 — 도는 동안 숫자키 = 그 모둠</span>
+          <span class="key">L</span><span>오늘 급식</span>
           <span class="key">0</span><span>종료 시퀀스</span>
           <span class="key">Esc</span><span>위젯 닫기</span>
           <span class="key">←</span><span>10초 뒤로 (Shift 30초)</span>
@@ -756,6 +839,9 @@ const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,readAloud:true,voiceE
   bgm:'command',bgmSrc:'audio/theme.mp3',bgmVol:.6,tracks:[],trackIdx:0,
   goal:'',
   quoteMode:'daily',quotes:'',quoteDefaults:true,
+  roster:'',groups:4,pickNoRepeat:true,bdayTrack:'',
+  noise:'on',noiseLevel:5,noiseWarn:true,noiseHold:4,
+  schoolName:'',atpt:'',schul:'',
   place:'서울 강남구',lat:37.478,lon:127.063,
   brief:'1교시 · 2학년 3반 — 전기와 자기 4차시\n준비물 · 전압계, 꼬마전구, 집게전선\n오늘의 질문 · 전구를 하나 더 끼우면 왜 어두워질까?\n체크 · 6교시 후 과학실 정리'};
 let CFG=Object.assign({},DEF);
@@ -987,7 +1073,7 @@ function say(en,kr,opt){
     k.rate=Math.min(1.6,(+CFG.rate||1.15)); k.pitch=.9; k.volume=mvol();
     k.onend=k.onerror=next; speechSynthesis.speak(k);
   };
-  const readTxt=(opt.read&&voiceKo&&CFG.readAloud!==false)?String(opt.read).trim():'';
+  const readTxt=(opt.read&&voiceKo&&CFG.readAloud!==false&&!(opt.readKr&&CFG.speakKo))?String(opt.read).trim():'';
   const readPart=()=>{ if(readTxt){ subtitle('',readTxt,Math.max(3000,readTxt.length*150)); koSpeak(readTxt,fin); } else fin(); };
   const done=()=>{
     if(CFG.speakKo && kr && voiceKo && !opt.noKo) koSpeak(kr,readPart);
@@ -1120,7 +1206,7 @@ function ornTick(){
   if(wf){ const pts=[]; for(let i=0;i<=24;i++){ const x=i/24*200, y=30+Math.sin(ORN.t*.25+i*.7)*8*(.4+earLevel*1.6)+(Math.random()-.5)*3;
       pts.push(x.toFixed(1)+','+y.toFixed(1)); } wf.setAttribute('points',pts.join(' ')); }
 }
-setInterval(()=>{ hudTick(); ornTick(); },120); hudTick();
+setInterval(()=>{ hudTick(); ornTick(); noiseTick(); },120); hudTick();
 
 /* ============================================================
    5. 귀 — 마이크 레벨 + 박수 감지
@@ -1237,6 +1323,10 @@ const K={
   volup:['소리높','소리키','소리올','소리크게','볼륨업','볼륨올','볼륨높','볼륨키','크게해','더크게','volumeup','louder','turnitup'],
   voldown:['소리낮','소리줄','소리내려','소리작게','볼륨다운','볼륨줄','볼륨낮','볼륨내려','작게해','더작게','volumedown','quieter','turnitdown'],
   quote:['명언','좋은말','격언','quote','한마디해','오늘의한마디','지혜','wisdom'],
+  pick:['뽑아','뽑을','뽑기','당번','추첨','제비','발표자','발표할','랜덤','random','pick','누가할','누가발표','한명','한사람'],
+  quiet:['조용히시켜','조용히해','조용좀','정숙','시끄러워','quiet','shh','쉿'],
+  bday:['생일','birthday','축하해'],
+  meal:['급식','점심뭐','점심메뉴','오늘메뉴','밥뭐','밥먹','메뉴','lunch','식단','내일급식','내일점심'],
   goal:['학습목표','목표','오늘목표','미션','mission','objective','오늘뭐배','뭘배','배울'],
   hi:['자비스','자비','저비스','쟈비스','jarvis','자바스','거기있','있니','있어','유데어','youthere','헤이','hey','들려','듣고있']
 };
@@ -1291,6 +1381,31 @@ const LINEDEF={
     'It was a pleasure, {sir}. Rest well.|저야말로 즐거웠습니다. 편히 쉬세요.',
     'Goodnight, {sir}. I will be here.|안녕히 가세요. 여기 있겠습니다.',
     'Anytime, {sir}. Powering down.|언제든지요. 전원을 내립니다.']},
+  pickStart:{t:'뽑기를 시작할 때',d:'"발표할 사람 뽑아줘" 라고 하면',v:[
+    'Selecting at random, {sir}. No favourites, I promise.|무작위로 뽑겠습니다. 편애는 없습니다.',
+    'Spinning the wheel of fate, {sir}.|운명의 바퀴를 돌립니다.',
+    'Consulting the random number generator, {sir}.|난수 생성기에 물어보는 중입니다.']},
+  pickDone:{t:'사람이 뽑혔을 때',d:'{pick} 자리에 이름이 들어갑니다 (이름은 한국어 음성이 읽음)',v:[
+    'And the honour goes to:|{pick}, 당첨입니다.',
+    'Fate has spoken:|운명이 정했습니다. {pick}.',
+    'Congratulations. The floor is yours:|축하합니다, {pick}. 발표해 주세요.']},
+  pickGroup:{t:'모둠이 뽑혔을 때',d:'{pick} 자리에 "3모둠" 처럼 들어갑니다',v:[
+    'Team up, please:|{pick}, 준비해 주세요.',
+    'The system has chosen:|시스템이 골랐습니다. {pick}.']},
+  noise:{t:'소음 경고',d:'소음 신호등이 빨강으로 몇 초 이어지면 (또는 "조용히 시켜")',v:[
+    'Volume check, {sir}. The room is getting loud.|소리가 커지고 있습니다. 조금만 조용히 해 주시죠.',
+    'My sensors are peaking. A little quieter, please.|센서가 한계입니다. 조금만 조용히요.',
+    'Silence is also data, {sir}. Let us collect some.|정숙도 데이터입니다. 조금 모아 보시죠.']},
+  birthday:{t:'생일 축하',d:'{pick} 자리에 이름',v:[
+    'Sound the trumpets, {sir}. We have a birthday.|오늘은 {pick}의 생일입니다. 축하합니다!',
+    'A special date in the archive, {sir}.|기록 보관소에 특별한 날이 있습니다. {pick}, 생일 축하합니다!']},
+  bdayNone:{t:'오늘 생일이 없을 때',d:'',v:[
+    'No birthdays today, {sir}. The cake remains in storage.|오늘은 생일인 사람이 없습니다. 케이크는 보관 중입니다.']},
+  meal:{t:'급식을 알려줄 때',d:'"오늘 급식 뭐야" 라고 하면 (뒤에 메뉴를 읽어 줍니다)',v:[
+    "Today's menu from the cafeteria, {sir}.|오늘의 급식입니다.",
+    'Nutritional intelligence incoming, {sir}.|영양 정보 들어옵니다.']},
+  mealNone:{t:'급식이 없을 때',d:'',v:[
+    'No meal on record for that day, {sir}.|그날은 급식이 없습니다.']},
   quote:{t:'명언을 열 때',d:'"오늘의 명언" 이라고 하면 (뒤에 한국어로 명언을 읽어 줍니다)',v:[
     'A thought for today, {sir}.|오늘의 한마디입니다.',
     'From the archive, {sir}. Someone wiser than me once said:|기록 보관소에서 하나 꺼냈습니다. 저보다 현명한 분의 말입니다.',
@@ -1310,7 +1425,12 @@ const fmt=s=>String(s==null?'':s)
 function lineSet(k){ const u=CFG.lines&&CFG.lines[k]; return (u&&u.length)?u:LINEDEF[k].v; }
 function linePair(k){ const s=pick(lineSet(k)), i=s.indexOf('|');
   return i<0?[s.trim(),'']:[s.slice(0,i).trim(),s.slice(i+1).trim()]; }
-function sayLine(k,opt){ const q=linePair(k); return say(q[0],q[1],opt); }
+function sayLine(k,opt,extra){
+  let q=linePair(k);
+  if(extra) q=q.map(x=>x.replace(/\{(\w+)\}/g,(m,key)=>(key in extra)?extra[key]:m));
+  opt=opt||{}; if(opt.readKr) opt.read=q[1];              // 한국어 자막을 그대로 읽는다
+  return say(q[0],q[1],opt);
+}
 const EGGS=[
   {k:['누구','who are you','후아유','정체','이름이뭐','네이름'],
    en:'I am JARVIS. Just A Rather Very Intelligent System. My user built me between two class periods.',
@@ -1360,6 +1480,10 @@ function handle(raw){
   if(has(t,K.music)) return playMusic();
   if(has(t,K.volup)) return volStep(.15);
   if(has(t,K.voldown)) return volStep(-.15);
+  if(has(t,K.meal)) return openMeal(t.includes('내일')?1:0);
+  if(has(t,K.bday)){ const who=rosterList().find(r=>t.includes(norm(r.name))); return openBirthday(who?[who.name]:null); }
+  if(has(t,K.quiet)) return sayLine('noise');
+  if(has(t,K.pick)) return startPick(t.includes('모둠')||t.includes('팀')?'group':'person',parseCount(raw));
   if(has(t,K.quote)) return openQuote();
   if(has(t,K.goal)) return (goalPending?fillBlanks():openGoal());
   if(has(t,K.off)) return shutdown();
@@ -1406,6 +1530,7 @@ function boot(){
     sayLine('welcome',{hold:5200,then:()=>{
       if(CFG.bgm==='boot') bgmStop(3200);            // 부팅 연출용 — 인사 끝나면 서서히 끔
       else if(CFG.bgm==='loop') bgmFadeTo(bgmBase=CFG.bgmVol*.45,1600); // 수업 내내 낮게 깔기
+      bootBirthday();
     }});
     if(SR){ recWanted=true; setTimeout(startRec,1400); }
   },4700);
@@ -1800,6 +1925,163 @@ function openQuote(){
   const readBy=(by&&by!=='전해지는 말')?'. '+by:'';
   sayLine('quote',{hold:7000,read:forSpeech(q.ko).replace(/[.。!?…]+$/,'')+readBy});
 }
+/* ============================================================
+   교실 도우미 — 명단 · 뽑기 · 소음 · 생일 · 급식
+   명단은 이 브라우저(localStorage)에만 있고 어디로도 보내지 않는다.
+   ============================================================ */
+function rosterList(){
+  return (CFG.roster||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const c=l.split('|').map(x=>x.trim());
+    return {name:c[0],group:(c[1]||'').replace(/[^0-9]/g,''),bday:(c[2]||'').replace(/[^0-9]/g,'')};
+  }).filter(r=>r.name);
+}
+function groupNums(){
+  const gs=[...new Set(rosterList().map(r=>r.group).filter(Boolean))].map(Number).sort((a,b)=>a-b);
+  if(gs.length) return gs;
+  const n=Math.max(0,Math.min(9,+CFG.groups||0)); return Array.from({length:n},(_,i)=>i+1);
+}
+const dayKey=()=>{ const d=new Date(); return d.getFullYear()+''+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); };
+function pickedToday(){ try{ return JSON.parse(localStorage.getItem('jarvis-picked-'+dayKey())||'[]'); }catch(e){ return []; } }
+function markPicked(names){ const a=pickedToday().concat(names); localStorage.setItem('jarvis-picked-'+dayKey(),JSON.stringify(a)); }
+const KNUM={'한':1,'두':2,'세':3,'네':4,'다섯':5,'여섯':6};
+function parseCount(raw){
+  let m=/(\d+)\s*(명|사람|팀|모둠)/.exec(raw||''); if(m) return Math.max(1,Math.min(6,+m[1]));
+  m=/(한|두|세|네|다섯|여섯)\s*(명|사람|팀)/.exec(raw||''); if(m) return KNUM[m[1]];
+  return 1;
+}
+const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [a[i],a[j]]=[a[j],a[i]]; } return a; };
+
+/* 뽑기 — 도는 동안 선생님이 숫자키를 누르면 그 모둠(또는 그 모둠의 한 명)으로 멈춘다 */
+let spin=null;
+function startPick(kind,count){
+  count=count||1;
+  const all=rosterList();
+  if(kind==='person'&&!all.length) return say('I have no class list, {sir}. Add one in the console.','명단이 없습니다. 교사 콘솔 「우리 반」 탭에 넣어 주세요.',{hold:5000});
+  if(kind==='group'&&!groupNums().length) return say('No teams are defined, {sir}.','모둠이 정해져 있지 않습니다. 명단에 모둠 번호를 적거나 모둠 수를 정해 주세요.',{hold:5000});
+  const p=panel('Random Select',kind==='group'?'모둠 뽑기':'발표자 뽑기','secure random · v7',
+    '<div class="pickwrap"><div class="pickbig spin" id="pickBig">?</div><div class="picksub" id="pickSub"></div><div class="pickmem" id="pickMem"></div></div>');
+  let pool;
+  if(kind==='group') pool=groupNums().map(String);
+  else{
+    pool=all.map(r=>r.name);
+    if(CFG.pickNoRepeat!==false){ const done=pickedToday(); const left=pool.filter(n=>!done.includes(n)); if(left.length>=count) pool=left; }
+  }
+  const big=p.querySelector('#pickBig'), sub=p.querySelector('#pickSub');
+  sub.textContent=kind==='group'?'모둠 '+groupNums().length+'개 중에서':(pool.length+'명 중에서'+(count>1?' '+count+'명':''));
+  sayLine('pickStart',{hold:3000});
+  spin={kind:kind,count:count,pool:pool,forced:null,p:p,t0:performance.now()};
+  const DUR=3600;
+  const step=()=>{                                          // rAF 대신 타이머 — 창이 가려져도 끝까지 돈다
+    if(!spin||spin.p!==p||panelEl!==p){ spin=null; return; }
+    const k=Math.min(1,(performance.now()-spin.t0)/DUR);
+    const show=Array.from({length:count},()=>pool[(Math.random()*pool.length)|0]);
+    big.innerHTML=show.map(n=>'<span class="nm">'+escT(kind==='group'?n+'모둠':n)+'</span>').join('');
+    if(k<.97) sfx.blip();
+    if(k>=1) return landPick();
+    setTimeout(step,40+k*k*420);                            // 점점 느려진다
+  };
+  setTimeout(step,60);
+}
+function landPick(){
+  const sp=spin; spin=null; if(!sp||panelEl!==sp.p) return;
+  const all=rosterList(); let result=[];
+  if(sp.kind==='group'){
+    const gs=groupNums(); const g=(sp.forced&&gs.includes(sp.forced))?sp.forced:gs[(Math.random()*gs.length)|0];
+    result=[String(g)];
+  }else{
+    let pool=sp.pool.slice();
+    if(sp.forced){                                           // 숫자키: 그 모둠에서 고른다 (모둠이 없으면 그 번호 학생)
+      const gm=all.filter(r=>+r.group===sp.forced).map(r=>r.name);
+      if(gm.length) pool=gm; else if(all[sp.forced-1]) pool=[all[sp.forced-1].name];
+    }
+    result=shuffle(pool).slice(0,sp.count);
+  }
+  const big=sp.p.querySelector('#pickBig'), mem=sp.p.querySelector('#pickMem');
+  big.classList.remove('spin'); big.classList.add('land');
+  big.innerHTML=result.map(n=>'<span class="nm">'+escT(sp.kind==='group'?n+'모둠':n)+'</span>').join('');
+  sfx.up(); flash(.12);
+  if(sp.kind==='group'){
+    const members=all.filter(r=>r.group===result[0]).map(r=>r.name);
+    mem.textContent=members.length?members.join(' · '):'';
+    sayLine('pickGroup',{readKr:true},{pick:result[0]+'모둠'});
+  }else{
+    markPicked(result);
+    sayLine('pickDone',{readKr:true},{pick:result.join(', ')});
+  }
+}
+
+/* 소음 신호등 — 자비스가 말하거나 음악이 나올 땐 재지 않는다 */
+const NZ={avg:0,red:0,last:0};
+function noiseTick(){
+  const el=$('#noiseLight'); if(!el) return;
+  if(CFG.noise==='off'||phase!=='online'||!micOK){ el.classList.remove('show'); body.classList.remove('nz-y','nz-r'); return; }
+  el.classList.add('show');
+  const active=!speaking&&!bgmPlaying&&!spin;
+  if(active) NZ.avg=NZ.avg*.88+earLevel*.12;
+  const sv=+CFG.noiseLevel||5, yT=Math.max(.06,.22-(sv-5)*.025), rT=Math.max(.12,.42-(sv-5)*.04);
+  const st=NZ.avg>rT?'r':NZ.avg>yT?'y':'g';
+  el.dataset.st=st; body.classList.toggle('nz-y',st==='y'); body.classList.toggle('nz-r',st==='r');
+  const m=$('#nzNow'); if(m) m.style.width=Math.min(100,NZ.avg*200)+'%';
+  if(st==='r'&&active){ NZ.red+=120;
+    if(NZ.red>=(+CFG.noiseHold||4)*1000 && Date.now()-NZ.last>40000 && CFG.noiseWarn!==false){ NZ.last=Date.now(); NZ.red=0; sayLine('noise'); } }
+  else NZ.red=Math.max(0,NZ.red-240);
+}
+
+/* 생일 */
+function todaysBirthdays(){ const d=new Date(), md=String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  return rosterList().filter(r=>r.bday&&r.bday.slice(-4)===md).map(r=>r.name); }
+function openBirthday(names){
+  if(!names) names=todaysBirthdays();
+  if(!names.length) return sayLine('bdayNone');
+  const p=panel('Birthday Protocol','생일 축하','🎂 archive · special',
+    '<div class="confetti" id="confetti"></div><div class="bdaywrap"><div class="bdaycake">🎂</div>'
+    +'<div class="bdayname">'+names.map(escT).join(' · ')+'</div><div class="bdaymsg">생일 축하합니다!</div></div>');
+  const cf=p.querySelector('#confetti'), cols=['#4fe3ff','#ffc14d','#ff5470','#7dffb0','#fff','#c084fc'];
+  cf.innerHTML=Array.from({length:46},(_,i)=>'<i style="left:'+(Math.random()*100)+'%;background:'+cols[i%cols.length]
+    +';animation-delay:'+(Math.random()*3).toFixed(2)+'s;animation-duration:'+(2.6+Math.random()*2).toFixed(2)+'s"></i>').join('');
+  sfx.up(); flash(.15);
+  const tr=tracks(), ti=CFG.bdayTrack===''?-1:+CFG.bdayTrack;
+  sayLine('birthday',{readKr:true,then:()=>{ if(tr[ti]) loadTrack(ti,true); }},{pick:names.join(', ')});
+}
+function bootBirthday(){
+  const names=todaysBirthdays(); if(!names.length) return;
+  const key='jarvis-bday-'+dayKey(); if(localStorage.getItem(key)) return;   // 하루 한 번만 자동으로
+  localStorage.setItem(key,'1'); setTimeout(()=>openBirthday(names),900);
+}
+
+/* 오늘 급식 — 나이스 교육정보 개방포털, 키 없이 (open.neis.go.kr) */
+const NEIS='https://open.neis.go.kr/hub/';
+async function findSchool(name){
+  const r=await fetch(NEIS+'schoolInfo?Type=json&pSize=20&SCHUL_NM='+encodeURIComponent(name));
+  const d=await r.json(); const rows=(d.schoolInfo&&d.schoolInfo[1]&&d.schoolInfo[1].row)||[];
+  return rows.map(x=>({name:x.SCHUL_NM,atpt:x.ATPT_OFCDC_SC_CODE,schul:x.SD_SCHUL_CODE,office:x.ATPT_OFCDC_SC_NM,addr:x.ORG_RDNMA||''}));
+}
+const cleanDish=t=>String(t||'').replace(/\([\d.\s]+\)/g,'').replace(/\s+/g,' ').trim();
+async function openMeal(offset){
+  if(!CFG.atpt||!CFG.schul) return say('No school is registered, {sir}.','학교가 등록되지 않았습니다. 교사 콘솔 기본 탭에서 학교를 찾아 주세요.',{hold:5200});
+  const d=new Date(); d.setDate(d.getDate()+(offset||0));
+  const ymd=d.getFullYear()+''+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  const label=(offset?'내일':'오늘')+' · '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+['일','월','화','수','목','금','토'][d.getDay()]+')';
+  const p=panel('School Meal','오늘의 급식','neis · open data',
+    '<div class="mealhead"><span class="d">'+escT(ymd)+'</span><span class="k">'+escT(CFG.schoolName||'')+' · 불러오는 중…</span></div>');
+  try{
+    const r=await fetch(NEIS+'mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE='+encodeURIComponent(CFG.atpt)
+      +'&SD_SCHUL_CODE='+encodeURIComponent(CFG.schul)+'&MLSV_YMD='+ymd);
+    const j=await r.json(); if(panelEl!==p) return;
+    const rows=(j.mealServiceDietInfo&&j.mealServiceDietInfo[1]&&j.mealServiceDietInfo[1].row)||[];
+    const lunch=rows.find(x=>x.MMEAL_SC_CODE==='2')||rows[0];
+    if(!lunch){ p.querySelector('.mealhead .k').textContent=label+' · 급식 없음'; return sayLine('mealNone'); }
+    const dishes=String(lunch.DDISH_NM||'').split(/<br\s*\/?>/i).map(cleanDish).filter(Boolean);
+    p.querySelector('.mealhead').innerHTML='<span class="d">'+escT(label)+'</span><span class="k">'+escT(lunch.SCHUL_NM||CFG.schoolName)+' · '+escT(lunch.MMEAL_SC_NM)+' · '+escT(lunch.CAL_INFO||'')+'</span>';
+    p.insertAdjacentHTML('beforeend','<div class="meallist">'+dishes.map((x,i)=>'<div>'+escT(x)+'</div>').join('')+'</div>');
+    sayLine('meal',{read:dishes.join(', ')});
+  }catch(e){
+    if(panelEl!==p) return;
+    p.querySelector('.mealhead .k').textContent='급식 서버에 연결하지 못했습니다';
+    say('The cafeteria uplink is down, {sir}.','급식 정보 연결에 실패했습니다.');
+  }
+}
+
 function fillBlanks(){
   if(!goalPending) return;
   const cs=goalPending.cs; goalPending=null;
@@ -1819,6 +2101,7 @@ const ACT={
   '7':()=>(goalPending?fillBlanks():openGoal()),
   '8':()=>(bgmPlaying?stopMusic():playMusic()),
   '9':openQuote,
+  'p':()=>startPick('person',1),'g':()=>startPick('group',1),'l':()=>openMeal(0),
   '6':()=>{ sfx.up(); if(Math.random()<.45) return sayLine('hello');
             const e=pick(EGGS); say(e.en,e.kr); },
   '0':shutdown
@@ -1840,6 +2123,7 @@ addEventListener('keydown',e=>{
   if(k==='escape'&&consOpen){ e.preventDefault(); return closeCons(); }
   if(e.target&&e.target.matches&&e.target.matches('input,textarea,select')) return;
   if(consOpen) return;
+  if(spin&&/^[1-9]$/.test(k)){ e.preventDefault(); spin.forced=+k; return; }   // 뽑기 중 숫자키 = 몰래 정하기
   if(k==='arrowup'||k==='+'||k==='='){ e.preventDefault(); return volStep(.15); }
   if(k==='arrowdown'||k==='-'||k==='_'){ e.preventDefault(); return volStep(-.15); }
   if(k==='arrowright'){ e.preventDefault(); return seekBy(e.shiftKey?30:10); }
@@ -1879,7 +2163,7 @@ function enter(){
 $('#goBtn').onclick=enter;
 
 const cons=$('#cons');
-function openCons(){ fillVoices(); pitchShow(); trackListRender(); if($('#pitch')) $('#pitch').value=Math.round((+CFG.pitch||.8)*100); cons.classList.add('open'); body.classList.add('showcur'); fillCons(); }
+function openCons(){ fillVoices(); pitchShow(); trackListRender(); fillBdayTrack(); schoolShow(); if($('#pitch')) $('#pitch').value=Math.round((+CFG.pitch||.8)*100); cons.classList.add('open'); body.classList.add('showcur'); fillCons(); }
 function closeCons(){ cons.classList.remove('open'); }
 function toggleCons(){ cons.classList.contains('open')?closeCons():openCons(); }
 $('#fab').onclick=toggleCons;
@@ -2027,6 +2311,26 @@ function previewQuote(){
   setTimeout(()=>{ if(phase==='standby') boot(); setTimeout(openQuote,5300); },420);
 }
 $('#quotePrev').onclick=previewQuote;
+function previewRun(fn){ closeCons(); if(phase==='online') return fn(); if(phase==='gate') enter();
+  setTimeout(()=>{ if(phase==='standby') boot(); setTimeout(fn,5300); },420); }
+$('#pickPrev').onclick=()=>previewRun(()=>startPick('person',1));
+$('#pickPrevG').onclick=()=>previewRun(()=>startPick('group',1));
+$('#bdayPrev').onclick=()=>previewRun(()=>openBirthday(null));
+$('#pickReset').onclick=()=>{ localStorage.removeItem('jarvis-picked-'+dayKey()); toast('오늘 뽑힌 기록을 지웠습니다'); };
+function fillBdayTrack(){ const sel=$('#bdayTrack'); if(!sel) return;
+  sel.innerHTML='<option value="">안 틀기</option>'+tracks().map((t,i)=>'<option value="'+i+'"'+(String(CFG.bdayTrack)===String(i)?' selected':'')+'>'+escT(t.name)+'</option>').join(''); }
+$('#bdayTrack').onchange=e=>{ CFG.bdayTrack=e.target.value; saveCfg(); toast('저장됨'); };
+function schoolShow(){ const n=$('#schoolNow'); if(n) n.textContent=CFG.schul?('등록된 학교 · '+CFG.schoolName+' ('+CFG.atpt+' / '+CFG.schul+')'):'아직 등록된 학교가 없습니다.'; }
+$('#schoolFind').onclick=async ()=>{
+  const q=$('#schoolQ').value.trim(), box=$('#schoolRes'); if(!q) return;
+  box.innerHTML='<div class="hint">찾는 중…</div>';
+  try{ const list=await findSchool(q);
+    if(!list.length){ box.innerHTML='<div class="hint">찾지 못했습니다. 정식 이름(예: ○○초등학교)으로 넣어 보세요.</div>'; return; }
+    box.innerHTML=list.map((x,i)=>'<button data-si="'+i+'">'+escT(x.name)+' <span style="color:#3d5f6b">— '+escT(x.office)+' · '+escT(x.addr)+'</span></button>').join('');
+    box.onclick=e=>{ const b=e.target.closest('[data-si]'); if(!b) return; const x=list[+b.dataset.si];
+      CFG.schoolName=x.name; CFG.atpt=x.atpt; CFG.schul=x.schul; saveCfg(); schoolShow(); box.innerHTML=''; toast('학교를 등록했습니다'); };
+  }catch(err){ box.innerHTML='<div class="hint" style="color:#ffc14d">나이스 서버에 연결하지 못했습니다.</div>'; }
+};
 $('#briefPrev').onclick=()=>{ closeCons(); if(phase==='online') openBrief(); else toast('부팅한 뒤에 볼 수 있습니다'); };
 
 /* 음악 */
@@ -2092,7 +2396,8 @@ $('#bgmClear').onclick=async ()=>{
 
 /* 설정 내려받기 · 불러오기 · 초기화 */
 $('#expCfg').onclick=()=>{
-  const blob=new Blob([JSON.stringify(CFG,null,2)],{type:'application/json'});
+  const out=Object.assign({},CFG); delete out.roster;                    // 아이들 명단은 파일로 내보내지 않는다
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='jarvis-설정.json'; document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },3000);
