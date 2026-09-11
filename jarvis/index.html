@@ -47,7 +47,7 @@ body.on .brk,body.booting .brk{opacity:1}
 .brk.d{bottom:2vmin;right:2vmin;border-left:0;border-top:0}
 
 /* ---------- reactor ---------- */
-#core{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);width:58vmin;height:58vmin;pointer-events:none;
+#core{position:fixed;left:50%;top:57%;transform:translate(-50%,-50%);width:44vmin;height:44vmin;pointer-events:none;
   filter:drop-shadow(0 0 calc(2vmin + var(--lvl)*3vmin) rgba(79,227,255,.55));
   opacity:.2;transition:opacity 1s cubic-bezier(.2,.7,.3,1)}
 body.booting #core{opacity:.4} body.on #core{opacity:1}
@@ -76,7 +76,7 @@ body.speaking #core{filter:drop-shadow(0 0 4vmin rgba(120,235,255,.85))}
 #gate small{color:#4a707f;font-size:clamp(11px,1.35vmin,15px);line-height:1.9}
 
 /* ---------- standby prompt ---------- */
-#standby{position:fixed;left:50%;bottom:14vmin;transform:translateX(-50%);text-align:center;pointer-events:none;
+#standby{position:fixed;left:50%;bottom:8.5vmin;transform:translateX(-50%);text-align:center;pointer-events:none;
   font-family:var(--hud);letter-spacing:.28em;color:var(--dim);font-size:clamp(11px,1.5vmin,17px);text-transform:uppercase;
   opacity:0;transition:opacity .6s}
 body.standby #standby{opacity:1;animation:breathe 3.4s ease-in-out infinite}
@@ -305,6 +305,65 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
 }
 #app-credit{position:fixed;left:0;bottom:0;width:100%;z-index:5;pointer-events:none}
 @media (max-width:640px){.wnow{grid-template-columns:1fr;text-align:center;justify-items:center}.clockwrap{grid-template-columns:1fr;text-align:center}}
+
+/* ---------- 아이언맨 HUD 장식 ---------- */
+.hex{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 1.2s;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='34.64' height='60' viewBox='0 0 34.64 60'><g fill='none' stroke='%234fe3ff' stroke-opacity='.11' stroke-width='1'><polygon points='17.32,0 34.64,10 34.64,30 17.32,40 0,30 0,10'/><polygon points='0,30 17.32,40 17.32,60 0,70 -17.32,60 -17.32,40'/><polygon points='34.64,30 51.96,40 51.96,60 34.64,70 17.32,60 17.32,40'/></g></svg>");
+  background-size:34.64px 60px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 55%,transparent 24%,#000 62%);mask-image:radial-gradient(ellipse at 50% 55%,transparent 24%,#000 62%)}
+.orn{position:fixed;top:11vmin;width:18vmin;display:flex;flex-direction:column;gap:2vmin;pointer-events:none;
+  font-family:var(--hud);opacity:0;transition:opacity 1s}
+#ornL{left:2.6vmin} #ornR{right:2.6vmin}
+.ornbox{position:relative;border:1px solid rgba(79,227,255,.2);padding:1.1vmin 1.2vmin;background:rgba(79,227,255,.03)}
+.ornbox::before{content:'';position:absolute;left:-1px;top:-1px;width:1.6vmin;height:1.6vmin;border-top:2px solid var(--cy);border-left:2px solid var(--cy)}
+.ornbox::after{content:'';position:absolute;right:-1px;bottom:-1px;width:1.6vmin;height:1.6vmin;border-bottom:2px solid rgba(79,227,255,.5);border-right:2px solid rgba(79,227,255,.5)}
+.olab{font-size:clamp(8px,1vmin,12px);letter-spacing:.2em;color:var(--dim);margin-bottom:.8vmin;text-transform:uppercase}
+.dial{width:100%;height:auto;display:block;overflow:visible}
+.dial .dt{fill:none;stroke:rgba(79,227,255,.4);stroke-width:1;stroke-dasharray:1 5.9}
+.dial .dr{fill:none;stroke:var(--cy);stroke-width:3;stroke-dasharray:60 18 12 18;opacity:.5}
+.dial .db{fill:none;stroke:rgba(79,227,255,.14);stroke-width:6}
+.dial .da{fill:none;stroke:var(--cy);stroke-width:6;transform:rotate(-90deg);transform-origin:50% 50%;
+  stroke-dasharray:96 100;filter:drop-shadow(0 0 4px rgba(79,227,255,.8));transition:stroke-dasharray 1s}
+.dial .dv{fill:#eafcff;font-size:24px;text-anchor:middle;font-family:var(--hud)}
+.dial .du{fill:var(--cy);font-size:10px;text-anchor:middle;letter-spacing:.1em;font-family:var(--hud)}
+.spinA{transform-origin:50% 50%;animation:sp 14s linear infinite}
+.spinB{transform-origin:50% 50%;animation:sp 9s linear infinite reverse}
+.abars{display:flex;align-items:flex-end;gap:.35vmin;height:7vmin}
+.abars i{flex:1;height:6%;background:linear-gradient(0deg,var(--cy2),var(--cy));box-shadow:0 0 6px rgba(79,227,255,.5);transition:height .12s}
+.hexblk{margin:0;font-family:var(--hud);font-size:clamp(8px,1.05vmin,12px);line-height:1.55;color:rgba(79,227,255,.55);letter-spacing:.06em;white-space:pre}
+.radar{position:relative;width:100%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(79,227,255,.35);overflow:hidden;
+  background:radial-gradient(circle,rgba(79,227,255,.08) 0 30%,transparent 31%),
+    repeating-radial-gradient(circle,transparent 0 22%,rgba(79,227,255,.18) 22.5% 23%)}
+.radar::before,.radar::after{content:'';position:absolute;background:rgba(79,227,255,.2)}
+.radar::before{left:50%;top:0;bottom:0;width:1px}.radar::after{top:50%;left:0;right:0;height:1px}
+.radar .sweep{position:absolute;inset:0;border-radius:50%;transform-origin:50% 50%;animation:sp 4s linear infinite;
+  background:conic-gradient(from 0deg,rgba(79,227,255,.5),rgba(79,227,255,.06) 70deg,transparent 90deg)}
+.radar i{position:absolute;width:.7vmin;height:.7vmin;border-radius:50%;background:var(--cy);box-shadow:0 0 8px var(--cy);animation:blink 2.6s infinite}
+.hbars{display:grid;gap:.6vmin}
+.hbars b{display:block;height:.7vmin;background:rgba(79,227,255,.12)}
+.hbars i{display:block;height:100%;width:50%;background:var(--cy);box-shadow:0 0 6px rgba(79,227,255,.6);transition:width 1.2s}
+.wavesvg{width:100%;height:5vmin;margin-top:1vmin;display:block}
+.wavesvg polyline{fill:none;stroke:var(--cy);stroke-width:1.5;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 3px rgba(79,227,255,.7))}
+#helm{position:fixed;left:50%;top:5vmin;height:28vmin;width:auto;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity 1s;
+  filter:drop-shadow(0 0 8px rgba(79,227,255,.25))}
+#helm .eyes{animation:eyeglow 3.2s ease-in-out infinite}
+@keyframes eyeglow{0%,100%{opacity:.7}50%{opacity:1}}
+#torso{position:fixed;left:50%;top:31vmin;width:88vmin;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity 1s}
+.ruler{position:fixed;left:24vmin;right:24vmin;height:1.3vmin;pointer-events:none;opacity:0;transition:opacity 1s;background-repeat:repeat-x;
+  background-image:repeating-linear-gradient(90deg,rgba(79,227,255,.45) 0 1px,transparent 1px 2.5vmin),
+                   repeating-linear-gradient(90deg,rgba(79,227,255,.16) 0 1px,transparent 1px .5vmin);
+  background-size:auto 100%,auto 55%}
+.ruler.top{top:1.4vmin;background-position:0 100%,0 100%}
+.ruler.bot{bottom:1.4vmin;background-position:0 0,0 0}
+/* 상태별 밝기: 대기땐 희미, 켜지면 또렷, 위젯 뜨면 뒤로 */
+body.standby .hex,body.standby .orn,body.standby #helm,body.standby #torso,body.standby .ruler{opacity:.28}
+body.booting .hex,body.booting .orn,body.booting #helm,body.booting #torso,body.booting .ruler{opacity:.55}
+body.on .hex{opacity:.9} body.on .orn,body.on .ruler{opacity:1} body.on #helm{opacity:.62} body.on #torso{opacity:.42}
+body.widget .orn,body.widget #helm,body.widget #torso,body.widget .ruler{opacity:.14}
+body.nosuit #helm,body.nosuit #torso{display:none}
+body.ornlite .orn,body.ornlite .ruler{display:none}
+body.ornoff .orn,body.ornoff .ruler,body.ornoff .hex,body.ornoff #helm,body.ornoff #torso{display:none}
+@media (max-width:760px),(max-aspect-ratio:1/1){.orn,.ruler,#torso{display:none}}
 </style>
 
 <canvas id="bg"></canvas>
@@ -348,6 +407,60 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
     <circle id="coreGlow" cx="200" cy="200" r="62" fill="url(#gcore)"/>
   </g>
 </svg></div>
+
+<div class="hex"></div>
+<div class="ruler top"></div><div class="ruler bot"></div>
+<svg id="helm" viewBox="0 0 200 240" aria-hidden="true">
+  <defs><filter id="eg" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>
+  <g fill="none" stroke="#4fe3ff" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M58 206 C44 178 42 132 46 92 C49 58 68 22 100 16 C132 22 151 58 154 92 C158 132 156 178 142 206 C130 220 114 226 100 226 C86 226 70 220 58 206 Z"/>
+    <path d="M72 58 C64 90 60 140 66 190 C78 206 90 212 100 213 C110 212 122 206 134 190 C140 140 136 90 128 58 C118 52 108 50 100 50 C92 50 82 52 72 58 Z" opacity=".8"/>
+    <path d="M100 22 V48" opacity=".55"/>
+    <path d="M67 140 L73 176 M133 140 L127 176" opacity=".6"/>
+    <path d="M86 180 H114 M100 190 V213" opacity=".7"/>
+    <path d="M52 100 C40 104 36 120 40 134 M148 100 C160 104 164 120 160 134" opacity=".45"/>
+  </g>
+  <g class="eyes">
+    <polygon points="62,104 91,100 93,112 66,117" fill="#4fe3ff" opacity=".85" filter="url(#eg)"/>
+    <polygon points="109,100 138,104 134,117 107,112" fill="#4fe3ff" opacity=".85" filter="url(#eg)"/>
+    <polygon points="62,104 91,100 93,112 66,117" fill="#e8fbff"/>
+    <polygon points="109,100 138,104 134,117 107,112" fill="#e8fbff"/>
+  </g>
+</svg>
+<svg id="torso" viewBox="0 0 400 220" aria-hidden="true">
+  <g fill="none" stroke="#4fe3ff" stroke-width="1.3" stroke-linecap="round">
+    <path d="M200 30 C160 24 118 34 84 62 C56 86 36 122 26 170"/>
+    <path d="M200 30 C240 24 282 34 316 62 C344 86 364 122 374 170"/>
+    <path d="M150 52 C128 92 118 140 120 200" opacity=".6"/>
+    <path d="M250 52 C272 92 282 140 280 200" opacity=".6"/>
+    <path d="M60 78 L34 96 M340 78 L366 96" opacity=".5"/>
+    <path d="M96 150 H124 M276 150 H304" opacity=".4"/>
+  </g>
+</svg>
+<div class="orn" id="ornL">
+  <div class="ornbox"><div class="olab">Reactor output</div>
+    <svg class="dial" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="55" class="dt"/><circle cx="60" cy="60" r="47" class="dr spinA"/>
+      <circle cx="60" cy="60" r="38" class="db"/><circle cx="60" cy="60" r="38" class="da" id="d1a" pathLength="100"/>
+      <text x="60" y="65" class="dv" id="d1v">96.2</text><text x="60" y="80" class="du">PCT</text>
+    </svg></div>
+  <div class="ornbox"><div class="olab">Audio array</div>
+    <div class="abars" id="abars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="ornbox"><div class="olab">Data stream</div><pre class="hexblk" id="hexblk"></pre></div>
+</div>
+<div class="orn" id="ornR">
+  <div class="ornbox"><div class="olab">Atmos scan</div>
+    <div class="radar"><div class="sweep"></div><i style="left:62%;top:30%"></i><i style="left:28%;top:58%;animation-delay:.9s"></i><i style="left:70%;top:66%;animation-delay:1.7s"></i></div></div>
+  <div class="ornbox"><div class="olab">Thermal</div>
+    <svg class="dial" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="55" class="dt"/><circle cx="60" cy="60" r="47" class="dr spinB"/>
+      <circle cx="60" cy="60" r="38" class="db"/><circle cx="60" cy="60" r="38" class="da" id="d2a" pathLength="100"/>
+      <text x="60" y="65" class="dv" id="d2v">34</text><text x="60" y="80" class="du">DEG C</text>
+    </svg></div>
+  <div class="ornbox"><div class="olab">Subsystems</div>
+    <div class="hbars" id="hbars"><b><i></i></b><b><i></i></b><b><i></i></b><b><i></i></b><b><i></i></b></div>
+    <svg class="wavesvg" viewBox="0 0 200 60" preserveAspectRatio="none"><polyline id="wave" points="0,30 200,30"/></svg></div>
+</div>
 
 <div class="hud">
   <div class="box tl" id="hudL"></div>
@@ -419,6 +532,16 @@ ol.script li{margin-bottom:4px} ol.script b{color:var(--cy);font-weight:600}
             <div class="hint">비워 두면 "OOO 전용 인공지능 비서"로 나옵니다.</div></div>
         </div>
         <div class="rowb"><button class="btn" data-play="welcome">▶ 부팅 인사 들어보기</button></div>
+
+        <h3 style="margin-top:34px">Display</h3>
+        <p class="lead">화면 장식입니다. 전자칠판이 버벅이면 줄이세요.</p>
+        <div class="two">
+          <div class="fld"><label>HUD 장식</label>
+            <select data-cfg="orn"><option value="full">전부 — 계기판·헬멧·데이터 (기본)</option>
+              <option value="lite">헬멧만</option><option value="off">끄기 — 리액터만</option></select></div>
+          <div class="fld"><label>헬멧 실루엣</label>
+            <select data-cfg="suit"><option value="on">보이기</option><option value="off">숨기기</option></select></div>
+        </div>
 
         <h3 style="margin-top:34px">Weather</h3>
         <p class="lead">"오늘 날씨 어때?" 에 답할 위치입니다.</p>
@@ -628,7 +751,7 @@ const $=s=>document.querySelector(s), body=document.body;
 
 /* ---------- 설정 ---------- */
 const DEF={sens:5,lang:'ko-KR',speakKo:false,autoLoop:true,readAloud:true,voiceEn:'',voiceKo:'',pitch:.8,
-  name:'선생님',sir:'sir',owner:'',tagline:'',lines:{},goalStyle:'',
+  name:'선생님',sir:'sir',owner:'',tagline:'',lines:{},goalStyle:'',orn:'full',suit:'on',
   vol:.5,rate:1.15,script:'짝짝 (손뼉 두 번) | 부팅 로그가 흐르고 "Welcome home." | Space\n"You up, JARVIS?" | 자비스가 대답 | 6\n"음악 틀어" | 멋 부린 한마디 뒤에 음악 | 8\n"음악 꺼" | 정숙 — 여기서 수업 분위기로 전환 | 8\n"오늘 날씨 어때?" | 실시간 날씨 위젯 | 1\n"시스템 진단해" | 이 컴퓨터의 진짜 사양 | 3\n"오늘 학습목표" | 목표 공개 → 빈칸이면 아이들에게 질문 → 스페이스바 | 7\n"오늘의 명언" | 명언 하나가 뜨고 자비스가 읽어 줌 | 9\n"자비스, 고생했어" | 종료 인사 | 0',
   bgm:'command',bgmSrc:'audio/theme.mp3',bgmVol:.6,tracks:[],trackIdx:0,
   goal:'',
@@ -974,7 +1097,30 @@ function hudTick(){
   $('#hudBR').innerHTML='<span class="k">stark industries</span><br><span class="k">rev '+hex(3)+' · authorised</span><br>'
     +'<span class="v">'+(phase==='online'?'awaiting command':'—')+'</span>';
 }
-setInterval(hudTick,120); hudTick();
+/* 장식 계기판 — 오디오 막대는 마이크에, 나머지는 살짝씩 흔들린다 */
+const ORN={bars:new Array(12).fill(.06),t:0,v1:96.2,v2:34};
+const clampN=(v,a,b)=>Math.max(a,Math.min(b,v));
+function ornTick(){
+  if(phase==='gate'||body.classList.contains('ornoff')) return;
+  ORN.t++;
+  const ab=$('#abars');
+  if(ab){ const lv=earLevel;
+    ORN.bars=ORN.bars.map(h=>{ const tg=Math.max(.06+Math.random()*.1,Math.min(1,lv*(.5+Math.random()*.9)+(bgmPlaying?.12+Math.random()*.25:0)));
+      return h+(tg-h)*(tg>h?.55:.16); });
+    let i=0; for(const b of ab.children){ b.style.height=(ORN.bars[i++]*100).toFixed(0)+'%'; } }
+  if(ORN.t%4===0){ const hx=$('#hexblk'); if(hx) hx.textContent=Array.from({length:6},()=>hex(4)+' '+hex(4)+' '+hex(2)).join('\n'); }
+  if(ORN.t%10===0){
+    ORN.v1=clampN(ORN.v1+(Math.random()-.5)*1.2,92,99.4); const a=$('#d1a'),v=$('#d1v');
+    if(a){ a.style.strokeDasharray=ORN.v1.toFixed(1)+' 100'; v.textContent=ORN.v1.toFixed(1); }
+    ORN.v2=clampN(ORN.v2+(Math.random()-.5)*1.4,30,39); const a2=$('#d2a'),v2=$('#d2v');
+    if(a2){ a2.style.strokeDasharray=(ORN.v2*2).toFixed(0)+' 100'; v2.textContent=ORN.v2.toFixed(0); }
+    for(const b of document.querySelectorAll('#hbars i')) b.style.width=(35+Math.random()*60).toFixed(0)+'%';
+  }
+  const wf=$('#wave');
+  if(wf){ const pts=[]; for(let i=0;i<=24;i++){ const x=i/24*200, y=30+Math.sin(ORN.t*.25+i*.7)*8*(.4+earLevel*1.6)+(Math.random()-.5)*3;
+      pts.push(x.toFixed(1)+','+y.toFixed(1)); } wf.setAttribute('points',pts.join(' ')); }
+}
+setInterval(()=>{ hudTick(); ornTick(); },120); hudTick();
 
 /* ============================================================
    5. 귀 — 마이크 레벨 + 박수 감지
@@ -1769,6 +1915,7 @@ function bindCfg(){
       if((k==='lat'||k==='lon')&&!isFinite(v)) v=DEF[k];
       CFG[k]=v; saveCfg(); toast('저장됨');
       if(k==='name'||k==='tagline') applyIdentity();
+      if(k==='orn'||k==='suit') applyDisplay();
       if(k==='script') renderScript();
       if(k==='bgmSrc') bgmLoad();
       if(k==='lang'&&rec){ try{ rec.stop(); }catch(e){} }
@@ -1966,6 +2113,10 @@ $('#reset').onclick=()=>{
   fillCfg(); fillLines(); applyIdentity(); bgmLoad(); toast('초기화되었습니다');
 };
 
-applyIdentity(); fillCons(); bgmLoad();
+function applyDisplay(){
+  body.classList.toggle('ornlite',CFG.orn==='lite'); body.classList.toggle('ornoff',CFG.orn==='off');
+  body.classList.toggle('nosuit',CFG.suit==='off');
+}
+applyDisplay(); applyIdentity(); fillCons(); bgmLoad();
 
 </script>
