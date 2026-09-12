@@ -941,7 +941,11 @@ async function migrateTracks(){
   const list=[];
   const old=await idbGet('bgm');
   if(old&&old.blob) list.push({id:'legacy',name:old.name||'저장된 음원',kind:'idb',src:'bgm'});
-  if(CFG.bgmSrc) list.push({id:trackId(),name:CFG.bgmSrc.split('/').pop(),kind:'path',src:CFG.bgmSrc});
+  if(CFG.bgmSrc){
+    let ok=true;
+    if(location.protocol!=='file:'){ try{ const r=await fetch(CFG.bgmSrc,{method:'HEAD'}); ok=r.ok; }catch(e){ ok=false; } }
+    if(ok) list.push({id:trackId(),name:CFG.bgmSrc.split('/').pop(),kind:'path',src:CFG.bgmSrc});
+  }
   if(list.length){ CFG.tracks=list; CFG.trackIdx=0; saveCfg(); }
 }
 async function loadTrack(i,play){
@@ -997,12 +1001,17 @@ function osdTrack(mark){
   clearTimeout(mosdT); mosdT=setTimeout(()=>{ el.classList.remove('show'); clearInterval(mosdIv); },3000);
 }
 bgm.addEventListener('ended',()=>{ if(tracks().length>1) trackStep(1); });
-bgm.addEventListener('canplaythrough',()=>{ bgmReady=true;
+bgm.addEventListener('canplaythrough',()=>{ bgmReady=true; bgmSkips=0;
   const tr=curTrack(); bgmState('준비됨 ✓ · '+(tr?tr.name:''),'#7dffb0');
   if(playAfterLoad){ playAfterLoad=false; bgmPlay(bgmBase); osdTrack(); }
 });
+let bgmSkips=0;
 bgm.addEventListener('error',()=>{ if(!bgm.src) return; bgmReady=false;
-  const tr=curTrack(); bgmState('불러오지 못했습니다'+(tr?' · '+tr.name:'')+' — 음악 탭에서 다시 고르세요','#ffc14d'); });
+  const tr=curTrack(), n=tracks().length, wantPlay=playAfterLoad;
+  bgmState('불러오지 못했습니다'+(tr?' · '+tr.name:'')+' — 음악 탭에서 다시 고르세요','#ffc14d');
+  if(n>1&&bgmSkips<n-1){ bgmSkips++; loadTrack(trackNo()+1,wantPlay); }          // 깨진 곡은 건너뛴다
+  else if(wantPlay){ playAfterLoad=false; noMusicMsg(); }
+});
 function bgmFadeTo(v,ms,then){
   clearInterval(bgmFade); v=Math.min(1,v*bgmMul());
   const t0=performance.now(), v0=bgm.volume, d=Math.max(60,ms||600);
@@ -1024,9 +1033,14 @@ function bgmPlay(vol){
 function bgmStop(ms){ if(!bgmPlaying) return; bgmPlaying=false;
   bgmFadeTo(0,ms||1200,()=>{ try{bgm.pause();}catch(e){} }); }
 function bgmDuck(on){ if(!bgmPlaying) return; bgmFadeTo(on?bgmBase*.22:bgmBase,320); }
+function noMusicMsg(){
+  sfx.close();
+  if(CFG.bgm==='off') return subtitle('Music is switched off in settings.','설정에서 음악이 「사용 안 함」입니다 — Ctrl+Alt+J → 음악 탭에서 켜 주세요',5200);
+  subtitle('No music loaded.','재생할 곡이 없습니다 — Ctrl+Alt+J → 음악 탭에서 파일을 골라 주세요',5200);
+}
 function bgmToggle(){
   if(bgmPlaying) return bgmStop(600);
-  if(!bgmReady) return bgmState('재생할 음원이 없습니다','#ffc14d');
+  if(CFG.bgm==='off'||!bgmReady) return noMusicMsg();
   bgmPlay(CFG.bgm==='loop'?CFG.bgmVol*.45:CFG.bgmVol);
 }
 
@@ -1470,7 +1484,8 @@ const EGGS=[
 
 /* --- 음악 --- */
 function playMusic(){
-  if(!bgmReady) return say('I have no music loaded, {sir}.','재생할 곡이 없습니다. 교사 콘솔 음악 탭에서 넣어 주세요.');
+  if(CFG.bgm==='off') return say('Music is disabled in the settings, {sir}.','설정에서 음악이 「사용 안 함」입니다. 교사 콘솔 음악 탭에서 켜 주세요.',{hold:5200});
+  if(!bgmReady) return say('I have no music loaded, {sir}.','재생할 곡이 없습니다. Ctrl+Alt+J → 음악 탭에서 파일을 골라 주세요.',{hold:5200});
   sfx.up();
   sayLine('musicOn',{then:()=>setTimeout(()=>bgmPlay(CFG.bgmVol),320)});
 }
