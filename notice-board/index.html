@@ -177,6 +177,34 @@
   #cleanCard{display:none}
   body.cmode #bottomRow{grid-template-columns:1fr 1fr 1fr}
   body.cmode #cleanCard{display:flex}
+
+  /* ⛶ 시간표 크게 — 주요일정·청소당번을 덮고 한 줄을 다 씁니다 */
+  body.ttbig #bottomRow{grid-template-columns:1fr}
+  body.ttbig #schedCard,body.ttbig #cleanCard{display:none}
+  body.ttbig #ttCard{grid-column:1 / -1}
+  /* 오늘 시간표 — 넓어진 폭을 살려 교시별 타일을 가로로 늘어놓습니다 */
+  body.ttbig #ttcBox{display:flex;flex-direction:row;align-items:stretch;gap:.6rem;overflow:hidden}
+  body.ttbig .ttc{flex:1 1 0;min-width:0;flex-direction:column;align-items:center;justify-content:center;
+    gap:.35rem;padding:.4rem .3rem;border-bottom:none;border-radius:.9rem;background:var(--panel2);
+    text-align:center;line-height:1.15}
+  body.ttbig .ttc.nowp{background:var(--accent);color:#fff}
+  body.ttbig .ttc.nowp .who,body.ttbig .ttc.nowp .locpin{color:#fff;opacity:.9}
+  body.ttbig .ttc.nowp .chg{color:#ffe4e6 !important}
+  body.ttbig .ttc .who{min-width:0;font-size:1.25rem}
+  body.ttbig .ttc .t{display:flex;flex-direction:column;align-items:center;font-size:2.2rem;font-weight:800}
+  body.ttbig .ttc .t s{font-size:1.1rem}
+  body.ttbig .ttc .arrow{display:none}
+  body.ttbig .ttchgb{font-size:1.05rem;padding:.05rem .55rem;margin:.15rem 0 0}
+  body.ttbig .locpin{font-size:1.15rem;margin:.1rem 0 0}
+  /* 주간 시간표 — 요일을 행으로 눕혀 6줄로, 글자는 칸 높이에 맞춰 스크립트가 정합니다 */
+  body.ttbig #weekBox table{height:100%}
+  body.ttbig #weekBox th,body.ttbig #weekBox td{white-space:normal;line-height:1.15}
+  body.ttbig #weekBox td.pn{width:auto}
+  body.ttbig #weekBox tr.today td{background:rgba(59,110,245,.13);font-weight:800;color:var(--accent)}
+  body.ttbig #weekBox tr.today td.pn{background:var(--accent);color:#fff}
+  body.ttbig #weekBox tr.today td.now{background:var(--accent);color:#fff;box-shadow:inset 0 0 0 2px #fff}
+  body.ttbig #weekBox tr.today td.now.chg{color:#ffe4e6}
+  .tgl.big{margin-left:auto;padding:.3rem .8rem}
   .cleanrow{display:flex;align-items:flex-start;gap:.7rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:1.2rem;line-height:1.3}
   .cleanrow:last-child{border-bottom:none}
   .cleanrow .ar{flex:0 0 auto;font-weight:800;color:var(--accent);min-width:6rem}
@@ -209,9 +237,12 @@
   #weekBox th{background:var(--panel2);font-weight:800;color:var(--sub);font-size:.9rem}
   #weekBox th.today{background:var(--accent);color:#fff}
   #weekBox td.pn{background:var(--panel2);font-weight:800;color:var(--sub);width:2.6rem}
-  #weekBox td.now{background:rgba(59,110,245,.14);font-weight:800;color:var(--accent)}
   #weekBox td.chg{color:var(--urgent);font-weight:800}
-  #weekBox td.tdcol{background:rgba(59,110,245,.05)}
+  /* 오늘 열은 색을 칠하고, 지금 교시는 더 진하게 */
+  #weekBox td.tdcol{background:rgba(59,110,245,.13);font-weight:800;color:var(--accent)}
+  #weekBox td.now{background:var(--accent);color:#fff;font-weight:900;box-shadow:inset 0 0 0 2px #fff}
+  #weekBox td.tdcol.chg{color:var(--urgent)}
+  #weekBox td.now.chg{color:#ffe4e6}
   .listrow{display:flex;align-items:flex-start;gap:.7rem;padding:.55rem 0;border-bottom:1px solid var(--line);
     font-size:1.25rem;line-height:1.3}
   .listrow:last-child{border-bottom:none}
@@ -402,11 +433,11 @@
 
     <!-- 하단: 일정 + 시간표변경 -->
     <div id="bottomRow">
-      <section class="card">
+      <section class="card" id="schedCard">
         <h2><span class="em">📅</span>주요일정</h2>
         <div class="body" id="schedBox"></div>
       </section>
-      <section class="card">
+      <section class="card" id="ttCard">
         <h2 id="ttcTitle"><span class="em">🔄</span>수업 변경·장소</h2>
         <h2 class="toggleh" id="ttCentral" style="display:none">
           <button class="tgl" id="tglc-tt" onclick="switchCentral('tt')">📖 시간표</button>
@@ -416,6 +447,7 @@
         <h2 class="toggleh" id="ttToggle" style="display:none">
           <button class="tgl on" id="tgl-today" onclick="switchTT('today')">📖 오늘</button>
           <button class="tgl"    id="tgl-week"  onclick="switchTT('week')">🗓️ 주간</button>
+          <button class="tgl big" id="tgl-big"  onclick="toggleTTBig()" title="주요일정·청소당번을 덮고 크게 봅니다">⛶ 크게</button>
         </h2>
         <div class="body" id="ttcBox"></div>
         <div class="body" id="weekBox" style="display:none"></div>
@@ -1270,28 +1302,72 @@ function renderWeekTT(){
   const maxP = Math.max(1, ...rows.flat().map(r=>Number(r.PERIO)||0), ...basePeriods);
   const todayY = ymd(new Date());
   const DW=['월','화','수','목','금'];
+  const nowP = currentPeriodNo();        // 지금 교시는 더 진하게
   // 오늘 변경사항을 주간 표에도 반영
   const myChg = ttcRows.filter(_mine);
+
+  // 칸 하나의 과목·표시 계산 (세로표·가로표가 같이 씀)
+  const cellOf = (d, i, p) => {
+    const isToday = ymd(d)===todayY;
+    const cell = (rows[i]||[]).find(r=>Number(r.PERIO)===p);
+    let subj = ttSubject(schoolDayFor(d), p, cell ? cell.ITRT_CNTNT : '');
+    let cls = isToday?'tdcol':'';
+    if(isToday && nowP===p) cls += ' now';
+    if(ttChangedOn(d).includes(p)) cls += ' chg';
+    if(isToday){ const c = myChg.find(x=>x.period===p); if(c){ subj = c.after_subj || subj; cls += ' chg'; } }
+    return {subj, cls};
+  };
+
+  // ⛶ 크게 모드: 폭은 넓고 높이는 그대로라, 요일을 행으로 눕혀 줄 수를 줄입니다
+  if(document.body.classList.contains('ttbig')){
+    let h='<table><thead><tr><th></th>';
+    for(let p=1;p<=maxP;p++) h+=`<th>${p}교시</th>`;
+    h+='</tr></thead><tbody>';
+    days.forEach((d,i)=>{
+      const isToday = ymd(d)===todayY;
+      h+=`<tr class="${isToday?'today':''}"><td class="pn">${DW[i]} <small>${d.getMonth()+1}/${d.getDate()}</small></td>`;
+      for(let p=1;p<=maxP;p++){
+        if(p>basePeriods[i] && !(rows[i]||[]).some(r=>Number(r.PERIO)===p)){ h+='<td></td>'; continue; }
+        const {subj, cls} = cellOf(d,i,p);
+        h+=`<td class="${cls}">${esc(subj)}</td>`;
+      }
+      h+='</tr>';
+    });
+    box.innerHTML = h+'</tbody></table>';
+    fitWeekTable();
+    return;
+  }
+
   let html='<table><thead><tr><th></th>'
     + days.map((d,i)=>`<th class="${ymd(d)===todayY?'today':''}">${DW[i]}<br>${d.getMonth()+1}/${d.getDate()}</th>`).join('')
     + '</tr></thead><tbody>';
   for(let p=1;p<=maxP;p++){
     html+=`<tr><td class="pn">${p}</td>`;
     days.forEach((d,i)=>{
-      const isToday = ymd(d)===todayY;
-      const cell = (rows[i]||[]).find(r=>Number(r.PERIO)===p);
-      let subj = ttSubject(schoolDayFor(d), p, cell ? cell.ITRT_CNTNT : '');  // 요일변경 반영
-      let cls = isToday?'tdcol':'';
-      if(ttChangedOn(d).includes(p)) cls += ' chg';   // 결보강으로 바뀐 자리
-      if(isToday){
-        const c = myChg.find(x=>x.period===p);
-        if(c){ subj = c.after_subj || subj; cls += ' chg'; }
-      }
+      const {subj, cls} = cellOf(d,i,p);
       html+=`<td class="${cls}">${esc(subj)}</td>`;
     });
     html+='</tr>';
   }
   box.innerHTML = html+'</tbody></table>';
+  fitWeekTable();
+}
+/* 표 글자를 칸 높이에 맞춥니다 — 줄이 몇 개든 잘리지 않게 */
+function fitWeekTable(){
+  const box=$('weekBox'), tb=box&&box.querySelector('table');
+  if(!tb || box.style.display==='none') return;
+  const n=tb.querySelectorAll('tr').length, h=box.getBoundingClientRect().height;
+  if(!n || !h) return;
+  const rowH = h/n;
+  const big = document.body.classList.contains('ttbig');
+  // 글자는 줄 높이의 절반쯤. 작은 칸에서는 원래 크기 그대로 둡니다.
+  const fs = big ? Math.max(12, Math.min(rowH*0.5, 44)) : null;
+  tb.querySelectorAll('th,td').forEach(c=>{
+    if(fs){ c.style.fontSize = (c.tagName==='TH' ? fs*0.8 : fs)+'px';
+            c.style.padding  = Math.round(rowH*0.1)+'px 4px'; }
+    else { c.style.fontSize=''; c.style.padding=''; }
+  });
+  tb.querySelectorAll('td.pn small').forEach(s=>{ s.style.fontSize = fs ? (fs*0.6)+'px' : ''; });
 }
 /* ── 중앙 보드: 반을 골라 그 반 주간 시간표 보기 (학교 원본 표 사용) ── */
 function buildClassPicker(){
@@ -1335,12 +1411,50 @@ function switchCentral(which){
   $('tglc-chg').classList.toggle('on', !tt);
 }
 
+/* ── 시간표 크게 보기 ──
+   ⛶ 를 누르면 주요일정·청소당번을 덮고 한 줄을 다 씁니다.
+   주간 표는 칸이 많아 작게는 안 읽히므로 켜면 저절로 커집니다. */
+const LS_TTBIG = 'hnr_tt_big';
+let ttMode = 'today';
+let ttBigPref = false;
+try{ ttBigPref = localStorage.getItem(LS_TTBIG)==='1'; }catch(e){}
+
+function applyTTBig(){
+  const big = ttBigPref || ttMode==='week';
+  const was = document.body.classList.contains('ttbig');
+  document.body.classList.toggle('ttbig', big);
+  const b=$('tgl-big');
+  if(b){ b.classList.toggle('on', big); b.textContent = big ? '⤡ 작게' : '⛶ 크게'; }
+  if(was!==big && typeof renderWeekTT==='function') renderWeekTT();   // 모양이 달라지므로 다시 그림
+  if(typeof fitNoticeItems==='function') fitNoticeItems();
+}
+function toggleTTBig(){
+  // 주간에서는 늘 크게 — 누르면 오늘로 돌아가며 작아집니다
+  if(ttMode==='week' && !ttBigPref){ switchTT('today'); return; }
+  ttBigPref = !ttBigPref;
+  try{ localStorage.setItem(LS_TTBIG, ttBigPref?'1':'0'); }catch(e){}
+  applyTTBig();
+}
 function switchTT(which){
   const wk = which==='week';
-  $('ttcBox').style.display  = wk?'none':'block';
-  $('weekBox').style.display = wk?'block':'none';
+  ttMode = wk ? 'week' : 'today';
+  // 인라인으로 block 을 박으면 크게 모드의 flex 배치가 덮이므로, 보일 때는 비워 둡니다
+  $('ttcBox').style.display  = wk?'none':'';
+  $('weekBox').style.display = wk?'':'none';
   $('tgl-today').classList.toggle('on', !wk);
   $('tgl-week').classList.toggle('on', wk);
+  applyTTBig();
+  if(wk) renderWeekTT();          // 지금 교시 표시를 새로 칠합니다
+}
+/* 지금 몇 교시인지 (수업 중이 아니면 null) */
+function currentPeriodNo(){
+  const now=new Date(), dow=now.getDay();
+  if(dow===0||dow===6) return null;
+  const m=now.getHours()*60+now.getMinutes();
+  const p=BELL.filter(x=>!x.days||x.days.includes(dow))
+              .find(x=>m>=_toMin(x.s)&&m<_toMin(x.e));
+  const n = p ? parseInt(p.label,10) : NaN;
+  return Number.isFinite(n) ? n : null;
 }
 
 const _mine = x => x.grade==null || (x.grade===CM_GRADE && (x.class_no==null || x.class_no===CM_CLASS));
@@ -1368,6 +1482,7 @@ function renderTTC(){
     if(!pNums.length && !myChg.length && !myLoc.length){
       box.innerHTML='<div class="empty">오늘 시간표 정보가 없습니다</div>'; return; }
     const autoChg = ttChangedOn(new Date());   // 컴시간에서 바뀐 교시
+    const nowP = currentPeriodNo();            // 지금 하는 수업은 타일 색을 칠합니다
     const extra=[];
     let html = pNums.map(p=>{
       const chg=myChg.find(c=>c.period===p), loc=myLoc.find(l=>l.period===p);
@@ -1377,7 +1492,7 @@ function renderTTC(){
       // 결보강으로 바뀐 교시는 눈에 띄게 (선생님이 따로 올리지 않으셔도 자동)
       if(!chg && autoChg.includes(p))
         subj = `<span class="chg" style="color:var(--urgent)">${esc(periods[p])}</span><span class="ttchgb">🔁 변경</span>`;
-      return `<div class="listrow ttc"><span class="who">${p}교시</span><span class="t">${subj}`
+      return `<div class="listrow ttc${nowP===p?' nowp':''}"><span class="who">${p}교시</span><span class="t">${subj}`
         +`${loc?` <span class="locpin">📍${esc(loc.location)}</span>`:''}`
         +`${chg&&chg.note?` <span class="loc">(${esc(chg.note)})</span>`:''}</span></div>`;
     }).join('');
@@ -1583,14 +1698,14 @@ function renderDemo(){
 
 /* ── 부팅 + 주기적 새로고침 ── */
 async function boot(){
-  applyClassMode(); updatePeriod(); buildGoClass(); runSetup();
+  applyClassMode(); updatePeriod(); buildGoClass(); runSetup(); applyTTBig();
   if(DEMO){ renderDemo(); return; } // 데모: 정적 샘플만 (네트워크/실시간 없음)
   await loadConfig();
   await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadVideos(), loadLiveTimetable(), loadMeal(), loadWeather(), loadAir()]);
   subscribe();
 }
 boot();
-addEventListener('resize', fitNoticeItems);   // 창 크기 바뀌면 공지 칸 다시 맞춤
+addEventListener('resize', ()=>{ fitNoticeItems(); fitWeekTable(); });   // 창 크기 바뀌면 공지·시간표 칸 다시 맞춤
 
 /* ── 🔄 하루 한 번 새로고침 ────────────────────────────────────────
    전자칠판은 몇 주씩 켜둔 채로 두게 됩니다. 그동안 자료는 계속 받아오지만
@@ -1604,7 +1719,7 @@ setInterval(()=>{
   // 새벽 4시대 + 6시간 이상 켜져 있었을 때만
   if(d.getHours() === 4 && openedHours > 6) location.reload();
 }, 300000);   // 5분마다 확인
-setInterval(updatePeriod, 20000); // 현재 교시 표시 갱신
+setInterval(()=>{ updatePeriod(); if(ttMode==='week') renderWeekTT(); else if(document.body.classList.contains('ttbig')) renderTTC(); }, 20000); // 현재 교시 표시 갱신 (주간 표의 '지금' 칸도)
 if(!DEMO){
   setInterval(loadCalls, 30000); // 호출은 30초마다 (실시간 보조)
   setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); loadVideos(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
