@@ -291,6 +291,7 @@
     <button class="tab" data-p="call" onclick="tab('call')">📣 학생 호출</button>
     <button class="tab" data-p="clean" onclick="tab('clean')">🧹 청소당번</button>
     <button class="tab" data-p="role" onclick="tab('role')">🙋 1인1역</button>
+    <button class="tab" data-p="bday" onclick="tab('bday')">🎂 생일</button>
     <button class="tab" data-p="lost" onclick="tab('lost')">🔍 분실물</button>
     <button class="tab" data-p="cfg" onclick="tab('cfg')">⚙️ 설정</button>
   </div>
@@ -601,6 +602,36 @@
     </div>
   </div>
 
+  <!-- 🎂 생일 -->
+  <div class="panel" id="p-bday">
+    <div class="card wform">
+      <h2>🎂 우리 반 생일 넣기</h2>
+      <div class="hint">교실 전자칠판 청소당번 칸의 <b>🎂 생일</b> 버튼에 <b>이번 달 생일</b>이 나오고,
+        생일 당일에는 위쪽 디데이 줄에 <b>🎂 오늘 생일</b>이 뜹니다.</div>
+      <div class="box tip" style="background:#eef7ff;border:1px solid #cfe4ff;color:#1e4fa3;
+           border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;line-height:1.6">
+        🔒 <b>태어난 해는 저장하지 않습니다</b> (월·일만). 로그인 없이 보는 교실 화면에는 이번 달 것만 읽힙니다.<br>
+        이름을 전부 적기 조심스러우시면 <b>「하늘」「준호」</b>처럼 이름만 적으셔도 됩니다.
+      </div>
+      <div class="row">
+        <div class="field"><label>학년</label><select id="bdGrade" onchange="loadBirthdays()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="bdClass" type="number" placeholder="예: 3" oninput="loadBirthdays()"></div>
+      </div>
+      <div class="field"><label>한 줄에 한 명 — <b>이름 월/일</b> (명렬표에서 복사해 붙여넣으셔도 됩니다)</label>
+        <textarea id="bdText" style="min-height:150px" placeholder="김하늘 9/3
+이준호 9.17
+박서연 09-25
+최민지 2011-10-02   ← 연도가 있어도 월·일만 저장됩니다"></textarea></div>
+      <div id="bdPreview" class="hint" style="margin-top:-4px"></div>
+      <button class="btn" id="bdSave" onclick="saveBirthdays()">생일 저장</button>
+    </div>
+    <div class="card">
+      <h2>등록된 생일</h2>
+      <div class="hint">위에서 고른 반의 생일입니다. 월별로 정렬됩니다.</div>
+      <div id="bdList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
   <!-- 분실물 -->
   <div class="panel" id="p-lost">
     <div class="card">
@@ -803,7 +834,7 @@ function applyDeviceClass(force){
   if(!d.grade) return;
   [['nGrade','nClass'],['sGrade','sClass'],['dGrade','dClass'],['aGrade','aClass'],
    ['kGrade','kClass'],['lcGrade','lcClass'],['clGrade','clClass'],['roGrade','roClass'],
-   ['vGrade','vClass'],['urlGrade','urlClass']].forEach(([gi,ci])=>{
+   ['vGrade','vClass'],['bdGrade','bdClass'],['urlGrade','urlClass']].forEach(([gi,ci])=>{
     const ge=$(gi), ce=$(ci);
     if(ge && (force || !ge.value)) ge.value=d.grade;
     if(ce && d.class_no && (force || !ce.value)) ce.value=d.class_no;
@@ -942,7 +973,7 @@ function enterDash(){
   if(shared && document.querySelector('.tab.on')?.dataset.p === 'msg') tab('notice');
   $('whoami').textContent = READONLY ? '👀 둘러보기'
     : (shared ? '👥 공동계정' : (myName+' 선생님'));
-  loadNotices(); loadScheds(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadVideos(); loadCfg(); makeUrl();
+  loadNotices(); loadScheds(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadVideos(); loadBirthdays(); loadCfg(); makeUrl();
   if(!shared){ loadMsgs(false); refreshMsgBadge(); }   // 공동계정은 쪽지 조회 자체를 안 함
   msgUrlHint(); buildSquadChips(); loadSquadCfg();
   loadPalette('clean'); loadPalette('duty'); loadApprovals();
@@ -1662,6 +1693,81 @@ async function loadRoles(){
   box.innerHTML=data.map(r=>`<div class="item"><span class="tag" style="background:#7c5cff">${r.grade}-${r.class_no}</span>
     <div class="main"><div class="t">${r.icon||'🙋'} ${esc(r.role)}</div><div class="meta">${esc(r.member)}</div></div>
     <button class="del" onclick="del('class_roles',${r.id},loadRoles)">삭제</button></div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎂 생일 — 한 줄에 한 명, "이름 월/일"
+   ═══════════════════════════════════════════════════════════════ */
+/* 한 줄을 {name, month, day} 로 읽습니다. 못 읽으면 null.
+   받는 모양 : 김하늘 9/3 · 9.3 · 9-3 · 09/03 · 0903 · 9월 3일 · 2011-09-03 · 2011.9.3 */
+function parseBirthdayLine(line){
+  const s=line.replace(/\t/g,' ').trim(); if(!s) return null;
+  let m, name='', mo=0, dy=0;
+  if((m = s.match(/^(.+?)\s+(\d{4})[.\-\/]\s*(\d{1,2})[.\-\/]\s*(\d{1,2})일?\s*$/))){          // 2011-09-03
+    name=m[1]; mo=+m[3]; dy=+m[4];
+  } else if((m = s.match(/^(.+?)\s+(\d{1,2})\s*월\s*(\d{1,2})\s*일?\s*$/))){                   // 9월 3일
+    name=m[1]; mo=+m[2]; dy=+m[3];
+  } else if((m = s.match(/^(.+?)\s+(\d{1,2})\s*[.\-\/]\s*(\d{1,2})\s*$/))){                    // 9/3 · 9.3 · 9-3
+    name=m[1]; mo=+m[2]; dy=+m[3];
+  } else if((m = s.match(/^(.+?)\s+(\d{2})(\d{2})\s*$/))){                                    // 0903
+    name=m[1]; mo=+m[2]; dy=+m[3];
+  } else return null;
+  name=name.trim().replace(/[,，]$/,'');
+  if(!name || mo<1||mo>12 || dy<1||dy>31) return null;
+  return {name, month:mo, day:dy};
+}
+function previewBirthdays(){
+  const lines=$('bdText').value.split(/\r?\n/).filter(l=>l.trim());
+  const ok=[], bad=[];
+  lines.forEach(l=>{ const r=parseBirthdayLine(l); (r?ok:bad).push(r||l); });
+  const box=$('bdPreview');
+  if(!lines.length){ box.innerHTML=''; return; }
+  box.innerHTML = `읽힌 것 <b>${ok.length}명</b>`
+    + (bad.length ? ` · <span style="color:#b45309">못 읽은 줄 ${bad.length}개 : ${bad.map(esc).join(' / ')}</span>` : '');
+}
+$('bdText').addEventListener('input', previewBirthdays);
+
+async function saveBirthdays(){
+  const g=$('bdGrade').value, c=$('bdClass').value;
+  if(!g||!c){ toast('학년·반을 먼저 고르세요'); return; }
+  const lines=$('bdText').value.split(/\r?\n/).filter(l=>l.trim());
+  const rows=[], bad=[];
+  lines.forEach(l=>{ const r=parseBirthdayLine(l); if(r) rows.push({...r, grade:Number(g), class_no:Number(c), author_id:me.id}); else bad.push(l); });
+  if(!rows.length){ toast('읽을 수 있는 줄이 없습니다 — "이름 9/3" 처럼 적어주세요'); return; }
+  if(bad.length && !confirm(`${bad.length}줄은 못 읽어서 빼고 저장합니다.\n\n${bad.join('\n')}\n\n계속할까요?`)) return;
+  $('bdSave').disabled=true;
+  // 같은 사람·같은 날은 다시 넣지 않습니다
+  const { error } = await sb.from('birthdays').upsert(rows, { onConflict:'grade,class_no,name,month,day', ignoreDuplicates:true });
+  $('bdSave').disabled=false;
+  if(error){
+    toast(/relation|does not exist/i.test(error.message)
+      ? '생일 표가 아직 없습니다 — BIRTHDAYS.sql 을 한 번 실행해 주세요'
+      : '저장 실패: '+error.message);
+    return;
+  }
+  $('bdText').value=''; previewBirthdays();
+  toast(`🎂 ${rows.length}명 저장했습니다`); loadBirthdays();
+}
+async function loadBirthdays(){
+  const g=$('bdGrade').value, c=$('bdClass').value, box=$('bdList');
+  if(!box) return;
+  if(!g||!c){ box.innerHTML='<div class="empty">학년·반을 고르면 보입니다</div>'; return; }
+  const { data, error } = await sb.from('birthdays').select('*')
+    .eq('grade',Number(g)).eq('class_no',Number(c)).order('month').order('day').order('name');
+  if(error){ box.innerHTML='<div class="empty">생일 표가 아직 없습니다 — <b>BIRTHDAYS.sql</b> 을 한 번 실행해 주세요</div>'; return; }
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 생일이 없습니다</div>'; return; }
+  const thisMo=new Date().getMonth()+1;
+  let html='', lastMo=0;
+  data.forEach(b=>{
+    if(b.month!==lastMo){
+      lastMo=b.month;
+      html+=`<div style="margin:10px 0 4px;font-weight:800;color:${b.month===thisMo?'#3b6ef5':'#6c7894'}">${b.month}월${b.month===thisMo?' · 이번 달':''}</div>`;
+    }
+    html+=`<div class="item"><span class="tag" style="background:#e84d92">${b.month}/${b.day}</span>
+      <div class="main"><div class="t">🎂 ${esc(b.name)}</div></div>
+      <button class="del" data-title="${esc(b.name)}" onclick="del('birthdays',${b.id},loadBirthdays,this.dataset.title)">삭제</button></div>`;
+  });
+  box.innerHTML=html;
 }
 
 /* ── 분실물 ── */

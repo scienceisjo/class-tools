@@ -88,6 +88,22 @@
   .dday.t-방학 .cnt{color:var(--green)} .dday.t-기타 .cnt{color:var(--accent)}
   .dday.today{border-color:var(--gold);background:linear-gradient(90deg,#fff6e8,#fffdf8)}
   .dday.today .cnt{color:var(--gold)}
+  /* 🎂 오늘 생일 칩 */
+  .dday.t-생일{border-color:var(--pink);background:linear-gradient(90deg,#fff0f6,#fffafc)}
+  .dday.t-생일 .lab b{color:var(--pink)}
+  .dday.t-생일 .cnt{font-size:1.8rem}
+  /* 🎂 이달의 생일 목록 (청소당번 칸) */
+  .bdhead{font-size:1.15rem;font-weight:800;color:var(--sub);padding-bottom:.45rem;
+    border-bottom:1.5px solid var(--line);margin-bottom:.35rem}
+  .bdhead b{color:var(--pink)}
+  .bdrow{display:flex;align-items:center;gap:.7rem;padding:.45rem 0;border-bottom:1px solid var(--line);
+    font-size:1.25rem;line-height:1.3}
+  .bdrow:last-child{border-bottom:none}
+  .bdrow .bdd{flex:0 0 auto;font-weight:800;color:var(--pink);min-width:3.4rem}
+  .bdrow .bdn{font-weight:700}
+  .bdrow.past{opacity:.45}
+  .bdrow.today{background:#fff0f6;border-radius:.6rem;padding:.45rem .6rem;margin:0 -.6rem}
+  .bdrow .bdtag{margin-left:auto;font-size:1rem;font-weight:900;color:var(--pink)}
 
   /* ── 본문 그리드 ── */
   main{flex:1 1 auto;display:grid;grid-template-columns:30% 1fr;
@@ -456,9 +472,11 @@
         <h2 class="toggleh">
           <button class="tgl on" id="tgl-clean" onclick="switchDuty('clean')">🧹 청소당번</button>
           <button class="tgl"    id="tgl-role"  onclick="switchDuty('role')">🙋 1인1역</button>
+          <button class="tgl"    id="tgl-bday"  onclick="switchDuty('bday')">🎂 생일</button>
         </h2>
         <div class="body" id="cleanBox"></div>
         <div class="body" id="roleBox" style="display:none"></div>
+        <div class="body" id="bdayBox" style="display:none"></div>
       </section>
     </div>
   </main>
@@ -767,11 +785,42 @@ async function loadRoles(){
   box.innerHTML = data.map(r=>`<div class="rolerow"><span class="rn">${r.icon||'🙋'} ${esc(r.role)}</span><span class="rm">${esc(r.member)}</span></div>`).join('');
 }
 function switchDuty(which){
-  const isRole = which==='role';
-  $('cleanBox').style.display = isRole?'none':'block';
-  $('roleBox').style.display  = isRole?'block':'none';
-  $('tgl-clean').classList.toggle('on', !isRole);
-  $('tgl-role').classList.toggle('on', isRole);
+  ['clean','role','bday'].forEach(k=>{
+    const box=$(k==='clean'?'cleanBox':k==='role'?'roleBox':'bdayBox');
+    if(box) box.style.display = k===which?'block':'none';
+    const b=$('tgl-'+k); if(b) b.classList.toggle('on', k===which);
+  });
+}
+
+/* ═══ 🎂 이달의 생일 ═══
+   서버가 이번 달 것만 내줍니다. 생일 당일은 디데이 줄에도 칩이 뜹니다. */
+let BDAYS = [];
+async function loadBirthdays(){
+  if(!CLASS_MODE) return;
+  const { data, error } = await sb.from('birthdays').select('name,month,day')
+    .eq('grade',CM_GRADE).eq('class_no',CM_CLASS).order('day').order('name');
+  BDAYS = error ? [] : (data||[]);
+  renderBirthdays();
+  loadDdays();                                 // 오늘 생일 칩을 디데이 줄에 얹습니다
+}
+function todayBirthdays(){
+  const d=new Date();
+  return BDAYS.filter(b=>b.month===d.getMonth()+1 && b.day===d.getDate());
+}
+function renderBirthdays(){
+  const box=$('bdayBox'); if(!box) return;
+  const d=new Date(), mo=d.getMonth()+1, today=d.getDate();
+  const list=BDAYS.filter(b=>b.month===mo);
+  if(!list.length){ box.innerHTML=`<div class="empty">${mo}월에는 생일인 친구가 없습니다</div>`; return; }
+  box.innerHTML = `<div class="bdhead">🎂 ${mo}월 생일 <b>${list.length}명</b></div>`
+    + list.map(b=>{
+        const isT = b.day===today, past = b.day<today;
+        return `<div class="bdrow${isT?' today':past?' past':''}">
+          <span class="bdd">${b.day}일</span><span class="bdn">${esc(b.name)}</span>
+          ${isT?'<span class="bdtag">🎉 오늘!</span>':''}</div>`;
+      }).join('');
+  // 오늘 생일이면 이 칸을 생일로 먼저 보여줍니다
+  if(list.some(b=>b.day===today) && !renderBirthdays._auto){ renderBirthdays._auto=true; switchDuty('bday'); }
 }
 
 /* ── 현재 교시 / 쉬는시간 (헤더 표시) ── */
@@ -1084,8 +1133,14 @@ async function loadDdays(){
     .order('target_date',{ascending:true}).limit(6);
   const bar = $('ddayBar');
   const rows = (data||[]).filter(forThisBoard);     // 우리 반/학년/전교 것만
-  if(!rows.length){ bar.innerHTML=''; return; }
-  bar.innerHTML = rows.map(x=>{
+  // 🎂 오늘 생일인 친구가 있으면 맨 앞에 칩을 하나 얹습니다
+  const tb = (typeof todayBirthdays==='function') ? todayBirthdays() : [];
+  const bdChip = tb.length
+    ? `<div class="dday t-생일 today"><span class="ic">🎂</span>
+        <span class="lab">오늘 생일<b>${tb.map(b=>esc(b.name)).join(' · ')}</b></span>
+        <span class="cnt">🎉</span></div>` : '';
+  if(!rows.length && !bdChip){ bar.innerHTML=''; return; }
+  bar.innerHTML = bdChip + rows.map(x=>{
     const n = ddayNum(x.target_date);
     const cnt = n===0 ? 'D-DAY' : `D-${n}`;
     const dd = new Date(x.target_date+'T00:00');
@@ -1701,7 +1756,7 @@ async function boot(){
   applyClassMode(); updatePeriod(); buildGoClass(); runSetup(); applyTTBig();
   if(DEMO){ renderDemo(); return; } // 데모: 정적 샘플만 (네트워크/실시간 없음)
   await loadConfig();
-  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadVideos(), loadLiveTimetable(), loadMeal(), loadWeather(), loadAir()]);
+  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadVideos(), loadBirthdays(), loadLiveTimetable(), loadMeal(), loadWeather(), loadAir()]);
   subscribe();
 }
 boot();
@@ -1722,7 +1777,7 @@ setInterval(()=>{
 setInterval(()=>{ updatePeriod(); if(ttMode==='week') renderWeekTT(); else if(document.body.classList.contains('ttbig')) renderTTC(); }, 20000); // 현재 교시 표시 갱신 (주간 표의 '지금' 칸도)
 if(!DEMO){
   setInterval(loadCalls, 30000); // 호출은 30초마다 (실시간 보조)
-  setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); loadVideos(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
+  setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); loadVideos(); loadBirthdays(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
   setInterval(loadMeal, 3600000);          // 급식 1시간마다
   setInterval(loadTimetableNEIS, 3600000); // NEIS 시간표 1시간마다
   setInterval(loadWeekTT, 21600000);       // 주간 시간표 6시간마다
@@ -1730,7 +1785,7 @@ if(!DEMO){
   setInterval(loadSchoolSched, 21600000);  // 학사일정 6시간마다
   setInterval(()=>{ loadWeather(); loadAir(); }, 1800000); // 날씨·미세먼지 30분마다
   // 자정 지나면 날짜 바뀌므로 급식/일정/디데이/평가/시간표 갱신
-  setInterval(()=>{ const d=new Date(); if(d.getHours()===0 && d.getMinutes()<3){ loadMeal(); loadSchedules(); loadSchoolSched(); loadTTC(); loadLocations(); loadTimetableNEIS(); loadDdays(); loadAssessments(); } }, 120000);
+  setInterval(()=>{ const d=new Date(); if(d.getHours()===0 && d.getMinutes()<3){ loadMeal(); loadSchedules(); loadSchoolSched(); loadTTC(); loadLocations(); loadTimetableNEIS(); loadDdays(); loadAssessments(); renderBirthdays._auto=false; loadBirthdays(); } }, 120000);
 }
 </script>
 
