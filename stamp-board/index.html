@@ -236,11 +236,10 @@ main{flex:1;padding:14px 0 90px}
 .pick-i{border:2px solid var(--line);border-radius:14px;padding:9px 5px;background:#fff;text-align:center}
 .pick-i.on{border-color:var(--ac);background:#FFF4EA}
 .pick-i svg,.pick-i img.charimg{width:100%;height:auto}
-.pick-i .t{font-size:11.5px;font-weight:900;margin-top:3px}
-footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;font-weight:700;line-height:1.7}
-
 /* 밝은 배경의 개별 이미지가 선택 카드 색과 자연스럽게 어울리도록 한다. */
 .dex-i img.charimg,.pick-i img.charimg{mix-blend-mode:multiply}
+.pick-i .t{font-size:11.5px;font-weight:900;margin-top:3px}
+footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;font-weight:700;line-height:1.7}
 </style>
 </head>
 <body>
@@ -350,7 +349,7 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
 <div class="mdl" id="mdl"><div class="mdl-in" id="mdlIn"></div></div>
 <div class="load" id="load"><div class="spin"></div></div>
 
-<footer class="wrap">
+<footer class="wrap" id="app-credit">
   © 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br>
   <span style="opacity:.85">과학 칭찬도장판 · 최종 업데이트 2026-08-16</span>
 </footer>
@@ -359,16 +358,36 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
 /* ══════════════════════════════════════════════════════════════════════════
    설정
    ══════════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════
+   🧰 배포판(class-kit)은 config.js 의 window.CLASS_KIT_CONFIG 를 먼저 읽습니다.
+   설정 파일이 없으면 아래 기본값(우리 학교 값)으로 지금처럼 동작합니다.
+   ════════════════════════════════════════════════════════════════════════ */
+var KIT = window.CLASS_KIT_CONFIG || {};
+function kitGet(path, dflt){ try{ var v = path.split('.').reduce(function(o,k){ return (o==null)?undefined:o[k]; }, KIT); return (v===undefined||v===null||v==='') ? dflt : v; }catch(e){ return dflt; } }
+function kitTheme(section){ var t = kitGet('theme.'+section, null); if(!t || typeof t!=='object') return; var r=document.documentElement.style; Object.keys(t).forEach(function(k){ if(t[k]) r.setProperty(k.charAt(0)==='-'?k:'--'+k, String(t[k])); }); }
+function kitFooter(label){ if(!window.CLASS_KIT_CONFIG) return; var f=document.getElementById('app-credit'); if(!f){ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ kitFooter(label); }); return; }
+  var e = function(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var c = KIT.credits||{}, a = c.author||'조승재(과학이조선생)', lic = c.license||'CC BY-NC-SA 4.0';
+  var lu = c.licenseUrl||'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko', au = c.authorUrl||'';
+  var sch = kitGet('school.name',''), tch = kitGet('school.teacher','');
+  f.innerHTML = '원작 © 2026 ' + (au ? '<a href="'+e(au)+'" target="_blank" rel="noopener" style="color:inherit">'+e(a)+'</a>' : e(a))
+    + ' · <a href="'+e(lu)+'" target="_blank" rel="noopener" style="color:inherit">'+e(lic)+'</a>'
+    + (sch ? ' · 운영: '+e(sch)+(tch ? ' '+e(tch)+' 선생님' : '') : '')
+    + '<br><span style="opacity:.85">'+e(label)+' · 우리 반 도구 꾸러미 '+e(KIT.version||'')+'</span>'; }
 var CONFIG = {
-  schoolName : '해누리중학교',
-  supabaseUrl: 'https://hmzklbrksfdhzsgwzfyg.supabase.co',
-  supabaseKey: 'sb_publishable_OFVhbjVPbJiMWXVz2nKQuw_m6RmVVZE'
+  schoolName : kitGet('school.name', '해누리중학교'),
+  supabaseUrl: kitGet('supabase.url', 'https://hmzklbrksfdhzsgwzfyg.supabase.co'),
+  supabaseKey: kitGet('supabase.key', 'sb_publishable_OFVhbjVPbJiMWXVz2nKQuw_m6RmVVZE')
 };
+var STUDENT_DOMAIN = kitGet('studentEmailDomain', 'haenuri.app');   // 학생 가짜 이메일 도메인 (세 앱 공통)
+var STAMP_NAME     = kitGet('brand.stamp', '칭찬도장판');
+var QUESTION_APP   = kitGet('brand.question', '질문과수원');
 var sb = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 
-/* 학년도·학기 — 3~7월=1학기, 그 외=2학기 */
+/* 학년도·학기 — 3~7월=1학기, 그 외=2학기 (config: stamp.semester1Months) */
+var SEM1 = kitGet('stamp.semester1Months', [3, 7]);
 function nowYear(){ return new Date().getFullYear(); }
-function nowSem(){ var m=new Date().getMonth()+1; return (m>=3 && m<=7) ? 1 : 2; }
+function nowSem(){ var m=new Date().getMonth()+1; return (m>=SEM1[0] && m<=SEM1[1]) ? 1 : 2; }
 /* 오늘 날짜 — 반드시 한국 시간으로. toISOString() 은 UTC 라서 오전 9시 이전에 찍으면
    (1교시 8:50 골든벨이 딱 그 구간이다) 날짜가 하루 밀려 어제 자로 기록된다. */
 function todayStr(){ return new Date(Date.now() + 9*3600*1000).toISOString().slice(0,10); }
@@ -384,14 +403,14 @@ var BEHAVIOR_CHIPS = {
 };
 
 /* 보상 — 소비형(잔액 차감) / 명예형(누적 자동 해금) */
-var REWARDS = [
+var REWARDS = kitGet('stamp.rewards', null) || [
   {code:'snack',  ic:'🍬', name:'간식',                cost:1},
   {code:'point1', ic:'⭐', name:'상점 1점',            cost:2},
   {code:'point2', ic:'⭐', name:'상점 2점',            cost:3},
   {code:'point5', ic:'🌟', name:'상점 5점',            cost:5}
 ];
 /* 💡 학생에게 보여줄 «이럴 때 도장을 받아요» 안내 */
-var HOW_TO_EARN = [
+var HOW_TO_EARN = kitGet('stamp.howToEarn', null) || [
   {ic:'🙋', t:'질문에 대답을 잘했을 때',        s:'손 들고 자기 생각을 말해보세요'},
   {ic:'🎯', t:'«이거 대답하면 도장!» 이라고 할 때', s:'선생님이 예고한 문제를 맞히면 바로 도장'},
   {ic:'🔔', t:'골든벨에서 끝까지 살아남았을 때',   s:'수업 시작에 내는 3~5문제, 다 맞히면 도장'},
@@ -403,7 +422,7 @@ var HOW_TO_EARN = [
   {ic:'🔬', t:'실험·관찰을 끈기 있게 했을 때',   s:'결과가 이상하면 다시 해보는 그 모습!'}
 ];
 
-var HONORS = [
+var HONORS = kitGet('stamp.honors', null) || [
   {need:15, ic:'🍿', name:'우리 반 간식데이 제안권', desc:'반 전체가 함께 누리는 보상이에요'},
   {need:20, ic:'🏛️', name:'과학실 명예의 전당',      desc:'내 캐릭터가 과학실에 전시돼요'}
 ];
@@ -425,8 +444,6 @@ var BRANCHES=[
   {id:'responsible',label:'책임',   icon:'🛡️', c:'#3DA89B', d:'#26786E', l:'#BEE6E0',
    n:{creature:'수호형',   scientist:'안전관리자',  lab:'안전관리동', robot:'방호로봇'}}
 ];
-var KIT = window.CLASS_KIT_CONFIG || {};
-function kitGet(path, dflt){ try{ var v = path.split('.').reduce(function(o,k){ return (o==null)?undefined:o[k]; }, KIT); return (v===undefined||v===null||v==='') ? dflt : v; }catch(e){ return dflt; } }
 var TH=[0,1,3,6,10,15,20];              // 단계 임계값 (서버 class_base() 도 같은 숫자를 쓰므로 config 로 바꾸지 않는다)
 var STAGE_NAME=['알','부화','아기','성장기','성숙기','완전체','전설'];
 /* ── 세계관 팩 (packs.js) ─────────────────────────────────────────────────
@@ -482,6 +499,7 @@ function packWord(key, dflt){ var p = packById(curTheme()); return (p && p.words
 
 function stageOf(n){ var s=0; for(var i=0;i<TH.length;i++){ if(n>=TH[i]) s=i; } return s; }
 
+/* 그리기 코드(공통 SVG 조각·테마 4종)는 packs.js 로 옮겼다 — 팩 추가는 packs.js 에서 */
 
 /* ══════════════════════════════════════════════════════════════════════════
    상태 · 공용
@@ -504,17 +522,28 @@ function toast(m){
 }
 function showErr(id,msg){ var e=$(id); e.textContent=msg; e.classList.add('show'); }
 function hideErr(id){ $(id).classList.remove('show'); }
-function fakeEmail(g,c,n){ return 's'+g+'_'+c+'_'+n+'@haenuri.app'; }
+function fakeEmail(g,c,n){ return 's'+g+'_'+c+'_'+n+'@'+STUDENT_DOMAIN; }
 function goScr(id){
   var a=document.querySelectorAll('.scr'), i;
   for(i=0;i<a.length;i++) a[i].classList.toggle('on', a[i].id===id);
   window.scrollTo(0,0);
 }
 function branchOf(id){ for(var i=0;i<BRANCHES.length;i++) if(BRANCHES[i].id===id) return BRANCHES[i]; return BRANCHES[0]; }
-function catName(id){ var m={general:'칭찬',inquiry:'탐구 설계·수행',analysis:'자료 해석·추론',concept:'개념 이해·적용',
-  communicate:'과학적 의사소통',collaborate:'협업·기여',responsible:'책임 있는 참여'}; return m[id]||id; }
-function stuName(id){ var m={general:'💐 칭찬',inquiry:'🔬 탐구왕',analysis:'📊 해석가',concept:'💡 연결고리',
-  communicate:'🗣️ 설명가',collaborate:'🤝 함께하기',responsible:'🛡️ 믿음직'}; return m[id]||id; }
+var CAT_TEACHER={general:'칭찬',inquiry:'탐구 설계·수행',analysis:'자료 해석·추론',concept:'개념 이해·적용',
+  communicate:'과학적 의사소통',collaborate:'협업·기여',responsible:'책임 있는 참여'};
+var CAT_STUDENT={general:'💐 칭찬',inquiry:'🔬 탐구왕',analysis:'📊 해석가',concept:'💡 연결고리',
+  communicate:'🗣️ 설명가',collaborate:'🤝 함께하기',responsible:'🛡️ 믿음직'};
+(function(){   /* 🧰 config.js: stamp.competencies[id].teacherLabel / studentLabel, stamp.general */
+  var cc = kitGet('stamp.competencies', null);
+  if(cc && typeof cc === 'object') Object.keys(cc).forEach(function(k){
+    if(cc[k] && cc[k].teacherLabel) CAT_TEACHER[k] = cc[k].teacherLabel;
+    if(cc[k] && cc[k].studentLabel) CAT_STUDENT[k] = cc[k].studentLabel;
+  });
+  var g = kitGet('stamp.general', null);
+  if(g){ if(g.teacherLabel) CAT_TEACHER.general = g.teacherLabel; if(g.studentLabel) CAT_STUDENT.general = g.studentLabel; }
+})();
+function catName(id){ return CAT_TEACHER[id]||id; }
+function stuName(id){ return CAT_STUDENT[id]||id; }
 function daysAgo(d){
   if(!d) return null;
   var a=new Date(d); a.setHours(0,0,0,0);
@@ -847,7 +876,7 @@ function openDex(theme){
 }
 
 async function pickThemeFromDex(id){
-  if(!await pickTheme(id)) return;
+  if(!await pickTheme(id)) return;   /* 저장 + 도장판 다시 그리기 */
   closeMdl();
   _dexTheme = id;
   openDex(id);
@@ -878,6 +907,7 @@ function openThemePick(){
   h += '<button class="btn ghost" style="margin-top:8px" onclick="closeMdl()">닫기</button>';
   $('mdlIn').innerHTML = h; $('mdl').classList.add('show');
 }
+/* 테마·갈래 저장 — 허용 값인지, 잠금·단계 조건을 만족하는지 확인하고 서버가 돌려준 값까지 대조한다 */
 var _characterChoiceSaving = false;
 async function saveCharacterChoice(field, value){
   if(_characterChoiceSaving) return false;
@@ -914,7 +944,7 @@ async function saveNick(){
   await sb.from('stamp_profiles').update({nickname:S.sp.nickname, updated_at:new Date().toISOString()}).eq('student_id', S.user.id);
   closeMdl(); renderBoard(); toast('저장했어요!');
 }
-/* 진화 고르기 */
+/* 갈래 고르기 */
 function openBranchPick(){
   var n=S.bal.earned, st=stageOf(n), m=catCount(), tid=curTheme();
   var h = '<h3 style="font-size:var(--fs-m);font-weight:900">' + esc(packWord('branchTitle', '🌱 어떤 모습으로 자랄까요?')) + '</h3>';
@@ -1290,7 +1320,7 @@ async function loadRecentQs(){
   if(ids.length !== 1){ el.innerHTML=''; return; }   // 한 명일 때만
   var id = ids[0];
   if(_qCache[id]){ renderQHint(id); return; }
-  el.innerHTML = '<div class="qhint"><div class="qhint-h">🌳 질문과수원에서 불러오는 중...</div></div>';
+  el.innerHTML = '<div class="qhint"><div class="qhint-h">🌳 ' + QUESTION_APP + '에서 불러오는 중...</div></div>';
   try{
     var r = await sb.from('questions').select('id,text,question_date,starred,resolved')
               .eq('user_id', id).order('question_date',{ascending:false}).limit(3);
@@ -2584,7 +2614,7 @@ async function doneCoupon(id){
 /* 내보내기 */
 function renderExport(){
   var h = '<div class="card"><h3>📤 생기부용 내보내기</h3>';
-  h += '<div class="sub">학생별 <b>날짜 · 역량 · 행동</b> 기록을 내려받아 세특 작성에 씁니다</div>';
+  h += '<div class="sub">학생별 <b>학번 · 이름 · 날짜 · 역량 · 관찰된 행동 · 수업(차시) · 출처</b>를 내려받아 세특 작성에 씁니다 — 화면 목록과 달리 <b>기록 전부</b>를 받아요</div>';
   h += '<div style="background:rgba(217,83,79,.09);border-radius:10px;padding:10px;font-size:var(--fs-xxs);font-weight:800;color:var(--bad);margin:12px 0">⚠️ 학생 개인정보가 담긴 파일입니다. 다운로드 후 관리에 주의해주세요.</div>';
   h += '<label class="fl">반 (비우면 전체)</label><input class="inp" id="exC" type="number" inputmode="numeric" placeholder="예: 3">';
   h += '<button class="btn" style="margin-top:12px" onclick="doExport()">⬇️ CSV 내려받기</button>';
@@ -2592,37 +2622,97 @@ function renderExport(){
   h += '<div class="sub" style="margin-top:12px">현재 내 기록: <b>' + S.teaObs.length + '건</b></div></div>';
   $('p-out').innerHTML = h;
 }
-function exRows(){
+/* 내보내기용 — 화면 목록(S.teaObs)은 최근 600건까지만 들고 있으므로, 내보낼 때는 서버에서 전부 다시 받는다.
+   학생 이름은 profiles 를 같이 붙여 받는다(교사 계정은 명단을 읽을 수 있다). */
+async function fetchAllObs(){
+  var all = [], from = 0, page = 1000;
+  while(true){
+    var r = await sb.from('observations').select('*, profiles!observations_student_id_fkey(name,grade,class_no,number)')
+              .eq('given_by', S.user.id).is('voided_at', null)
+              .order('observed_on',{ascending:false}).order('id',{ascending:false}).range(from, from+page-1);
+    if(r.error){
+      /* 관계 이름이 다르거나 명단 읽기가 막혀 있으면 이름 없이라도 받는다 */
+      var r2 = await sb.from('observations').select('*').eq('given_by', S.user.id).is('voided_at', null)
+                 .order('observed_on',{ascending:false}).order('id',{ascending:false}).range(from, from+page-1);
+      if(r2.error) throw new Error(r2.error.message || '기록을 받지 못했어요');
+      r = r2;
+    }
+    all = all.concat(r.data || []);
+    if((r.data || []).length < page) break;
+    from += page;
+  }
+  return all;
+}
+function exFilter(rows){
   var c = ($('exC') && $('exC').value.trim()) || '';
-  return S.teaObs.filter(function(o){ return !c || String(o.class_no_snap)===c; });
+  return rows.filter(function(o){ return !c || String(o.class_no_snap)===c; });
 }
-function doExport(){
-  var rows = exRows();
-  if(!rows.length){ toast('내보낼 기록이 없어요'); return; }
-  var head = '학년도,학기,반,번호,날짜,역량,관찰된 행동,수업\n';
-  var body = rows.map(function(o){
-    var q = function(v){ return '"' + String(v==null?'':v).replace(/"/g,'""') + '"'; };
-    return [o.school_year,o.semester,o.class_no_snap||'',o.number_snap||'',o.observed_on,
-            catName(o.category),o.behavior,o.lesson_note||''].map(q).join(',');
-  }).join('\n');
-  var blob = new Blob(['﻿'+head+body], {type:'text/csv;charset=utf-8;'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '칭찬도장_관찰기록_' + todayStr() + '.csv';
-  a.click(); URL.revokeObjectURL(a.href);
-  toast('내려받았어요 (' + rows.length + '건)');
+/* 학번 = 학년 + 반 2자리 + 번호 2자리 (관찰 당시 반·번호를 우선, 없으면 명단) */
+function exSid(o){
+  var p = o.profiles || {};
+  var g = p.grade || '', c = o.class_no_snap || p.class_no || '', n = o.number_snap || p.number || '';
+  if(!g && !c) return '';
+  var z = function(v){ v = String(v||''); return v.length===1 ? '0'+v : v; };
+  return String(g) + z(c) + z(n);
 }
-function doCopyAll(){
-  var rows = exRows();
+/* 도장의 출처 — 질문과수원 ⭐ 연계인지, 골든벨인지, 도장판에서 직접 찍었는지 */
+function exSource(o){
+  var n = String(o.lesson_note || '');
+  if(n.indexOf('질문과수원') === 0) return '질문과수원 ⭐';
+  if(/골든벨/.test(n)) return '골든벨';
+  return '도장판';
+}
+/* 수업(차시) 칸 — 질문과수원 태그 「질문과수원 ⭐ 2-7-2-2 옴의 법칙 (Q#12)」는 가운데 차시만, 도장판 기록은 그대로 */
+function exLesson(o){
+  var n = String(o.lesson_note || '');
+  if(n.indexOf('질문과수원') === 0) return n.replace(/^질문과수원\s*⭐\s*/, '').replace(/\s*\(Q#\d+\)\s*$/, '').trim();
+  return n;
+}
+function exSort(rows){
+  return rows.slice().sort(function(a,b){
+    var ac = +(a.class_no_snap||0) - +(b.class_no_snap||0); if(ac) return ac;
+    var an = +(a.number_snap||0) - +(b.number_snap||0); if(an) return an;
+    return String(a.observed_on).localeCompare(String(b.observed_on));
+  });
+}
+async function doExport(){
+  showLoad();
+  try{
+    var rows = exSort(exFilter(await fetchAllObs()));
+    if(!rows.length){ toast('내보낼 기록이 없어요'); return; }
+    var head = '학년도,학기,반,번호,학번,이름,날짜,역량,관찰된 행동,수업(차시),출처\n';
+    var body = rows.map(function(o){
+      var q = function(v){ return '"' + String(v==null?'':v).replace(/"/g,'""') + '"'; };
+      var nm = (o.profiles && o.profiles.name) || '';
+      return [o.school_year,o.semester,o.class_no_snap||'',o.number_snap||'',exSid(o),nm,o.observed_on,
+              catName(o.category),o.behavior,exLesson(o),exSource(o)].map(q).join(',');
+    }).join('\n');
+    var blob = new Blob(['﻿'+head+body], {type:'text/csv;charset=utf-8;'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '칭찬도장_관찰기록_' + todayStr() + '.csv';
+    a.click(); URL.revokeObjectURL(a.href);
+    toast('내려받았어요 (' + rows.length + '건)');
+  }catch(e){ toast('내보내기에 실패했어요 — ' + (e.message||e)); console.error(e); }
+  finally{ hideLoad(); }
+}
+async function doCopyAll(){
+  var rows;
+  showLoad();
+  try{ rows = exSort(exFilter(await fetchAllObs())); }
+  catch(e){ toast('기록을 받지 못했어요 — ' + (e.message||e)); return; }
+  finally{ hideLoad(); }
   if(!rows.length){ toast('복사할 기록이 없어요'); return; }
   var by={}, i;
   for(i=0;i<rows.length;i++){
-    var k = (rows[i].class_no_snap||'?') + '-' + (rows[i].number_snap||'?');
+    var nm = (rows[i].profiles && rows[i].profiles.name) || '';
+    var k = (rows[i].class_no_snap||'?') + '-' + (rows[i].number_snap||'?') + (nm ? ' ' + nm : '');
     (by[k]=by[k]||[]).push(rows[i]);
   }
   var out = Object.keys(by).sort().map(function(k){
     return '[' + k + ']\n' + by[k].map(function(o){
-      return '  ' + o.observed_on + ' (' + catName(o.category) + ') ' + o.behavior;
+      var ls = exLesson(o);
+      return '  ' + o.observed_on + ' (' + catName(o.category) + ') ' + o.behavior + (ls ? ' — ' + ls : '') + (exSource(o)!=='도장판' ? ' [' + exSource(o) + ']' : '');
     }).join('\n');
   }).join('\n\n');
   navigator.clipboard.writeText(out).then(function(){ toast('복사했어요 (' + rows.length + '건)'); },
@@ -2633,7 +2723,12 @@ function doCopyAll(){
    시작
    ══════════════════════════════════════════════════════════════════════════ */
 $('schoolName').textContent = CONFIG.schoolName;
-document.title = '🏅 ' + CONFIG.schoolName + ' 칭찬도장판';
+document.title = '🏅 ' + CONFIG.schoolName + ' ' + STAMP_NAME;
+if(window.CLASS_KIT_CONFIG){   /* 🧰 배포판: 이름·색·푸터·이메일 도메인 */
+  var lgt = document.querySelector('.lg-t'); if(lgt) lgt.textContent = STAMP_NAME;
+  var tE = document.getElementById('tE'); if(tE) tE.placeholder = '이메일 (예: name@school.ac.kr)';
+  kitTheme('stamp'); kitFooter(STAMP_NAME);
+}
 $('mdl').addEventListener('click', function(e){ if(e.target===this) closeMdl(); });
 
 (async function init(){
