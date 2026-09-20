@@ -393,6 +393,153 @@
   .vitem .vg{font-size:.95rem;color:var(--accent);font-weight:800}
   .vback{margin-top:auto;border:none;font-family:inherit;font-weight:800;cursor:pointer;
     background:var(--accent);color:#fff;border-radius:.8rem;padding:.8rem;font-size:1.2rem}
+
+  /* 🎨 화면 디자인 고르기 (좌하단 바로가기 옆) */
+  #themeSel{font-family:inherit;font-size:1.15rem;font-weight:700;padding:.35rem .8rem;
+    border:1.5px solid var(--line);border-radius:.6rem;background:#fff;color:var(--txt);cursor:pointer}
+
+  /* ═══════════════════════════════════════════════════════════════
+     🍎 테마 「깔끔」 — 애플 디자인 언어
+     한 가지 파랑(#0066cc)만 쓰고, 그림자 없이 면과 가는 선으로만 구분합니다.
+     굵기는 600, 제목은 자간을 살짝 좁힙니다.
+     ═══════════════════════════════════════════════════════════════ */
+  html[data-theme="apple"]{
+    --bg:#f5f5f7; --panel:#ffffff; --panel2:#f5f5f7; --line:#e0e0e0;
+    --txt:#1d1d1f; --sub:#6e6e73; --accent:#0066cc; --gold:#1d1d1f;
+    --urgent:#e30000; --green:#1d1d1f; --pink:#0066cc; --purple:#0066cc;
+    --shadow:none;
+  }
+  html[data-theme="apple"] body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Pretendard',
+    'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+  html[data-theme="apple"] header{background:rgba(255,255,255,.82);backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:1px solid rgba(0,0,0,.08)}
+  html[data-theme="apple"] .brand h1{font-weight:600;letter-spacing:-.02em}
+  html[data-theme="apple"] .classbadge{border-radius:99px;font-weight:600;letter-spacing:0;padding:.25rem 1.1rem}
+  html[data-theme="apple"] .clock .time{font-weight:600;letter-spacing:-.02em}
+  html[data-theme="apple"] .clock .date{font-weight:400}
+  html[data-theme="apple"] .period{color:var(--sub);font-weight:400}
+  html[data-theme="apple"] .period b{font-weight:600}
+  html[data-theme="apple"] #urgentBar{background:#e30000}
+  html[data-theme="apple"] #callBar{background:#f5f5f7;border-bottom:1px solid rgba(0,0,0,.08)}
+  html[data-theme="apple"] #callBar.has{background:#eaf2ff;border-bottom-color:#c7dcff}
+  html[data-theme="apple"] #callBar.has .clabel{color:var(--accent)}
+  html[data-theme="apple"] .callitem{border-color:var(--line)}
+  html[data-theme="apple"] .callitem .cls{background:var(--accent)}
+  html[data-theme="apple"] .callitem .stu{color:var(--txt)}
+  html[data-theme="apple"] .callitem .rsn{background:#f5f5f7;color:var(--sub)}
+  html[data-theme="apple"] .card{border-radius:1.05rem;border:1px solid var(--line)}
+  html[data-theme="apple"] .card h2{font-weight:600;letter-spacing:-.01em}
+  html[data-theme="apple"] .dday{border-radius:1.05rem}
+  html[data-theme="apple"] .dday .cnt{font-weight:600;color:var(--txt)}
+  html[data-theme="apple"] .dday .lab b{font-weight:600}
+  html[data-theme="apple"] .dday.today{border-color:var(--accent);background:#fff}
+  html[data-theme="apple"] .dday.today .cnt{color:var(--accent)}
+  html[data-theme="apple"] .dday.t-생일{border-color:var(--line);background:#fff}
+  html[data-theme="apple"] .nitem{border-radius:.75rem}
+  html[data-theme="apple"] .nitem .ntitle,html[data-theme="apple"] .listrow .t,
+  html[data-theme="apple"] .assessrow .sub,html[data-theme="apple"] .cleanrow .mb{font-weight:600}
+  html[data-theme="apple"] .nitem .nbody{color:var(--sub);font-weight:400}
+  html[data-theme="apple"] .slide .cat,html[data-theme="apple"] .nitem .ndept{background:rgba(0,0,0,.05);color:var(--txt);font-weight:600}
+  html[data-theme="apple"] .cat-긴급{background:#e30000;color:#fff}
+  html[data-theme="apple"] .ty-지필평가,html[data-theme="apple"] .ty-수행평가,html[data-theme="apple"] .ty-기타{
+    background:rgba(0,0,0,.05);color:var(--txt)}
+  html[data-theme="apple"] .tgl{background:#f5f5f7;border-color:transparent;color:var(--txt);font-weight:600}
+  html[data-theme="apple"] .tgl.on{background:var(--accent);color:#fff}
+  html[data-theme="apple"] .viewtabs button{background:#f5f5f7;font-weight:600}
+  html[data-theme="apple"] .viewtabs button.on{background:var(--accent)}
+  html[data-theme="apple"] #weekBox th{background:#f5f5f7;font-weight:600}
+  html[data-theme="apple"] #weekBox td.tdcol{background:rgba(0,102,204,.08);font-weight:600}
+  html[data-theme="apple"] #weekBox td.pn{background:#f5f5f7;font-weight:600}
+  html[data-theme="apple"] #mealList li{font-weight:400}
+  html[data-theme="apple"] #mealList li::before{color:var(--sub)}
+  html[data-theme="apple"] .squad b{font-weight:600}
+  html[data-theme="apple"] #goClass{border-color:var(--line)}
+  html[data-theme="apple"] #goClassSel,html[data-theme="apple"] #themeSel,html[data-theme="apple"] #callFilter{
+    border-radius:99px;font-weight:400}
+  html[data-theme="apple"] #msgBtn{box-shadow:none;font-weight:600;padding:.7rem 1.5rem}
+  html[data-theme="apple"] .setup .prim,html[data-theme="apple"] .vback{border-radius:99px;font-weight:600}
+  html[data-theme="apple"] .setup .cbtn{border-radius:99px}
+
+  /* ═══════════════════════════════════════════════════════════════
+     🌈 테마 「알록달록」 — 귀엽고 색 많은 디자인
+     카드마다 파스텔 색이 다르고, 모서리는 둥글게, 제목은 알약 모양.
+     ═══════════════════════════════════════════════════════════════ */
+  html[data-theme="cute"]{
+    --bg:#fff6fa; --panel:#ffffff; --panel2:#fff3f8; --line:#ffd9e6;
+    --txt:#4a3b5c; --sub:#9b86ad; --accent:#ff6f91; --gold:#ff9f43;
+    --urgent:#ff4d6d; --green:#22c48f; --pink:#ff6f91; --purple:#a78bfa;
+    --shadow:0 .35rem 0 rgba(255,111,145,.13);
+  }
+  html[data-theme="cute"] body{
+    background-color:var(--bg);
+    background-image:radial-gradient(#ffd9e6 1.2px,transparent 1.2px);background-size:1.6rem 1.6rem}
+  html[data-theme="cute"] .brand h1,html[data-theme="cute"] .card h2,html[data-theme="cute"] .classbadge,
+  html[data-theme="cute"] .clock .time,html[data-theme="cute"] .dday .cnt,html[data-theme="cute"] .squad b,
+  html[data-theme="cute"] .setup h2{font-family:'Jua','Pretendard','Malgun Gothic',sans-serif;font-weight:400}
+  html[data-theme="cute"] header{background:linear-gradient(90deg,#ffe3ec,#ece6ff,#dff3ff);
+    border-bottom:2px solid #ffd9e6;box-shadow:none}
+  html[data-theme="cute"] .brand h1{color:#e5488a;letter-spacing:0}
+  html[data-theme="cute"] .classbadge{border-radius:99px;background:#ff6f91;padding:.2rem 1.1rem}
+  html[data-theme="cute"] .classbadge::before{content:'🌸 '}
+  html[data-theme="cute"] .clock .time{color:#e5488a}
+  html[data-theme="cute"] .period{color:#16a37a}
+  html[data-theme="cute"] #urgentBar{background:linear-gradient(90deg,#ff5c8a,#ff8a5c)}
+  html[data-theme="cute"] #callBar{background:linear-gradient(90deg,#fff0f6,#f3edff);border-bottom:2px solid #ffd9e6}
+  html[data-theme="cute"] #callBar .clabel{color:#e5488a}
+  html[data-theme="cute"] .card{border-radius:1.6rem;border-width:2.5px}
+  html[data-theme="cute"] .card h2:not(.toggleh){display:inline-flex;align-self:flex-start;
+    padding:.25rem 1rem .25rem .8rem;border-radius:99px;font-size:1.45rem}
+  /* 카드마다 다른 파스텔 */
+  html[data-theme="cute"] #meal{border-color:#ffd8b5}
+  html[data-theme="cute"] #meal h2{background:#fff1e3;color:#e07b2a}
+  html[data-theme="cute"] #noticeCard{border-color:#bfe4ff}
+  html[data-theme="cute"] #noticeCard h2{background:#e8f5ff;color:#2a8fd6}
+  html[data-theme="cute"] #assess{border-color:#d9ccff}
+  html[data-theme="cute"] #assess h2{background:#efeaff;color:#7c5cff}
+  html[data-theme="cute"] #schedCard{border-color:#b8f0d6}
+  html[data-theme="cute"] #schedCard h2{background:#e6fbf1;color:#16a37a}
+  html[data-theme="cute"] #ttCard{border-color:#ffe9a8}
+  html[data-theme="cute"] #ttCard h2{background:#fff8dc;color:#c98f00}
+  html[data-theme="cute"] #cleanCard{border-color:#ffcfe0}
+  html[data-theme="cute"] #cleanCard h2{background:#fff0f6;color:#e5488a}
+  html[data-theme="cute"] #ttCard .tgl.on{background:#f5b301}
+  html[data-theme="cute"] #cleanCard .tgl.on{background:#ff6f91}
+  html[data-theme="cute"] .tgl{border-radius:99px;border-width:2px;border-color:var(--line);background:#fff;font-weight:800}
+  html[data-theme="cute"] .tgl.on{border-color:transparent}
+  html[data-theme="cute"] .viewtabs button{background:#fff;border:2px solid #ffd9e6}
+  html[data-theme="cute"] .viewtabs button.on{background:#ff6f91;border-color:transparent}
+  html[data-theme="cute"] .dday{border-radius:1.3rem;border-width:2px}
+  html[data-theme="cute"] .dday.t-시험{background:#ffe6ec;border-color:#ffc2d1}
+  html[data-theme="cute"] .dday.t-평가{background:#fff2df;border-color:#ffd9a8}
+  html[data-theme="cute"] .dday.t-방학{background:#e2fbf1;border-color:#b8f0d6}
+  html[data-theme="cute"] .dday.t-기타{background:#e8f2ff;border-color:#bfe4ff}
+  html[data-theme="cute"] .dday.today{border-color:#ff9f43;background:#fff2df}
+  html[data-theme="cute"] .nitem{background:#fff7fb;border:2px solid #ffe3ec;border-radius:1.1rem}
+  html[data-theme="cute"] .cat-일반{background:#e2fbf1;color:#16a37a}
+  html[data-theme="cute"] .cat-교과{background:#efeaff;color:#7c5cff}
+  html[data-theme="cute"] .cat-학년{background:#e8f2ff;color:#2a8fd6}
+  html[data-theme="cute"] .cat-긴급{background:#ff5c8a;color:#fff}
+  html[data-theme="cute"] .nitem .ndept{background:#fff1e3;color:#e07b2a}
+  html[data-theme="cute"] #mealList li::before{content:'🍽';font-size:.9em}
+  html[data-theme="cute"] #weekBox th{background:#fff3f8;color:#e5488a;border-color:var(--line)}
+  html[data-theme="cute"] #weekBox td{border-color:var(--line)}
+  html[data-theme="cute"] #weekBox th.today{background:#ff6f91}
+  html[data-theme="cute"] #weekBox td.tdcol{background:#fff0f6;color:#e5488a}
+  html[data-theme="cute"] #weekBox td.now,html[data-theme="cute"] .ttc.nowp{background:#ff6f91}
+  html[data-theme="cute"] #weekBox td.pn{background:#fff3f8;color:#e5488a}
+  html[data-theme="cute"] .listrow .d,html[data-theme="cute"] .assessrow .d{color:#e07b2a}
+  html[data-theme="cute"] .cleanrow .ar{color:#2a8fd6}
+  html[data-theme="cute"] .squad b{color:#ff6f91}
+  html[data-theme="cute"] #goClass,html[data-theme="cute"] .callitem{border-width:2px;border-color:var(--line)}
+  html[data-theme="cute"] #goClassSel,html[data-theme="cute"] #themeSel,html[data-theme="cute"] #callFilter{
+    border-radius:99px;border-width:2px}
+  html[data-theme="cute"] #msgBtn{background:linear-gradient(90deg,#ff6f91,#a78bfa);box-shadow:0 .35rem 0 rgba(255,111,145,.25)}
+  html[data-theme="cute"] .setup .sheet{border-radius:2rem;border:3px solid #ffd9e6}
+  html[data-theme="cute"] .setup .prim,html[data-theme="cute"] .vback{border-radius:99px}
+  html[data-theme="cute"] .setup .cbtn{border-radius:99px;border-width:2px}
+  html[data-theme="cute"] .setup .cbtn:hover{background:#fff0f6;border-color:#ff6f91;color:#e5488a}
+  html[data-theme="cute"] .vitem{border-radius:1.1rem;border-width:2px}
+  html[data-theme="cute"] .vitem.on{background:#fff0f6;border-color:#ff6f91}
 </style>
 </head>
 <body>
@@ -521,6 +668,11 @@
     <select id="goClassSel" onchange="gotoClass(this.value)">
       <option value="">반을 고르세요</option>
     </select>
+    <select id="themeSel" onchange="setTheme(this.value)" title="화면 디자인 — 이 기기에 기억됩니다">
+      <option value="">🎨 기본</option>
+      <option value="apple">🍎 깔끔</option>
+      <option value="cute">🌈 알록달록</option>
+    </select>
   </div>
 
   <button id="msgBtn" onclick="openMsg()">📮 선생님께 말하기</button>
@@ -579,6 +731,32 @@ const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,'0');
 const ymd = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
 const todayStr = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+
+/* ═══ 🎨 화면 디자인 (기본 · 🍎 깔끔 · 🌈 알록달록) ═══
+   이 기기에 기억됩니다. ?theme=apple 처럼 주소로도 정할 수 있습니다. */
+const THEMES = ['', 'apple', 'cute'];
+const LS_THEME = 'hnr_theme';
+function setTheme(name, remember=true){
+  if(!THEMES.includes(name)) name='';
+  if(name) document.documentElement.setAttribute('data-theme', name);
+  else document.documentElement.removeAttribute('data-theme');
+  if(remember){ try{ localStorage.setItem(LS_THEME, name); }catch(e){} }
+  const sel=$('themeSel'); if(sel) sel.value=name;
+  // 알록달록은 둥근 글꼴(Jua)을 씁니다 — 그때만 한 번 받아옵니다
+  if(name==='cute' && !document.getElementById('cuteFont')){
+    const l=document.createElement('link'); l.id='cuteFont'; l.rel='stylesheet';
+    l.href='https://fonts.googleapis.com/css2?family=Jua&display=swap';
+    document.head.appendChild(l);
+  }
+  // 칸 크기가 달라질 수 있어 공지·시간표 칸을 다시 맞춥니다
+  setTimeout(()=>{ if(typeof fitNoticeItems==='function') fitNoticeItems();
+                   if(typeof fitWeekTable==='function') fitWeekTable(); }, 60);
+}
+(function(){
+  const q = new URLSearchParams(location.search).get('theme');
+  let saved=''; try{ saved = localStorage.getItem(LS_THEME)||''; }catch(e){}
+  if(q!==null) setTheme(q, true); else setTheme(saved, false);
+})();
 
 /* ── 교실별 모드 (?class=2-3) — 특정 교실 전자칠판용 ── */
 const _cm = new URLSearchParams(location.search).get('class');
