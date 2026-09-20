@@ -1304,7 +1304,7 @@ async function saveVideo(){
   }
   $('vSave').disabled=false;
   if(error){
-    toast(/relation|does not exist/i.test(error.message)
+    toast(/relation|does not exist|schema cache/i.test(error.message)
       ? '영상 표가 아직 없습니다 — VIDEOS.sql 을 한 번 실행해 주세요'
       : ((editingVideoId?'수정':'등록')+' 실패: '+error.message));
     return;
@@ -1740,7 +1740,7 @@ async function saveBirthdays(){
   const { error } = await sb.from('birthdays').upsert(rows, { onConflict:'grade,class_no,name,month,day', ignoreDuplicates:true });
   $('bdSave').disabled=false;
   if(error){
-    toast(/relation|does not exist/i.test(error.message)
+    toast(/relation|does not exist|schema cache/i.test(error.message)
       ? '생일 표가 아직 없습니다 — BIRTHDAYS.sql 을 한 번 실행해 주세요'
       : '저장 실패: '+error.message);
     return;
