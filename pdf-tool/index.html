@@ -13,10 +13,6 @@
 <meta name="apple-mobile-web-app-title" content="PDF 도구">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
-<script src="lib/pdf-lib.min.js"></script>
-<script src="lib/pdf.min.js"></script>
-<script src="lib/fflate.min.js"></script>
-<script src="lib/tesseract/tesseract.min.js"></script>
 <!-- 참고: 워터마크 글자는 캔버스 이미지로 처리하므로 폰트 삽입 라이브러리(fontkit) 불필요 -->
 <style>
   :root{
@@ -65,6 +61,7 @@
     display:flex; align-items:center; gap:10px; padding:10px 12px;
     border:1px solid var(--line); border-radius:10px; background:#fafbff;
   }
+  .list.busy{pointer-events:none; opacity:.6}
   .item.dragging{opacity:.55; box-shadow:0 8px 22px rgba(59,111,224,.25); border-color:var(--brand); background:#eef3ff}
   .item.dragover-top{box-shadow:inset 0 3px 0 var(--brand)}
   .item.dragover-bot{box-shadow:inset 0 -3px 0 var(--brand)}
@@ -90,6 +87,20 @@
   @media(max-width:768px){ input[type=text],input[type=number],select,textarea{font-size:16px} }
   textarea{resize:vertical; min-height:220px; line-height:1.6}
   .hint{color:var(--sub); font-size:12.5px; margin-top:5px}
+  .warnbox{margin-top:10px; background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:10px; padding:10px 12px; font-size:13px; line-height:1.55}
+  /* 저장 파일 이름 칸 */
+  .fname{display:flex; align-items:stretch; border:1px solid var(--line); border-radius:10px; background:#fff; overflow:hidden}
+  .fname:focus-within{border-color:var(--brand); box-shadow:0 0 0 3px rgba(59,111,224,.15)}
+  .fname input[type=text]{border:none; border-radius:0; flex:1; min-width:0}
+  .fname input[type=text]:focus{outline:none}
+  .fname .fext{display:flex; align-items:center; padding:0 12px; background:#f3f5f9; color:var(--sub); font-size:14px; border-left:1px solid var(--line)}
+  .namepreview{font-size:12.5px; color:var(--sub); margin-top:6px; overflow-wrap:anywhere}
+  .namepreview b{color:var(--ink); font-weight:600}
+  .segnames{margin-top:10px; display:flex; flex-direction:column; gap:6px}
+  .segname{display:flex; align-items:center; gap:8px}
+  .segname .segtag{flex:none; min-width:118px; font-size:12.5px; font-weight:700; color:#fff; padding:6px 10px; border-radius:8px; white-space:nowrap}
+  .segname .fname{flex:1}
+  .segname input[type=text]{padding:8px 10px}
   .radios{display:flex; flex-direction:column; gap:8px; margin-top:6px}
   .radios label{display:flex; align-items:flex-start; gap:8px; font-size:14px;
     padding:10px 12px; border:1px solid var(--line); border-radius:10px; cursor:pointer}
@@ -145,6 +156,7 @@
   .thumb.deleted{opacity:.35}
   .thumb .imgbox{height:150px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#f8fafc; border-radius:6px}
   .thumb img{max-width:132px; max-height:142px; border:1px solid #eee; transition:transform .2s; background:#fff}
+  .thumb img.pending{visibility:hidden}
   .thumb .num{font-size:12px; color:var(--sub); margin:5px 0 4px}
   .thumb .ctrl{display:flex; justify-content:center; gap:6px}
   .thumb .ctrl button{border:none; background:#eef1f6; border-radius:8px; min-width:40px; height:40px; cursor:pointer; font-size:16px; line-height:1}
@@ -169,9 +181,11 @@
   .sgallery{display:flex; flex-wrap:wrap; gap:0; margin-top:12px; user-select:none}
   .scell{display:flex; align-items:stretch}
   .spage{width:104px; padding:6px; border:2px solid var(--line); border-radius:9px; background:#fff;
-    text-align:center; cursor:pointer; transition:border-color .1s, background .1s; touch-action:none}
+    text-align:center; cursor:pointer; transition:border-color .1s, background .1s; touch-action:pan-y;
+    -webkit-touch-callout:none; user-select:none; -webkit-user-select:none}
   .spage .simgbox{height:120px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#f8fafc; border-radius:5px}
   .spage img{max-width:90px; max-height:112px; border:1px solid #eee; background:#fff; pointer-events:none}
+  .spage img.pending{visibility:hidden}
   .spage .snum{font-size:11.5px; color:var(--sub); margin-top:4px}
   .spage.sel{border-color:var(--brand); background:#eaf1ff}
   .spage.sel .snum{color:var(--brand); font-weight:700}
@@ -242,7 +256,7 @@
   <button class="help-btn install-btn" id="install-btn" style="display:none">💻 앱 설치</button>
   <button class="help-btn" id="open-manual">📖 설명서</button>
   <h1>📄 PDF 만능 도구</h1>
-  <p>병합 · 분할 · 압축 · 변환 · 정리 · 쪽번호 · 워터마크 · 모아찍기 · OCR — 인터넷 없이, 무제한 무료</p>
+  <p>병합 · 분할 · 압축 · 변환 · 정리 · 쪽번호 · 워터마크 · 모아찍기 · OCR — 파일은 이 컴퓨터 안에서만 처리돼요</p>
 </header>
 
 <div class="wrap">
@@ -270,6 +284,12 @@
     </div>
     <input type="file" id="file-merge" accept="application/pdf" multiple>
     <div class="list" id="list-merge"></div>
+    <div id="merge-opts" style="display:none">
+      <label class="f" for="merge-name">저장할 파일 이름</label>
+      <div class="fname"><input type="text" id="merge-name" autocomplete="off" spellcheck="false"><span class="fext">.pdf</span></div>
+      <div class="hint">비워 두면 흐린 글씨의 이름으로 저장돼요.</div>
+      <label class="check"><input type="checkbox" id="merge-duplex"> 양면 인쇄용: 각 파일이 새 종이에서 시작하도록 홀수 쪽 파일 뒤에 빈 쪽 넣기</label>
+    </div>
     <button class="btn" id="btn-merge" disabled>PDF 병합하기</button>
     <div class="bar" id="bar-merge"><div></div></div>
     <div class="status" id="status-merge"></div>
@@ -298,15 +318,15 @@
         </span>
       </div>
       <div class="hint" id="split-help">
-        · 페이지를 <b>클릭(터치는 톡 누르기)</b>하면 선택돼요. 마우스로 <b>드래그</b>하면 여러 쪽이 한꺼번에 선택돼요(파란색). · 페이지 사이 <b>✂</b>를 누르면 그 자리에서 잘려요(색깔 구간으로 나뉨).
+        · 페이지를 <b>클릭(터치는 톡 누르기)</b>하면 선택돼요. 마우스로 <b>드래그</b>하면 여러 쪽이 한꺼번에 선택돼요(파란색). 휴대폰·태블릿은 <b>길게 누른 채 끌면</b> 여러 쪽이 골라져요. · 페이지 사이 <b>✂</b>를 누르면 그 자리에서 잘려요(색깔 구간으로 나뉨).
       </div>
 
       <div class="split-quick">
         <div class="sq-title">⚡ 빠른 도구</div>
         <div class="sq-row">
           <span class="sq-label">번호로 선택</span>
-          <input type="text" id="sq-pages" placeholder="예: 1-3, 5, 8-10">
-          <button class="minibtn" id="sq-select">선택에 추가</button>
+          <input type="text" id="sq-pages" placeholder="예: 1-3, 5, 8~10">
+          <button class="minibtn" id="sq-select">이 쪽들 선택</button>
         </div>
         <div class="sq-row">
           <span class="sq-label">몇 쪽씩 자르기</span>
@@ -316,7 +336,7 @@
         </div>
         <div class="sq-row">
           <span class="sq-label">용량으로 나누기</span>
-          <input type="number" id="sq-size" min="1" value="10" inputmode="numeric" style="width:74px">
+          <input type="number" id="sq-size" min="0.1" step="any" value="10" inputmode="decimal" style="width:74px">
           <span class="sq-unit">MB 이하로</span>
           <button class="minibtn sq-go" id="sq-size-btn">📧 나눠 저장</button>
         </div>
@@ -324,6 +344,11 @@
       </div>
 
       <div class="sgallery" id="split-gallery"></div>
+
+      <label class="f" for="split-name" style="margin-top:18px">저장할 파일 이름</label>
+      <div class="fname"><input type="text" id="split-name" autocomplete="off" spellcheck="false"><span class="fext">.pdf</span></div>
+      <div class="namepreview" id="split-name-preview"></div>
+      <div class="segnames" id="split-segnames"></div>
     </div>
 
     <button class="btn" id="btn-split-extract" disabled>선택한 페이지 추출하기</button>
@@ -358,7 +383,8 @@
           <span class="s"> · 살짝만 줄이기</span></span></label>
       </div>
       <label class="check"><input type="checkbox" id="c-gray"> 흑백(회색조)으로 변환 — 잉크 절약, 용량 추가 감소</label>
-      <div class="hint">※ 스캔본·사진 PDF에서 효과가 큽니다. 글자만 있는 PDF는 거의 안 줄어들 수 있어요.</div>
+      <div class="hint">※ 모든 쪽을 사진으로 다시 찍어 담는 방식이라 스캔본·사진 PDF에서 효과가 큽니다.</div>
+      <div class="warnbox" id="compress-textwarn" style="display:none">이 PDF는 글자가 살아 있는 문서예요. 압축하면 모든 쪽이 사진으로 바뀌어 <b>글자 선택·검색·복사가 안 되고</b>, 용량도 거의 안 줄거나 오히려 커질 수 있어요. 원본 한글·워드 파일이 있다면 거기서 PDF로 다시 저장하는 편이 더 작고 선명해요.</div>
       <div class="preview-box" id="compress-preview-box" style="display:none">
         <div class="plabel">미리보기 (이 설정으로 변환한 첫 페이지)</div>
         <canvas id="compress-preview"></canvas>
@@ -402,11 +428,19 @@
           </select>
         </div>
       </div>
-      <div class="hint">이미지는 용지 안에 비율을 유지한 채 최대 크기로, 가운데에 배치됩니다.</div>
+      <label class="f" for="img-quality">사진 화질</label>
+      <select id="img-quality">
+        <option value="orig">원본 그대로 (추천)</option>
+        <option value="small">용량 줄이기 (긴 변 2000픽셀로 줄여 담기)</option>
+      </select>
+      <div class="hint">이미지는 용지 안에 비율을 유지한 채 최대 크기로, 가운데에 배치됩니다. 휴대폰으로 세워 찍은 사진도 바로 세워서 담아요.</div>
       <div class="preview-box" id="img2pdf-preview-box" style="display:none">
         <div class="plabel">미리보기 (첫 번째 이미지가 놓이는 모습)</div>
         <canvas id="img2pdf-preview"></canvas>
       </div>
+      <label class="f" for="img2pdf-name" style="margin-top:18px">저장할 파일 이름</label>
+      <div class="fname"><input type="text" id="img2pdf-name" autocomplete="off" spellcheck="false"><span class="fext">.pdf</span></div>
+      <div class="hint">비워 두면 흐린 글씨의 이름으로 저장돼요.</div>
     </div>
 
     <button class="btn" id="btn-img2pdf" disabled>PDF 만들기</button>
@@ -525,7 +559,9 @@
           </select>
         </div>
       </div>
-      <label class="check"><input type="checkbox" id="num-skipfirst"> 첫 페이지(표지)에는 번호 표시 안 함</label>
+      <label class="f" for="num-from">번호를 넣기 시작할 쪽</label>
+      <input type="number" id="num-from" value="1" min="1" inputmode="numeric">
+      <div class="hint">표지만 빼려면 2, 표지와 목차 두 쪽을 빼려면 3을 넣으세요. 그 쪽이 '시작 번호'를 받아요.</div>
       <div class="preview-box" id="num-preview-box" style="display:none">
         <div class="plabel">미리보기 (첫 페이지)</div>
         <canvas id="num-preview"></canvas>
@@ -716,7 +752,7 @@
   <!-- OCR -->
   <div class="panel" id="panel-ocr">
     <h2>OCR — 스캔본 글자 인식</h2>
-    <p class="desc">스캔한 PDF나 사진 속 글자를 인식해서 텍스트로 만들어 줍니다. 한국어·영어 지원, 100% 오프라인.</p>
+    <p class="desc">스캔한 PDF나 사진 속 글자를 인식해서 텍스트로 만들어 줍니다. 한국어·영어를 알아보고, 인식도 이 컴퓨터 안에서 이루어져요.</p>
     <div class="drop" id="drop-ocr">
       <b>클릭</b>하거나 파일을 여기로 <b>끌어다 놓으세요</b>
       <small>PDF 1개 또는 사진 여러 장 (JPG, PNG)</small>
@@ -734,12 +770,12 @@
             <option value="eng">영어만</option>
           </select>
         </div>
-        <div>
-          <label class="f">인식할 페이지 (PDF만, 비우면 전체)</label>
+        <div id="ocr-range-box">
+          <label class="f">인식할 페이지 (비우면 전체)</label>
           <input type="text" id="ocr-range" placeholder="예: 1-3, 5">
         </div>
       </div>
-      <div class="hint">※ 처음 실행할 땐 인식 엔진을 준비하느라 10~20초쯤 걸리고, 이후 페이지당 수 초~수십 초 걸려요. 글자가 선명할수록 정확합니다.</div>
+      <div class="hint">※ 처음 실행할 땐 인식 자료(한국어 약 7MB, 영어 약 11MB)를 받아 오느라 시간이 걸려요. 한 번 받아 두면 그다음부터는 인터넷이 끊겨도 됩니다. 이후 페이지당 수 초~수십 초 걸리고, 글자가 선명할수록 정확합니다.</div>
     </div>
 
     <button class="btn" id="btn-ocr" disabled>🔍 글자 인식 시작</button>
@@ -764,8 +800,8 @@
     </div>
   </div>
   <button class="footlink" id="open-manual2">📖 사용 설명서 보기</button><br>
-  모든 처리는 이 컴퓨터 안에서만 이루어집니다 · 파일이 외부로 전송되지 않아요 🔒<br>
-  <span class="credit">제작: 해누리중학교 조승재</span> · <a href="mailto:chuseonjae@outlook.kr" style="color:var(--brand)">chuseonjae@outlook.kr</a>
+  파일은 이 컴퓨터 안에서만 처리되고 밖으로 보내지 않아요 🔒 (방문자 수만 따로 셉니다)<br>
+  <span class="credit">문의</span> · <a href="mailto:chuseonjae@outlook.kr" style="color:var(--brand)">chuseonjae@outlook.kr</a>
 </footer>
 
 <!-- 설명서 모달 -->
@@ -776,15 +812,67 @@
       <button class="modal-close" id="close-manual" aria-label="설명서 닫기">✕</button>
     </div>
     <div class="modal-body">
-      <p class="man-intro">각 기능의 제목을 누르면 사용법이 펼쳐져요. 이 도구의 모든 작업은 인터넷 없이 이 컴퓨터 안에서만 처리됩니다. 🔒</p>
+      <p class="man-intro">각 기능의 제목을 누르면 사용법이 펼쳐져요. 넣은 파일은 이 컴퓨터(브라우저) 안에서만 처리되고 어디에도 올라가지 않아요. 🔒</p>
       <div id="manual-list"></div>
     </div>
   </div>
 </div>
 
+<!-- 라이브러리는 화면을 먼저 그린 뒤에 읽는다(글자 인식 엔진은 OCR을 처음 쓸 때 불러옴) -->
+<script src="lib/pdf-lib.min.js"></script>
+<script src="lib/pdf.min.js"></script>
+<script src="lib/fflate.min.js"></script>
 <script>
-const { PDFDocument, StandardFonts, degrees, rgb } = PDFLib;
+const { PDFDocument, StandardFonts, degrees, rgb, ParseSpeeds } = PDFLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";
+
+// ---------- pdf.js 공용 창구 ----------
+// · 워커 하나를 모든 문서가 같이 씀 → 문서를 열 때마다 워커가 쌓여 메모리가 새던 문제 해결
+// · isEvalSupported:false → pdf.js 3.x 글꼴 취약점(CVE-2024-4367, 악성 PDF로 스크립트 실행) 차단
+// · cMapUrl → 한글 CID 글꼴(UniKS-UCS2-H 등)을 쓰는 PDF의 글자가 렌더·추출에서 빠지지 않게
+// 쓰고 나면 반드시 pdf.destroy(). 넘긴 버퍼는 워커로 옮겨져 비워지므로, 다시 쓸 버퍼면 .slice(0)로 넘길 것.
+let pdfjsWorker = null;
+function openPdf(bytes){
+  if(!pdfjsWorker) pdfjsWorker = new pdfjsLib.PDFWorker({name:"pdf-tool"});
+  return pdfjsLib.getDocument({
+    data: bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes),
+    worker: pdfjsWorker, isEvalSupported: false,
+    cMapUrl: "lib/cmaps/", cMapPacked: true
+  }).promise;
+}
+
+// ---------- pdf-lib 공용 창구 ----------
+// 사용자에게 그대로 보여 줄 안내(입력 실수·편집 제한 등)는 UserMsg로 던진다
+class UserMsg extends Error{}
+// 편집 제한(보안) PDF는 pdf-lib가 내용을 풀지 못해 빈 쪽 결과가 되므로 미리 막는다
+async function loadEditable(bytes, name){
+  const doc = await PDFDocument.load(bytes, {ignoreEncryption:true, parseSpeed: ParseSpeeds.Fastest});
+  if(doc.isEncrypted) throw new UserMsg(`「${name || "이 파일"}」은(는) 보안(편집 제한)이 걸린 PDF라 합치거나 고칠 수 없어요. 제한이 없는 원본 파일을 받아서 넣어 주세요.`);
+  return doc;
+}
+// 저장할 때 쉬어 가며 끊지 않게(다른 탭에 가 있어도 멈추지 않음)
+const saveDoc = doc => doc.save({objectsPerTick: Infinity});
+
+// 파일 이름을 HTML에 넣을 때 태그로 해석되지 않게
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+// 저장 파일 이름 정리: 윈도우 금지문자·끝 마침표 제거, 확장자 중복 방지, 길이 제한
+function safeName(s, ext){
+  let n = String(s || "").normalize("NFC").replace(/[\\\/:*?"<>|\u0000-\u001f]/g, "").replace(/\s+/g, " ").trim();
+  if(ext) n = n.replace(new RegExp("\\." + ext + "$", "i"), "");
+  return n.replace(/[. ]+$/, "").slice(0, 120);
+}
+// 같은 이름이 겹치면 (2), (3)을 붙여 ZIP 안에서 덮어쓰이지 않게
+function uniqueNames(names){
+  const used = new Set();
+  return names.map(n=>{
+    let cand = n, k = 2;
+    const dot = n.lastIndexOf("."), base = dot>0 ? n.slice(0,dot) : n, ext = dot>0 ? n.slice(dot) : "";
+    while(used.has(cand.toLowerCase())) cand = `${base} (${k++})${ext}`;
+    used.add(cand.toLowerCase());
+    return cand;
+  });
+}
+const baseOf = f => (f && f.name ? f.name.replace(/\.[^.]+$/, "") : "");
 
 // ---------- 공통 유틸 ----------
 function fmtSize(b){
@@ -799,46 +887,45 @@ function setStatus(id, msg, cls){
 }
 // 기술적 영어 예외를 사용자 친화적 한국어로 변환
 function friendlyError(e){
+  if(e instanceof UserMsg) return e.message;
   const m = ((e && e.message) || String(e)).toLowerCase();
   if(/encrypt|password/.test(m)) return "암호가 걸린 PDF라 열 수 없어요. 암호를 먼저 해제한 뒤 다시 시도해 주세요.";
   if(/invalid|parse|xref|structure|corrupt|not a pdf/.test(m)) return "파일이 손상됐거나 형식이 특이해서 열 수 없어요. 다른 PDF로 시도해 주세요.";
   if(/memory|allocation|out of/.test(m)) return "파일이 너무 커서 처리 중 메모리가 부족했어요. 페이지 수를 줄이거나 나눠서 시도해 주세요.";
   return "처리 중 문제가 생겼어요. 파일을 확인하고 다시 시도해 주세요.";
 }
-// 쪽수 많은/큰 파일은 미리보기가 오래 걸려 멈춘 것처럼 보이므로 미리 확인
-function confirmHeavy(total, size){
-  if(total > 60 || size > 30*1024*1024){
-    return confirm(`이 파일은 ${total}쪽(${fmtSize(size)})이라 미리보기를 만드는 데 시간이 걸릴 수 있어요.\n계속할까요?`);
-  }
-  return true;
-}
-// 실시간 미리보기용: PDF 첫 페이지를 화면 크기 캔버스로 렌더(파일별 1회 캐시)
+// 실시간 미리보기용: PDF 첫 페이지를 화면 크기 캔버스로 렌더(파일별 1회 캐시, 문서는 바로 닫음)
+// 회전(/Rotate)과 잘라내기 상자는 pdf.js 화면 좌표에 이미 반영됨
 const firstPageCache = new WeakMap();
-async function getFirstPage(file, maxW=460){
-  if(firstPageCache.has(file)) return firstPageCache.get(file);
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data: buf.slice(0)}).promise;
-  const page = await pdf.getPage(1);
-  const vp1 = page.getViewport({scale:1});
-  const scale = Math.min(maxW/vp1.width, 2);
-  const vp = page.getViewport({scale});
-  const c = document.createElement("canvas");
-  c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
-  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0,0,c.width,c.height);
-  // intent:"print" — 탭이 백그라운드여도 렌더가 멈추지 않음
-  await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
-  page.cleanup();
-  const res = { canvas:c, ptW:vp1.width, ptH:vp1.height, scale, pages:pdf.numPages };
-  firstPageCache.set(file, res);
-  return res;
+function getFirstPage(file, maxW=460){
+  if(!firstPageCache.has(file)) firstPageCache.set(file, (async ()=>{
+    const pdf = await openPdf(await file.arrayBuffer());
+    try{
+      const page = await pdf.getPage(1);
+      const vp1 = page.getViewport({scale:1});
+      const scale = Math.min(maxW/vp1.width, 2);
+      const vp = page.getViewport({scale});
+      const c = document.createElement("canvas");
+      c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+      const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0,0,c.width,c.height);
+      // intent:"print" — 탭이 백그라운드여도 렌더가 멈추지 않음
+      await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
+      return { canvas:c, ptW:vp1.width, ptH:vp1.height, scale, pages:pdf.numPages };
+    }finally{ pdf.destroy(); }
+  })().catch(e=>{ firstPageCache.delete(file); throw e; }));
+  return firstPageCache.get(file);
 }
 // 워터마크 색상 매핑(미리보기·실제 공용)
 const WM_COLORS = {gray:"#737373", red:"#d92626", blue:"#3366d9"};
+// 진행 막대가 떠 있는 동안(=작업 중) 탭을 닫거나 새로고침하면 확인을 받는다
+const activeBars = new Set();
 function setBar(id, pct){
   const bar = document.getElementById(id);
   bar.style.display = pct == null ? "none" : "block";
-  if(pct != null) bar.firstElementChild.style.width = pct + "%";
+  if(pct != null){ bar.firstElementChild.style.width = pct + "%"; activeBars.add(id); }
+  else activeBars.delete(id);
 }
+window.addEventListener("beforeunload", e=>{ if(activeBars.size){ e.preventDefault(); e.returnValue = ""; } });
 function download(data, filename, mime){
   const blob = data instanceof Blob ? data : new Blob([data], {type: mime || "application/pdf"});
   const url = URL.createObjectURL(blob);
@@ -847,6 +934,28 @@ function download(data, filename, mime){
   document.body.appendChild(a); a.click(); a.remove();
   return {url, filename, size: blob.size};
 }
+// 캔버스 → 그림 Blob. 크롬은 탭이 가려져 있으면 toBlob을 쪽마다 1초쯤 미루므로(다른 탭에 가 있는 동안 압축이
+// 쪽당 1초씩 늘어짐), 그때는 바로 변환하는 toDataURL을 쓴다(한 쪽에 수십 ms)
+function canvasBlob(c, type, q){
+  if(document.hidden){
+    const url = c.toDataURL(type, q);
+    const bin = atob(url.slice(url.indexOf(",") + 1));
+    const u8 = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) u8[i] = bin.charCodeAt(i);
+    return Promise.resolve(new Blob([u8], {type: url.slice(5, url.indexOf(";"))}));
+  }
+  return new Promise((res, rej)=>c.toBlob(b=>b ? res(b) : rej(new Error("memory")), type, q));
+}
+const canvasJpg = (c, q)=>canvasBlob(c, "image/jpeg", q);
+// 결과 칸 비우기 — 만들어 둔 blob 주소도 풀어 메모리를 돌려준다
+function clearResults(containerId){
+  const box = document.getElementById(containerId);
+  if(!box) return;
+  box.querySelectorAll('a[href^="blob:"]').forEach(a=>URL.revokeObjectURL(a.href));
+  box.innerHTML = "";
+}
+// 새 파일을 올렸을 때 이전 파일의 결과·완료 문구가 남지 않게
+function resetOutput(key){ clearResults("results-"+key); setStatus("status-"+key, ""); }
 function addResult(containerId, url, filename, sizeLabel){
   const box = document.getElementById(containerId);
   if(!box.querySelector(".savenote")){
@@ -859,25 +968,31 @@ function addResult(containerId, url, filename, sizeLabel){
   }
   const a = document.createElement("a");
   a.href = url; a.download = filename;
-  a.innerHTML = `<span>⬇ ${filename}</span><span class="dl">${sizeLabel||"저장"}</span>`;
+  a.innerHTML = `<span>⬇ ${esc(filename)}</span><span class="dl">${esc(sizeLabel||"저장")}</span>`;
   box.appendChild(a);
 }
-// 다운로드 없이 링크만 (여러 파일일 때)
-function linkResult(containerId, bytes, filename, mime, sizeLabel){
-  const blob = new Blob([bytes], {type: mime || "application/pdf"});
+// 다운로드 없이 링크만 (여러 파일일 때). data는 바이트 또는 Blob
+function linkResult(containerId, data, filename, mime, sizeLabel){
+  const blob = data instanceof Blob ? data : new Blob([data], {type: mime || "application/pdf"});
   addResult(containerId, URL.createObjectURL(blob), filename, sizeLabel || fmtSize(blob.size));
 }
-// ZIP 한 번에 저장 버튼
+// ZIP 한 번에 저장 버튼. items: {filename, bytes} 또는 {filename, blob}
 function addZipButton(containerId, items, zipName){
   const box = document.getElementById(containerId);
   const btn = document.createElement("button");
   btn.className = "btn zip";
   btn.textContent = `📦 ZIP으로 한 번에 저장 (${items.length}개 파일)`;
-  btn.onclick = ()=>{
-    const obj = {};
-    items.forEach(it=>{ obj[it.filename] = it.bytes; });
-    const zipped = fflate.zipSync(obj, {level: 0});
-    download(zipped, zipName, "application/zip");
+  btn.onclick = async ()=>{
+    btn.disabled = true;
+    try{
+      const names = uniqueNames(items.map(it=>it.filename));
+      const obj = {};
+      for(let i=0;i<items.length;i++){
+        const it = items[i];
+        obj[names[i]] = it.bytes || new Uint8Array(await it.blob.arrayBuffer());
+      }
+      download(fflate.zipSync(obj, {level: 0}), zipName, "application/zip");
+    }finally{ btn.disabled = false; }
   };
   box.appendChild(btn);
 }
@@ -889,46 +1004,53 @@ function unsupportedMsg(flt){
   if(flt===isImg) msg += "\n· 아이폰 사진(HEIC)은 지원되지 않아요 — 사진 앱에서 'JPEG로 저장' 후 넣어주세요.";
   return msg;
 }
+const dropHandlers = {};   // 드롭존 id → 파일 받는 함수 (상자 밖에 떨어뜨린 파일을 넘겨주기 위해)
 function setupDrop(dropId, inputId, onFiles, filter){
   const drop = document.getElementById(dropId);
   const input = document.getElementById(inputId);
   const flt = filter || isPdf;
+  const take = all=>{
+    const fs = all.filter(flt);
+    if(fs.length) onFiles(fs);
+    else if(all.length) alert(unsupportedMsg(flt));
+  };
+  dropHandlers[dropId] = take;
   // 접근성: 드롭존을 키보드로도 조작
   drop.setAttribute("tabindex","0");
   drop.setAttribute("role","button");
   drop.setAttribute("aria-label","파일 선택 또는 끌어다 놓기");
   drop.addEventListener("click", ()=>input.click());
   drop.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); input.click(); } });
-  input.addEventListener("change", ()=>{
-    const all=[...input.files], fs=all.filter(flt);
-    if(fs.length) onFiles(fs);
-    else if(all.length) alert(unsupportedMsg(flt));
-    input.value="";
-  });
+  input.addEventListener("change", ()=>{ take([...input.files]); input.value=""; });
   ["dragover","dragenter"].forEach(e=>drop.addEventListener(e, ev=>{ev.preventDefault(); drop.classList.add("over");}));
   ["dragleave","drop"].forEach(e=>drop.addEventListener(e, ev=>{ev.preventDefault(); drop.classList.remove("over");}));
-  drop.addEventListener("drop", ev=>{
-    const all=[...ev.dataTransfer.files], files=all.filter(flt);
-    if(files.length) onFiles(files);
-    else if(all.length) alert(unsupportedMsg(flt));
-  });
+  drop.addEventListener("drop", ev=>{ ev.stopPropagation(); take([...ev.dataTransfer.files]); });
 }
+// 점선 상자 밖에 파일을 떨어뜨려도 브라우저가 PDF를 열어 작업이 날아가지 않게 → 지금 탭의 상자로 넘긴다
+window.addEventListener("dragover", e=>e.preventDefault());
+window.addEventListener("drop", e=>{
+  e.preventDefault();
+  const files = e.dataTransfer ? [...e.dataTransfer.files] : [];
+  if(!files.length) return;
+  const zone = document.querySelector(".panel.active .drop");
+  if(zone && dropHandlers[zone.id]) dropHandlers[zone.id](files);
+});
+// 쪽 범위 해석: '1-3, 5' 뿐 아니라 '1~3', '1 3', '1–3'도 받고, 중복은 한 번만, 없는 쪽은 알려 준다
 function parseRanges(str, max){
-  const out = [];
-  for(let part of str.split(",")){
-    part = part.trim(); if(!part) continue;
-    if(part.includes("-")){
-      let [a,b] = part.split("-").map(s=>parseInt(s.trim(),10));
-      if(isNaN(a)||isNaN(b)) throw new Error(`잘못된 범위: "${part}"`);
-      if(a>b) [a,b]=[b,a];
-      for(let p=a;p<=b;p++){ if(p>=1&&p<=max) out.push(p-1); }
-    }else{
-      const p = parseInt(part,10);
-      if(isNaN(p)) throw new Error(`잘못된 페이지: "${part}"`);
-      if(p>=1&&p<=max) out.push(p-1);
-    }
+  const s = String(str || "").replace(/[~〜∼～–—]/g, "-").replace(/\s*-\s*/g, "-").replace(/[，、;\s]+/g, ",");
+  const out = [], seen = new Set(), outside = [];
+  for(const part of s.split(",")){
+    if(!part) continue;
+    if(!/^\d+(-\d+)?$/.test(part)) throw new UserMsg(`「${part}」은(는) 쪽 번호로 읽을 수 없어요. 예: 1-3, 5`);
+    let [a, b] = part.split("-").map(Number);
+    if(b === undefined) b = a;
+    if(a > b) [a, b] = [b, a];
+    if(a > max){ outside.push(part); continue; }
+    if(b > max){ outside.push(part); b = max; }
+    for(let p=Math.max(1,a); p<=b; p++) if(!seen.has(p)){ seen.add(p); out.push(p-1); }
   }
-  if(!out.length) throw new Error("유효한 페이지가 없어요. (문서는 1~"+max+"페이지)");
+  if(!out.length) throw new UserMsg(`넣은 쪽이 문서 범위(1~${max}쪽)를 벗어났어요.`);
+  out.warn = outside.length ? ` (문서가 ${max}쪽까지라 「${outside.join(", ")}」의 없는 쪽은 뺐어요)` : "";
   return out;
 }
 // 단일 PDF 선택 패널 공통 처리
@@ -936,17 +1058,18 @@ function singlePdfPicker(key, onLoaded){
   const state = {file: null};
   setupDrop("drop-"+key, "file-"+key, files=>{
     state.file = files[0];
+    resetOutput(key);
+    if(files.length > 1) setStatus("status-"+key, `${files.length}개 중 첫 파일(${files[0].name})만 열었어요. 이 기능은 한 번에 한 파일씩 처리해요.`, "err");
     const list = document.getElementById("list-"+key);
     list.innerHTML = "";
     const row = document.createElement("div");
     row.className = "item";
-    row.innerHTML = `<span class="name">${state.file.name}</span>
+    row.innerHTML = `<span class="name">${esc(state.file.name)}</span>
       <span class="meta">${fmtSize(state.file.size)}</span>
       <button data-a="del" title="삭제">✕</button>`;
     row.querySelector('[data-a=del]').onclick = ()=>{
       state.file = null; list.innerHTML = "";
-      document.getElementById("results-"+key).innerHTML = "";
-      setStatus("status-"+key, "");
+      resetOutput(key);
       onLoaded(state);
     };
     list.appendChild(row);
@@ -962,39 +1085,55 @@ document.querySelectorAll(".tab").forEach(tab=>{
   tab.setAttribute("role","tab");
   tab.setAttribute("tabindex","0");
   tab.setAttribute("aria-selected", tab.classList.contains("active") ? "true":"false");
-  const activate = ()=>{
+  const activate = (scroll=true)=>{
     document.querySelectorAll(".tab").forEach(t=>{ t.classList.remove("active"); t.setAttribute("aria-selected","false"); });
     document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
     tab.classList.add("active"); tab.setAttribute("aria-selected","true");
     document.getElementById("panel-"+tab.dataset.tab).classList.add("active");
+    // 주소에 #기능이름을 남겨, 특정 기능을 바로 여는 링크를 나눌 수 있게 (예: …/pdf-tool/#compress)
+    if(history.replaceState) history.replaceState(null, "", "#" + tab.dataset.tab);
     // 모바일: 탭이 여러 줄이라 내용이 밀리므로 해당 패널을 보이게 스크롤
-    document.getElementById("panel-"+tab.dataset.tab).scrollIntoView({behavior:"smooth", block:"nearest"});
+    if(scroll) document.getElementById("panel-"+tab.dataset.tab).scrollIntoView({behavior:"smooth", block:"nearest"});
   };
-  tab.addEventListener("click", activate);
+  tab._activate = activate;
+  tab.addEventListener("click", ()=>activate());
   tab.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); activate(); } });
 });
+// 주소의 #기능이름으로 처음 열 탭 정하기
+(function(){
+  const key = decodeURIComponent(location.hash.slice(1));
+  const t = key && document.querySelector(`.tab[data-tab="${CSS.escape(key)}"]`);
+  if(t) t._activate(false);
+})();
 
 // ================= 병합 =================
 let mergeFiles = [];
-const mergeThumbCache = new WeakMap();   // File → 첫 페이지 미리보기 dataURL
-async function firstPageThumb(file){
-  if(mergeThumbCache.has(file)) return mergeThumbCache.get(file);
-  try{
-    const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data: buf.slice(0)}).promise;
-    const page = await pdf.getPage(1);
-    const vp1 = page.getViewport({scale:1});
-    const sc = Math.min(46/vp1.width, 60/vp1.height, 1);
-    const vp = page.getViewport({scale:sc});
-    const c = document.createElement("canvas");
-    c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
-    const ctx = c.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height);
-    await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
-    const url = c.toDataURL("image/jpeg",0.7);
-    mergeThumbCache.set(file, url);
-    page.cleanup();
-    return url;
-  }catch(e){ return null; }
+// File → 첫 페이지 미리보기 dataURL의 Promise (렌더 중에 목록을 다시 그려도 같은 파일을 두 번 열지 않게)
+const mergeThumbCache = new WeakMap();
+function firstPageThumb(file){
+  if(!mergeThumbCache.has(file)) mergeThumbCache.set(file, (async ()=>{
+    let pdf = null;
+    try{
+      pdf = await openPdf(await file.arrayBuffer());
+      const page = await pdf.getPage(1);
+      const vp1 = page.getViewport({scale:1});
+      const sc = Math.min(46/vp1.width, 60/vp1.height, 1);
+      const vp = page.getViewport({scale:sc});
+      const c = document.createElement("canvas");
+      c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+      const ctx = c.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height);
+      await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
+      return c.toDataURL("image/jpeg",0.7);
+    }catch(e){ return null; }
+    finally{ if(pdf) pdf.destroy(); }
+  })());
+  return mergeThumbCache.get(file);
+}
+// 병합 결과 이름을 비워 두었을 때 쓸 이름: 「첫 파일_외N개」
+function autoMergeName(){
+  if(!mergeFiles.length) return "병합된_PDF";
+  const first = safeName(baseOf(mergeFiles[0]), "pdf") || "병합된_PDF";
+  return mergeFiles.length > 1 ? `${first}_외${mergeFiles.length-1}개` : first;
 }
 // 목록 드래그 재배치 (마우스·터치 공용). 각 행에 .drag-handle과 data-idx가 있어야 함.
 // 드래그 중에는 DOM 노드만 옮기고, 놓을 때 DOM 순서대로 배열을 재구성해 한 번만 다시 그림.
@@ -1046,14 +1185,14 @@ function enableDragReorder(listId, getArr, setArr, rerender){
   });
 }
 
-setupDrop("drop-merge","file-merge", files=>{ mergeFiles.push(...files); renderMerge(); });
+setupDrop("drop-merge","file-merge", files=>{ mergeFiles.push(...files); clearResults("results-merge"); renderMerge(); });
 function renderMerge(){
   const list = document.getElementById("list-merge");
   list.innerHTML = "";
   if(mergeFiles.length >= 2){
     const clr = document.createElement("button");
     clr.className = "minibtn"; clr.style.alignSelf = "flex-start"; clr.textContent = "🗑 모두 지우기";
-    clr.onclick = ()=>{ mergeFiles=[]; renderMerge(); document.getElementById("results-merge").innerHTML=""; setStatus("status-merge",""); };
+    clr.onclick = ()=>{ mergeFiles=[]; renderMerge(); resetOutput("merge"); };
     list.appendChild(clr);
     const hint = document.createElement("div");
     hint.className = "hint"; hint.style.margin = "2px 0";
@@ -1068,7 +1207,7 @@ function renderMerge(){
       <span class="drag-handle" title="드래그해서 순서 변경">⠿</span>
       <span class="meta">${i+1}</span>
       <img class="imgprev mthumb" alt="">
-      <span class="name">${f.name}</span>
+      <span class="name">${esc(f.name)}</span>
       <span class="meta">${fmtSize(f.size)}</span>
       <button class="move" data-a="up" title="위로">▲</button>
       <button class="move" data-a="down" title="아래로">▼</button>
@@ -1080,6 +1219,8 @@ function renderMerge(){
     list.appendChild(row);
   });
   document.getElementById("btn-merge").disabled = mergeFiles.length < 2;
+  document.getElementById("merge-opts").style.display = mergeFiles.length ? "block" : "none";
+  document.getElementById("merge-name").placeholder = autoMergeName();
   const mh = mergeFiles.length===1 ? "병합하려면 파일을 1개 더 올려주세요. (2개 이상 필요)" : "";
   setStatus("status-merge", mh, mh ? "err" : "");
   enableDragReorder("list-merge", ()=>mergeFiles, a=>{ mergeFiles=a; }, renderMerge);
@@ -1087,79 +1228,142 @@ function renderMerge(){
 document.getElementById("btn-merge").onclick = async ()=>{
   if(mergeFiles.length < 2){ setStatus("status-merge","병합하려면 2개 이상의 파일이 필요해요.","err"); return; }
   const btn = document.getElementById("btn-merge"); btn.disabled = true;
-  document.getElementById("results-merge").innerHTML = "";
+  const list = document.getElementById("list-merge");
+  const files = mergeFiles.slice();   // 처리 중에 목록을 만져도 결과가 틀어지지 않게
+  const name = (safeName(document.getElementById("merge-name").value, "pdf") || autoMergeName()) + ".pdf";
+  const duplex = document.getElementById("merge-duplex").checked;
+  clearResults("results-merge");
+  list.classList.add("busy");
   setStatus("status-merge","병합 중...", ""); setBar("bar-merge", 5);
   try{
     const out = await PDFDocument.create();
-    for(let i=0;i<mergeFiles.length;i++){
-      const bytes = await mergeFiles[i].arrayBuffer();
-      const src = await PDFDocument.load(bytes, {ignoreEncryption:true});
+    let blanks = 0;
+    for(let i=0;i<files.length;i++){
+      const src = await loadEditable(await files[i].arrayBuffer(), files[i].name);
       const pages = await out.copyPages(src, src.getPageIndices());
       pages.forEach(p=>out.addPage(p));
-      setBar("bar-merge", 5 + Math.round((i+1)/mergeFiles.length*85));
+      // 양면 인쇄: 다음 파일이 새 종이 앞면에서 시작하도록 홀수로 끝나면 빈 쪽 한 장
+      if(duplex && i < files.length-1 && out.getPageCount() % 2 === 1){
+        const last = out.getPage(out.getPageCount()-1);
+        out.addPage([last.getWidth(), last.getHeight()]); blanks++;
+      }
+      setBar("bar-merge", 5 + Math.round((i+1)/files.length*85));
     }
-    const bytes = await out.save();
+    const bytes = await saveDoc(out);
     setBar("bar-merge", 100);
-    const {url, filename} = download(bytes, "병합된_PDF.pdf");
+    const {url, filename} = download(bytes, name);
     addResult("results-merge", url, filename, fmtSize(bytes.length));
-    setStatus("status-merge", `완료! ${mergeFiles.length}개 파일 → ${out.getPageCount()}페이지`, "ok");
+    setStatus("status-merge", `완료! ${files.length}개 파일 → ${out.getPageCount()}쪽` + (blanks ? ` (양면 인쇄용 빈 쪽 ${blanks}장 포함)` : ""), "ok");
   }catch(e){ console.error(e); setStatus("status-merge",friendlyError(e),"err"); }
-  finally{ setBar("bar-merge", null); btn.disabled = false; }
+  finally{ setBar("bar-merge", null); btn.disabled = false; list.classList.remove("busy"); }
 };
 
 // ================= 분할 (갤러리 + 드래그 범위 + 가위) =================
-let splitFile = null, splitBytes = null, splitPages = [];
+let splitFile = null, splitPages = [];
+let splitSrc = null;            // pdf-lib 문서(저장용) — 파일마다 한 번만 연다
+let splitLoadId = 0;            // 불러오는 도중 다른 파일을 올리면 이전 작업을 버리기 위한 번호표
 const splitSel = new Set();     // 선택된 페이지 인덱스(0-based)
 const splitCuts = new Set();    // "이 페이지 뒤에서 자름" 인덱스 (0 ~ total-2)
+const splitSegNames = new Map();// 조각별로 적은 이름 ("시작-끝" → 이름)
 let splitCells = [];            // 각 페이지 DOM 참조
 let splitDragging = false, splitAnchor = 0, splitDragMoved = false;
+let splitPress = null;          // 터치: 길게 눌러야 범위 선택 시작 {timer, x, y, i}
 const SEG_COLORS = ["#3b6fe0","#16a34a","#d97706","#9333ea","#dc2626","#0891b2","#ca8a04","#db2777"];
 
-setupDrop("drop-split","file-split", files=>{ loadSplit(files[0]); });
+// 썸네일 한 장 그리기(분할·페이지 정리 공용). 작은 그림만 남기고 캔버스는 바로 비운다
+async function renderThumb(pdf, pageNo, maxW, maxH){
+  const page = await pdf.getPage(pageNo);
+  const vp1 = page.getViewport({scale:1});
+  const sc = Math.min(maxW/vp1.width, maxH/vp1.height, 1.5);
+  const vp = page.getViewport({scale:sc});
+  const c = document.createElement("canvas");
+  c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0,0,c.width,c.height);
+  await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
+  page.cleanup();
+  const url = c.toDataURL("image/jpeg", 0.7);
+  c.width = 0; c.height = 0;
+  return url;
+}
+// 썸네일은 목록을 먼저 보여 준 뒤 뒤에서 채운다(화면에 보이는 쪽 먼저, 두 장씩).
+// 각 칸에는 data-src=원본 쪽 번호(0부터)를 달아 둔다. onThumb(원본 쪽, 그림 주소)
+function thumbLoader(maxW, maxH, onThumb){
+  const L = { pdf:null, queue:[], busy:0, gen:0, done:new Set() };
+  L.io = "IntersectionObserver" in window ? new IntersectionObserver(entries=>{
+    const vis = entries.filter(e=>e.isIntersecting).map(e=>+e.target.dataset.src);
+    if(!vis.length) return;
+    L.queue = vis.concat(L.queue.filter(i=>!vis.includes(i)));
+    L.pump();
+  }, {rootMargin:"400px"}) : null;
+  L.stop = ()=>{ L.gen++; L.queue = []; L.busy = 0; L.done = new Set(); if(L.io) L.io.disconnect(); if(L.pdf){ L.pdf.destroy(); L.pdf = null; } };
+  L.start = (pdf, n)=>{ L.stop(); L.pdf = pdf; L.queue = [...Array(n).keys()]; L.pump(); };
+  L.unwatchAll = ()=>{ if(L.io) L.io.disconnect(); };
+  L.watch = el=>{ if(L.io) L.io.observe(el); };
+  L.pump = ()=>{
+    const gen = L.gen, pdf = L.pdf;
+    while(pdf && L.busy < 2 && L.queue.length){
+      const i = L.queue.shift();
+      if(L.done.has(i)) continue;
+      L.done.add(i); L.busy++;
+      renderThumb(pdf, i+1, maxW, maxH)
+        .then(url=>{ if(gen === L.gen) onThumb(i, url); })
+        .catch(()=>{ if(gen === L.gen) L.done.delete(i); })
+        .finally(()=>{ if(gen === L.gen){ L.busy--; L.pump(); } });
+    }
+  };
+  return L;
+}
+const splitThumbL = thumbLoader(88, 112, (i, url)=>{
+  if(splitPages[i]) splitPages[i].thumb = url;
+  const img = splitCells[i] && splitCells[i].querySelector("img");
+  if(img){ img.src = url; img.classList.remove("pending"); }
+});
 
-async function loadSplit(file){
-  splitFile = file; splitBytes = null; splitPages = [];
-  splitSel.clear(); splitCuts.clear(); splitCells = [];
+setupDrop("drop-split","file-split", files=>{
+  loadSplit(files[0], files.length > 1 ? ` (${files.length}개 중 첫 파일만 열었어요)` : "");
+});
+
+async function loadSplit(file, note=""){
+  const my = ++splitLoadId;
+  splitThumbL.stop();
+  splitFile = file; splitSrc = null; splitPages = [];
+  splitSel.clear(); splitCuts.clear(); splitSegNames.clear(); splitCells = [];
+  document.getElementById("split-name").value = "";
   const list = document.getElementById("list-split");
   list.innerHTML = "";
   document.getElementById("split-gallery").innerHTML = "";
-  document.getElementById("results-split").innerHTML = "";
+  document.getElementById("split-segnames").innerHTML = "";
+  resetOutput("split");
   document.getElementById("split-visual").style.display = "none";
   document.getElementById("btn-split-extract").disabled = true;
   document.getElementById("btn-split-cut").disabled = true;
-  if(!file) return;
+  if(!file){ setBar("bar-split", null); return; }
   const row = document.createElement("div");
   row.className = "item";
-  row.innerHTML = `<span class="name">${file.name}</span>
+  row.innerHTML = `<span class="name">${esc(file.name)}</span>
     <span class="meta">${fmtSize(file.size)}</span>
     <button data-a="del" title="삭제">✕</button>`;
-  row.querySelector('[data-a=del]').onclick = ()=>{ loadSplit(null); setStatus("status-split",""); };
+  row.querySelector('[data-a=del]').onclick = ()=>loadSplit(null);
   list.appendChild(row);
-  setStatus("status-split","미리보기 만드는 중...",""); setBar("bar-split", 3);
+  setStatus("status-split","쪽 수를 확인하는 중...",""); setBar("bar-split", 10);
   try{
-    splitBytes = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data: splitBytes.slice(0)}).promise;
-    const total = pdf.numPages;
-    if(!confirmHeavy(total, file.size)){ setBar("bar-split", null); setStatus("status-split","취소했어요. 다시 파일을 올리면 시작해요.",""); splitBytes=null; document.getElementById("list-split").innerHTML=""; return; }
-    for(let i=1;i<=total;i++){
-      const page = await pdf.getPage(i);
-      const vp1 = page.getViewport({scale:1});
-      const sc = Math.min(88/vp1.width, 112/vp1.height, 1.5);
-      const vp = page.getViewport({scale:sc});
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.ceil(vp.width); canvas.height = Math.ceil(vp.height);
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
-      await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
-      splitPages.push({srcIndex:i-1, thumb:canvas.toDataURL("image/jpeg",0.7)});
-      setBar("bar-split", 3 + Math.round(i/total*90));
-      page.cleanup();
-    }
+    const buf = await file.arrayBuffer();
+    const src = await loadEditable(buf.slice(0), file.name);   // 보안 PDF면 여기서 안내
+    const pdf = await openPdf(buf);
+    if(my !== splitLoadId){ pdf.destroy(); return; }            // 그 사이 다른 파일을 올렸음
+    splitSrc = src;
+    const total = src.getPageCount();
+    splitPages = Array.from({length: total}, (_,i)=>({srcIndex:i, thumb:null}));
     setBar("bar-split", null);
+    document.getElementById("split-name").placeholder = safeName(baseOf(file), "pdf");
     document.getElementById("split-visual").style.display = "block";
+    splitThumbL.start(pdf, total);
     renderSplitGallery();
-    setStatus("status-split", `${total}쪽 불러왔어요. 드래그로 범위를 고르거나 ✂로 잘라보세요.`, "ok");
-  }catch(e){ console.error(e); setBar("bar-split", null); setStatus("status-split",friendlyError(e),"err"); }
+    setStatus("status-split", `${total}쪽 불러왔어요${note}. 미리보기는 화면에 보이는 쪽부터 채워져요 — 기다리지 않고 바로 고르거나 잘라도 돼요.`, "ok");
+  }catch(e){
+    if(my !== splitLoadId) return;
+    console.error(e); setBar("bar-split", null); setStatus("status-split",friendlyError(e),"err");
+  }
 }
 
 // 가위 표시로 나뉜 구간들 → [{start,end}...] (inclusive, 0-based)
@@ -1171,25 +1375,30 @@ function splitSegments(){
 }
 function segIndexOfPage(i, segs){ return segs.findIndex(s=> i>=s.start && i<=s.end); }
 
+document.getElementById("split-gallery").addEventListener("contextmenu", e=>{ if(e.target.closest(".spage")) e.preventDefault(); });
 function renderSplitGallery(){
   const box = document.getElementById("split-gallery");
   box.innerHTML = ""; splitCells = [];
+  splitThumbL.unwatchAll();
   const total = splitPages.length;
   const segs = splitSegments();
   const showSeg = splitCuts.size > 0;
+  const frag = document.createDocumentFragment();
   splitPages.forEach((p,i)=>{
     const cell = document.createElement("div");
     cell.className = "scell";
     const pg = document.createElement("div");
     pg.className = "spage" + (splitSel.has(i) ? " sel":"");
+    pg.dataset.src = i;
     const segColor = SEG_COLORS[ (showSeg ? segIndexOfPage(i,segs) : 0) % SEG_COLORS.length ];
     pg.innerHTML = `
-      <div class="simgbox"><img src="${p.thumb}" alt="${i+1}쪽 미리보기"></div>
+      <div class="simgbox"><img ${p.thumb ? `src="${p.thumb}"` : 'class="pending"'} alt="${i+1}쪽 미리보기"></div>
       <div class="snum">${i+1}쪽</div>
       <div class="sseg" style="height:4px;border-radius:3px;margin-top:4px;background:${showSeg?segColor:'transparent'}"></div>`;
-    pg.addEventListener("pointerdown", (e)=>{ e.preventDefault(); splitDragging=true; splitAnchor=i; splitDragMoved=false; });
+    pg.addEventListener("pointerdown", e=>splitPointerDown(e, i));
     cell.appendChild(pg);
     splitCells[i] = pg;
+    if(!p.thumb) splitThumbL.watch(pg);
     // 페이지 사이 가위
     if(i < total-1){
       const cut = document.createElement("div");
@@ -1198,14 +1407,16 @@ function renderSplitGallery(){
       b.textContent = "✂"; b.title = (i+1)+"쪽과 "+(i+2)+"쪽 사이에서 자르기";
       b.onclick = (e)=>{ e.stopPropagation();
         if(splitCuts.has(i)) splitCuts.delete(i); else splitCuts.add(i);
-        renderSplitGallery(); updateSplitInfo();
+        renderSplitGallery();
       };
       cut.appendChild(b);
       cell.appendChild(cut);
     }
-    box.appendChild(cell);
+    frag.appendChild(cell);
   });
+  box.appendChild(frag);
   updateSplitInfo();
+  updateSplitNames();
 }
 function selectSplitRange(a, b){
   const lo = Math.min(a,b), hi = Math.max(a,b);
@@ -1224,8 +1435,91 @@ function updateSplitInfo(){
   document.getElementById("btn-split-extract").disabled = splitSel.size === 0;
   document.getElementById("btn-split-cut").disabled = splitCuts.size === 0;
 }
+
+// ---- 저장 이름: 비워 두면 원본 이름 기준 ----
+function splitPrefix(){
+  return safeName(document.getElementById("split-name").value, "pdf") || safeName(baseOf(splitFile), "pdf") || "분할";
+}
+function splitExtractName(){
+  const typed = safeName(document.getElementById("split-name").value, "pdf");
+  return (typed || `${safeName(baseOf(splitFile), "pdf") || "분할"}_추출`) + ".pdf";
+}
+function splitSegName(seg, k, n){
+  const typed = safeName(splitSegNames.get(seg.start+"-"+seg.end), "pdf");
+  return (typed || splitSegDefault(k, n)) + ".pdf";
+}
+// 저장될 이름 미리보기(추출 1개 · 가위 분할 첫~끝)
+function splitSegDefault(k, n){ return `${splitPrefix()}_${String(k+1).padStart(String(n).length,"0")}`; }
+function updateSplitPreview(){
+  const prev = document.getElementById("split-name-preview");
+  if(!splitPages.length){ prev.textContent = ""; return; }
+  let html = `선택한 쪽 추출 → <b>${esc(splitExtractName())}</b>`;
+  if(splitCuts.size){
+    const segs = splitSegments();
+    const names = uniqueNames(segs.map((s,k)=>splitSegName(s,k,segs.length)));
+    html += ` · 가위 분할 → <b>${esc(names[0])}</b>` + (names.length > 1 ? ` … <b>${esc(names[names.length-1])}</b> (${names.length}개)` : "");
+  }
+  prev.innerHTML = html;
+}
+// 가위로 잘랐으면 조각마다 이름 칸
+function updateSplitNames(){
+  const box = document.getElementById("split-segnames");
+  box.innerHTML = "";
+  updateSplitPreview();
+  if(!splitPages.length || !splitCuts.size) return;
+  const segs = splitSegments();
+  if(segs.length > 60){
+    box.innerHTML = `<div class="hint">조각이 ${segs.length}개라 이름은 번호로 자동으로 붙어요. 조각마다 이름을 주려면 60개 이하로 잘라 주세요.</div>`;
+    return;
+  }
+  const note = document.createElement("div");
+  note.className = "hint"; note.textContent = "조각마다 이름을 따로 줄 수 있어요 (예: 1단원, 2단원). 비워 두면 흐린 글씨 이름으로 저장돼요.";
+  box.appendChild(note);
+  segs.forEach((s,k)=>{
+    const row = document.createElement("div");
+    row.className = "segname";
+    const key = s.start+"-"+s.end;
+    row.innerHTML = `<span class="segtag" style="background:${SEG_COLORS[k % SEG_COLORS.length]}">조각 ${k+1} · ${s.start+1}~${s.end+1}쪽</span>
+      <div class="fname"><input type="text" autocomplete="off" spellcheck="false" aria-label="조각 ${k+1} 이름"><span class="fext">.pdf</span></div>`;
+    const inp = row.querySelector("input");
+    inp.placeholder = splitSegDefault(k, segs.length);
+    inp.value = splitSegNames.get(key) || "";
+    inp.addEventListener("input", ()=>{
+      if(inp.value.trim()) splitSegNames.set(key, inp.value); else splitSegNames.delete(key);
+      updateSplitPreview();
+    });
+    box.appendChild(row);
+  });
+}
+// 앞 이름을 바꾸면 조각 칸의 흐린 글씨(기본 이름)만 따라 바뀐다 — 적어 둔 조각 이름은 그대로
+document.getElementById("split-name").addEventListener("input", ()=>{
+  const inputs = document.querySelectorAll("#split-segnames .segname input");
+  inputs.forEach((inp,k)=>{ inp.placeholder = splitSegDefault(k, inputs.length); });
+  updateSplitPreview();
+});
+
+// ---- 쪽 고르기: 마우스는 바로 끌어서 범위, 터치는 톡=한 쪽, 길게 누른 뒤 끌기=범위(그냥 쓸면 화면이 내려감) ----
+function splitPointerDown(e, i){
+  if(e.pointerType === "touch"){
+    if(splitPress) clearTimeout(splitPress.timer);
+    splitPress = { x:e.clientX, y:e.clientY, i, fired:false, timer: setTimeout(()=>{
+      splitPress.fired = true;
+      splitDragging = true; splitAnchor = i; splitDragMoved = false;
+      if(navigator.vibrate) try{ navigator.vibrate(15); }catch(_){}
+      selectSplitRange(i, i);
+    }, 380) };
+    return;
+  }
+  e.preventDefault();
+  splitDragging = true; splitAnchor = i; splitDragMoved = false;
+}
+// 끄는 동안 화면이 같이 움직이지 않게(길게 눌러 범위 선택을 시작한 뒤에만)
+document.addEventListener("touchmove", e=>{ if(splitDragging) e.preventDefault(); }, {passive:false});
 // 드래그(마우스·터치 공용) 이동: 포인터 밑의 페이지를 찾아 범위 선택
 document.addEventListener("pointermove", (e)=>{
+  if(splitPress && !splitPress.fired && Math.hypot(e.clientX-splitPress.x, e.clientY-splitPress.y) > 10){
+    clearTimeout(splitPress.timer); splitPress = null;   // 쓸어 넘김 = 화면 내리기
+  }
   if(!splitDragging) return;
   const el = document.elementFromPoint(e.clientX, e.clientY);
   const cell = el && el.closest ? el.closest(".spage") : null;
@@ -1233,14 +1527,23 @@ document.addEventListener("pointermove", (e)=>{
   if(j >= 0 && j !== splitAnchor){ splitDragMoved = true; selectSplitRange(splitAnchor, j); }
 });
 // 드래그 종료 (전역 한 번만) — 안 움직였으면 탭/클릭으로 간주해 토글
-document.addEventListener("pointerup", ()=>{
+function splitPointerEnd(e){
+  if(splitPress && !splitPress.fired){       // 터치로 짧게 톡 → 한 쪽 토글
+    clearTimeout(splitPress.timer);
+    const i = splitPress.i; splitPress = null;
+    if(e.type === "pointerup"){ if(splitSel.has(i)) splitSel.delete(i); else splitSel.add(i); updateSplitSelStyles(); updateSplitInfo(); }
+    return;
+  }
+  splitPress = null;
   if(!splitDragging) return;
-  if(!splitDragMoved){
+  if(!splitDragMoved && e.type === "pointerup" && e.pointerType !== "touch"){
     if(splitSel.has(splitAnchor)) splitSel.delete(splitAnchor); else splitSel.add(splitAnchor);
     updateSplitSelStyles(); updateSplitInfo();
   }
   splitDragging = false;
-});
+}
+document.addEventListener("pointerup", splitPointerEnd);
+document.addEventListener("pointercancel", splitPointerEnd);
 
 // 툴바 버튼
 document.getElementById("split-selectall").onclick = ()=>{ splitSel.clear(); splitPages.forEach((_,i)=>splitSel.add(i)); updateSplitSelStyles(); updateSplitInfo(); };
@@ -1248,74 +1551,78 @@ document.getElementById("split-clear").onclick = ()=>{ splitSel.clear(); updateS
 document.getElementById("split-cutall").onclick = ()=>{ splitCuts.clear(); for(let i=0;i<splitPages.length-1;i++) splitCuts.add(i); renderSplitGallery(); };
 document.getElementById("split-cutreset").onclick = ()=>{ splitCuts.clear(); renderSplitGallery(); };
 
-// 빠른 도구 1: 번호로 페이지 선택 (타이핑) → 선택에 추가
+// 빠른 도구 1: 번호로 페이지 선택 (타이핑) → 그 쪽들로 선택을 바꿈
 document.getElementById("sq-select").onclick = ()=>{
   if(!splitPages.length) return;
-  const str = document.getElementById("sq-pages").value;
   try{
-    const idxs = parseRanges(str, splitPages.length);
-    idxs.forEach(i=>splitSel.add(i));
+    const idxs = parseRanges(document.getElementById("sq-pages").value, splitPages.length);
+    splitSel.clear(); idxs.forEach(i=>splitSel.add(i));
     updateSplitSelStyles(); updateSplitInfo();
-    setStatus("status-split", `${idxs.length}쪽을 선택에 추가했어요. '선택한 페이지 추출하기'를 누르세요.`, "ok");
-  }catch(e){ setStatus("status-split", e.message, "err"); }
+    const first = splitCells[Math.min(...idxs)]; if(first) first.scrollIntoView({behavior:"smooth", block:"nearest"});
+    setStatus("status-split", `${idxs.length}쪽을 선택했어요${idxs.warn}. '선택한 페이지 추출하기'를 누르세요.`, idxs.warn ? "err" : "ok");
+  }catch(e){ setStatus("status-split", friendlyError(e), "err"); }
 };
 // 빠른 도구 2: N쪽마다 가위 표시
 document.getElementById("sq-every-btn").onclick = ()=>{
   if(!splitPages.length) return;
   const n = parseInt(document.getElementById("sq-every").value,10);
   if(!n || n<1){ setStatus("status-split","1 이상의 숫자를 입력해 주세요.","err"); return; }
+  if(n >= splitPages.length){ setStatus("status-split", `문서가 ${splitPages.length}쪽이라 ${n}쪽마다 자르면 나눌 곳이 없어요. 더 작은 수를 넣어 주세요.`, "err"); return; }
+  if(splitCuts.size && !confirm(`지금 표시된 가위 ${splitCuts.size}개를 지우고 ${n}쪽마다 새로 표시할까요?`)) return;
   splitCuts.clear();
   for(let i=n-1; i<splitPages.length-1; i+=n) splitCuts.add(i);
   renderSplitGallery();
-  const segs = splitSegments().length;
-  setStatus("status-split", `${n}쪽마다 잘라 ${segs}조각으로 표시했어요. '가위로 자른 대로 분할하기'를 누르세요.`, "ok");
+  setStatus("status-split", `${n}쪽마다 잘라 ${splitSegments().length}조각으로 표시했어요. '가위로 자른 대로 분할하기'를 누르세요.`, "ok");
 };
+// 한 조각 만들기: 한 번에 copyPages → 여러 쪽이 함께 쓰는 글꼴·그림이 한 벌만 들어감
+async function buildSplitRange(a, b){
+  const out = await PDFDocument.create();
+  const idx = []; for(let k=a;k<=b;k++) idx.push(splitPages[k].srcIndex);
+  (await out.copyPages(splitSrc, idx)).forEach(p=>out.addPage(p));
+  return saveDoc(out);
+}
 // 빠른 도구 3: 용량(MB)으로 분할 → 각 파일이 목표 용량 이하가 되도록 바로 저장
 document.getElementById("sq-size-btn").onclick = async ()=>{
-  if(!splitBytes) return;
+  if(!splitSrc) return;
   const mb = parseFloat(document.getElementById("sq-size").value);
-  if(!mb || mb<=0){ setStatus("status-split","1 이상의 숫자를 입력해 주세요.","err"); return; }
+  if(!(mb > 0)){ setStatus("status-split","0보다 큰 숫자를 입력해 주세요.","err"); return; }
   const limit = mb*1024*1024;
+  if(splitFile.size <= limit){ setStatus("status-split", `이 파일은 이미 ${fmtSize(splitFile.size)}라 ${mb}MB 이하예요. 나누지 않아도 돼요.`, "ok"); return; }
   const btn = document.getElementById("sq-size-btn"); btn.disabled = true;
-  document.getElementById("results-split").innerHTML = "";
+  clearResults("results-split");
   setStatus("status-split","용량에 맞춰 나누는 중...",""); setBar("bar-split", 5);
-  const baseName = splitFile.name.replace(/\.pdf$/i,"");
   try{
-    const src = await PDFDocument.load(splitBytes.slice(0), {ignoreEncryption:true});
     const total = splitPages.length;
     const segments = [];       // {start, end, bytes}
-    // cur를 한 쪽씩 키우며 저장. 한도를 넘으면, 넘기 '직전'에 저장해 둔 바이트(prevBytes)를
-    // 한 조각으로 확정한다. (removePage는 삽입 이미지 객체를 남겨 용량이 안 줄기 때문)
-    let cur = await PDFDocument.create();
-    let curStart = 0, oversize = false;
-    let prevBytes = null;      // cur가 유효했던 마지막(직전 페이지까지) 저장본
-    for(let i=0;i<total;i++){
-      const [pg] = await cur.copyPages(src, [splitPages[i].srcIndex]); cur.addPage(pg);
-      const bytes = await cur.save();
-      if(bytes.length > limit && cur.getPageCount() > 1){
-        // 직전까지(curStart..i-1)를 확정 — 이때 이미 저장해 둔 prevBytes 사용(오염 없음)
-        segments.push({start:curStart, end:i-1, bytes: prevBytes});
-        // 이 페이지로 새 조각 시작
-        cur = await PDFDocument.create();
-        const [pg2] = await cur.copyPages(src, [splitPages[i].srcIndex]); cur.addPage(pg2);
-        curStart = i;
-        prevBytes = await cur.save();
-        if(prevBytes.length > limit) oversize = true;   // 한 쪽만으로도 한도 초과
-      }else{
-        prevBytes = bytes;
-        if(bytes.length > limit) oversize = true;
+    let a = 0, oversize = false;
+    // 조각마다: 1쪽→2쪽→4쪽…으로 늘려 한도를 넘는 곳을 찾고, 그 사이를 반씩 좁혀 가장 긴 조각을 찾는다
+    while(a < total){
+      let ok = a, okBytes = await buildSplitRange(a, a);
+      if(okBytes.length > limit){ oversize = true; segments.push({start:a, end:a, bytes:okBytes}); a++; continue; }
+      let bad = -1, step = 1;
+      while(ok < total-1){
+        const nxt = Math.min(total-1, ok + step);
+        const bytes = await buildSplitRange(a, nxt);
+        if(bytes.length <= limit){ ok = nxt; okBytes = bytes; step *= 2; }
+        else { bad = nxt; break; }
       }
-      setBar("bar-split", 5 + Math.round((i+1)/total*88));
+      while(bad >= 0 && bad - ok > 1){
+        const mid = (ok + bad) >> 1;
+        const bytes = await buildSplitRange(a, mid);
+        if(bytes.length <= limit){ ok = mid; okBytes = bytes; } else bad = mid;
+      }
+      segments.push({start:a, end:ok, bytes:okBytes});
+      a = ok + 1;
+      setBar("bar-split", 5 + Math.round(a/total*88));
     }
-    segments.push({start:curStart, end:total-1, bytes: prevBytes});
-    const pad = String(segments.length).length;
+    const prefix = splitPrefix(), pad = String(segments.length).length;
+    const names = uniqueNames(segments.map((s,k)=>`${prefix}_${String(k+1).padStart(pad,"0")}.pdf`));
     const items = [];
-    segments.forEach((s,idx)=>{
-      const filename = `${baseName}_${String(idx+1).padStart(pad,"0")}.pdf`;
-      items.push({filename, bytes: s.bytes});
-      linkResult("results-split", s.bytes, filename, "application/pdf", `${s.start+1}~${s.end+1}쪽 · ${fmtSize(s.bytes.length)}`);
+    segments.forEach((s,k)=>{
+      items.push({filename:names[k], bytes:s.bytes});
+      linkResult("results-split", s.bytes, names[k], "application/pdf", `${s.start+1}~${s.end+1}쪽 · ${fmtSize(s.bytes.length)}`);
     });
-    if(items.length > 1) addZipButton("results-split", items, `${baseName}_용량분할.zip`);
+    if(items.length > 1) addZipButton("results-split", items, `${prefix}_용량분할.zip`);
     setBar("bar-split", 100);
     let msg = `완료! ${mb}MB 기준 ${segments.length}조각으로 나눴어요`;
     if(oversize) msg += " — 일부 페이지는 한 장만으로도 용량이 커서 그 페이지는 더 줄이지 못했어요('압축' 탭을 먼저 써 보세요).";
@@ -1326,60 +1633,53 @@ document.getElementById("sq-size-btn").onclick = async ()=>{
 
 // 선택한 페이지 추출 → PDF 1개
 document.getElementById("btn-split-extract").onclick = async ()=>{
-  if(!splitBytes || splitSel.size===0) return;
+  if(!splitSrc || splitSel.size===0) return;
   const btn = document.getElementById("btn-split-extract"); btn.disabled = true;
-  document.getElementById("results-split").innerHTML = "";
+  clearResults("results-split");
   setStatus("status-split","추출 중...",""); setBar("bar-split", 20);
-  const baseName = splitFile.name.replace(/\.pdf$/i,"");
   try{
-    const src = await PDFDocument.load(splitBytes.slice(0), {ignoreEncryption:true});
     const idxs = [...splitSel].sort((a,b)=>a-b).map(i=>splitPages[i].srcIndex);
     const out = await PDFDocument.create();
-    const pages = await out.copyPages(src, idxs);
-    pages.forEach(p=>out.addPage(p));
-    const outBytes = await out.save();
+    (await out.copyPages(splitSrc, idxs)).forEach(p=>out.addPage(p));
+    const outBytes = await saveDoc(out);
     setBar("bar-split",100);
-    const {url,filename} = download(outBytes, `${baseName}_추출.pdf`);
+    const {url,filename} = download(outBytes, splitExtractName());
     addResult("results-split", url, filename, `${idxs.length}쪽 · ${fmtSize(outBytes.length)}`);
     setStatus("status-split", `완료! ${idxs.length}쪽 추출`, "ok");
   }catch(e){ console.error(e); setStatus("status-split",friendlyError(e),"err"); }
-  finally{ setBar("bar-split", null); btn.disabled = false; }
+  finally{ setBar("bar-split", null); btn.disabled = splitSel.size === 0; }
 };
 
 // 가위로 자른 대로 분할 → 구간별 PDF 여러 개
 document.getElementById("btn-split-cut").onclick = async ()=>{
-  if(!splitBytes || splitCuts.size===0) return;
+  if(!splitSrc || splitCuts.size===0) return;
   const btn = document.getElementById("btn-split-cut"); btn.disabled = true;
-  document.getElementById("results-split").innerHTML = "";
+  clearResults("results-split");
   setStatus("status-split","분할 중...",""); setBar("bar-split", 10);
-  const baseName = splitFile.name.replace(/\.pdf$/i,"");
   try{
-    const src = await PDFDocument.load(splitBytes.slice(0), {ignoreEncryption:true});
     const segs = splitSegments();
-    const pad = String(segs.length).length;
+    const names = uniqueNames(segs.map((s,k)=>splitSegName(s,k,segs.length)));
     const items = [];
     for(let s=0;s<segs.length;s++){
       const {start,end} = segs[s];
-      const idxs = [];
-      for(let k=start;k<=end;k++) idxs.push(splitPages[k].srcIndex);
-      const out = await PDFDocument.create();
-      const pages = await out.copyPages(src, idxs);
-      pages.forEach(p=>out.addPage(p));
-      const outBytes = await out.save();
-      const filename = `${baseName}_${String(s+1).padStart(pad,"0")}.pdf`;
-      items.push({filename, bytes: outBytes});
-      linkResult("results-split", outBytes, filename, "application/pdf", `${start+1}~${end+1}쪽 · ${fmtSize(outBytes.length)}`);
+      const outBytes = await buildSplitRange(start, end);
+      items.push({filename:names[s], bytes:outBytes});
+      linkResult("results-split", outBytes, names[s], "application/pdf", `${start+1}~${end+1}쪽 · ${fmtSize(outBytes.length)}`);
       setBar("bar-split", 10 + Math.round((s+1)/segs.length*88));
     }
-    if(items.length > 1) addZipButton("results-split", items, `${baseName}_분할.zip`);
+    if(items.length > 1) addZipButton("results-split", items, `${splitPrefix()}_분할.zip`);
     setStatus("status-split", `완료! ${segs.length}조각으로 분할 — 아래에서 하나씩 저장하거나 ZIP으로 받으세요`, "ok");
   }catch(e){ console.error(e); setStatus("status-split",friendlyError(e),"err"); }
-  finally{ setBar("bar-split", null); btn.disabled = false; }
+  finally{ setBar("bar-split", null); btn.disabled = splitCuts.size === 0; }
 };
 
 // ================= 압축 =================
-let compressFile = null;
-setupDrop("drop-compress","file-compress", files=>{ compressFile = files[0]; renderCompress(); });
+// 모든 쪽을 사진(JPG)으로 다시 찍어 담는 방식 — 스캔본에 효과가 크고, 글자 PDF는 글자 선택·검색이 사라진다
+let compressFile = null, cPvPdf = null, cPvFor = null, cHasText = false;
+setupDrop("drop-compress","file-compress", files=>{
+  compressFile = files[0]; resetOutput("compress"); renderCompress();
+  if(files.length > 1) setStatus("status-compress", `${files.length}개 중 첫 파일(${files[0].name})만 열었어요.`, "err");
+});
 function renderCompress(){
   const list = document.getElementById("list-compress");
   list.innerHTML = "";
@@ -1388,20 +1688,65 @@ function renderCompress(){
   if(compressFile){
     const row = document.createElement("div");
     row.className = "item";
-    row.innerHTML = `<span class="name">${compressFile.name}</span>
+    row.innerHTML = `<span class="name">${esc(compressFile.name)}</span>
       <span class="meta">${fmtSize(compressFile.size)}</span>
       <button data-a="del" title="삭제">✕</button>`;
-    row.querySelector('[data-a=del]').onclick = ()=>{ compressFile=null; renderCompress(); document.getElementById("results-compress").innerHTML=""; setStatus("status-compress",""); };
+    row.querySelector('[data-a=del]').onclick = ()=>{ compressFile=null; renderCompress(); resetOutput("compress"); };
     list.appendChild(row);
+  }
+  if(cPvFor !== compressFile){
+    if(cPvPdf) cPvPdf.destroy();
+    cPvPdf = null; cPvFor = null; cHasText = false;
+    document.getElementById("compress-textwarn").style.display = "none";
   }
   document.getElementById("compress-preview-box").style.display = compressFile ? "block":"none";
   if(compressFile) renderCompressPreview();
 }
+// dpi = 다시 찍을 해상도(150 안팎이면 인쇄해도 선명, 100이면 화면용). 포스터처럼 큰 쪽은 긴 변 4000px로 제한
 const LEVELS = {
-  high:   {scale:1.0, quality:0.5},
-  medium: {scale:1.3, quality:0.65},
-  low:    {scale:1.7, quality:0.8},
+  high:   {dpi:100, quality:0.5},
+  medium: {dpi:130, quality:0.62},
+  low:    {dpi:170, quality:0.78},
 };
+function levelScale(level, vp1){
+  return Math.min(LEVELS[level].dpi / 72, 4000 / Math.max(vp1.width, vp1.height));
+}
+// 회색조: canvas filter를 못 쓰는 브라우저(사파리 등)는 픽셀을 직접 바꾼다
+function toGray(c){
+  const g = document.createElement("canvas"); g.width = c.width; g.height = c.height;
+  const gc = g.getContext("2d");
+  if("filter" in gc){ gc.filter = "grayscale(1)"; gc.drawImage(c,0,0); }
+  else{
+    gc.drawImage(c,0,0);
+    const d = gc.getImageData(0,0,g.width,g.height), a = d.data;
+    for(let k=0;k<a.length;k+=4){ const y = a[k]*0.299 + a[k+1]*0.587 + a[k+2]*0.114; a[k]=a[k+1]=a[k+2]=y; }
+    gc.putImageData(d,0,0);
+  }
+  c.width = 0; c.height = 0;
+  return g;
+}
+async function rasterPage(page, scale, gray){
+  const vp = page.getViewport({scale});
+  let c = document.createElement("canvas");
+  c.width = Math.max(1, Math.floor(vp.width)); c.height = Math.max(1, Math.floor(vp.height));
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0,0,c.width,c.height);
+  // intent:'print' → 탭이 백그라운드여도 렌더가 멈추지 않음
+  await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
+  if(gray) c = toGray(c);
+  return c;
+}
+// 글자가 살아 있는 PDF인지(앞 3쪽 안에 글자 20자 이상) — 압축하면 글자 선택·검색이 사라지므로 미리 알린다
+async function pdfHasText(pdf){
+  let chars = 0;
+  for(let i=1; i<=Math.min(3, pdf.numPages); i++){
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    chars += tc.items.reduce((n,it)=>n + (it.str ? it.str.trim().length : 0), 0);
+    page.cleanup();
+    if(chars >= 20) return true;
+  }
+  return false;
+}
 // 압축 미리보기: 선택한 강도로 첫 페이지를 실제 재변환해 화질을 보여주고 예상 용량 표시
 let cPvBusy=false, cPvAgain=false;
 async function renderCompressPreview(){
@@ -1411,31 +1756,34 @@ async function renderCompressPreview(){
   cPvBusy=true;
   const note=document.getElementById("compress-preview-note");
   const pv=document.getElementById("compress-preview");
+  const file = compressFile;
   try{
     const level=document.querySelector('input[name=clevel]:checked').value;
     const gray=document.getElementById("c-gray").checked;
-    const {scale, quality}=LEVELS[level];
     note.textContent="미리보기 만드는 중...";
-    const buf=await compressFile.arrayBuffer();
-    const pdf=await pdfjsLib.getDocument({data:buf.slice(0)}).promise;
-    const pages=pdf.numPages;
+    if(cPvFor !== file){
+      const pdf = await openPdf(await file.arrayBuffer());
+      if(compressFile !== file){ pdf.destroy(); return; }
+      cPvPdf = pdf; cPvFor = file;
+      cHasText = await pdfHasText(pdf);
+      document.getElementById("compress-textwarn").style.display = cHasText ? "block" : "none";
+    }
+    const pdf = cPvPdf;
     const page=await pdf.getPage(1);
-    const vp=page.getViewport({scale});
-    let c=document.createElement("canvas"); c.width=Math.floor(vp.width); c.height=Math.floor(vp.height);
-    const ctx=c.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,c.width,c.height);
-    await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
+    const c = await rasterPage(page, levelScale(level, page.getViewport({scale:1})), gray);
     page.cleanup();
-    if(gray){ const g=document.createElement("canvas"); g.width=c.width; g.height=c.height; const gc=g.getContext("2d"); gc.filter="grayscale(1)"; gc.drawImage(c,0,0); c=g; }
-    const blob=await new Promise(r=>c.toBlob(r,"image/jpeg",quality));
+    const blob=await canvasJpg(c, LEVELS[level].quality);
+    c.width = 0; c.height = 0;
+    if(compressFile !== file) return;
     const img=await createImageBitmap(blob);
     const dispW=Math.min(460, img.width), dispH=Math.round(img.height*Math.min(460,img.width)/img.width);
     pv.width=dispW; pv.height=dispH;
     pv.getContext("2d").drawImage(img,0,0,dispW,dispH);
     if(img.close) img.close();
-    const est=blob.size*pages, orig=compressFile.size, ratio=Math.round((1-est/orig)*100);
-    note.innerHTML = est<orig
-      ? `예상 용량: <b>${fmtSize(orig)} → 약 ${fmtSize(est)}</b> (약 ${ratio}% 감소) · 전체 쪽수 기준 대략적 추정이에요`
-      : `이 파일은 이 설정으론 거의 안 줄어요(약 <b>${fmtSize(est)}</b>). '강하게'를 써 보세요.`;
+    const est=blob.size*pdf.numPages, orig=file.size, ratio=Math.round((1-est/orig)*100);
+    note.innerHTML = est<orig*0.9
+      ? `예상 용량: <b>${fmtSize(orig)} → 약 ${fmtSize(est)}</b> (약 ${ratio}% 감소) · 첫 쪽으로 어림한 값이에요`
+      : `이 설정으론 거의 안 줄거나 오히려 커져요(약 <b>${fmtSize(est)}</b>). ${cHasText ? "글자 위주 PDF라 이 방식이 맞지 않아요." : "'강하게'나 흑백을 써 보세요."}`;
     box.style.display="block";
   }catch(e){ console.error(e); note.textContent=""; }
   finally{ cPvBusy=false; if(cPvAgain){ cPvAgain=false; renderCompressPreview(); } }
@@ -1444,73 +1792,65 @@ document.querySelectorAll('input[name=clevel]').forEach(r=>r.addEventListener("c
 document.getElementById("c-gray").addEventListener("change", renderCompressPreview);
 document.getElementById("btn-compress").onclick = async ()=>{
   if(!compressFile) return;
+  const file = compressFile;
   const btn = document.getElementById("btn-compress"); btn.disabled = true;
-  document.getElementById("results-compress").innerHTML = "";
+  clearResults("results-compress");
   const level = document.querySelector('input[name=clevel]:checked').value;
   const gray = document.getElementById("c-gray").checked;
-  const {scale, quality} = LEVELS[level];
-  const origSize = compressFile.size;
+  const origSize = file.size;
   setStatus("status-compress","압축 중... (페이지가 많으면 시간이 걸려요)",""); setBar("bar-compress", 3);
+  let pdf = null;
   try{
-    const bytes = await compressFile.arrayBuffer();
-    const task = pdfjsLib.getDocument({data: bytes.slice(0)});
-    const pdf = await task.promise;
+    pdf = await openPdf(await file.arrayBuffer());
     const n = pdf.numPages;
     const out = await PDFDocument.create();
     for(let i=1;i<=n;i++){
       const page = await pdf.getPage(i);
-      const vp0 = page.getViewport({scale:1});
-      const vp = page.getViewport({scale});
-      let canvas = document.createElement("canvas");
-      canvas.width = Math.floor(vp.width);
-      canvas.height = Math.floor(vp.height);
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-      // intent:'print' → 탭이 백그라운드여도 렌더가 멈추지 않음
-      await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
-      if(gray){
-        const g = document.createElement("canvas");
-        g.width = canvas.width; g.height = canvas.height;
-        const gctx = g.getContext("2d");
-        gctx.filter = "grayscale(1)";
-        gctx.drawImage(canvas, 0, 0);
-        canvas = g;
-      }
-      const jpg = canvas.toDataURL("image/jpeg", quality);
-      const img = await out.embedJpg(jpg);
-      const pw = vp0.width, ph = vp0.height;
-      const p = out.addPage([pw, ph]);
-      p.drawImage(img, {x:0,y:0,width:pw,height:ph});
-      setBar("bar-compress", 3 + Math.round(i/n*90));
+      const vp1 = page.getViewport({scale:1});
+      const c = await rasterPage(page, levelScale(level, vp1), gray);
       page.cleanup();
+      const blob = await canvasJpg(c, LEVELS[level].quality);
+      c.width = 0; c.height = 0;   // 큰 캔버스 메모리를 바로 돌려준다
+      const img = await out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+      const p = out.addPage([vp1.width, vp1.height]);
+      p.drawImage(img, {x:0,y:0,width:vp1.width,height:vp1.height});
+      setBar("bar-compress", 3 + Math.round(i/n*90));
+      setStatus("status-compress", `압축 중... ${i}/${n}쪽`, "");
     }
-    const outBytes = await out.save();
+    const outBytes = await saveDoc(out);
     setBar("bar-compress",100);
     const newSize = outBytes.length;
-    const baseName = compressFile.name.replace(/\.pdf$/i,"");
-    const {url,filename} = download(outBytes, `${baseName}_${gray?"흑백_":""}압축.pdf`);
+    const filename = `${safeName(baseOf(file), "pdf") || "문서"}_${gray?"흑백_":""}압축.pdf`;
     const ratio = Math.round((1 - newSize/origSize)*100);
-    addResult("results-compress", url, filename, fmtSize(newSize));
     if(newSize < origSize){
-      setStatus("status-compress", `완료! ${fmtSize(origSize)} → ${fmtSize(newSize)} (약 ${ratio}% 감소)`, "ok");
+      const r = download(outBytes, filename);
+      addResult("results-compress", r.url, r.filename, fmtSize(newSize));
+      setStatus("status-compress", `완료! ${fmtSize(origSize)} → ${fmtSize(newSize)} (약 ${ratio}% 감소)` + (cHasText ? " · 글자는 그림으로 바뀌어 선택·검색이 안 돼요." : ""), "ok");
     }else{
-      setStatus("status-compress", `완료! ${fmtSize(origSize)} → ${fmtSize(newSize)} — 이 파일은 더 줄지 않았어요. '강하게'를 선택해 보세요.`, "ok");
+      // 오히려 커졌으면 자동 저장하지 않는다(원본이 더 나음). 그래도 필요하면 받을 수 있게 버튼만 둔다
+      linkResult("results-compress", outBytes, filename, "application/pdf", `${fmtSize(newSize)} (원본보다 큼)`);
+      setStatus("status-compress", `이 파일은 줄지 않았어요 (${fmtSize(origSize)} → ${fmtSize(newSize)}). 그래서 자동으로 저장하지 않았어요 — 원본을 그대로 쓰시는 게 나아요.` + (cHasText ? " 글자 위주 PDF는 이 방식으로 줄지 않아요." : " '강하게'나 흑백으로 다시 해 보세요."), "err");
     }
   }catch(e){ console.error(e); setStatus("status-compress",friendlyError(e),"err"); }
-  finally{ setBar("bar-compress", null); btn.disabled = false; }
+  finally{ if(pdf) pdf.destroy(); setBar("bar-compress", null); btn.disabled = !compressFile; }
 };
 
 // ================= 이미지 → PDF =================
 let imgFiles = [];
-setupDrop("drop-img2pdf","file-img2pdf", files=>{ imgFiles.push(...files); renderImg2Pdf(); }, isImg);
+setupDrop("drop-img2pdf","file-img2pdf", files=>{ imgFiles.push(...files); clearResults("results-img2pdf"); renderImg2Pdf(); }, isImg);
+// 이름을 비워 두었을 때: 「첫 사진_외N장」
+function autoImgName(){
+  if(!imgFiles.length) return "이미지_변환";
+  const first = safeName(baseOf(imgFiles[0]), "pdf") || "이미지_변환";
+  return imgFiles.length > 1 ? `${first}_외${imgFiles.length-1}장` : first;
+}
 function renderImg2Pdf(){
   const list = document.getElementById("list-img2pdf");
   list.innerHTML = "";
   if(imgFiles.length >= 2){
     const clr = document.createElement("button");
     clr.className = "minibtn"; clr.style.alignSelf = "flex-start"; clr.textContent = "🗑 모두 지우기";
-    clr.onclick = ()=>{ imgFiles=[]; renderImg2Pdf(); document.getElementById("results-img2pdf").innerHTML=""; setStatus("status-img2pdf",""); };
+    clr.onclick = ()=>{ imgFiles=[]; renderImg2Pdf(); resetOutput("img2pdf"); };
     list.appendChild(clr);
     const hint = document.createElement("div");
     hint.className = "hint"; hint.style.margin = "2px 0";
@@ -1527,13 +1867,13 @@ function renderImg2Pdf(){
     const prev = document.createElement("img");
     prev.className = "imgprev";
     prev.src = URL.createObjectURL(f);
-    prev.onload = ()=>URL.revokeObjectURL(prev.src);
+    prev.onload = prev.onerror = ()=>URL.revokeObjectURL(prev.src);
     row.appendChild(prev);
     const rest = document.createElement("span");
     rest.style.cssText = "flex:1;display:flex;align-items:center;gap:10px;min-width:0";
     rest.innerHTML = `
       <span class="meta">${i+1}</span>
-      <span class="name">${f.name}</span>
+      <span class="name">${esc(f.name)}</span>
       <span class="meta">${fmtSize(f.size)}</span>`;
     row.appendChild(rest);
     const btns = document.createElement("span");
@@ -1550,11 +1890,12 @@ function renderImg2Pdf(){
   });
   document.getElementById("img2pdf-opts").style.display = imgFiles.length ? "block":"none";
   document.getElementById("btn-img2pdf").disabled = !imgFiles.length;
+  document.getElementById("img2pdf-name").placeholder = autoImgName();
   document.getElementById("img2pdf-preview-box").style.display = imgFiles.length ? "block":"none";
   if(imgFiles.length) renderImg2pdfPreview();
   enableDragReorder("list-img2pdf", ()=>imgFiles, a=>{ imgFiles=a; }, renderImg2Pdf);
 }
-// 이미지→PDF 미리보기: 선택한 용지·여백에 첫 이미지가 놓이는 모습
+// 이미지→PDF 미리보기: 선택한 용지·여백에 첫 이미지가 놓이는 모습 (브라우저가 사진의 회전 정보를 반영해 보여 줌)
 async function renderImg2pdfPreview(){
   const box=document.getElementById("img2pdf-preview-box");
   if(!imgFiles.length){ box.style.display="none"; return; }
@@ -1580,67 +1921,141 @@ async function renderImg2pdfPreview(){
   }catch(e){ console.error(e); }
 }
 ["img-pagesize","img-margin"].forEach(id=>document.getElementById(id).addEventListener("change", renderImg2pdfPreview));
-async function embedImageFile(doc, file){
-  const type = (file.type||"").toLowerCase();
-  if(type === "image/jpeg"){
-    return doc.embedJpg(await file.arrayBuffer());
+
+// 파일 앞부분으로 진짜 형식 알아내기(확장자·MIME이 틀린 파일 대비)
+function sniffImage(u8){
+  if(u8[0]===0xFF && u8[1]===0xD8 && u8[2]===0xFF) return "jpeg";
+  if(u8[0]===0x89 && u8[1]===0x50 && u8[2]===0x4E && u8[3]===0x47) return "png";
+  const box = String.fromCharCode(...u8.subarray(4, 12));
+  if(/^ftyp(heic|heix|hevc|mif1|msf1|avif)/.test(box)) return "heic";
+  return "other";
+}
+// JPEG의 EXIF 회전값(1=그대로, 3=180°, 6=시계 90°, 8=반시계 90°, 2·4·5·7=거울상)
+function jpegOrientation(u8){
+  const v = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  let off = 2;
+  while(off + 4 < v.byteLength){
+    if(v.getUint8(off) !== 0xFF) return 1;
+    const marker = v.getUint8(off+1), len = v.getUint16(off+2);
+    if(marker === 0xE1 && v.getUint32(off+4) === 0x45786966){   // "Exif"
+      const t = off + 10, le = v.getUint16(t) === 0x4949;
+      const ifd = t + v.getUint32(t+4, le), n = v.getUint16(ifd, le);
+      for(let k=0;k<n;k++){
+        const e = ifd + 2 + k*12;
+        if(v.getUint16(e, le) === 0x0112) return v.getUint16(e+8, le) || 1;
+      }
+      return 1;
+    }
+    if(marker === 0xDA) return 1;   // 그림 데이터 시작 = 더 볼 머리글 없음
+    off += 2 + len;
   }
-  if(type === "image/png"){
-    return doc.embedPng(await file.arrayBuffer());
+  return 1;
+}
+// 캔버스로 한 번 그려 다시 담기: 회전 정보·거울상은 브라우저가 반영해 줌. 투명한 곳이 없으면 JPG, 있으면 PNG
+async function rasterImage(doc, file, maxSide, quality){
+  let bmp;
+  try{ bmp = await createImageBitmap(file, {imageOrientation:"from-image"}); }
+  catch(e){ bmp = await loadImageEl(file).catch(()=>{ throw new UserMsg(`「${file.name}」은(는) 열 수 없는 그림 파일이에요.`); }); }
+  const W = bmp.width || bmp.naturalWidth, H = bmp.height || bmp.naturalHeight;
+  const r = maxSide ? Math.min(1, maxSide / Math.max(W, H)) : 1;
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(W*r)); c.height = Math.max(1, Math.round(H*r));
+  const ctx = c.getContext("2d");
+  ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  if(bmp.close) bmp.close();
+  let opaque = true;
+  if(!/\.jpe?g$/i.test(file.name)){
+    const a = ctx.getImageData(0,0,c.width,c.height).data;
+    for(let k=3;k<a.length;k+=4) if(a[k] < 255){ opaque = false; break; }
   }
-  // 그 외 형식(webp/bmp/gif 등)은 캔버스로 PNG 변환 후 삽입
-  const url = URL.createObjectURL(file);
-  try{
-    const img = await new Promise((res,rej)=>{
-      const im = new Image();
-      im.onload = ()=>res(im);
-      im.onerror = ()=>rej(new Error(file.name+" 을(를) 열 수 없어요."));
-      im.src = url;
-    });
-    const c = document.createElement("canvas");
-    c.width = img.naturalWidth; c.height = img.naturalHeight;
-    c.getContext("2d").drawImage(img,0,0);
-    return doc.embedPng(c.toDataURL("image/png"));
-  }finally{ URL.revokeObjectURL(url); }
+  let out;
+  if(opaque){
+    const flat = document.createElement("canvas"); flat.width = c.width; flat.height = c.height;
+    const fx = flat.getContext("2d"); fx.fillStyle = "#fff"; fx.fillRect(0,0,c.width,c.height); fx.drawImage(c,0,0);
+    out = await doc.embedJpg(new Uint8Array(await (await canvasJpg(flat, quality)).arrayBuffer()));
+    flat.width = 0;
+  }else{
+    const blob = await canvasBlob(c, "image/png");
+    out = await doc.embedPng(new Uint8Array(await blob.arrayBuffer()));
+  }
+  c.width = 0;
+  return {img: out, rot: 0};
+}
+// 그림 한 장 담기 → {img, rot}. rot = 쪽에 놓을 때 돌릴 각도(원본 JPG를 그대로 쓰면서 회전 정보만 반영)
+async function embedImageFile(doc, file, small){
+  const u8 = new Uint8Array(await file.arrayBuffer());
+  const kind = sniffImage(u8);
+  if(kind === "heic"){
+    // 사파리는 HEIC를 그릴 수 있음 → 그 외 브라우저는 안내
+    try{ return await rasterImage(doc, file, small ? 2000 : 0, 0.9); }
+    catch(e){ throw new UserMsg(`「${file.name}」은(는) 아이폰 사진(HEIC)이라 이 브라우저에서 열 수 없어요. 사진 앱에서 'JPEG로 내보내기' 후 넣어 주세요.`); }
+  }
+  if(small) return rasterImage(doc, file, 2000, 0.82);          // 용량 줄이기: 긴 변 2000px
+  if(kind === "jpeg"){
+    const o = jpegOrientation(u8);
+    if(o === 1 || o === 3 || o === 6 || o === 8){
+      return {img: await doc.embedJpg(u8), rot: {1:0, 3:180, 6:-90, 8:90}[o]};
+    }
+    return rasterImage(doc, file, 0, 0.92);                        // 거울상 사진(드묾)
+  }
+  if(kind === "png"){
+    try{ return {img: await doc.embedPng(u8), rot: 0}; }
+    catch(e){ return rasterImage(doc, file, 0, 0.92); }
+  }
+  return rasterImage(doc, file, 0, 0.92);                          // webp·bmp·gif 등
 }
 document.getElementById("btn-img2pdf").onclick = async ()=>{
   if(!imgFiles.length) return;
   const btn = document.getElementById("btn-img2pdf"); btn.disabled = true;
-  document.getElementById("results-img2pdf").innerHTML = "";
+  const files = imgFiles.slice();
+  const list = document.getElementById("list-img2pdf");
+  clearResults("results-img2pdf");
+  list.classList.add("busy");
   setStatus("status-img2pdf","PDF 만드는 중...",""); setBar("bar-img2pdf", 3);
   const sizeMode = document.getElementById("img-pagesize").value;
   const margin = parseInt(document.getElementById("img-margin").value,10);
+  const small = document.getElementById("img-quality").value === "small";
+  const name = (safeName(document.getElementById("img2pdf-name").value, "pdf") || autoImgName()) + ".pdf";
   const A4 = [595.28, 841.89];
   try{
     const out = await PDFDocument.create();
-    for(let i=0;i<imgFiles.length;i++){
-      const img = await embedImageFile(out, imgFiles[i]);
+    for(let i=0;i<files.length;i++){
+      const {img, rot} = await embedImageFile(out, files[i], small);
+      const turned = rot === 90 || rot === -90;
+      const iw = turned ? img.height : img.width, ih = turned ? img.width : img.height;   // 바로 세웠을 때 크기
       let pw, ph;
       if(sizeMode === "a4p"){ [pw,ph] = A4; }
       else if(sizeMode === "a4l"){ [pw,ph] = [A4[1],A4[0]]; }
       else { // 이미지 크기 그대로 (96dpi 기준 → pt)
-        pw = img.width*0.75 + margin*2;
-        ph = img.height*0.75 + margin*2;
+        pw = iw*0.75 + margin*2;
+        ph = ih*0.75 + margin*2;
       }
       const page = out.addPage([pw, ph]);
       const availW = pw - margin*2, availH = ph - margin*2;
-      const r = Math.min(availW/img.width, availH/img.height);
-      const w = img.width*r, h = img.height*r;
-      page.drawImage(img, {x:(pw-w)/2, y:(ph-h)/2, width:w, height:h});
-      setBar("bar-img2pdf", 3 + Math.round((i+1)/imgFiles.length*92));
+      const r = Math.min(availW/iw, availH/ih);
+      const w = iw*r, h = ih*r, X = (pw-w)/2, Y = (ph-h)/2;
+      // pdf-lib는 그림의 왼쪽 아래 모서리를 축으로 돌리므로, 돌린 뒤 제자리에 오도록 기준점을 옮긴다
+      if(rot === 0)        page.drawImage(img, {x:X, y:Y, width:w, height:h});
+      else if(rot === 180) page.drawImage(img, {x:X+w, y:Y+h, width:w, height:h, rotate:degrees(180)});
+      else if(rot === -90) page.drawImage(img, {x:X, y:Y+h, width:h, height:w, rotate:degrees(-90)});
+      else                 page.drawImage(img, {x:X+w, y:Y, width:h, height:w, rotate:degrees(90)});
+      setBar("bar-img2pdf", 3 + Math.round((i+1)/files.length*92));
     }
-    const bytes = await out.save();
+    const bytes = await saveDoc(out);
     setBar("bar-img2pdf",100);
-    const {url,filename} = download(bytes, "이미지_변환.pdf");
-    addResult("results-img2pdf", url, filename, `${imgFiles.length}페이지 · ${fmtSize(bytes.length)}`);
-    setStatus("status-img2pdf", `완료! 이미지 ${imgFiles.length}장 → PDF ${imgFiles.length}페이지`, "ok");
+    const {url,filename} = download(bytes, name);
+    addResult("results-img2pdf", url, filename, `${files.length}페이지 · ${fmtSize(bytes.length)}`);
+    setStatus("status-img2pdf", `완료! 이미지 ${files.length}장 → PDF ${files.length}페이지`, "ok");
   }catch(e){ console.error(e); setStatus("status-img2pdf",friendlyError(e),"err"); }
-  finally{ setBar("bar-img2pdf", null); btn.disabled = false; }
+  finally{ setBar("bar-img2pdf", null); btn.disabled = !imgFiles.length; list.classList.remove("busy"); }
 };
 
 // ================= PDF → 이미지 =================
 let p2iFile = null;
-setupDrop("drop-pdf2img","file-pdf2img", files=>{ p2iFile = files[0]; renderP2I(); });
+setupDrop("drop-pdf2img","file-pdf2img", files=>{
+  p2iFile = files[0]; resetOutput("pdf2img"); renderP2I();
+  if(files.length > 1) setStatus("status-pdf2img", `${files.length}개 중 첫 파일(${files[0].name})만 열었어요.`, "err");
+});
 function renderP2I(){
   const list = document.getElementById("list-pdf2img");
   list.innerHTML = "";
@@ -1649,99 +2064,105 @@ function renderP2I(){
   if(p2iFile){
     const row = document.createElement("div");
     row.className = "item";
-    row.innerHTML = `<span class="name">${p2iFile.name}</span>
+    row.innerHTML = `<span class="name">${esc(p2iFile.name)}</span>
       <span class="meta">${fmtSize(p2iFile.size)}</span>
       <button data-a="del" title="삭제">✕</button>`;
-    row.querySelector('[data-a=del]').onclick = ()=>{ p2iFile=null; renderP2I(); document.getElementById("results-pdf2img").innerHTML=""; setStatus("status-pdf2img",""); };
+    row.querySelector('[data-a=del]').onclick = ()=>{ p2iFile=null; renderP2I(); resetOutput("pdf2img"); };
     list.appendChild(row);
   }
 }
 document.getElementById("btn-pdf2img").onclick = async ()=>{
   if(!p2iFile) return;
+  const file = p2iFile;
   const btn = document.getElementById("btn-pdf2img"); btn.disabled = true;
-  document.getElementById("results-pdf2img").innerHTML = "";
+  clearResults("results-pdf2img");
   setStatus("status-pdf2img","변환 중...",""); setBar("bar-pdf2img", 3);
   const format = document.getElementById("p2i-format").value;   // png | jpeg
   const scale = parseFloat(document.getElementById("p2i-scale").value);
   const ext = format === "png" ? "png" : "jpg";
-  const baseName = p2iFile.name.replace(/\.pdf$/i,"");
+  const baseName = safeName(baseOf(file), "pdf") || "문서";
+  let pdf = null;
   try{
-    const bytes = await p2iFile.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data: bytes.slice(0)}).promise;
+    pdf = await openPdf(await file.arrayBuffer());
     const total = pdf.numPages;
     const rangeStr = document.getElementById("p2i-range").value.trim();
     const idxs = rangeStr ? parseRanges(rangeStr, total) : Array.from({length:total},(_,i)=>i);
-    const items = [];
+    const items = [];   // 그림은 Blob으로만 들고 있다가 ZIP을 누를 때 읽는다(메모리 절약)
     for(let k=0;k<idxs.length;k++){
       const i = idxs[k];
       const page = await pdf.getPage(i+1);
-      const vp = page.getViewport({scale});
+      const vp1 = page.getViewport({scale:1});
+      // 포스터처럼 큰 쪽은 긴 변 8000px에서 멈춘다(브라우저 캔버스 한계)
+      const vp = page.getViewport({scale: Math.min(scale, 8000 / Math.max(vp1.width, vp1.height))});
       const canvas = document.createElement("canvas");
       canvas.width = Math.floor(vp.width); canvas.height = Math.floor(vp.height);
       const ctx = canvas.getContext("2d");
       ctx.fillStyle = "#ffffff"; ctx.fillRect(0,0,canvas.width,canvas.height);
       await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
-      const blob = await new Promise(res=>canvas.toBlob(res, "image/"+format, format==="jpeg"?0.9:undefined));
+      page.cleanup();
+      const blob = await canvasBlob(canvas, "image/"+format, format==="jpeg"?0.9:undefined);
+      const dims = `${canvas.width}×${canvas.height}`;
+      canvas.width = 0; canvas.height = 0;
       const num = String(i+1).padStart(String(total).length,"0");
       const filename = `${baseName}_${num}.${ext}`;
-      const u8 = new Uint8Array(await blob.arrayBuffer());
-      items.push({filename, bytes: u8});
-      linkResult("results-pdf2img", u8, filename, "image/"+format, `${canvas.width}×${canvas.height} · ${fmtSize(blob.size)}`);
+      items.push({filename, blob});
+      linkResult("results-pdf2img", blob, filename, "image/"+format, `${dims} · ${fmtSize(blob.size)}`);
       setBar("bar-pdf2img", 3 + Math.round((k+1)/idxs.length*95));
-      page.cleanup();
+      setStatus("status-pdf2img", `변환 중... ${k+1}/${idxs.length}장`, "");
     }
     if(items.length > 1) addZipButton("results-pdf2img", items, `${baseName}_이미지.zip`);
-    else if(items.length === 1) download(items[0].bytes, items[0].filename, "image/"+format);
-    setStatus("status-pdf2img", `완료! ${idxs.length}장 변환 — 아래에서 하나씩 저장하거나 ZIP으로 한 번에 받으세요`, "ok");
+    else if(items.length === 1) download(items[0].blob, items[0].filename);
+    setStatus("status-pdf2img", `완료! ${idxs.length}장 변환${idxs.warn || ""} — 아래에서 하나씩 저장하거나 ZIP으로 한 번에 받으세요`, idxs.warn ? "err" : "ok");
   }catch(e){ console.error(e); setStatus("status-pdf2img",friendlyError(e),"err"); }
-  finally{ setBar("bar-pdf2img", null); btn.disabled = false; }
+  finally{ if(pdf) pdf.destroy(); setBar("bar-pdf2img", null); btn.disabled = !p2iFile; }
 };
 
 // ================= 페이지 정리 =================
-let orgFile = null, orgBytes = null, orgPages = [];
-setupDrop("drop-organize","file-organize", files=>{ loadOrganize(files[0]); });
-async function loadOrganize(file){
-  orgFile = file; orgPages = [];
+let orgFile = null, orgSrc = null, orgPages = [], orgLoadId = 0;
+const orgThumbL = thumbLoader(140, 150, (i, url)=>{
+  const p = orgPages.find(q=>q.srcIndex === i);
+  if(p) p.thumb = url;
+  const img = document.querySelector(`#org-thumbs [data-src="${i}"] img`);
+  if(img){ img.src = url; img.classList.remove("pending"); }
+});
+setupDrop("drop-organize","file-organize", files=>{
+  loadOrganize(files[0], files.length > 1 ? ` (${files.length}개 중 첫 파일만 열었어요)` : "");
+});
+async function loadOrganize(file, note=""){
+  const my = ++orgLoadId;
+  orgThumbL.stop();
+  orgFile = file; orgSrc = null; orgPages = [];
   const list = document.getElementById("list-organize");
   list.innerHTML = "";
   document.getElementById("org-thumbs").innerHTML = "";
-  document.getElementById("results-organize").innerHTML = "";
+  resetOutput("organize");
   document.getElementById("btn-organize").disabled = true;
   document.getElementById("org-help").style.display = "none";
-  if(!file) return;
+  if(!file){ setBar("bar-organize", null); return; }
   const row = document.createElement("div");
   row.className = "item";
-  row.innerHTML = `<span class="name">${file.name}</span>
+  row.innerHTML = `<span class="name">${esc(file.name)}</span>
     <span class="meta">${fmtSize(file.size)}</span>
     <button data-a="del" title="삭제">✕</button>`;
-  row.querySelector('[data-a=del]').onclick = ()=>{ orgFile=null; orgBytes=null; loadOrganize(null); setStatus("status-organize",""); };
+  row.querySelector('[data-a=del]').onclick = ()=>loadOrganize(null);
   list.appendChild(row);
-  setStatus("status-organize","미리보기 만드는 중...",""); setBar("bar-organize", 3);
+  setStatus("status-organize","쪽 수를 확인하는 중...",""); setBar("bar-organize", 10);
   try{
-    orgBytes = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data: orgBytes.slice(0)}).promise;
-    const total = pdf.numPages;
-    if(!confirmHeavy(total, file.size)){ setBar("bar-organize", null); setStatus("status-organize","취소했어요. 다시 파일을 올리면 시작해요.",""); orgBytes=null; document.getElementById("list-organize").innerHTML=""; return; }
-    for(let i=1;i<=total;i++){
-      const page = await pdf.getPage(i);
-      const vp1 = page.getViewport({scale:1});
-      const sc = Math.min(140/vp1.width, 150/vp1.height, 1.5);
-      const vp = page.getViewport({scale:sc});
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.ceil(vp.width); canvas.height = Math.ceil(vp.height);
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
-      await page.render({canvasContext:ctx, viewport:vp, intent:"print"}).promise;
-      orgPages.push({srcIndex:i-1, rotation:0, deleted:false, thumb:canvas.toDataURL("image/jpeg",0.7)});
-      setBar("bar-organize", 3 + Math.round(i/total*90));
-      page.cleanup();
-    }
+    const buf = await file.arrayBuffer();
+    const src = await loadEditable(buf.slice(0), file.name);
+    const pdf = await openPdf(buf);
+    if(my !== orgLoadId){ pdf.destroy(); return; }
+    orgSrc = src;
+    const total = src.getPageCount();
+    orgPages = Array.from({length: total}, (_,i)=>({srcIndex:i, rotation:0, deleted:false, thumb:null}));
     setBar("bar-organize", null);
-    setStatus("status-organize", `${total}페이지 불러왔어요. 아래에서 정리해 보세요.`, "ok");
+    orgThumbL.start(pdf, total);
+    renderOrgThumbs();
+    setStatus("status-organize", `${total}페이지 불러왔어요${note}. 미리보기는 보이는 쪽부터 채워져요 — 바로 정리해도 돼요.`, "ok");
     document.getElementById("org-help").style.display = "block";
     document.getElementById("btn-organize").disabled = false;
-    renderOrgThumbs();
   }catch(e){
+    if(my !== orgLoadId) return;
     console.error(e); setBar("bar-organize", null);
     setStatus("status-organize",friendlyError(e),"err");
   }
@@ -1749,11 +2170,14 @@ async function loadOrganize(file){
 function renderOrgThumbs(){
   const box = document.getElementById("org-thumbs");
   box.innerHTML = "";
+  orgThumbL.unwatchAll();
+  const frag = document.createDocumentFragment();
   orgPages.forEach((p,i)=>{
     const d = document.createElement("div");
     d.className = "thumb" + (p.deleted ? " deleted":"");
+    d.dataset.src = p.srcIndex;
     d.innerHTML = `
-      <div class="imgbox"><img src="${p.thumb}" style="transform:rotate(${p.rotation}deg)"></div>
+      <div class="imgbox"><img ${p.thumb ? `src="${p.thumb}"` : 'class="pending"'} alt="" style="transform:rotate(${p.rotation}deg)"></div>
       <div class="num">${i+1} <span style="opacity:.6">(원본 ${p.srcIndex+1}p)</span>${p.deleted?' · <b style="color:#dc2626">삭제됨</b>':''}${p.rotation? ' · ↻'+p.rotation+'°':''}</div>
       <div class="ctrl">
         <button data-a="left" title="앞으로">◀</button>
@@ -1765,43 +2189,73 @@ function renderOrgThumbs(){
     d.querySelector('[data-a=right]').onclick = ()=>{ if(i<orgPages.length-1){[orgPages[i+1],orgPages[i]]=[orgPages[i],orgPages[i+1]]; renderOrgThumbs();} };
     d.querySelector('[data-a=rot]').onclick = ()=>{ p.rotation = (p.rotation+90)%360; renderOrgThumbs(); };
     d.querySelector('[data-a=del]').onclick = ()=>{ p.deleted = !p.deleted; renderOrgThumbs(); };
-    box.appendChild(d);
+    if(!p.thumb) orgThumbL.watch(d);
+    frag.appendChild(d);
   });
+  box.appendChild(frag);
 }
 document.getElementById("btn-organize").onclick = async ()=>{
-  if(!orgBytes) return;
-  const keep = orgPages.filter(p=>!p.deleted);
+  if(!orgSrc) return;
+  const keep = orgPages.filter(p=>!p.deleted).map(p=>({srcIndex:p.srcIndex, rotation:p.rotation}));
   if(!keep.length){ setStatus("status-organize","모든 페이지가 삭제 상태예요. 최소 1페이지는 남겨주세요.","err"); return; }
   const btn = document.getElementById("btn-organize"); btn.disabled = true;
-  document.getElementById("results-organize").innerHTML = "";
+  clearResults("results-organize");
   setStatus("status-organize","저장 중...",""); setBar("bar-organize", 10);
   try{
-    const src = await PDFDocument.load(orgBytes.slice(0), {ignoreEncryption:true});
     const out = await PDFDocument.create();
-    const copied = await out.copyPages(src, keep.map(p=>p.srcIndex));
+    const copied = await out.copyPages(orgSrc, keep.map(p=>p.srcIndex));
     copied.forEach((pg,i)=>{
       const base = pg.getRotation().angle || 0;
       pg.setRotation(degrees((base + keep[i].rotation) % 360));
       out.addPage(pg);
     });
-    const outBytes = await out.save();
+    const outBytes = await saveDoc(out);
     setBar("bar-organize",100);
-    const baseName = orgFile.name.replace(/\.pdf$/i,"");
-    const {url,filename} = download(outBytes, `${baseName}_정리.pdf`);
+    const {url,filename} = download(outBytes, `${safeName(baseOf(orgFile), "pdf") || "문서"}_정리.pdf`);
     addResult("results-organize", url, filename, `${keep.length}페이지 · ${fmtSize(outBytes.length)}`);
     const delCount = orgPages.length - keep.length;
     setStatus("status-organize", `완료! ${keep.length}페이지 저장${delCount?` (${delCount}페이지 삭제됨)`:""}`, "ok");
   }catch(e){ console.error(e); setStatus("status-organize",friendlyError(e),"err"); }
-  finally{ setBar("bar-organize", null); btn.disabled = false; }
+  finally{ setBar("bar-organize", null); btn.disabled = !orgSrc; }
 };
 
 // ================= 쪽번호 =================
+// 쪽이 눈에 보이는 모습(잘라내기 상자·회전 반영) 기준 좌표 → PDF 안쪽 좌표로 바꿔 주는 도우미.
+// 가로로 돌려 놓은 쪽·여백을 잘라 둔 쪽에도 번호·워터마크가 보이는 그대로의 자리에 바로 선 모습으로 들어간다.
+function pageFrame(p){
+  const box = p.getCropBox();
+  const r = (((p.getRotation().angle || 0) % 360) + 360) % 360;
+  const W = box.width, H = box.height;
+  const turned = r === 90 || r === 270;
+  const toUser = (vx, vy)=>{
+    let x = vx, y = vy;
+    if(r === 90){ x = W - vy; y = vx; }
+    else if(r === 180){ x = W - vx; y = H - vy; }
+    else if(r === 270){ x = vy; y = H - vx; }
+    return {x: box.x + x, y: box.y + y};
+  };
+  return {vw: turned ? H : W, vh: turned ? W : H, rot: degrees(r), toUser};
+}
 const numState = singlePdfPicker("number", st=>{
   document.getElementById("number-opts").style.display = st.file ? "block":"none";
   document.getElementById("btn-number").disabled = !st.file;
   document.getElementById("num-preview-box").style.display = st.file ? "block":"none";
   if(st.file) renderNumPreview();
 });
+function numOpts(){
+  return {
+    pos: document.getElementById("num-pos").value,
+    fmt: document.getElementById("num-fmt").value,
+    start: Math.max(0, parseInt(document.getElementById("num-start").value,10) || 1),
+    size: parseInt(document.getElementById("num-size").value,10),
+    from: Math.max(1, parseInt(document.getElementById("num-from").value,10) || 1)   // 이 쪽부터 번호
+  };
+}
+function numLabel(fmt, num, lastNum){
+  if(fmt==="dash") return `- ${num} -`;
+  if(fmt==="total") return `${num} / ${lastNum}`;
+  return String(num);
+}
 // 쪽번호 미리보기: 첫 페이지에 실제 위치·모양·크기로 번호를 얹어 그림
 let numPvBusy = false, numPvAgain = false;
 async function renderNumPreview(){
@@ -1815,24 +2269,16 @@ async function renderNumPreview(){
     pv.width = base.width; pv.height = base.height;
     const ctx = pv.getContext("2d");
     ctx.drawImage(base, 0, 0);
-    const pos = document.getElementById("num-pos").value;
-    const fmt = document.getElementById("num-fmt").value;
-    const start = parseInt(document.getElementById("num-start").value,10) || 1;
-    const size = parseInt(document.getElementById("num-size").value,10);
-    const skipFirst = document.getElementById("num-skipfirst").checked;
-    const lastNum = start + (pages - (skipFirst?1:0)) - 1;
-    // 첫 페이지가 받을 번호 (표지 제외면 표지엔 번호 없음)
-    const shownNum = skipFirst ? null : start;
+    const {pos, fmt, start, size, from} = numOpts();
+    const lastNum = start + (pages - from);
     const note = document.getElementById("num-preview-note");
-    if(shownNum === null){
-      note.innerHTML = "표지(첫 페이지)에는 번호가 <b>표시되지 않아요</b>. 본문 첫 쪽부터 "+start+"번이 매겨져요.";
-    }else{
-      note.textContent = "";
-    }
-    if(shownNum !== null){
-      let label = String(shownNum);
-      if(fmt==="dash") label = `- ${shownNum} -`;
-      else if(fmt==="total") label = `${shownNum} / ${lastNum}`;
+    if(from > pages){
+      note.innerHTML = `이 문서는 ${pages}쪽이라 ${from}쪽부터 넣을 곳이 없어요. '번호를 넣기 시작할 쪽'을 줄여 주세요.`;
+    }else if(from > 1){
+      note.innerHTML = `앞의 ${from-1}쪽에는 번호가 <b>표시되지 않아요</b>. ${from}쪽부터 ${start}번이 매겨져요.`;
+    }else note.textContent = "";
+    if(from === 1){
+      const label = numLabel(fmt, start, lastNum);
       const fontPx = size*scale;
       ctx.font = `${fontPx}px "Malgun Gothic",${WM_FONT}`;
       ctx.fillStyle = "rgb(64,64,64)";
@@ -1858,35 +2304,28 @@ async function renderNumPreview(){
   }catch(e){ console.error(e); }
   finally{ numPvBusy=false; if(numPvAgain){ numPvAgain=false; renderNumPreview(); } }
 }
-["num-pos","num-fmt","num-start","num-size","num-skipfirst"].forEach(id=>{
+["num-pos","num-fmt","num-start","num-size","num-from"].forEach(id=>{
   const el = document.getElementById(id);
   el.addEventListener(el.type==="number" ? "input" : "change", renderNumPreview);
 });
 document.getElementById("btn-number").onclick = async ()=>{
   if(!numState.file) return;
+  const file = numState.file;
   const btn = document.getElementById("btn-number"); btn.disabled = true;
-  document.getElementById("results-number").innerHTML = "";
+  clearResults("results-number");
   setStatus("status-number","쪽번호 넣는 중...",""); setBar("bar-number", 10);
   try{
-    const pos = document.getElementById("num-pos").value;
-    const fmt = document.getElementById("num-fmt").value;
-    const start = parseInt(document.getElementById("num-start").value,10) || 1;
-    const size = parseInt(document.getElementById("num-size").value,10);
-    const skipFirst = document.getElementById("num-skipfirst").checked;
-    const bytes = await numState.file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes, {ignoreEncryption:true});
+    const {pos, fmt, start, size, from} = numOpts();
+    const doc = await loadEditable(await file.arrayBuffer(), file.name);
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const pages = doc.getPages();
-    const numberedCount = pages.length - (skipFirst?1:0);
+    if(from > pages.length) throw new UserMsg(`이 문서는 ${pages.length}쪽이라 ${from}쪽부터 번호를 넣을 수 없어요.`);
+    const numberedCount = pages.length - from + 1;
     const lastNum = start + numberedCount - 1;
     pages.forEach((p,i)=>{
-      if(skipFirst && i===0) return;
-      const num = start + i - (skipFirst?1:0);
-      let label;
-      if(fmt==="dash") label = `- ${num} -`;
-      else if(fmt==="total") label = `${num} / ${lastNum}`;
-      else label = String(num);
-      const {width:w, height:h} = p.getSize();
+      if(i < from-1) return;
+      const label = numLabel(fmt, start + i - (from-1), lastNum);
+      const f = pageFrame(p), w = f.vw, h = f.vh;
       const tw = font.widthOfTextAtSize(label, size);
       let x, y;
       if(pos==="bc"){ x=(w-tw)/2; y=18; }
@@ -1894,17 +2333,17 @@ document.getElementById("btn-number").onclick = async ()=>{
       else if(pos==="bl"){ x=28; y=18; }
       else if(pos==="tr"){ x=w-tw-28; y=h-18-size; }
       else { x=28; y=h-18-size; }
-      p.drawText(label, {x, y, size, font, color:rgb(0.25,0.25,0.25)});
+      const at = f.toUser(x, y);
+      p.drawText(label, {x:at.x, y:at.y, size, font, color:rgb(0.25,0.25,0.25), rotate:f.rot});
       setBar("bar-number", 10 + Math.round((i+1)/pages.length*85));
     });
-    const outBytes = await doc.save();
+    const outBytes = await saveDoc(doc);
     setBar("bar-number",100);
-    const baseName = numState.file.name.replace(/\.pdf$/i,"");
-    const {url,filename} = download(outBytes, `${baseName}_쪽번호.pdf`);
+    const {url,filename} = download(outBytes, `${safeName(baseOf(file), "pdf") || "문서"}_쪽번호.pdf`);
     addResult("results-number", url, filename, fmtSize(outBytes.length));
     setStatus("status-number", `완료! ${numberedCount}개 페이지에 번호를 넣었어요`, "ok");
   }catch(e){ console.error(e); setStatus("status-number",friendlyError(e),"err"); }
-  finally{ setBar("bar-number", null); btn.disabled = false; }
+  finally{ setBar("bar-number", null); btn.disabled = !numState.file; }
 };
 
 // ================= 워터마크 =================
@@ -2064,12 +2503,11 @@ document.getElementById("btn-watermark").onclick = async ()=>{
     setStatus("status-watermark","로고/도장 이미지를 선택해 주세요.","err"); return;
   }
   const btn = document.getElementById("btn-watermark"); btn.disabled = true;
-  document.getElementById("results-watermark").innerHTML = "";
+  clearResults("results-watermark");
   setStatus("status-watermark", "워터마크 넣는 중...", "");
   setBar("bar-watermark", 10);
   try{
-    const bytes = await wmState.file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes, {ignoreEncryption:true});
+    const doc = await loadEditable(await wmState.file.arrayBuffer(), wmState.file.name);
     const pages = doc.getPages();
     const SCALE = 2;   // 워터마크 이미지 선명도
     const pos = wmEffPos();
@@ -2092,7 +2530,7 @@ document.getElementById("btn-watermark").onclick = async ()=>{
     const cache = new Map();   // 같은 크기 페이지는 워터마크 이미지 재사용
     for(let i=0;i<pages.length;i++){
       const p = pages[i];
-      const {width:w, height:h} = p.getSize();
+      const f = pageFrame(p), w = f.vw, h = f.vh;   // 눈에 보이는 쪽 크기(회전·잘라내기 반영) 기준으로 그림
       const key = Math.round(w)+"x"+Math.round(h);
       let emb = cache.get(key);
       if(!emb){
@@ -2102,20 +2540,23 @@ document.getElementById("btn-watermark").onclick = async ()=>{
         paintWatermark(ctx, cw, ch, cfg.mode === "text"
           ? { mode:"text", text:cfg.text, fontPx:cfg.size*SCALE, colorHex:cfg.colorHex, opacity:cfg.opacity, diag:cfg.diag, pos:cfg.pos }
           : { mode:"image", img:cfg.img, imgFrac:cfg.imgFrac, opacity:cfg.opacity, pos:cfg.pos });
-        emb = await doc.embedPng(cv.toDataURL("image/png"));
+        const blob = await canvasBlob(cv, "image/png");
+        cv.width = 0;
+        emb = await doc.embedPng(new Uint8Array(await blob.arrayBuffer()));
         cache.set(key, emb);
       }
-      p.drawImage(emb, {x:0, y:0, width:w, height:h});
+      const at = f.toUser(0, 0);
+      p.drawImage(emb, {x:at.x, y:at.y, width:w, height:h, rotate:f.rot});
       setBar("bar-watermark", 20 + Math.round((i+1)/pages.length*70));
     }
-    const outBytes = await doc.save();
+    const outBytes = await saveDoc(doc);
     setBar("bar-watermark",100);
-    const baseName = wmState.file.name.replace(/\.pdf$/i,"");
+    const baseName = safeName(baseOf(wmState.file), "pdf") || "문서";
     const {url,filename} = download(outBytes, `${baseName}_워터마크.pdf`);
     addResult("results-watermark", url, filename, fmtSize(outBytes.length));
     setStatus("status-watermark", `완료! ${pages.length}개 페이지에 워터마크를 넣었어요`, "ok");
   }catch(e){ console.error(e); setStatus("status-watermark",friendlyError(e),"err"); }
-  finally{ setBar("bar-watermark", null); btn.disabled = false; }
+  finally{ setBar("bar-watermark", null); btn.disabled = !wmState.file; }
 };
 
 // ================= 모아찍기 · 소책자 =================
@@ -2191,28 +2632,31 @@ function bookletOrder(total){
 document.getElementById("btn-nup").onclick = async ()=>{
   if(!nupState.file) return;
   const btn = document.getElementById("btn-nup"); btn.disabled = true;
-  document.getElementById("results-nup").innerHTML = "";
+  clearResults("results-nup");
   setStatus("status-nup","만드는 중...",""); setBar("bar-nup", 10);
   const mode = document.querySelector('input[name=nupmode]:checked').value;
   try{
-    const bytes = await nupState.file.arrayBuffer();
-    const srcDoc = await PDFDocument.load(bytes, {ignoreEncryption:true});
+    const srcDoc = await loadEditable(await nupState.file.arrayBuffer(), nupState.file.name);
     const total = srcDoc.getPageCount();
     const out = await PDFDocument.create();
-    const embedded = await out.embedPdf(srcDoc, Array.from({length:total},(_,i)=>i));
+    // 잘라내기 상자만큼만 담고(여백을 잘라 둔 쪽), 돌려 놓은 쪽은 보이는 방향 그대로 놓는다
+    const srcPages = srcDoc.getPages();
+    const rots = srcPages.map(p=>(((p.getRotation().angle || 0) % 360) + 360) % 360);
+    const embedded = await out.embedPages(srcPages, srcPages.map(p=>{ const b = p.getCropBox(); return {left:b.x, bottom:b.y, right:b.x+b.width, top:b.y+b.height}; }));
     setBar("bar-nup", 40);
     const A4P = [595.28, 841.89], A4L = [841.89, 595.28];
     const GAP = 8, M = 14; // 칸 사이 간격, 바깥 여백
 
     // 한 칸에 원본 페이지를 비율 유지로 배치
-    const place = (page, emb, cx, cy, cw, ch) => {
-      if(emb == null) return;
-      const s = Math.min(cw/emb.width, ch/emb.height);
-      page.drawPage(emb, {
-        x: cx + (cw - emb.width*s)/2,
-        y: cy + (ch - emb.height*s)/2,
-        width: emb.width*s, height: emb.height*s
-      });
+    const place = (page, idx, cx, cy, cw, ch) => {
+      if(idx == null) return;
+      const emb = embedded[idx], r = rots[idx], turned = r === 90 || r === 270;
+      const vw = turned ? emb.height : emb.width, vh = turned ? emb.width : emb.height;   // 보이는 크기
+      const s = Math.min(cw/vw, ch/vh);
+      const X = cx + (cw - vw*s)/2, Y = cy + (ch - vh*s)/2, ew = emb.width*s, eh = emb.height*s;
+      // 쪽의 회전(시계 방향)을 그대로 따라 돌리고, 돌린 뒤 칸 안에 오도록 기준점을 옮긴다
+      const at = r === 90 ? {x:X, y:Y+ew} : r === 180 ? {x:X+ew, y:Y+eh} : r === 270 ? {x:X+eh, y:Y} : {x:X, y:Y};
+      page.drawPage(emb, {x:at.x, y:at.y, width:ew, height:eh, rotate:degrees(-r)});
     };
 
     let sides; // 각 장(면)에 들어갈 원본 페이지 index 배열
@@ -2234,57 +2678,67 @@ document.getElementById("btn-nup").onclick = async ()=>{
           [M, M+ch+GAP], [M+cw+GAP, M+ch+GAP],  // 위 왼/오
           [M, M],        [M+cw+GAP, M]           // 아래 왼/오
         ];
-        side.forEach((idx,ci)=> place(page, idx==null?null:embedded[idx], cells[ci][0], cells[ci][1], cw, ch));
+        side.forEach((idx,ci)=> place(page, idx, cells[ci][0], cells[ci][1], cw, ch));
       }else{
         const page = out.addPage(A4L.slice());
         const cw = (A4L[0]-M*2-GAP)/2, ch = A4L[1]-M*2;
-        place(page, side[0]==null?null:embedded[side[0]], M, M, cw, ch);
-        place(page, side[1]==null?null:embedded[side[1]], M+cw+GAP, M, cw, ch);
+        place(page, side[0], M, M, cw, ch);
+        place(page, side[1], M+cw+GAP, M, cw, ch);
       }
       setBar("bar-nup", 40 + Math.round((si+1)/sides.length*55));
     });
 
-    const outBytes = await out.save();
+    const outBytes = await saveDoc(out);
     setBar("bar-nup",100);
-    const baseName = nupState.file.name.replace(/\.pdf$/i,"");
+    const baseName = safeName(baseOf(nupState.file), "pdf") || "문서";
     const suffix = mode==="booklet" ? "소책자" : (mode==="4up" ? "4쪽모음" : "2쪽모음");
     const {url,filename} = download(outBytes, `${baseName}_${suffix}.pdf`);
     addResult("results-nup", url, filename, `${out.getPageCount()}장 · ${fmtSize(outBytes.length)}`);
     setStatus("status-nup", `완료! ${total}쪽 → ${out.getPageCount()}장. ${NUP_HINTS[mode]}`, "ok");
   }catch(e){ console.error(e); setStatus("status-nup",friendlyError(e),"err"); }
-  finally{ setBar("bar-nup", null); btn.disabled = false; }
+  finally{ setBar("bar-nup", null); btn.disabled = !nupState.file; }
 };
 
 // ================= 텍스트 추출 =================
 const textState = singlePdfPicker("text", st=>{
   document.getElementById("btn-text").disabled = !st.file;
-  if(!st.file){ document.getElementById("text-out-box").style.display = "none"; }
+  document.getElementById("text-out-box").style.display = "none";
 });
+// 글자 조각을 줄로 묶기: 같은 줄 판정은 글자 크기의 절반 이내 높이 차이 —
+// 위첨자(cm², x²)처럼 살짝 올라간 글자가 따로 한 줄로 떨어지지 않게 줄 기준선은 첫 조각으로 고정
+function pageTextFromItems(items){
+  const lines = [];
+  let line = "", baseY = null, lineH = 0;
+  for(const it of items){
+    if(typeof it.str !== "string") continue;
+    const y = it.transform[5];
+    const h = Math.abs(it.transform[3]) || it.height || 10;
+    if(baseY !== null && it.str && Math.abs(y - baseY) > Math.max(2, Math.max(h, lineH) * 0.5)){
+      lines.push(line); line = ""; baseY = null; lineH = 0;
+    }
+    line += it.str;
+    if(it.str && baseY === null){ baseY = y; }
+    if(it.str) lineH = Math.max(lineH, h);
+    if(it.hasEOL){ lines.push(line); line = ""; baseY = null; lineH = 0; }
+  }
+  if(line) lines.push(line);
+  return lines.map(l=>l.replace(/\s+$/,"")).join("\n").trim();
+}
 document.getElementById("btn-text").onclick = async ()=>{
   if(!textState.file) return;
   const btn = document.getElementById("btn-text"); btn.disabled = true;
   setStatus("status-text","추출 중...",""); setBar("bar-text", 5);
   document.getElementById("text-out-box").style.display = "none";
+  let pdf = null;
   try{
-    const bytes = await textState.file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data: bytes.slice(0)}).promise;
+    pdf = await openPdf(await textState.file.arrayBuffer());
     const total = pdf.numPages;
     let allText = "";
     let charCount = 0;
     for(let i=1;i<=total;i++){
       const page = await pdf.getPage(i);
       const tc = await page.getTextContent();
-      const lines = [];
-      let line = "", lastY = null;
-      tc.items.forEach(it=>{
-        const y = it.transform[5];
-        if(lastY !== null && Math.abs(y-lastY) > 3){ lines.push(line); line = ""; }
-        line += it.str;
-        if(it.hasEOL){ lines.push(line); line = ""; lastY = null; }
-        else lastY = y;
-      });
-      if(line) lines.push(line);
-      const pageText = lines.join("\n").trim();
+      const pageText = pageTextFromItems(tc.items);
       charCount += pageText.length;
       allText += `───────── ${i}쪽 ─────────\n${pageText}\n\n`;
       setBar("bar-text", 5 + Math.round(i/total*90));
@@ -2292,14 +2746,13 @@ document.getElementById("btn-text").onclick = async ()=>{
     }
     document.getElementById("text-out").value = allText;
     document.getElementById("text-out-box").style.display = "block";
-    setBar("bar-text", null);
     if(charCount === 0){
-      setStatus("status-text","글자를 찾지 못했어요. 스캔(이미지) PDF인 것 같아요.","err");
+      setStatus("status-text","글자를 찾지 못했어요. 스캔(이미지) PDF인 것 같아요 — 'OCR' 탭에서 글자 인식을 해 보세요.","err");
     }else{
       setStatus("status-text", `완료! ${total}쪽에서 글자 ${charCount.toLocaleString()}자 추출`, "ok");
     }
-  }catch(e){ console.error(e); setBar("bar-text", null); setStatus("status-text",friendlyError(e),"err"); }
-  finally{ btn.disabled = false; }
+  }catch(e){ console.error(e); setStatus("status-text",friendlyError(e),"err"); }
+  finally{ if(pdf) pdf.destroy(); setBar("bar-text", null); btn.disabled = !textState.file; }
 };
 document.getElementById("btn-text-copy").onclick = async ()=>{
   const t = document.getElementById("text-out").value;
@@ -2314,7 +2767,7 @@ document.getElementById("btn-text-copy").onclick = async ()=>{
 };
 document.getElementById("btn-text-save").onclick = ()=>{
   const t = document.getElementById("text-out").value;
-  const baseName = textState.file ? textState.file.name.replace(/\.pdf$/i,"") : "추출텍스트";
+  const baseName = (textState.file && safeName(baseOf(textState.file), "pdf")) || "추출텍스트";
   // 메모장 호환을 위해 BOM 추가
   download(new Blob(["﻿"+t], {type:"text/plain;charset=utf-8"}), `${baseName}.txt`);
   setStatus("status-text","TXT 파일로 저장했어요!","ok");
@@ -2326,6 +2779,8 @@ setupDrop("drop-ocr","file-ocr", files=>{
   const pdfs = files.filter(isPdf);
   if(pdfs.length){ ocrPdf = pdfs[0]; ocrImgs = []; }   // PDF는 1개만
   else { ocrPdf = null; ocrImgs.push(...files.filter(isImg)); }
+  document.getElementById("ocr-out-box").style.display = "none";
+  resetOutput("ocr");
   renderOcrList();
 }, f=>isPdf(f)||isImg(f));
 function renderOcrList(){
@@ -2335,7 +2790,7 @@ function renderOcrList(){
   files.forEach((f,i)=>{
     const row = document.createElement("div");
     row.className = "item";
-    row.innerHTML = `<span class="name">${f.name}</span>
+    row.innerHTML = `<span class="name">${esc(f.name)}</span>
       <span class="meta">${fmtSize(f.size)}</span>
       <button data-a="del" title="삭제">✕</button>`;
     row.querySelector('[data-a=del]').onclick = ()=>{
@@ -2348,6 +2803,7 @@ function renderOcrList(){
   });
   const has = !!ocrPdf || ocrImgs.length > 0;
   document.getElementById("ocr-opts").style.display = has ? "block":"none";
+  document.getElementById("ocr-range-box").style.display = ocrPdf ? "block":"none";
   document.getElementById("btn-ocr").disabled = !has;
 }
 async function fileToCanvas(file){
@@ -2356,7 +2812,7 @@ async function fileToCanvas(file){
     const img = await new Promise((res,rej)=>{
       const im = new Image();
       im.onload = ()=>res(im);
-      im.onerror = ()=>rej(new Error(file.name+" 을(를) 열 수 없어요."));
+      im.onerror = ()=>rej(new UserMsg(`「${file.name}」을(를) 열 수 없어요. 아이폰 사진(HEIC)이면 JPEG로 바꿔 넣어 주세요.`));
       im.src = url;
     });
     // OCR용: 초대형 사진은 축소(메모리·속도), 너무 작은 캡처는 확대(글자 높이 확보)
@@ -2400,13 +2856,28 @@ function preprocessForOcr(srcCanvas, border=24){
     im.data[i]=im.data[i+1]=im.data[i+2]=v; im.data[i+3]=255;
   }
   octx.putImageData(im, border, border);
+  srcCanvas.width = 0; srcCanvas.height = 0;
   return out;
+}
+// tesseract.js는 OCR을 처음 쓸 때만 불러온다(다른 기능을 쓸 때 첫 화면이 가벼워지게)
+let tesseractLoading = null;
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve();
+  if(!tesseractLoading) tesseractLoading = new Promise((res, rej)=>{
+    const s = document.createElement("script");
+    s.src = "lib/tesseract/tesseract.min.js";
+    s.onload = ()=>res();
+    s.onerror = ()=>{ tesseractLoading = null; rej(new UserMsg("글자 인식 엔진을 불러오지 못했어요. 인터넷에 연결된 상태에서 한 번 열어 두면 그다음부터는 연결 없이도 써요.")); };
+    document.head.appendChild(s);
+  });
+  return tesseractLoading;
 }
 // 인식 엔진은 한 번 만들면 재사용 (언어를 바꾸면 다시 준비)
 let ocrWorker = null, ocrWorkerLang = null, ocrProgressCb = null;
 async function getOcrWorker(lang){
   if(ocrWorker && ocrWorkerLang === lang) return ocrWorker;
   if(ocrWorker){ try{ await ocrWorker.terminate(); }catch(e){} ocrWorker = null; }
+  await loadTesseract();
   // 워커 내부에서는 상대 경로를 못 읽어서 절대 주소로 변환
   const abs = p => new URL(p, location.href).href;
   ocrWorker = await Tesseract.createWorker(lang, 1, {
@@ -2430,26 +2901,25 @@ document.getElementById("btn-ocr").onclick = async ()=>{
   const btn = document.getElementById("btn-ocr"); btn.disabled = true;
   document.getElementById("ocr-out-box").style.display = "none";
   const lang = document.getElementById("ocr-lang").value;
-  setStatus("status-ocr","인식 엔진 준비 중... (처음엔 10~20초 걸려요)",""); setBar("bar-ocr", 2);
+  const pdfFile = ocrPdf, imgs = ocrImgs.slice();
+  let pdf = null;
   try{
-    const worker = await getOcrWorker(lang);
-    // 인식 대상 캔버스 목록 만들기
+    // 쪽 범위부터 확인 — 잘못 적었으면 엔진을 준비하기 전에 바로 알려 준다
     let sources = []; // {label, canvas 생성 함수}
-    if(ocrPdf){
-      const bytes = await ocrPdf.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({data: bytes.slice(0)}).promise;
+    let warn = "";
+    if(pdfFile){
+      pdf = await openPdf(await pdfFile.arrayBuffer());
       const total = pdf.numPages;
       const rangeStr = document.getElementById("ocr-range").value.trim();
       const idxs = rangeStr ? parseRanges(rangeStr, total) : Array.from({length:total},(_,i)=>i);
+      warn = idxs.warn || "";
       sources = idxs.map(i=>({
         label: (i+1)+"쪽",
         get: async ()=>{
           const page = await pdf.getPage(i+1);
           // 약 300 DPI로 렌더(pdf.js scale 1 = 72 DPI). 과대 이미지는 상한으로 캡
           const base = page.getViewport({scale:1});
-          let scale = 300/72;
-          const maxSide = 4000;
-          scale = Math.min(scale, maxSide/Math.max(base.width, base.height));
+          const scale = Math.min(300/72, 4000/Math.max(base.width, base.height));
           const vp = page.getViewport({scale});
           const c = document.createElement("canvas");
           c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
@@ -2461,8 +2931,18 @@ document.getElementById("btn-ocr").onclick = async ()=>{
         }
       }));
     }else{
-      sources = ocrImgs.map(f=>({ label: f.name, get: ()=>fileToCanvas(f) }));
+      sources = imgs.map(f=>({ label: f.name, get: ()=>fileToCanvas(f) }));
     }
+    // 처음 한 번은 인식 자료(한글 약 7MB·영어 약 11MB)를 받아 오므로 진행률을 보여 준다
+    setStatus("status-ocr","인식 엔진 준비 중...",""); setBar("bar-ocr", 2);
+    ocrProgressCb = m=>{
+      if(m.status === "loading language traineddata"){
+        const pct = Math.round((m.progress || 0)*100);
+        setStatus("status-ocr", pct < 100 ? `인식 자료 불러오는 중... ${pct}% (처음 한 번만 오래 걸려요)` : "인식 엔진 준비 중...", "");
+        setBar("bar-ocr", Math.max(2, Math.round((m.progress || 0)*20)));
+      }
+    };
+    const worker = await getOcrWorker(lang);
     let allText = "", charCount = 0;
     for(let k=0;k<sources.length;k++){
       const s = sources[k];
@@ -2474,23 +2954,22 @@ document.getElementById("btn-ocr").onclick = async ()=>{
       };
       const canvas = preprocessForOcr(await s.get());
       const {data} = await worker.recognize(canvas);
+      canvas.width = 0; canvas.height = 0;
       const t = (data.text||"").trim();
       charCount += t.length;
       allText += `───────── ${s.label} ─────────\n${t}\n\n`;
     }
-    ocrProgressCb = null;
-    setBar("bar-ocr", null);
     document.getElementById("ocr-out").value = allText;
     document.getElementById("ocr-out-box").style.display = "block";
     if(charCount === 0){
       setStatus("status-ocr","글자를 찾지 못했어요. 이미지가 흐리거나 글자가 너무 작을 수 있어요.","err");
     }else{
-      setStatus("status-ocr", `완료! ${sources.length}개에서 글자 ${charCount.toLocaleString()}자 인식 (아래에서 확인·수정하세요)`, "ok");
+      setStatus("status-ocr", `완료! ${sources.length}개에서 글자 ${charCount.toLocaleString()}자 인식${warn} (아래에서 확인·수정하세요)`, warn ? "err" : "ok");
     }
   }catch(e){
-    console.error(e); setBar("bar-ocr", null);
+    console.error(e);
     setStatus("status-ocr", friendlyError(e), "err");
-  }finally{ btn.disabled = false; }
+  }finally{ ocrProgressCb = null; if(pdf) pdf.destroy(); setBar("bar-ocr", null); btn.disabled = !(ocrPdf || ocrImgs.length); }
 };
 document.getElementById("btn-ocr-copy").onclick = async ()=>{
   const t = document.getElementById("ocr-out").value;
@@ -2505,7 +2984,8 @@ document.getElementById("btn-ocr-copy").onclick = async ()=>{
 };
 document.getElementById("btn-ocr-save").onclick = ()=>{
   const t = document.getElementById("ocr-out").value;
-  const baseName = ocrPdf ? ocrPdf.name.replace(/\.pdf$/i,"") : "인식결과";
+  const src = ocrPdf || ocrImgs[0];
+  const baseName = (src && safeName(baseOf(src), "txt")) || "인식결과";
   download(new Blob(["﻿"+t], {type:"text/plain;charset=utf-8"}), `${baseName}_OCR.txt`);
   setStatus("status-ocr","TXT 파일로 저장했어요!","ok");
 };
@@ -2517,18 +2997,22 @@ const MANUAL = [
     steps:["위 상자를 클릭하거나, 합칠 PDF들을 상자로 끌어다 놓아요. (여러 개 한꺼번에 가능)",
       "왼쪽 <b>⠿ 손잡이를 잡고 위아래로 드래그</b>하거나 ▲ ▼ 버튼으로 순서를 정해요. 이 순서대로 합쳐져요.",
       "빼고 싶은 파일은 그 줄의 ✕ 로 지워요.",
-      "'PDF 병합하기'를 누르면 '병합된_PDF.pdf'가 저장돼요."],
+      "<b>'저장할 파일 이름'</b> 칸에 원하는 이름을 적어요. 비워 두면 흐린 글씨 이름(예: 첫파일_외2개)으로 저장돼요.",
+      "'PDF 병합하기'를 누르면 합친 PDF가 저장돼요."],
     tips:["파일이 <b>2개 이상</b>이어야 병합돼요. 1개면 버튼이 꺼져 있어요.",
+      "<b>양면 인쇄용</b>에 체크하면 쪽수가 홀수인 파일 뒤에 빈 쪽을 넣어, 다음 파일이 늘 새 종이 앞면에서 시작해요. 학생별 학습지를 합쳐 양면으로 뽑을 때 좋아요.",
+      "보안(편집 제한)이 걸린 PDF는 합칠 수 없어요. 어느 파일이 그런지 이름으로 알려 드려요.",
       "각 파일 첫 페이지 미리보기가 함께 보여서 순서 정하기 쉬워요. 손잡이 드래그는 휴대폰·태블릿에서도 돼요."] },
   { title:"✂️ 분할 — PDF를 나누기",
     one:"한 PDF에서 필요한 쪽만 빼거나, 여러 조각으로 잘라 나눌 때 써요.",
-    steps:["PDF 1개를 올리면 페이지 미리보기(썸네일)가 쭉 나와요.",
-      "<b>원하는 쪽만 빼내기</b> → 페이지를 클릭(터치는 톡 누르기)하거나 마우스로 드래그해 파란색으로 고른 뒤 '선택한 페이지 추출하기'.",
+    steps:["PDF 1개를 올리면 페이지 미리보기(썸네일)가 쭉 나와요. 쪽이 많으면 화면에 보이는 쪽부터 채워지는데, 다 뜨기 전에 바로 골라도 돼요.",
+      "<b>원하는 쪽만 빼내기</b> → 페이지를 클릭하거나 마우스로 드래그해 파란색으로 고른 뒤 '선택한 페이지 추출하기'. 휴대폰·태블릿은 톡 누르면 한 쪽, <b>길게 누른 채 끌면</b> 여러 쪽이 골라져요(그냥 쓸면 화면이 내려가요).",
       "<b>여러 조각으로 자르기</b> → 페이지 사이 '✂'를 눌러요. 자른 자리마다 색깔 구간으로 나뉘고, '가위로 자른 대로 분할하기'를 눌러요.",
+      "<b>'저장할 파일 이름'</b>에 이름을 적으면 추출한 파일은 그 이름, 가위로 자른 조각은 '이름_01, 이름_02…'로 저장돼요. 가위로 잘랐다면 아래에 조각마다 이름 칸(예: 1단원, 2단원)도 나와요.",
       "조각이 여러 개면 하나씩 저장하거나 '📦 ZIP으로 한 번에 저장'으로 받아요."],
     tips:["'✂ 모두 낱장'은 모든 페이지를 한 장씩 낱개로 나눠요. '가위 초기화'는 가위를 모두 지워요.",
       "'추출'은 고른 쪽을 <b>1개 파일로</b>, '가위로 자르기'는 구간마다 <b>여러 개 파일로</b> 만들어요.",
-      "<b>⚡ 빠른 도구</b> — '번호로 선택'에 <b>1-3, 5</b>처럼 적으면 그 쪽이 선택돼요. '몇 쪽씩 자르기'는 예: 10을 넣으면 10쪽마다 가위를 표시해요.",
+      "<b>⚡ 빠른 도구</b> — '번호로 선택'에 <b>1-3, 5</b>나 <b>8~10</b>처럼 적으면 그 쪽들로 선택이 바뀌어요. '몇 쪽씩 자르기'는 예: 10을 넣으면 10쪽마다 가위를 표시해요.",
       "<b>📧 용량으로 나누기</b> — '10 MB 이하로'처럼 정하면 각 파일이 그 용량을 넘지 않게 자동으로 나눠 저장돼요. 이메일에 첨부 용량 제한이 있을 때 편해요."] },
   { title:"🗜️ 압축 — PDF 용량 줄이기",
     one:"사진·스캔이 많아 무거운 PDF를 가볍게 만들어 이메일·업로드하기 좋게 해요.",
@@ -2536,16 +3020,19 @@ const MANUAL = [
       "'압축 강도'를 골라요: 강하게(용량 최소) / 보통(추천) / 약하게(화질 우선).",
       "더 줄이고 잉크도 아끼려면 '흑백(회색조)으로 변환'에 체크해요.",
       "'PDF 압축하기'를 누르면 '원래크기 → 줄어든크기' 안내와 함께 저장돼요."],
-    tips:["스캔본·사진이 많은 PDF에서 효과가 커요. 글자만 있는 PDF는 거의 안 줄어요.",
+    tips:["모든 쪽을 사진으로 다시 찍어 담는 방식이라 스캔본·사진이 많은 PDF에서 효과가 커요.",
+      "글자가 살아 있는 PDF(한글·워드에서 만든 파일)를 넣으면 빨간 안내가 떠요. 압축하면 글자 선택·검색이 안 되고 거의 안 줄어요 — 원본 파일에서 PDF로 다시 저장하는 편이 나아요.",
+      "압축했는데 오히려 커지면 자동으로 저장하지 않고 알려 드려요. 그땐 원본을 그대로 쓰세요.",
       "잘 안 줄면 '강하게'로 다시 해 보세요. 색이 중요하면 흑백 체크는 하지 마세요."] },
   { title:"🖼️ 이미지→PDF — 사진·그림을 PDF로",
     one:"사진·그림(JPG·PNG 등) 여러 장을 한 개의 PDF로 묶을 때 써요.",
     steps:["이미지들을 올려요. (여러 장 가능)",
       "왼쪽 <b>⠿ 손잡이를 잡고 위아래로 드래그</b>하거나 ▲ ▼ 로 순서를 정하고, 필요 없는 건 ✕ 로 지워요.",
-      "'용지 크기'(A4 세로 추천/가로/이미지 그대로)와 '여백'을 골라요.",
-      "'PDF 만들기'를 누르면 '이미지_변환.pdf'가 저장돼요."],
+      "'용지 크기'(A4 세로 추천/가로/이미지 그대로)와 '여백'을 골라요. 휴대폰 사진이 많아 파일이 너무 크면 '사진 화질'을 '용량 줄이기'로 바꿔요.",
+      "<b>'저장할 파일 이름'</b>을 적고 'PDF 만들기'를 누르면 저장돼요. 비워 두면 첫 사진 이름으로 저장돼요."],
     tips:["이미지 1장이 PDF 1쪽이 돼요. 비율은 안 찌그러지고 가운데로 배치돼요. 순서는 손잡이 드래그로 편하게 바꿔요(터치도 됨).",
-      "아이폰 사진(HEIC)은 사진 앱에서 'JPEG로 저장' 후 넣어주세요."] },
+      "휴대폰을 세워 찍은 사진도 눕지 않고 바로 선 채로 들어가요.",
+      "아이폰 사진(HEIC)은 사파리에서만 열려요. 다른 브라우저에선 사진 앱에서 'JPEG로 저장' 후 넣어주세요."] },
   { title:"📷 PDF→이미지 — PDF를 그림 파일로",
     one:"PDF 각 페이지를 PNG·JPG 그림으로 저장해 발표·문서에 붙여넣을 때 써요.",
     steps:["PDF 1개를 올려요.",
@@ -2567,7 +3054,7 @@ const MANUAL = [
     steps:["PDF 1개를 올려요.",
       "'위치'(아래 가운데 추천 등)와 '모양'(1,2,3 / -1- / 1/10)을 골라요.",
       "'시작 번호'와 '글자 크기'를 정해요.",
-      "표지에 번호를 빼려면 '첫 페이지(표지)에는 번호 표시 안 함'에 체크.",
+      "표지·목차에 번호를 빼려면 '번호를 넣기 시작할 쪽'을 바꿔요. 표지만 빼면 2, 표지와 목차를 빼면 3.",
       "'쪽번호 넣기' → '파일이름_쪽번호.pdf'가 저장돼요."],
     tips:["'1 / 10' 모양은 전체 쪽수도 함께 보여줘 자료집에 좋아요.",
       "시작 번호를 바꾸면 앞 자료에 이어 5부터처럼 시작할 수 있어요."] },
@@ -2603,7 +3090,7 @@ const MANUAL = [
     steps:["스캔 PDF 1개, 또는 사진 여러 장(JPG·PNG)을 올려요.",
       "'언어'(한국어+영어 추천 / 한국어만 / 영어만)를 골라요.",
       "PDF 일부만 하려면 '인식할 페이지'에 예: 1-3, 5. 비우면 전체.",
-      "'🔍 글자 인식 시작' → 처음엔 준비로 10~20초, 이후 페이지당 수 초~수십 초.",
+      "'🔍 글자 인식 시작' → 처음 한 번은 인식 자료를 받느라 시간이 걸리고(진행률이 보여요), 이후 페이지당 수 초~수십 초.",
       "결과 칸에서 오타를 바로 고친 뒤 '📋 전체 복사'나 '💾 TXT 파일로 저장'."],
     tips:["OCR은 100% 정확하지 않아요. 결과 칸에서 직접 고칠 수 있으니 꼭 검토하세요.",
       "인식 중엔 창을 닫거나 다른 탭으로 넘어가지 말고 기다려 주세요."] },
@@ -2691,26 +3178,31 @@ window.addEventListener("appinstalled", ()=>{ installBtn.style.display = "none";
   async function run(){
     const d = new Date();
     const ymd = "" + d.getFullYear() + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0");
-    const counted = sessionStorage.getItem("pdfVisitCounted");
+    // 저장소가 막힌 브라우저(사생활 보호 모드 등)에서도 멈추지 않게
+    const ss = (fn, dflt)=>{ try{ return fn(); }catch(e){ return dflt; } };
+    const counted = ss(()=>sessionStorage.getItem("pdfVisitCounted"), null);
     const verb = counted ? "get" : "hit";     // 같은 세션에선 증가 안 하고 읽기만
-    const cachedTotal = parseInt(localStorage.getItem("vcTotal"),10) || 0;
+    const cachedTotal = parseInt(ss(()=>localStorage.getItem("vcTotal"), 0),10) || 0;
     // 오프라인/즉시 표시용 캐시
     if(cachedTotal){ elTotal.textContent = fmt(cachedTotal); card.style.display = "inline-flex"; }
     try{
-      const [tot, tod] = await Promise.all([
-        fetch(`${BASE}/${verb}/${NS}/${KEY}`).then(r=>r.json()),
-        fetch(`${BASE}/${verb}/${NS}/pdftool-${ymd}`).then(r=>r.json())
+      // 서버가 바쁘거나(429) 오늘 기록이 아직 없으면(404) 숫자가 아닌 값이 오므로 걸러 낸다
+      const num = url=>fetch(url).then(r=>r.ok ? r.json() : null).then(j=>j && Number.isFinite(j.value) ? j.value : null).catch(()=>null);
+      const [total, today] = await Promise.all([
+        num(`${BASE}/${verb}/${NS}/${KEY}`),
+        num(`${BASE}/${verb}/${NS}/pdftool-${ymd}`)
       ]);
-      const total = tot.value, today = tod.value;
-      localStorage.setItem("vcTotal", total);
+      if(total == null) throw new Error("counter");
+      ss(()=>localStorage.setItem("vcTotal", total));
       card.style.display = "inline-flex";
       card.classList.add("pop");
       animateCount(elTotal, cachedTotal, total, 1300);
+      const todayTxt = today == null ? "" : `오늘 <b>${fmt(today)}</b>명 방문`;
       if(!counted){
-        sessionStorage.setItem("pdfVisitCounted", "1");
-        elSub.innerHTML = `오늘 <b>${fmt(today)}</b>명 방문 · 당신은 <b>${fmt(total)}</b>번째 손님이에요! 🎉`;
+        ss(()=>sessionStorage.setItem("pdfVisitCounted", "1"));
+        elSub.innerHTML = (todayTxt ? todayTxt + " · " : "") + `당신은 <b>${fmt(total)}</b>번째 손님이에요! 🎉`;
       }else{
-        elSub.innerHTML = `오늘 <b>${fmt(today)}</b>명 방문 중`;
+        elSub.innerHTML = todayTxt ? todayTxt + " 중" : "";
       }
     }catch(e){
       // 인터넷이 없거나 카운터 서버가 응답 안 하면: 캐시가 있으면 그대로, 없으면 카드 숨김
@@ -2720,5 +3212,6 @@ window.addEventListener("appinstalled", ()=>{ installBtn.style.display = "none";
   run();
 })();
 </script>
+<footer id="app-credit" style="width:100%;box-sizing:border-box;margin:2.5rem 0 0;padding:14px 12px;text-align:center;font-size:12.5px;line-height:1.6;color:#8a8f98;font-family:system-ui,-apple-system,'Segoe UI','Malgun Gothic',sans-serif;border-top:1px solid rgba(128,128,128,.25);">© 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br><span style="font-size:11px;opacity:.85;">최종 업데이트: 2026-09-27</span></footer>
 </body>
 </html>

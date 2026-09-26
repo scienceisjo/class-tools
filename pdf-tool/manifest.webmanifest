@@ -1,7 +1,7 @@
 {
   "name": "PDF 만능 도구",
   "short_name": "PDF 도구",
-  "description": "병합·분할·압축·변환·OCR 등 11가지 PDF 기능. 인터넷 없이, 무료로, 무제한.",
+  "description": "병합·분할·압축·변환·OCR 등 11가지 PDF 기능. 파일은 이 기기 안에서만 처리돼요.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
