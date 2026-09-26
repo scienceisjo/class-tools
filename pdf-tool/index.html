@@ -548,7 +548,7 @@
       <div class="grid2">
         <div>
           <label class="f">시작 번호</label>
-          <input type="number" id="num-start" value="1" min="1" inputmode="numeric">
+          <input type="number" id="num-start" value="1" min="0" inputmode="numeric">
         </div>
         <div>
           <label class="f">글자 크기</label>
@@ -2246,7 +2246,7 @@ function numOpts(){
   return {
     pos: document.getElementById("num-pos").value,
     fmt: document.getElementById("num-fmt").value,
-    start: Math.max(0, parseInt(document.getElementById("num-start").value,10) || 1),
+    start: (v=>Number.isFinite(v) && v >= 0 ? v : 1)(parseInt(document.getElementById("num-start").value,10)),   // 0부터도 가능
     size: parseInt(document.getElementById("num-size").value,10),
     from: Math.max(1, parseInt(document.getElementById("num-from").value,10) || 1)   // 이 쪽부터 번호
   };
