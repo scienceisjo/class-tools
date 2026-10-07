@@ -238,6 +238,14 @@
   .tgl{font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:var(--panel2);
     color:var(--sub);font-size:1.15rem;font-weight:800;padding:.3rem 1rem;border-radius:99px;transition:.15s}
   .tgl.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  /* 토글 버튼 글자는 절대 꺾이지 않게 */
+  .tgl{white-space:nowrap}
+  /* 요일 바꾼 날 표시는 버튼 아래 한 줄로 (버튼이 찌그러지지 않게) */
+  #ttToggle{flex-wrap:wrap;row-gap:.45rem}
+  #ttToggle .swapb{flex-basis:100%;margin-left:0;justify-content:center}
+  /* 청소당번·1인1역·생일 세 개가 좁은 칸에 한 줄로 */
+  #cleanCard .tgl{white-space:nowrap;font-size:1.05rem;padding:.3rem .75rem}
+  #cleanCard .toggleh{gap:.4rem}
   .swapb{display:inline-flex;align-items:center;background:rgba(217,119,6,.15);color:#b45309;
     font-size:1rem;font-weight:800;padding:.25rem .8rem;border-radius:99px;margin-left:auto}
   #ttPick{display:none;margin-left:auto;font-family:inherit;font-size:1rem;font-weight:700;
@@ -339,12 +347,13 @@
   .setup{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
     background:rgba(15,23,42,.55);padding:2rem;backdrop-filter:blur(3px)}
   .setup.show{display:flex}
-  .setup .sheet{background:#fff;border-radius:1.4rem;padding:2.2rem 2.6rem;max-width:64rem;width:100%;
+  .setup .sheet{background:#fff;border-radius:1.4rem;padding:2.2rem 2.6rem;max-width:76rem;width:100%;
     max-height:92vh;overflow:auto;box-shadow:0 2rem 5rem rgba(0,0,0,.3)}
   .setup h2{font-size:2.1rem;font-weight:900;margin-bottom:.5rem}
   .setup .sub{font-size:1.3rem;color:var(--sub);margin-bottom:1.6rem;line-height:1.6}
-  .setup .grow{display:flex;align-items:center;gap:.9rem;margin-bottom:.7rem;flex-wrap:wrap}
-  .setup .glabel{font-size:1.35rem;font-weight:900;color:var(--accent);width:5.5rem;flex:0 0 auto}
+  .setup .grow{display:flex;align-items:flex-start;gap:.9rem;margin-bottom:.7rem}
+  .setup .glabel{font-size:1.35rem;font-weight:900;color:var(--accent);width:5.5rem;flex:0 0 auto;padding-top:.55rem}
+  .setup .cbtns{display:flex;flex-wrap:wrap;gap:.7rem;flex:1 1 auto}
   .setup .cbtn{border:1.5px solid var(--line);background:#fff;color:var(--txt);border-radius:.7rem;
     padding:.6rem 1.05rem;font-size:1.3rem;font-weight:800;font-family:inherit;cursor:pointer;min-width:3.6rem}
   .setup .cbtn:hover{border-color:var(--accent);background:#eff6ff;color:var(--accent)}
@@ -859,10 +868,10 @@ function buildStartPick(){
     (byGrade[g] ||= []).push(c);
   });
   box.innerHTML = Object.keys(byGrade).sort().map(g=>
-    `<div class="grow"><span class="glabel">${g}학년</span>`
+    `<div class="grow"><span class="glabel">${g}학년</span><span class="cbtns">`
     + byGrade[g].sort((a,b)=>a-b).map(c=>
         `<button class="cbtn" onclick="pickClass('${g}-${c}')">${c}반</button>`).join('')
-    + `</div>`).join('');
+    + `</span></div>`).join('');
 }
 function pickClass(key){
   try{ localStorage.setItem(LS_SETUP, 'pin'); }catch(e){}   // 다음 화면에서 고정 안내
