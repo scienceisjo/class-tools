@@ -6,6 +6,7 @@
 <title>공지 관리 — 해누리중학교</title>
 <link rel="icon" href="logo.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="school.js?v=2610122"></script>
 <script src="video.js?v=2608301"></script>
 <style>
   :root{--bg:#f4f6fb;--card:#fff;--line:#e3e8f3;--txt:#1c2540;--sub:#7d8aa8;
@@ -180,7 +181,7 @@
 <!-- 로그인 -->
 <div id="login">
   <h1>📺 공지 관리</h1>
-  <p>해누리중학교 전자칠판 공지 시스템<br><b>공지 전용 계정</b>으로 로그인하세요.</p>
+  <p><span class="schName">해누리중학교</span> 전자칠판 공지 시스템<br><b>공지 전용 계정</b>으로 로그인하세요.</p>
 
   <div class="authtabs">
     <button class="atab on" id="atab-login" onclick="authTab('login')">로그인</button>
@@ -432,7 +433,7 @@
         <div class="field"><label>과목</label><input id="lcSubject" value="체육"></div>
         <div class="field" style="flex:2"><label>장소</label><input id="lcLoc" placeholder="아래에서 고르거나 직접 입력"></div>
       </div>
-      <div class="chips">
+      <div class="chips" id="lcChips">
         <button class="chip" onclick="$('lcLoc').value='운동장'">🏃 운동장</button>
         <button class="chip" onclick="$('lcLoc').value='체육관'">🏀 체육관</button>
         <button class="chip" onclick="$('lcLoc').value='다목적실'">🎤 다목적실</button>
@@ -660,7 +661,7 @@
       </div>
       <div class="field"><label>🔑 공지 관리자 가입 코드 — 이 코드를 아는 사람만 가입 가능</label><input id="cfgCode" placeholder="예: haenuri2026"></div>
       <button class="btn" id="cfgSave" onclick="saveCfg()">설정 저장</button>
-      <div class="hint" style="margin-top:12px">현재 설정: 해누리중학교 / 서울특별시교육청(B10) / 학교코드 7130256</div>
+      <div class="hint" style="margin-top:12px" id="cfgNow">현재 설정: 해누리중학교 / 서울특별시교육청(B10) / 학교코드 7130256</div>
     </div>
 
     <div class="card wform" id="approveCard" style="display:none">
@@ -686,17 +687,32 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const SUPABASE_URL  = 'https://hmzklbrksfdhzsgwzfyg.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtemtsYnJrc2ZkaHpzZ3d6ZnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MTY4NDcsImV4cCI6MjA5NTA5Mjg0N30.LuTEeJyu-mtkNzUTNaA8IigmdtWPWXS2ucVgXDeevPA';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+/* 학교마다 서버가 다릅니다 — school.js 에서 ?s= 로 고른 학교의 것을 씁니다 */
+const SUPABASE_URL  = SCHOOL.supabaseUrl;
+const SUPABASE_ANON = SCHOOL.supabaseKey;
+if(!SCHOOL.ready) SCHOOL.notReady();
+const sb = window.supabase.createClient(SUPABASE_URL || 'https://not-ready.supabase.co', SUPABASE_ANON || 'not-ready');
+document.title = '공지 관리 — ' + SCHOOL.name;
 const $ = id => document.getElementById(id);
 let me = null, myName = '', myAdmin = null, READONLY = false;
 
 /* ── 🏫 학교 부서 목록 ── */
-const DEPTS = ['교장','교감',
+const DEPTS = SCHOOL.depts || ['교장','교감',
   '과학정보부','학생생활부','체육안전부','창의인성부','교무업무지원팀','교육연구지원팀',
   '진로진학부','상담복지부','학력신장부','1학년부','2학년부','3학년부',
   '개별화교무실','행정실','시설관리과','조리실','방송실'];
+/* 학교에 맞게 화면 글자 바꾸기 (해누리는 원래 글자 그대로) */
+function applySchool(){
+  document.querySelectorAll('.schName').forEach(e=>e.textContent=SCHOOL.name);
+  const now=$('cfgNow');
+  if(now && !SCHOOL.isDefault) now.textContent=`현재 설정: ${SCHOOL.name} / 나이스 ${SCHOOL.neis.atpt} · ${SCHOOL.neis.school}`;
+  if(SCHOOL.places && $('lcChips')){
+    $('lcChips').innerHTML = SCHOOL.places.map(([ic,nm])=>
+      `<button class="chip" onclick="$('lcLoc').value='${nm}'">${ic} ${nm}</button>`).join('');
+  }
+  const fav=document.querySelector('link[rel=icon]');
+  if(fav){ if(SCHOOL.logo) fav.href=SCHOOL.logo; else if(SCHOOL.icon) fav.href=SCHOOL.icon+'-192.png'; else fav.remove(); }
+}
 function fillDeptSelects(){
   const opts = DEPTS.map(d=>`<option value="${d}">${d}</option>`).join('');
   const sg=$('sgDept'); if(sg && sg.options.length<=1) sg.innerHTML='<option value="">소속 부서 (선택)</option>'+opts;
@@ -714,8 +730,8 @@ function fillDeptSelects(){
    ═══════════════════════════════════════════════════════════════ */
 let POSTER = { name:'', subject:'', dept:'' };   // 지금 쓰시는 선생님
 let ROSTER = [];                                  // 지금까지 쓰인 이름들
-const LS_POSTER = 'hnr_notice_poster';
-const LS_DEVCLS = 'hnr_notice_device_class';
+const LS_POSTER = SCHOOL.key('hnr_notice_poster');
+const LS_DEVCLS = SCHOOL.key('hnr_notice_device_class');
 
 function isShared(){ return !!myAdmin?.is_shared; }
 
@@ -847,11 +863,11 @@ function renderDeviceUrl(){
   if(!d.grade || !d.class_no){ wrap.style.display='none'; }
   else {
     wrap.style.display='block';
-    $('pbUrl').value = `${siblingPage('display')}?class=${d.grade}-${d.class_no}`;
+    $('pbUrl').value = SCHOOL.link(siblingPage('display'), `class=${d.grade}-${d.class_no}`);
   }
   const dl=$('dispLink');   // 위쪽 미리보기 링크도 이 교실로 맞춰 둡니다
   if(dl) dl.href = (d.grade && d.class_no)
-    ? `${siblingPage('display')}?class=${d.grade}-${d.class_no}` : siblingPage('display');
+    ? SCHOOL.link(siblingPage('display'), `class=${d.grade}-${d.class_no}`) : SCHOOL.link(siblingPage('display'));
 }
 function copyPbUrl(){
   const el=$('pbUrl'); el.select(); el.setSelectionRange(0,999);
@@ -938,11 +954,23 @@ async function doSignup(){
   const uid=data.user?.id;
   if(!uid){ $('sgBtn').disabled=false; err.textContent='이메일 인증이 필요합니다. 메일 확인 후 로그인하세요.'; err.classList.add('show'); authTab('login'); return; }
   const hrG=$('sgHrGrade').value, hrC=$('sgHrClass').value;
-  const { error:insErr } = await sb.from('notice_admins').insert({ auth_id:uid, name, subject,
-    dept:$('sgDept').value||null,
-    hr_grade:(hrG&&hrC)?Number(hrG):null, hr_class:(hrG&&hrC)?Number(hrC):null });
+  const prof = { name, subject, dept:$('sgDept').value||null,
+    hr_grade:(hrG&&hrC)?Number(hrG):null, hr_class:(hrG&&hrC)?Number(hrC):null };
+  // 새로 설치한 학교는 서버가 가입 코드를 직접 확인하고 등록합니다 (첫 가입자는 관리 담당자)
+  let { data:reg, error:insErr } = await sb.rpc('register_notice_admin', {
+    p_code:code, p_name:prof.name, p_subject:prof.subject, p_dept:prof.dept,
+    p_hr_grade:prof.hr_grade, p_hr_class:prof.hr_class });
+  if(insErr && /register_notice_admin|PGRST202|not find the function/i.test(insErr.message+' '+(insErr.code||''))){
+    // 예전에 설치한 서버(해누리) — 직접 등록
+    ({ error:insErr } = await sb.from('notice_admins').insert(Object.assign({ auth_id:uid }, prof)));
+    reg = null;
+  }
   $('sgBtn').disabled=false;
   if(insErr){ err.textContent='계정은 만들어졌지만 프로필 저장 실패: '+insErr.message; err.classList.add('show'); return; }
+  if(reg==='bad_code'){ await sb.auth.signOut(); err.textContent='가입 코드가 올바르지 않습니다. 학교 담당자에게 문의하세요.'; err.classList.add('show'); return; }
+  if(reg==='owner'){                 // 이 학교 첫 가입자 — 바로 들어갑니다
+    toast('✅ 첫 가입자라 관리 담당자로 등록됐습니다'); checkSession(); return;
+  }
   // 승인 대기 안내 후 로그인 화면으로
   await sb.auth.signOut();
   authTab('login');
@@ -1846,15 +1874,15 @@ async function setApproval(authId, ok){
 
 /* 학생용 쪽지 페이지 주소 안내 */
 function msgUrlHint(){
-  const el=$('msgUrl'); if(el) el.textContent=siblingPage('message');
-  const dl=$('dispLink'); if(dl) dl.href=siblingPage('display');
-  const gl=$('guideLink'); if(gl) gl.href=siblingPage('guide');
+  const el=$('msgUrl'); if(el) el.textContent=SCHOOL.link(siblingPage('message'));
+  const dl=$('dispLink'); if(dl) dl.href=SCHOOL.link(siblingPage('display'));
+  const gl=$('guideLink'); if(gl) gl.href=SCHOOL.link(siblingPage('guide'));
 }
 
 /* ── 교실별 보드 주소 생성 ── */
 function makeUrl(){
   const g=$('urlGrade').value, c=$('urlClass').value||'1';
-  $('urlOut').value=`${siblingPage('display')}?class=${g}-${c}`;
+  $('urlOut').value=SCHOOL.link(siblingPage('display'), `class=${g}-${c}`);
 }
 
 /* ── 설정 ── */
@@ -1917,13 +1945,14 @@ let toastT; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.
 const today=new Date().toISOString().slice(0,10);
 $('sStart').value=today; $('dDate').value=today; $('aDate').value=today; $('lcDate').value=today;
 $('pw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+applySchool();
 fillDeptSelects();      // 로그인 전에도 가입 화면의 부서 목록이 보이도록
 checkSession();
 </script>
 <!-- 📱 홈 화면에 추가 -->
 <script>
-window.A2HS = { name:'해누리중 공지 관리', short:'공지 관리', theme:'#2563eb' };
+window.A2HS = { name:SCHOOL.short + ' 공지 관리', short:'공지 관리', theme:'#2563eb' };
 </script>
-<script src="a2hs.js?v=2608292"></script>
+<script src="a2hs.js?v=2610121"></script>
 </body>
 </html>

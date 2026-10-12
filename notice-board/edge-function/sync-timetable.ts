@@ -11,7 +11,9 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SCHOOL_CODE = "90186";        // 해누리중학교 (컴시간 코드)
+// 컴시간 학교 코드 — 설정표(display_config)의 comcigan_code 를 먼저 쓰고, 없으면 이 값
+// (같은 코드를 다른 학교 Supabase 에 그대로 올려도 되게)
+const DEFAULT_SCHOOL_CODE = "90186";   // 해누리중학교
 const COMCI_HOST  = "comci.net";
 const COMCI_PORT  = 4082;
 
@@ -19,8 +21,8 @@ const COMCI_PORT  = 4082;
 const QUERY_PREFIX = "73629_";
 const QUERY_PATH   = "36179";
 
-async function fetchComcigan() {
-  const q = btoa(`${QUERY_PREFIX}${SCHOOL_CODE}_0_1`);
+async function fetchComcigan(schoolCode: string) {
+  const q = btoa(`${QUERY_PREFIX}${schoolCode}_0_1`);
   const url = `http://${COMCI_HOST}:${COMCI_PORT}/${QUERY_PATH}?${q}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`컴시간 응답 오류 ${res.status}`);
@@ -95,7 +97,10 @@ Deno.serve(async () => {
   );
 
   try {
-    const data = await fetchComcigan();
+    const { data: cfg } = await supabase.from("display_config")
+      .select("value").eq("key", "comcigan_code").maybeSingle();
+    const code = (cfg?.value || "").trim() || DEFAULT_SCHOOL_CODE;
+    const data = await fetchComcigan(code);
     const rows = buildRows(data);
     if (!rows.length) throw new Error("시간표를 한 건도 읽지 못했습니다");
 

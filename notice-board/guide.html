@@ -264,7 +264,7 @@
   <ul>
     <li>이동수업이 있는 과목은 <b>학년·반을 지정해서</b> 장소를 올리실 수 있습니다</li>
     <li>장소 버튼을 누르면 바로 입력됩니다 —
-      <span style="font-size:14px;color:var(--sub)">운동장 · 체육관 · 다목적실 · 과학실1 · 과학실2 · 메이커실 · 기술실 · 미술실 · 음악실 · 가정실 · 도서관 · 중정</span></li>
+      <span id="placeList" style="font-size:14px;color:var(--sub)">운동장 · 체육관 · 다목적실 · 과학실1 · 과학실2 · 메이커실 · 기술실 · 미술실 · 음악실 · 가정실 · 도서관 · 중정</span></li>
     <li>해당 날짜에만 표시되고 다음 날 자동으로 사라집니다</li>
   </ul>
 </div>
@@ -356,5 +356,36 @@
 </footer>
 
 </div>
+<script src="school.js?v=2610122"></script>
+<script>
+/* 다른 학교로 열었을 때(?s=) 안내서 글자를 그 학교에 맞게 바꿉니다. 해누리는 그대로. */
+(function(){
+  if(!window.SCHOOL || SCHOOL.isDefault) return;
+  const board = 'scienceisjo.github.io/class-tools/notice-board/?s=' + SCHOOL.id;
+  const swaps = [
+    ['joo.is/해누리중공지', SCHOOL.shortUrl || board],
+    ['notice-board/admin.html', 'notice-board/admin.html?s=' + SCHOOL.id],
+    ['hnrnotice26!', SCHOOL.signupCode || '(담당 선생님께 받으세요)'],
+    ['조승재(과학정보부)', SCHOOL.contact || '학교 담당 선생님'],
+    ['조승재 (과학정보부)', SCHOOL.contact || '학교 담당 선생님'],
+    ['해누리중학교', SCHOOL.name],
+    ['해누리중', SCHOOL.short],
+  ];
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const nodes = []; while(w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach(n => { let t = n.nodeValue, t0 = t; swaps.forEach(([a,b]) => { t = t.split(a).join(b); }); if(t !== t0) n.nodeValue = t; });
+  document.title = '전자칠판 알림보드 사용법 — ' + SCHOOL.name;
+  const pl = document.getElementById('placeList');
+  if(pl && SCHOOL.places) pl.textContent = SCHOOL.places.map(p => p[1]).join(' · ');
+  const lg = document.querySelector('header img');
+  if(lg){ if(SCHOOL.logo) lg.src = SCHOOL.logo; else lg.style.display = 'none'; }
+  const fav = document.querySelector('link[rel=icon]'); if(fav && !SCHOOL.logo){ if(SCHOOL.icon) fav.href = SCHOOL.icon+'-192.png'; else fav.remove(); }
+  // 다른 페이지로 가는 링크에도 학교 이름표를 붙임
+  document.querySelectorAll('a[href]').forEach(a => {
+    const h = a.getAttribute('href');
+    if(/^(index|admin|message)\.html|^\.\/?$/.test(h)) a.setAttribute('href', SCHOOL.link(h));
+  });
+})();
+</script>
 </body>
 </html>

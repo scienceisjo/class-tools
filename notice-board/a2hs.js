@@ -16,6 +16,8 @@
 (function () {
   var CFG = window.A2HS || {};
   var BASE = new URL('.', location.href).href;
+  // 홈 화면 아이콘 — 학교마다 다름(school.js 의 icon), 없으면 해누리 교표
+  var ICON = BASE + ((window.SCHOOL && window.SCHOOL.icon) || 'logo');
 
   // 이미 홈 화면에서 실행 중이면 버튼을 만들 이유가 없습니다
   var installed = (window.matchMedia &&
@@ -45,9 +47,9 @@
       background_color: '#ffffff',
       theme_color: CFG.theme || '#2563eb',
       icons: [
-        { src: BASE + 'logo-192.png', sizes: '192x192', type: 'image/png' },
-        { src: BASE + 'logo-512.png', sizes: '512x512', type: 'image/png' },
-        { src: BASE + 'logo-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+        { src: ICON + '-192.png', sizes: '192x192', type: 'image/png' },
+        { src: ICON + '-512.png', sizes: '512x512', type: 'image/png' },
+        { src: ICON + '-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
       ]
     };
     var url = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' }));
@@ -57,7 +59,7 @@
 
     if (!document.querySelector('link[rel="apple-touch-icon"]')) {
       var ai = document.createElement('link');
-      ai.rel = 'apple-touch-icon'; ai.href = BASE + 'logo-192.png';
+      ai.rel = 'apple-touch-icon'; ai.href = ICON + '-192.png';
       document.head.appendChild(ai);
     }
     if (!document.querySelector('meta[name="theme-color"]')) {
