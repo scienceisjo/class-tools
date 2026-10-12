@@ -924,9 +924,21 @@ async function doLogin(){
   if(!email||!pw){ err.textContent='이메일과 비밀번호를 입력하세요'; err.classList.add('show'); return; }
   $('loginBtn').disabled=true;
   const { data, error } = await sb.auth.signInWithPassword({ email, password:pw });
-  if(error){ $('loginBtn').disabled=false; err.textContent='로그인 실패: '+error.message; err.classList.add('show'); return; }
+  if(error){ $('loginBtn').disabled=false;
+    err.textContent = /not confirmed/i.test(error.message)
+      ? '메일함의 인증 메일을 먼저 눌러 주세요. 메일이 오지 않으면 관리 담당 선생님께 알려 주세요(서버의 「이메일 확인」 설정을 꺼야 합니다).'
+      : '로그인 실패: '+error.message;
+    err.classList.add('show'); return; }
   // 공지 전용 계정인지 확인 — 질문나무 계정으로는 들어올 수 없음
-  const { data:adm } = await sb.from('notice_admins').select('*').eq('auth_id', data.user.id).maybeSingle();
+  let { data:adm } = await sb.from('notice_admins').select('*').eq('auth_id', data.user.id).maybeSingle();
+  if(!adm){                          // 이메일 확인을 거쳐 가입한 경우 — 가입 때 적은 정보로 등록을 마칩니다
+    const pend = readPendingReg(email);
+    if(pend){
+      const { data:reg } = await sb.rpc('register_notice_admin', pend);
+      if(reg && reg!=='bad_code'){ clearPendingReg();
+        ({ data:adm } = await sb.from('notice_admins').select('*').eq('auth_id', data.user.id).maybeSingle()); }
+    }
+  }
   $('loginBtn').disabled=false;
   if(!adm){ await sb.auth.signOut();
     err.textContent='공지 관리 권한이 없는 계정입니다. ‘가입’ 탭에서 공지 전용 계정을 만들어 주세요.';
@@ -938,6 +950,13 @@ async function doLogin(){
   enterDash();
 }
 
+/* 이메일 확인을 거치는 서버용 — 가입 때 적은 정보를 이 기기에 잠깐 기억 */
+const LS_PENDING_REG = SCHOOL.key('hnr_pending_reg');
+function savePendingReg(email, args){ try{ localStorage.setItem(LS_PENDING_REG, JSON.stringify({ email:email.toLowerCase(), args })); }catch(e){} }
+function readPendingReg(email){ try{ const v=JSON.parse(localStorage.getItem(LS_PENDING_REG)||'null');
+  return (v && v.email===email.toLowerCase()) ? v.args : null; }catch(e){ return null; } }
+function clearPendingReg(){ try{ localStorage.removeItem(LS_PENDING_REG); }catch(e){} }
+
 async function doSignup(){
   const name=$('sgName').value.trim(), email=$('sgEmail').value.trim(), pw=$('sgPw').value;
   const code=$('sgCode').value.trim(), subject=$('sgSubject').value.trim()||null;
@@ -948,14 +967,20 @@ async function doSignup(){
   const { data:ok, error:codeErr } = await sb.rpc('check_admin_code', { code });
   if(codeErr){ err.textContent='가입 코드를 확인하지 못했습니다. 관리자에게 문의하세요. ('+codeErr.message+')'; err.classList.add('show'); return; }
   if(ok !== true){ err.textContent='가입 코드가 올바르지 않습니다. 학교 담당자에게 문의하세요.'; err.classList.add('show'); return; }
+  const hrG=$('sgHrGrade').value, hrC=$('sgHrClass').value;
+  const prof = { name, subject, dept:$('sgDept').value||null,
+    hr_grade:(hrG&&hrC)?Number(hrG):null, hr_class:(hrG&&hrC)?Number(hrC):null };
   $('sgBtn').disabled=true;
   const { data, error } = await sb.auth.signUp({ email, password:pw });
   if(error){ $('sgBtn').disabled=false; err.textContent='가입 실패: '+error.message; err.classList.add('show'); return; }
   const uid=data.user?.id;
-  if(!uid){ $('sgBtn').disabled=false; err.textContent='이메일 인증이 필요합니다. 메일 확인 후 로그인하세요.'; err.classList.add('show'); authTab('login'); return; }
-  const hrG=$('sgHrGrade').value, hrC=$('sgHrClass').value;
-  const prof = { name, subject, dept:$('sgDept').value||null,
-    hr_grade:(hrG&&hrC)?Number(hrG):null, hr_class:(hrG&&hrC)?Number(hrC):null };
+  if(!uid || !data.session){         // 서버에 「이메일 확인」이 켜져 있음 — 확인 뒤 첫 로그인 때 등록을 마칩니다
+    savePendingReg(email, { p_code:code, p_name:prof.name, p_subject:prof.subject, p_dept:prof.dept,
+                            p_hr_grade:prof.hr_grade, p_hr_class:prof.hr_class });
+    $('sgBtn').disabled=false; authTab('login'); $('email').value=email;
+    const le=$('loginErr'); le.style.color='';
+    le.textContent='📧 메일함의 인증 메일을 누른 뒤 여기서 로그인하면 가입이 마무리됩니다.';
+    le.classList.add('show'); return; }
   // 새로 설치한 학교는 서버가 가입 코드를 직접 확인하고 등록합니다 (첫 가입자는 관리 담당자)
   let { data:reg, error:insErr } = await sb.rpc('register_notice_admin', {
     p_code:code, p_name:prof.name, p_subject:prof.subject, p_dept:prof.dept,

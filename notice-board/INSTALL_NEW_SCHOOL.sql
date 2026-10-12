@@ -433,7 +433,6 @@ CREATE TRIGGER trg_notice_admins_guard BEFORE UPDATE ON notice_admins
 --    쓰기: 승인된 선생님만 / 고치기·지우기: 본인 · 관리 담당자 · 그 반 담임
 -- ───────────────────────────────────────────────────────────────────
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 
 DO $rls$
@@ -458,6 +457,7 @@ BEGIN
       'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters']
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON %I TO anon, authenticated', t);   -- 이 앱 표만
   END LOOP;
 
   -- 교실 화면이 읽는 표: 누구나 읽기
