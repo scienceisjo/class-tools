@@ -6,7 +6,7 @@
 <title>공지 관리 — 해누리중학교</title>
 <link rel="icon" href="logo.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="school.js?v=2610122"></script>
+<script src="school.js?v=2610123"></script>
 <script src="video.js?v=2608301"></script>
 <style>
   :root{--bg:#f4f6fb;--card:#fff;--line:#e3e8f3;--txt:#1c2540;--sub:#7d8aa8;
@@ -712,6 +712,7 @@ function applySchool(){
   }
   const fav=document.querySelector('link[rel=icon]');
   if(fav){ if(SCHOOL.logo) fav.href=SCHOOL.logo; else if(SCHOOL.icon) fav.href=SCHOOL.icon+'-192.png'; else fav.remove(); }
+  if(!SCHOOL.isDefault && $('pbNewName')) $('pbNewName').placeholder='예: 홍길동';
 }
 function fillDeptSelects(){
   const opts = DEPTS.map(d=>`<option value="${d}">${d}</option>`).join('');

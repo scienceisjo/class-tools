@@ -6,7 +6,7 @@
 <title>선생님께 말하기 — 해누리중학교</title>
 <link rel="icon" href="logo.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="school.js?v=2610122"></script>
+<script src="school.js?v=2610123"></script>
 <style>
   :root{--bg:#f4f7fc;--card:#fff;--line:#e3e8f4;--txt:#1d2742;--sub:#6c7894;
     --accent:#3b6ef5;--green:#0ea371;--warn:#d97706;--red:#ef3b46;}
@@ -136,7 +136,8 @@ const SUPABASE_ANON = SCHOOL.supabaseKey;
 if(!SCHOOL.ready) SCHOOL.notReady();
 const sb = window.supabase.createClient(SUPABASE_URL || 'https://not-ready.supabase.co', SUPABASE_ANON || 'not-ready');
 document.title = '선생님께 말하기 — ' + SCHOOL.name;
-document.addEventListener('DOMContentLoaded', ()=>{ const f=document.querySelector('footer'); if(f) f.textContent = SCHOOL.name + ' · 선생님께 말하기'; });
+document.addEventListener('DOMContentLoaded', ()=>{ const f=document.querySelector('footer'); if(f) f.textContent = SCHOOL.name + ' · 선생님께 말하기';
+  const t=document.getElementById('teacher'); if(t && !SCHOOL.isDefault) t.placeholder='예: 홍길동 선생님'; });
 const $ = id => document.getElementById(id);
 
 // ?class=2-3 로 열면 학년·반 자동 입력 (전자칠판 QR용)

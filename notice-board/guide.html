@@ -356,15 +356,18 @@
 </footer>
 
 </div>
-<script src="school.js?v=2610122"></script>
+<script src="school.js?v=2610123"></script>
 <script>
 /* 다른 학교로 열었을 때(?s=) 안내서 글자를 그 학교에 맞게 바꿉니다. 해누리는 그대로. */
 (function(){
   if(!window.SCHOOL || SCHOOL.isDefault) return;
-  const board = 'scienceisjo.github.io/class-tools/notice-board/?s=' + SCHOOL.id;
+  // 교실 화면·관리 화면 주소 — 전용 주소가 있으면 그것, 없으면 ?s= 를 붙인 공용 주소
+  const base  = 'scienceisjo.github.io/class-tools/notice-board/';
+  const board = SCHOOL.home || (base + '?s=' + SCHOOL.id);
+  const admin = SCHOOL.home ? SCHOOL.home + 'admin.html' : base + 'admin.html?s=' + SCHOOL.id;
   const swaps = [
     ['joo.is/해누리중공지', SCHOOL.shortUrl || board],
-    ['notice-board/admin.html', 'notice-board/admin.html?s=' + SCHOOL.id],
+    [base + 'admin.html', admin],
     ['hnrnotice26!', SCHOOL.signupCode || '(담당 선생님께 받으세요)'],
     ['조승재(과학정보부)', SCHOOL.contact || '학교 담당 선생님'],
     ['조승재 (과학정보부)', SCHOOL.contact || '학교 담당 선생님'],

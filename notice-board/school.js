@@ -1,7 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════
    🏫 학교별 설정 — 전자칠판 알리미를 여러 학교가 함께 쓰기
    ───────────────────────────────────────────────────────────────
-   주소 끝에 ?s=geowon 처럼 학교 이름표를 붙이면 그 학교 화면이 됩니다.
+   학교마다 전용 주소가 있습니다 (예: class-tools/geowon/).
+   전용 주소의 페이지는 맨 위에서 window.SCHOOL_ID 로 학교를 정해 둡니다
+   — notice_build_sites.py 가 만들어 줍니다. 손으로 고치지 마세요.
+   notice-board/ 에 ?s=geowon 을 붙여 열면 전용 주소로 옮겨 갑니다.
    아무것도 안 붙이면 해누리중학교 (예전 주소는 그대로 동작).
 
    학교마다 자기 Supabase 를 씁니다 — 학생 쪽지·선생님 계정이
@@ -29,7 +32,8 @@
       name: '거원중학교', short: '거원중',
       supabaseUrl: '',            // ← 거원중 Supabase 주소 (프로젝트 만들면 채움)
       supabaseKey: '',            // ← 거원중 공개 키
-      logo: null,                 // 교표 그림을 받으면 'schools/geowon/logo.png'
+      home: 'scienceisjo.github.io/class-tools/geowon/',  // 전용 주소
+      logo: 'logo-geowon.png',
       icon: 'icon-geowon',        // 홈 화면 아이콘(icon-geowon-192.png · -512.png)
       shortUrl: '',
       contact: '',
@@ -46,11 +50,22 @@
     },
   };
 
-  var id = (new URLSearchParams(location.search).get('s') || 'haenuri').toLowerCase();
+  var fixed = (window.SCHOOL_ID || '').toLowerCase();          // 전용 주소면 페이지가 정해 줌
+  var param = (new URLSearchParams(location.search).get('s') || '').toLowerCase();
+  var id = fixed || param || 'haenuri';
   if (!SCHOOLS[id]) id = 'haenuri';
   var S = Object.assign({ id: id }, SCHOOLS[id]);
   S.isDefault = id === 'haenuri';
+  S.fixed = !!fixed && fixed === id;
   S.ready = !!(S.supabaseUrl && S.supabaseKey);
+
+  /* 예전 방식(notice-board/?s=geowon)으로 열면 그 학교 전용 주소로 옮김 — 같은 페이지·같은 반 그대로 */
+  if (!S.fixed && S.home && param === id && /github\.io$/.test(location.hostname)) {
+    var q = new URLSearchParams(location.search); q.delete('s');
+    var page = location.pathname.split('/').pop();
+    if (page === 'index.html') page = '';
+    location.replace('https://' + S.home + page + (q.toString() ? '?' + q.toString() : '') + location.hash);
+  }
 
   /* 같은 컴퓨터에서 두 학교를 열어도 기억이 섞이지 않게 (해누리는 예전 이름 그대로) */
   S.key = function (k) { return S.isDefault ? k : id + ':' + k; };
@@ -58,7 +73,7 @@
   /* 다른 페이지로 갈 때 학교 이름표를 이어 붙임 — link('index.html', 'class=2-3') */
   S.link = function (url, extra) {
     var q = [];
-    if (!S.isDefault) q.push('s=' + id);
+    if (!S.isDefault && !S.fixed) q.push('s=' + id);
     if (extra) q.push(extra);
     return q.length ? url + (url.indexOf('?') >= 0 ? '&' : '?') + q.join('&') : url;
   };
@@ -69,7 +84,8 @@
       var d = document.createElement('div');
       d.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;' +
         'background:#f4f7fc;font-family:Pretendard,"Malgun Gothic",sans-serif;color:#1d2742;text-align:center;padding:24px';
-      d.innerHTML = '<div><div style="font-size:64px">🏫</div><h1 style="font-size:30px;margin:16px 0 10px">' + S.name +
+      d.innerHTML = '<div><div style="font-size:64px">' +
+        (S.logo ? '<img src="' + S.logo + '" alt="" style="width:120px;height:120px;object-fit:contain">' : '🏫') + '</div><h1 style="font-size:30px;margin:16px 0 10px">' + S.name +
         ' 전자칠판 알리미</h1><p style="font-size:18px;color:#6c7894;line-height:1.7">곧 열립니다. 준비가 끝나면 이 주소로 바로 쓰실 수 있어요.</p></div>';
       document.body.appendChild(d);
     });

@@ -1,0 +1,1994 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<script>window.SCHOOL_ID = 'geowon';</script>
+<meta name="description" content="거원중학교 공지 · 시간표 · 급식 · 학생 호출을 교실 전자칠판에 띄우는 알리미">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="거원중학교 전자칠판 알리미">
+<meta property="og:title" content="공지 관리 — 거원중학교">
+<meta property="og:description" content="공지 · 시간표 · 급식 · 학생 호출을 교실 전자칠판에 띄우는 알리미">
+<meta property="og:image" content="https://scienceisjo.github.io/class-tools/geowon/og-geowon.png">
+<meta property="og:url" content="https://scienceisjo.github.io/class-tools/geowon/admin.html">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공지 관리 — 거원중학교</title>
+<link rel="icon" href="logo-geowon.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="school.js?v=2610123"></script>
+<script src="video.js?v=2608301"></script>
+<style>
+  :root{--bg:#f4f6fb;--card:#fff;--line:#e3e8f3;--txt:#1c2540;--sub:#7d8aa8;
+    --accent:#4a72ff;--green:#1eb87f;--red:#ff4d5e;--gold:#f5a623;--purple:#8b6cff;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:'Pretendard','Malgun Gothic',system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:980px;margin:0 auto;padding:20px 16px 80px}
+
+  /* 로그인 */
+  #login{max-width:380px;margin:8vh auto;background:var(--card);border:1px solid var(--line);
+    border-radius:18px;padding:32px 28px;box-shadow:0 8px 30px rgba(30,40,80,.08)}
+  #login h1{font-size:22px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  #login p{color:var(--sub);font-size:14px;margin-bottom:22px}
+  input,select,textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;
+    font-size:15px;font-family:inherit;background:#fff;color:var(--txt);margin-bottom:12px}
+  textarea{resize:vertical;min-height:80px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  button{cursor:pointer;border:none;font-family:inherit;font-weight:700;border-radius:10px;transition:.15s}
+  .btn{background:var(--accent);color:#fff;padding:12px 18px;font-size:15px;width:100%}
+  .btn:hover{filter:brightness(1.05)}.btn:disabled{opacity:.5;cursor:default}
+  .err{color:var(--red);font-size:13px;margin-top:8px;display:none}.err.show{display:block}
+  .authtabs{display:flex;gap:6px;margin-bottom:16px}
+  .atab{flex:1;background:#fff;border:1.5px solid var(--line);color:var(--sub);padding:9px;font-size:14px;border-radius:9px}
+  .atab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  /* 둘러보기(읽기전용): 입력/수정 요소 숨김 */
+  body.readonly .panel > .card:first-child{display:none}
+  body.readonly .card.wform{display:none}
+  body.readonly .del{display:none}
+  .robanner{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;font-weight:700;
+    padding:10px 14px;border-radius:10px;margin-bottom:14px;display:none}
+  body.readonly .robanner{display:block}
+  /* 👥 공동계정: 개인정보·설정 관련 화면 숨김 */
+  body.shared [data-p="msg"], body.shared #p-msg,
+  body.shared [data-p="cfg"], body.shared #p-cfg{display:none !important}
+  .shbanner{background:#eef7ff;border:1px solid #cfe4ff;color:#1e4fa3;font-size:13.5px;
+    font-weight:700;padding:10px 14px;border-radius:10px;margin-bottom:14px;display:none;line-height:1.6}
+  body.shared .shbanner{display:block}
+
+  /* 👤 공동계정 — 지금 쓰시는 선생님 */
+  #posterBar,#posterPick{display:none}
+  body.shared #posterBar{display:flex}
+  body.shared.pickon #posterPick{display:block}
+  body.readonly #posterBar,body.readonly #posterPick{display:none !important}
+  #posterBar{align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;
+    background:#fff;border:2px solid var(--accent);border-radius:12px;padding:11px 15px}
+  #posterBar.unset{border-color:#f59e0b;background:#fffbeb}
+  #posterBar .pb-l{font-size:12px;color:var(--sub);font-weight:700}
+  #posterBar .pb-n{font-size:17px;font-weight:900;color:var(--txt)}
+  #posterBar.unset .pb-n{color:#b45309}
+  #posterBar .pb-s{font-size:12.5px;color:var(--sub);font-weight:700}
+  #posterBar .pb-cls{margin-left:auto;font-size:12.5px;color:var(--sub);font-weight:700}
+  #posterPick{background:#f8fafc;border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:16px}
+  #posterPick h3{font-size:13px;color:var(--sub);font-weight:800;margin-bottom:10px}
+  #posterPick .names{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+  #posterPick .names .chip{position:relative;padding-right:14px}
+  #posterPick .names .chip.on{background:var(--accent);border-color:transparent}
+  #posterPick .names .x{margin-left:7px;color:#cbd5e1;font-weight:900}
+  #posterPick .names .chip.on .x{color:#dbeafe}
+  #posterPick .sep{border-top:1px dashed var(--line);margin:14px 0}
+
+  /* 🎬 영상 미리보기 */
+  .vprev{margin:-4px 0 12px}
+  .vprev .ok{display:flex;gap:12px;align-items:center;background:#f8fafc;border:1px solid var(--line);
+    border-radius:10px;padding:10px}
+  .vprev img{width:120px;height:68px;object-fit:cover;border-radius:7px;flex:0 0 auto;background:#e2e8f0}
+  .vprev .t{font-size:13px;font-weight:700;color:var(--txt)}
+  .vprev .s{font-size:12px;color:var(--sub);margin-top:2px}
+  .vprev .bad{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:12.5px;
+    font-weight:700;border-radius:10px;padding:10px 12px;line-height:1.6}
+
+  /* ⏱ 종료일·템플릿 빠른 선택 */
+  .quick{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px}
+  .quick .chip{padding:6px 12px;font-size:12.5px}
+  .quick .chip.on{background:var(--accent);border-color:transparent}
+
+  /* 헤더 */
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  header h1{font-size:20px;display:flex;align-items:center;gap:8px}
+  header .who{font-size:13px;color:var(--sub)}
+  .ghost{background:#fff;border:1.5px solid var(--line);color:var(--sub);padding:8px 14px;font-size:13px}
+  .preview-link{font-size:13px;color:var(--accent);text-decoration:none;font-weight:700;margin-right:10px}
+
+  /* 탭 */
+  .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+  .tab{background:#fff;border:1.5px solid var(--line);color:var(--sub);padding:9px 16px;font-size:14px;border-radius:99px}
+  .tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .badge{display:inline-block;background:var(--red);color:#fff;font-size:11px;font-weight:900;
+    padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle}
+  .msg{border:1.5px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;background:#fff}
+  .msg.unread{border-color:#fecaca;background:#fffbfb}
+  .msg .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .msg .who{font-weight:800;font-size:15px}
+  .msg .anon{color:var(--sub);font-weight:700}
+  .msg .when{color:var(--sub);font-size:12px;margin-left:auto}
+  .msg .body{font-size:15px;line-height:1.6;white-space:pre-wrap;word-break:break-word;
+    background:#f8fafc;border-radius:9px;padding:12px;margin-bottom:10px}
+  .msg .acts{display:flex;gap:8px}
+  .msg .acts button{padding:8px 14px;font-size:13px;border-radius:9px;border:1.5px solid var(--line);
+    background:#fff;color:var(--sub);font-weight:700}
+  .msg .acts .ok{background:#e7f9f0;color:var(--green);border-color:#bbf0d8}
+  .ctag{font-size:11.5px;font-weight:900;padding:3px 9px;border-radius:6px;color:#fff}
+  .panel{display:none}.panel.on{display:block}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+  .card h2{font-size:15px;margin-bottom:14px;color:var(--sub);font-weight:800;letter-spacing:.3px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:120px}
+  label{font-size:12px;color:var(--sub);font-weight:700;display:block;margin-bottom:4px}
+  .field{margin-bottom:12px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{padding:7px 14px;border:1.5px solid var(--line);border-radius:99px;font-size:13px;font-weight:700;color:var(--sub);background:#fff}
+  .chip.on{color:#fff;border-color:transparent}
+  .chip.on[data-c="긴급"]{background:var(--red)}.chip.on[data-c="교과"]{background:var(--purple)}
+  .chip.on[data-c="학년"]{background:var(--accent)}.chip.on[data-c="일반"]{background:var(--green)}
+
+  /* 목록 */
+  .item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:none}
+  .item .tag{flex:0 0 auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;color:#fff;margin-top:2px}
+  .tag-긴급{background:var(--red)}.tag-교과{background:var(--purple)}.tag-학년{background:var(--accent)}.tag-일반{background:var(--green)}
+  .item .main{flex:1;min-width:0}
+  .item .t{font-weight:700;font-size:15px}
+  .item .b{color:var(--sub);font-size:13px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item .meta{font-size:11px;color:var(--sub);margin-top:3px}
+  .item .del{background:#fff0f1;color:var(--red);padding:6px 12px;font-size:12px;flex:0 0 auto}
+  .empty{color:var(--sub);font-size:14px;padding:14px 0;text-align:center}
+  .pin{color:var(--gold);font-weight:800;font-size:11px}
+  .box-stale{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;
+    padding:12px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.6}
+  .box-stale .chip{background:#fff;border-color:#fed7aa;color:#9a3412;font-size:12.5px;padding:5px 11px}
+
+  /* ── 📱 휴대폰 화면 (이동 중 확인용) ── */
+  @media (max-width:640px){
+    .wrap{padding:12px 10px 90px}
+    header{flex-wrap:wrap;gap:8px}
+    header h1{font-size:18px}
+    header .who{font-size:12px}
+    .preview-link{font-size:12px;margin-right:6px}
+    .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+      padding-bottom:6px;margin-bottom:14px}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{flex:0 0 auto;font-size:13px;padding:8px 13px}
+    .card{padding:14px 13px;border-radius:12px}
+    .row{flex-direction:column;gap:0}
+    .row>*{min-width:0;width:100%}
+    input,select,textarea{font-size:16px;padding:12px}  /* 16px 미만이면 iOS가 확대함 */
+    .btn{padding:15px;font-size:16px}
+    .item{flex-wrap:wrap;gap:8px}
+    .item .main{flex:1 1 100%;order:2}
+    .item .del{order:3;padding:9px 14px}
+    .msg .body{font-size:14.5px}
+    .cleanrow-edit{flex-direction:row !important}
+    .cleanrow-edit input{font-size:15px;padding:10px}
+    #login{margin:4vh auto;padding:24px 20px}
+  }
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--txt);color:#fff;
+    padding:11px 22px;border-radius:99px;font-size:14px;font-weight:700;opacity:0;transition:.3s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+  .hint{font-size:12px;color:var(--sub);margin-top:-6px;margin-bottom:10px}
+  .privacy{font-size:12.5px;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;
+    border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.45}
+  .privacy b{color:#7c2d12}
+  .guide{font-size:12.5px;color:#7c2d12;background:#fef2f2;border:1px solid #fecaca;
+    border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.5}
+  .guide b{color:#b91c1c}
+</style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<div id="login">
+  <h1>📺 공지 관리</h1>
+  <p><span class="schName">거원중학교</span> 전자칠판 공지 시스템<br><b>공지 전용 계정</b>으로 로그인하세요.</p>
+
+  <div class="authtabs">
+    <button class="atab on" id="atab-login" onclick="authTab('login')">로그인</button>
+    <button class="atab" id="atab-signup" onclick="authTab('signup')">가입</button>
+  </div>
+
+  <!-- 로그인 -->
+  <div id="loginForm">
+    <input id="email" type="email" placeholder="이메일" autocomplete="username">
+    <input id="pw" type="password" placeholder="비밀번호" autocomplete="current-password">
+    <button class="btn" id="loginBtn" onclick="doLogin()">로그인</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+
+  <!-- 가입 -->
+  <div id="signupForm" style="display:none">
+    <input id="sgName" placeholder="이름 (예: 김OO)">
+    <input id="sgSubject" placeholder="담당 과목 (선택) — 교과 공지에 자동 입력">
+    <select id="sgDept"><option value="">소속 부서 (선택)</option></select>
+    <label style="display:block;font-size:13px;font-weight:800;color:var(--sub);margin:6px 0 4px">
+      담임 학급 (담임이 아니시면 비워두세요)</label>
+    <div class="row" style="gap:8px">
+      <select id="sgHrGrade"><option value="">학년</option><option>1</option><option>2</option><option>3</option></select>
+      <input id="sgHrClass" type="number" min="1" placeholder="반">
+    </div>
+    <input id="sgEmail" type="email" placeholder="이메일">
+    <input id="sgPw" type="password" placeholder="비밀번호 (6자 이상)">
+    <input id="sgCode" placeholder="가입 코드 (학교에서 받은 코드)">
+    <button class="btn" id="sgBtn" onclick="doSignup()">가입하기</button>
+    <div class="err" id="sgErr"></div>
+    <p style="margin-top:12px;font-size:12px;color:var(--sub)">※ 질문나무와 <b>별개</b>의 공지 전용 계정입니다.</p>
+  </div>
+
+  <button class="ghost" style="width:100%;margin-top:14px;padding:11px" onclick="enterGuest()">👀 둘러보기 (읽기 전용)</button>
+</div>
+
+<!-- 대시보드 -->
+<div class="wrap" id="dash" style="display:none">
+  <header>
+    <h1>📺 공지 관리</h1>
+    <div>
+      <a class="preview-link" id="guideLink" href="#" target="_blank">📘 사용법</a>
+      <a class="preview-link" id="dispLink" href="#" target="_blank">🖥️ 디스플레이 미리보기</a>
+      <span class="who" id="whoami"></span>
+      <button class="ghost" onclick="doLogout()">로그아웃</button>
+    </div>
+  </header>
+
+  <div class="robanner">👀 둘러보기 모드 — 내용을 볼 수만 있습니다. 작성·수정하려면 <b>로그아웃 후 로그인</b>하세요.</div>
+  <div class="shbanner">👥 <b>공동계정으로 접속하셨습니다.</b>
+    공지·평가일정·학생 호출 등은 그대로 쓰실 수 있고, <b>학생이 보낸 쪽지와 설정</b>은 보이지 않습니다.<br>
+    쪽지를 확인하시려면 <b>개인 계정으로 가입</b>해 주세요.</div>
+
+  <!-- 👤 공동계정 — 지금 쓰시는 선생님 -->
+  <div id="posterBar">
+    <div>
+      <div class="pb-l">지금 쓰시는 선생님</div>
+      <div class="pb-n" id="pbName">이름을 골라주세요</div>
+    </div>
+    <span class="pb-s" id="pbSub"></span>
+    <span class="pb-cls" id="pbCls"></span>
+    <button class="ghost" onclick="togglePoster()" id="pbToggle">✏️ 바꾸기</button>
+  </div>
+
+  <div id="posterPick">
+    <h3>👤 어느 선생님이 올리시나요? <span style="font-weight:600">— 고르신 이름으로 화면에 표시됩니다</span></h3>
+    <div class="names" id="pbNames"></div>
+    <div class="row">
+      <div class="field"><label>이름 (처음이시면 직접 적어주세요)</label>
+        <input id="pbNewName" placeholder="예: 홍길동" autocomplete="off"></div>
+      <div class="field"><label>담당 과목 (선택)</label>
+        <input id="pbNewSubj" placeholder="예: 과학" autocomplete="off"></div>
+      <div class="field"><label>소속 부서 (선택)</label>
+        <select id="pbNewDept"><option value="">표시 안 함</option></select></div>
+    </div>
+    <button class="btn" onclick="savePoster()">이 이름으로 시작하기</button>
+
+    <div class="sep"></div>
+    <h3>🏫 이 기기가 놓인 교실 <span style="font-weight:600">— 정해두면 대상 학년·반이 미리 채워집니다</span></h3>
+    <div class="hint">교실 전자칠판이라면 그 반으로 맞춰두세요. 다른 반에 잘못 올리는 일을 막아줍니다.
+      교무실 컴퓨터처럼 여러 반에 올리는 자리라면 <b>정하지 않음</b>으로 두세요.</div>
+    <div class="row">
+      <div class="field"><label>학년</label>
+        <select id="pbDevGrade"><option value="">정하지 않음</option><option>1</option><option>2</option><option>3</option></select></div>
+      <div class="field"><label>반</label>
+        <input id="pbDevClass" type="number" min="1" placeholder="예: 3"></div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <button class="ghost" style="width:100%;padding:12px" onclick="saveDeviceClass()">이 교실로 저장</button></div>
+    </div>
+    <div id="pbUrlWrap" style="display:none">
+      <label>🖥️ 이 교실 전자칠판에 띄울 주소</label>
+      <div class="row">
+        <input id="pbUrl" readonly style="flex:3;min-width:200px">
+        <button class="ghost" style="flex:1;padding:12px" onclick="copyPbUrl()">📋 주소 복사</button>
+        <button class="ghost" style="flex:1;padding:12px" onclick="window.open($('pbUrl').value,'_blank')">🖥️ 열어보기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab" data-p="msg" onclick="tab('msg')">📬 받은 쪽지<span class="badge" id="msgBadge" style="display:none">0</span></button>
+    <button class="tab on" data-p="notice" onclick="tab('notice')">📢 공지사항</button>
+    <button class="tab" data-p="sched" onclick="tab('sched')">📅 주요일정</button>
+    <button class="tab" data-p="vid" onclick="tab('vid')">🎬 영상</button>
+    <button class="tab" data-p="ttc" onclick="tab('ttc')">📍 수업 장소</button>
+    <button class="tab" data-p="dday" onclick="tab('dday')">🎯 디데이</button>
+    <button class="tab" data-p="assess" onclick="tab('assess')">📋 평가일정</button>
+    <button class="tab" data-p="call" onclick="tab('call')">📣 학생 호출</button>
+    <button class="tab" data-p="clean" onclick="tab('clean')">🧹 청소당번</button>
+    <button class="tab" data-p="role" onclick="tab('role')">🙋 1인1역</button>
+    <button class="tab" data-p="bday" onclick="tab('bday')">🎂 생일</button>
+    <button class="tab" data-p="lost" onclick="tab('lost')">🔍 분실물</button>
+    <button class="tab" data-p="cfg" onclick="tab('cfg')">⚙️ 설정</button>
+  </div>
+
+  <!-- 받은 쪽지 -->
+  <div class="panel" id="p-msg">
+    <div class="card">
+      <h2>학생이 보낸 쪽지</h2>
+      <div class="privacy">🔒 이 쪽지는 <b>선생님만</b> 볼 수 있습니다. 전자칠판이나 학생 화면에는 절대 표시되지 않습니다.</div>
+      <div class="hint">학생은 전자칠판 오른쪽 아래 <b>📮 선생님께 말하기</b> 버튼을 눌러 바로 씁니다.
+        휴대폰으로도 보낼 수 있어요 → <code id="msgUrl">message.html</code></div>
+      <div class="chips" id="msgFilter">
+        <button class="chip on" data-f="mine" onclick="msgTab('mine')">👤 나에게 온 것</button>
+        <button class="chip" data-f="unread" onclick="msgTab('unread')">🔴 안 읽음</button>
+        <button class="chip" data-f="all"  onclick="msgTab('all')">전체</button>
+        <button class="chip" data-f="done" onclick="msgTab('done')">✅ 처리됨</button>
+        <button class="chip" style="margin-left:auto" onclick="loadMsgs(false)">🔄 새로고침</button>
+      </div>
+      <div class="hint">받는 선생님을 지정하지 않은 쪽지는 <b>모든 선생님</b>에게 보입니다.
+        읽음 표시는 <b>선생님별로 따로</b> 관리되니, 다른 분이 열어도 내 알림은 그대로예요.</div>
+      <div id="msgList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 공지 -->
+  <div class="panel on" id="p-notice">
+    <div class="card">
+      <h2>새 공지 작성</h2>
+      <div class="chips" id="catChips">
+        <button class="chip on" data-c="일반" onclick="pickCat('일반')">📣 일반</button>
+        <button class="chip" data-c="긴급" onclick="pickCat('긴급')">🚨 긴급</button>
+        <button class="chip" data-c="교과" onclick="pickCat('교과')">📚 교과별</button>
+        <button class="chip" data-c="학년" onclick="pickCat('학년')">🎓 학년</button>
+      </div>
+      <div class="quick" id="nTpl">
+        <span style="font-size:12px;color:var(--sub);font-weight:700;align-self:center">자주 쓰는 공지</span>
+      </div>
+      <div class="field"><label>제목</label><input id="nTitle" placeholder="공지 제목"></div>
+      <div class="field"><label>내용 (선택)</label><textarea id="nBody" placeholder="자세한 내용"></textarea></div>
+      <div class="field"><label>🏫 부서 (선택) — 넣으면 화면에 함께 표시됩니다</label>
+        <select id="nDept"><option value="">표시 안 함</option></select></div>
+      <div class="field"><label>🔗 링크 URL (선택) — 입력하면 화면에 <b>QR코드</b>가 표시됩니다</label><input id="nLink" type="url" placeholder="예: https://forms.gle/... (신청서·설문)"></div>
+      <div class="row">
+        <div class="field" id="nSubjWrap" style="display:none"><label>교과명</label><input id="nSubj" placeholder="예: 수학"></div>
+        <div class="field"><label>대상 학년</label>
+          <select id="nGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>대상 반 (비우면 학년 전체)</label>
+          <input id="nClass" type="number" min="1" placeholder="예: 3"></div>
+        <div class="field"><label>노출 종료일 (비우면 무기한)</label><input id="nEnd" type="date"></div>
+      </div>
+      <div class="quick" id="nEndQuick">
+        <span style="font-size:12px;color:var(--sub);font-weight:700;align-self:center">언제까지 걸어둘까요</span>
+        <button class="chip" onclick="setEnd(0)">오늘까지</button>
+        <button class="chip" onclick="setEnd(2)">3일</button>
+        <button class="chip" onclick="setEnd(6)">1주일</button>
+        <button class="chip" onclick="setEnd(13)">2주일</button>
+        <button class="chip" onclick="setEnd(null)">무기한</button>
+      </div>
+      <div class="field"><label><input type="checkbox" id="nPin" style="width:auto;margin-right:6px">📌 상단 고정</label></div>
+      <button class="btn" id="nSave" onclick="saveNotice()">공지 등록</button>
+      <button class="ghost" id="nCancel" style="width:100%;margin-top:8px;padding:11px;display:none"
+              onclick="cancelEditNotice()">✕ 수정 취소</button>
+    </div>
+    <div class="card">
+      <h2>등록된 공지</h2>
+      <div class="box-stale" id="staleBox" style="display:none"></div>
+      <div id="noticeList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 일정 -->
+  <div class="panel" id="p-sched">
+    <div class="card">
+      <h2>새 일정 추가</h2>
+      <div class="field"><label>일정명</label><input id="sTitle" placeholder="예: 1학기 기말고사"></div>
+      <div class="row">
+        <div class="field"><label>시작일</label><input id="sStart" type="date"></div>
+        <div class="field"><label>종료일 (선택)</label><input id="sEnd" type="date"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>장소 (선택)</label><input id="sLoc" placeholder="예: 강당"></div>
+        <div class="field"><label>아이콘</label><input id="sIcon" value="📌" maxlength="2"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>대상 학년 (비우면 전교)</label>
+          <select id="sGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>대상 반 (비우면 학년 전체)</label>
+          <input id="sClass" type="number" min="1" placeholder="예: 3"></div>
+      </div>
+      <button class="btn" id="sSave" onclick="saveSched()">일정 추가</button>
+    </div>
+    <div class="card"><h2>등록된 일정</h2><div id="schedList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 수업 장소 -->
+  <!-- 🎬 영상 -->
+  <div class="panel" id="p-vid">
+    <div class="card wform">
+      <h2>🎬 교실에서 볼 영상 올리기</h2>
+      <div class="hint">주소를 넣어두시면 교실 전자칠판 위쪽 <b>[🎬 영상]</b>을 눌러 바로 재생하실 수 있습니다.
+        재생은 화면에서 직접 누르셔야 시작됩니다 — 수업 중에 갑자기 소리가 나는 일은 없습니다.</div>
+      <div class="field"><label>영상 주소 (유튜브 등)</label>
+        <input id="vUrl" type="url" placeholder="예: https://www.youtube.com/watch?v=..." oninput="previewVideo()"></div>
+      <div id="vPrev" class="vprev"></div>
+      <div class="field"><label>제목</label><input id="vTitle" placeholder="예: 학교폭력 예방 교육 영상"></div>
+      <div class="field"><label>한 줄 설명 (선택)</label><input id="vNote" placeholder="예: 조회 시간에 함께 봅니다"></div>
+      <div class="row">
+        <div class="field"><label>대상 학년</label>
+          <select id="vGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>대상 반 (비우면 학년 전체)</label>
+          <input id="vClass" type="number" min="1" placeholder="예: 3"></div>
+        <div class="field"><label>노출 종료일 (비우면 계속)</label><input id="vEnd" type="date"></div>
+      </div>
+      <button class="btn" id="vSave" onclick="saveVideo()">영상 등록</button>
+      <button class="ghost" id="vCancel" style="width:100%;margin-top:8px;padding:11px;display:none"
+              onclick="cancelEditVideo()">✕ 수정 취소</button>
+    </div>
+    <div class="card"><h2>올라간 영상</h2><div id="vidList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <div class="panel" id="p-ttc">
+    <div class="box tip" style="background:#eef7ff;border:1px solid #cfe4ff;color:#1e4fa3;
+         border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.6">
+      ✅ <b>시간표 변경(결보강)은 등록하지 않으셔도 됩니다.</b>
+      실무사님이 컴시간알리미에서 변경하시면 매일 아침 자동으로 화면에 반영됩니다.
+      아래는 <b>수업 장소</b>가 헷갈릴 때만 사용해 주세요.
+    </div>
+    <div class="card wform">
+      <h2>📍 수업 장소 안내</h2>
+      <div class="hint">"오늘 체육 어디서 해요?" — 등록하면 전자칠판에 <b>📍장소</b>로 표시됩니다. 해당 날짜에만 보입니다.</div>
+      <div class="row">
+        <div class="field"><label>날짜</label><input id="lcDate" type="date"></div>
+        <div class="field"><label>학년</label><select id="lcGrade"><option value="">전체</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="lcClass" type="number" placeholder="전체"></div>
+        <div class="field"><label>교시 (선택)</label><input id="lcPeriod" type="number" placeholder="예: 3"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>과목</label><input id="lcSubject" value="체육"></div>
+        <div class="field" style="flex:2"><label>장소</label><input id="lcLoc" placeholder="아래에서 고르거나 직접 입력"></div>
+      </div>
+      <div class="chips" id="lcChips">
+        <button class="chip" onclick="$('lcLoc').value='운동장'">🏃 운동장</button>
+        <button class="chip" onclick="$('lcLoc').value='체육관'">🏀 체육관</button>
+        <button class="chip" onclick="$('lcLoc').value='다목적실'">🎤 다목적실</button>
+        <button class="chip" onclick="$('lcLoc').value='과학실1'">🔬 과학실1</button>
+        <button class="chip" onclick="$('lcLoc').value='과학실2'">🧪 과학실2</button>
+        <button class="chip" onclick="$('lcLoc').value='메이커실'">🛠️ 메이커실</button>
+        <button class="chip" onclick="$('lcLoc').value='기술실'">⚙️ 기술실</button>
+        <button class="chip" onclick="$('lcLoc').value='미술실'">🎨 미술실</button>
+        <button class="chip" onclick="$('lcLoc').value='음악실'">🎵 음악실</button>
+        <button class="chip" onclick="$('lcLoc').value='가정실'">🍳 가정실</button>
+        <button class="chip" onclick="$('lcLoc').value='도서관'">📚 도서관</button>
+        <button class="chip" onclick="$('lcLoc').value='중정'">🌳 중정</button>
+      </div>
+      <div class="field"><label>비고 (선택)</label><input id="lcNote" placeholder="예: 비 와서 실내수업, 체육복 지참"></div>
+      <button class="btn" id="lcSave" onclick="saveLoc()">📍 장소 등록</button>
+    </div>
+    <div class="card"><h2>등록된 장소 안내</h2><div id="locList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 디데이 -->
+  <div class="panel" id="p-dday">
+    <div class="card">
+      <h2>디데이 추가</h2>
+      <div class="hint">전자칠판 상단에 <b>D-15</b> 처럼 남은 일수가 표시됩니다. 지난 날짜는 자동으로 사라집니다.</div>
+      <div class="field"><label>이름</label><input id="dTitle" placeholder="예: 1학기 기말고사"></div>
+      <div class="row">
+        <div class="field"><label>날짜</label><input id="dDate" type="date"></div>
+        <div class="field"><label>유형</label>
+          <select id="dType" onchange="ddayIcon()"><option>시험</option><option>평가</option><option>방학</option><option>기타</option></select></div>
+        <div class="field"><label>아이콘</label><input id="dIcon" value="📝" maxlength="2"></div>
+        <div class="field"><label>대상 학년 (비우면 전교)</label>
+          <select id="dGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>대상 반</label><input id="dClass" type="number" min="1" placeholder="전체"></div>
+      </div>
+      <button class="btn" id="dSave" onclick="saveDday()">디데이 추가</button>
+    </div>
+    <div class="card"><h2>등록된 디데이</h2><div id="ddayList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 평가일정 -->
+  <div class="panel" id="p-assess">
+    <div class="card">
+      <h2>평가일정 추가</h2>
+      <div class="hint">전자칠판 좌측 <b>다가오는 평가</b> 칸에 표시됩니다. 지난 평가는 자동으로 사라집니다.</div>
+      <div class="row">
+        <div class="field"><label>과목</label><input id="aSubject" placeholder="예: 수학"></div>
+        <div class="field"><label>유형</label>
+          <select id="aType"><option>수행평가</option><option>지필평가</option><option>기타</option></select></div>
+        <div class="field"><label>대상 학년</label>
+          <select id="aGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>대상 반 (비우면 학년 전체)</label>
+          <input id="aClass" type="number" min="1" placeholder="예: 3"></div>
+        <div class="field"><label>평가일</label><input id="aDate" type="date"></div>
+      </div>
+      <div class="field"><label>평가명</label><input id="aTitle" placeholder="예: 함수 단원 수행평가"></div>
+      <div class="field"><label>시험범위 / 비고 (선택)</label><input id="aScope" placeholder="예: 교과서 3단원, 계산기 지참"></div>
+      <button class="btn" id="aSave" onclick="saveAssess()">평가일정 추가</button>
+    </div>
+    <div class="card"><h2>등록된 평가일정</h2><div id="assessList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 학생 호출 -->
+  <div class="panel" id="p-call">
+    <div class="card">
+      <h2>학생 호출하기</h2>
+      <div class="hint">호출하면 전자칠판 상단 <b>📣 호출</b> 띠에 즉시 표시됩니다. 학생이 직접 확인하고 찾아옵니다.</div>
+      <div class="privacy">🔒 <b>개인정보 보호</b> — 화면에는 <b>이름·반·장소·사유</b>가 함께 표시됩니다. 사유는 <b>「디벗 수령」처럼 짧게</b> 적고, 상담·징계·건강 등 민감한 내용은 적지 마세요.</div>
+      <div class="row">
+        <div class="field"><label>학년</label>
+          <select id="kGrade"><option value="">선택</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label>
+          <input id="kClass" type="number" min="1" placeholder="예: 3"></div>
+        <div class="field"><label>학생 이름</label><input id="kName" placeholder="예: 김OO"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>오라는 곳</label><input id="kLoc" value="교무실"></div>
+        <div class="field" style="flex:2"><label>사유 (화면에 함께 표시됩니다)</label>
+          <input id="kReason" placeholder="예: 디벗 수령, 준비물 전달"></div>
+      </div>
+      <div class="chips">
+        <button class="chip" onclick="$('kReason').value='디벗 수령'">💻 디벗 수령</button>
+        <button class="chip" onclick="$('kReason').value='준비물 전달'">📦 준비물 전달</button>
+        <button class="chip" onclick="$('kReason').value='서류 제출'">📄 서류 제출</button>
+        <button class="chip" onclick="$('kReason').value='분실물 확인'">🔍 분실물 확인</button>
+      </div>
+      <button class="btn" id="kSave" onclick="saveCall()">📣 호출하기</button>
+    </div>
+    <div class="card"><h2>현재 호출 중</h2><div id="callList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 청소당번 -->
+  <div class="panel" id="p-clean">
+    <div class="card">
+      <h2>오늘(이번 주) 청소 조</h2>
+      <div class="hint">조 번호만 고르면 그 반 <b>교실 전자칠판</b>(<code>?class=학년-반</code>)에 크게 표시됩니다.
+        누가 몇 조인지는 학생들이 아니까 이름은 안 적어도 돼요.</div>
+      <div class="row">
+        <div class="field"><label>학년</label><select id="clGrade" onchange="onCleanClassChange()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="clClass" type="number" placeholder="예: 3" oninput="onCleanClassChange()"></div>
+        <div class="field" style="flex:2"><label>비고 (선택)</label><input id="clNote" placeholder="예: 이번 주 / 오늘만 / 복도까지"></div>
+      </div>
+      <div class="hint" style="margin-top:10px">이 반의 <b>조 편성 방식</b> — 반마다 다르게 설정할 수 있어요 (한 번 정하면 저장됩니다)</div>
+      <div class="row" style="align-items:flex-end;margin-bottom:10px">
+        <div class="field"><label>개수</label>
+          <select id="sqCount" onchange="saveSquadCfg()"></select></div>
+        <div class="field"><label>부르는 말</label>
+          <select id="sqUnit" onchange="saveSquadCfg()">
+            <option>조</option><option>모둠</option><option>팀</option><option>분단</option></select></div>
+        <div class="field" style="flex:2"><label>또는 직접 입력 (예: A조, 창가팀)</label>
+          <input id="sqCustom" placeholder="자유롭게 입력" oninput="pickSquad(this.value.trim())"></div>
+      </div>
+
+      <label>청소 조 선택 (선택 — 안 골라도 됩니다)</label>
+      <div class="chips" id="squadChips"></div>
+
+      <label style="margin-top:14px">이 반에서 쓰는 청소 역할 — 누르면 아래에 줄이 추가돼요</label>
+      <div class="chips" id="clRolePal"></div>
+      <div class="row" style="gap:8px;margin-bottom:12px">
+        <input id="clNewRole" placeholder="새 역할 입력 (예: 사물함 정리)" onkeydown="if(event.key==='Enter'){addRoleToPalette('clean');}">
+        <button class="ghost" style="flex:0 0 auto" onclick="addRoleToPalette('clean')">➕ 역할 추가</button>
+      </div>
+
+      <label>역할·이름 (비워둬도 저장돼요)</label>
+      <div id="clRows"></div>
+      <datalist id="cleanRoles">
+        <option>바닥 쓸기</option><option>바닥 걸레</option><option>칠판</option><option>창문</option>
+        <option>쓰레기통</option><option>사물함</option><option>복도</option><option>분리수거</option>
+      </datalist>
+      <div class="row" style="gap:8px;margin:8px 0 14px">
+        <button class="ghost" onclick="addCleanRow()">➕ 줄 추가</button>
+        <button class="ghost" onclick="addCleanRow('',null,4)">➕ 4줄 한번에</button>
+        <button class="ghost" onclick="clearCleanRows()">🗑️ 전부 비우기</button>
+      </div>
+      <button class="btn" id="clSave" onclick="saveClean()">청소당번 저장</button>
+    </div>
+    <div class="card">
+      <h2>등록된 청소당번</h2>
+      <div class="hint">반별로 보려면 위에서 학년·반을 고른 뒤 <button class="ghost" style="padding:3px 10px" onclick="loadClean()">새로고침</button></div>
+      <div id="cleanList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 1인1역 -->
+  <div class="panel" id="p-role">
+    <div class="card">
+      <h2>1인1역 추가</h2>
+      <div class="hint">그 반의 <b>교실 전자칠판</b>(<code>?class=학년-반</code>) 청소당번 칸에서 <b>🙋 1인1역</b> 버튼을 누르면 보입니다.</div>
+      <div class="row">
+        <div class="field"><label>학년</label><select id="roGrade" onchange="onDutyClassChange()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="roClass" type="number" placeholder="예: 3" oninput="onDutyClassChange()"></div>
+        <div class="field"><label>아이콘</label><input id="roIcon" value="🙋" maxlength="2"></div>
+        <div class="field"><label>역할</label><input id="roRole" placeholder="예: 우유당번"></div>
+        <div class="field"><label>담당 학생</label><input id="roMember" placeholder="예: 김OO"></div>
+      </div>
+      <div class="hint">이 반에서 쓰는 역할 — 누르면 위에 자동 입력돼요</div>
+      <div class="chips" id="roRolePal"></div>
+      <div class="row" style="gap:8px;margin-bottom:12px">
+        <input id="roNewRole" placeholder="새 역할 입력 (예: 급식 줄서기 도우미)" onkeydown="if(event.key==='Enter'){addRoleToPalette('duty');}">
+        <button class="ghost" style="flex:0 0 auto" onclick="addRoleToPalette('duty')">➕ 역할 추가</button>
+      </div>
+      <button class="btn" id="roSave" onclick="saveRole()">1인1역 추가</button>
+    </div>
+    <div class="card">
+      <h2>등록된 1인1역</h2>
+      <div class="hint">반별로 보려면 위에서 학년·반을 고른 뒤 <button class="ghost" style="padding:3px 10px" onclick="loadRoles()">새로고침</button></div>
+      <div id="roleList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 🎂 생일 -->
+  <div class="panel" id="p-bday">
+    <div class="card wform">
+      <h2>🎂 우리 반 생일 넣기</h2>
+      <div class="hint">교실 전자칠판 청소당번 칸의 <b>🎂 생일</b> 버튼에 <b>이번 달 생일</b>이 나오고,
+        생일 당일에는 위쪽 디데이 줄에 <b>🎂 오늘 생일</b>이 뜹니다.</div>
+      <div class="box tip" style="background:#eef7ff;border:1px solid #cfe4ff;color:#1e4fa3;
+           border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;line-height:1.6">
+        🔒 <b>태어난 해는 저장하지 않습니다</b> (월·일만). 로그인 없이 보는 교실 화면에는 이번 달 것만 읽힙니다.<br>
+        이름을 전부 적기 조심스러우시면 <b>「하늘」「준호」</b>처럼 이름만 적으셔도 됩니다.
+      </div>
+      <div class="row">
+        <div class="field"><label>학년</label><select id="bdGrade" onchange="loadBirthdays()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="bdClass" type="number" placeholder="예: 3" oninput="loadBirthdays()"></div>
+      </div>
+      <div class="field"><label>한 줄에 한 명 — <b>이름 월/일</b> (명렬표에서 복사해 붙여넣으셔도 됩니다)</label>
+        <textarea id="bdText" style="min-height:150px" placeholder="김하늘 9/3
+이준호 9.17
+박서연 09-25
+최민지 2011-10-02   ← 연도가 있어도 월·일만 저장됩니다"></textarea></div>
+      <div id="bdPreview" class="hint" style="margin-top:-4px"></div>
+      <button class="btn" id="bdSave" onclick="saveBirthdays()">생일 저장</button>
+    </div>
+    <div class="card">
+      <h2>등록된 생일</h2>
+      <div class="hint">위에서 고른 반의 생일입니다. 월별로 정렬됩니다.</div>
+      <div id="bdList"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- 분실물 -->
+  <div class="panel" id="p-lost">
+    <div class="card">
+      <h2>분실물(습득물) 등록</h2>
+      <div class="hint">전교 전자칠판 공지에 함께 표시됩니다. 사진은 선택입니다.</div>
+      <div class="row">
+        <div class="field"><label>물건</label><input id="loName" placeholder="예: 검정 우산"></div>
+        <div class="field"><label>발견 장소 (선택)</label><input id="loFound" placeholder="예: 3층 복도"></div>
+        <div class="field"><label>찾아가는 곳</label><input id="loKeep" value="교무실"></div>
+      </div>
+      <div class="field"><label>사진 (선택)</label><input id="loPhoto" type="file" accept="image/*"></div>
+      <button class="btn" id="loSave" onclick="saveLost()">분실물 등록</button>
+    </div>
+    <div class="card"><h2>보관 중인 분실물</h2><div id="lostList"><div class="empty">불러오는 중…</div></div></div>
+  </div>
+
+  <!-- 설정 -->
+  <div class="panel" id="p-cfg">
+    <div class="card" id="cfgCard">
+      <h2>디스플레이 설정</h2>
+      <div class="field"><label>학교명</label><input id="cfgSchool"></div>
+      <div class="field"><label>공지 카드 전환 간격 (초)</label><input id="cfgSlide" type="number" min="4"></div>
+      <div class="row">
+        <div class="field"><label>NEIS 교육청코드</label><input id="cfgAtpt"></div>
+        <div class="field"><label>NEIS 학교코드</label><input id="cfgSchoolCode"></div>
+      </div>
+      <div class="field"><label>🔑 공지 관리자 가입 코드 — 이 코드를 아는 사람만 가입 가능</label><input id="cfgCode" placeholder="예: haenuri2026"></div>
+      <button class="btn" id="cfgSave" onclick="saveCfg()">설정 저장</button>
+      <div class="hint" style="margin-top:12px" id="cfgNow">현재 설정: 거원중학교 / 서울특별시교육청(B10) / 학교코드 7130256</div>
+    </div>
+
+    <div class="card wform" id="approveCard" style="display:none">
+      <h2>👥 교사 계정 승인</h2>
+      <div class="hint">가입 신청한 선생님을 승인해야 글을 올릴 수 있습니다. (관리 담당자만 보입니다)</div>
+      <div id="approveList"><div class="empty">불러오는 중…</div></div>
+    </div>
+
+    <div class="card">
+      <h2>🖥️ 전자칠판 주소</h2>
+      <div class="hint"><b>중앙(전교용)</b> 보드: 그냥 <code>notice.html</code> 을 띄우세요.</div>
+      <div class="hint"><b>교실별</b> 보드: 주소 뒤에 <code>?class=학년-반</code> 을 붙이면 그 반 정보(시간표 변경·호출)가 우선 표시됩니다.</div>
+      <div class="row" style="align-items:flex-end">
+        <div class="field"><label>학년</label><select id="urlGrade" onchange="makeUrl()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="urlClass" type="number" value="1" oninput="makeUrl()"></div>
+        <div class="field" style="flex:2"><label>이 교실 보드 주소</label><input id="urlOut" readonly onclick="this.select()"></div>
+      </div>
+      <div class="hint">예) 2학년 3반 교실 → <code>notice.html?class=2-3</code> · 미리보기는 <code>?demo=1</code></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* 학교마다 서버가 다릅니다 — school.js 에서 ?s= 로 고른 학교의 것을 씁니다 */
+const SUPABASE_URL  = SCHOOL.supabaseUrl;
+const SUPABASE_ANON = SCHOOL.supabaseKey;
+if(!SCHOOL.ready) SCHOOL.notReady();
+const sb = window.supabase.createClient(SUPABASE_URL || 'https://not-ready.supabase.co', SUPABASE_ANON || 'not-ready');
+document.title = '공지 관리 — ' + SCHOOL.name;
+const $ = id => document.getElementById(id);
+let me = null, myName = '', myAdmin = null, READONLY = false;
+
+/* ── 🏫 학교 부서 목록 ── */
+const DEPTS = SCHOOL.depts || ['교장','교감',
+  '과학정보부','학생생활부','체육안전부','창의인성부','교무업무지원팀','교육연구지원팀',
+  '진로진학부','상담복지부','학력신장부','1학년부','2학년부','3학년부',
+  '개별화교무실','행정실','시설관리과','조리실','방송실'];
+/* 학교에 맞게 화면 글자 바꾸기 (해누리는 원래 글자 그대로) */
+function applySchool(){
+  document.querySelectorAll('.schName').forEach(e=>e.textContent=SCHOOL.name);
+  const now=$('cfgNow');
+  if(now && !SCHOOL.isDefault) now.textContent=`현재 설정: ${SCHOOL.name} / 나이스 ${SCHOOL.neis.atpt} · ${SCHOOL.neis.school}`;
+  if(SCHOOL.places && $('lcChips')){
+    $('lcChips').innerHTML = SCHOOL.places.map(([ic,nm])=>
+      `<button class="chip" onclick="$('lcLoc').value='${nm}'">${ic} ${nm}</button>`).join('');
+  }
+  const fav=document.querySelector('link[rel=icon]');
+  if(fav){ if(SCHOOL.logo) fav.href=SCHOOL.logo; else if(SCHOOL.icon) fav.href=SCHOOL.icon+'-192.png'; else fav.remove(); }
+  if(!SCHOOL.isDefault && $('pbNewName')) $('pbNewName').placeholder='예: 홍길동';
+}
+function fillDeptSelects(){
+  const opts = DEPTS.map(d=>`<option value="${d}">${d}</option>`).join('');
+  const sg=$('sgDept'); if(sg && sg.options.length<=1) sg.innerHTML='<option value="">소속 부서 (선택)</option>'+opts;
+  const nd=$('nDept'); if(nd && nd.options.length<=1) nd.innerHTML='<option value="">표시 안 함</option>'+opts;
+  const pd=$('pbNewDept'); if(pd && pd.options.length<=1) pd.innerHTML='<option value="">표시 안 함</option>'+opts;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   👤 공동계정 — "지금 쓰시는 선생님"
+   ───────────────────────────────────────────────────────────────
+   공동계정은 여러 선생님이 같이 쓰는 계정이라, 그냥 올리면 전자칠판에
+   모두 "공동계정 선생님"으로 나옵니다. 그래서 올리시는 분을 한 번
+   고르시게 하고, 그 이름으로 올라가게 합니다.
+   고르신 이름은 이 기기에 기억되므로 매번 고르실 필요는 없습니다.
+   ═══════════════════════════════════════════════════════════════ */
+let POSTER = { name:'', subject:'', dept:'' };   // 지금 쓰시는 선생님
+let ROSTER = [];                                  // 지금까지 쓰인 이름들
+const LS_POSTER = SCHOOL.key('hnr_notice_poster');
+const LS_DEVCLS = SCHOOL.key('hnr_notice_device_class');
+
+function isShared(){ return !!myAdmin?.is_shared; }
+
+/* 글에 적힐 이름 — 공동계정이면 고르신 이름, 개인계정이면 본인 이름 */
+function posterName(){ return isShared() ? (POSTER.name || '') : myName; }
+
+/* 이름을 아직 안 고르셨으면 등록을 막고 고르는 곳을 열어 드립니다 */
+function needPoster(){
+  if(!isShared() || POSTER.name) return false;
+  document.body.classList.add('pickon');
+  $('posterPick').scrollIntoView({behavior:'smooth', block:'center'});
+  $('pbNewName').focus();
+  toast('먼저 올리시는 선생님 성함을 골라주세요');
+  return true;
+}
+
+function loadPosterLocal(){
+  try{ const v=JSON.parse(localStorage.getItem(LS_POSTER)||'{}');
+       POSTER = { name:v.name||'', subject:v.subject||'', dept:v.dept||'' }; }
+  catch(e){ POSTER = { name:'', subject:'', dept:'' }; }
+}
+function renderPosterBar(){
+  const bar=$('posterBar'); if(!bar) return;
+  bar.classList.toggle('unset', !POSTER.name);
+  $('pbName').textContent = POSTER.name ? POSTER.name+' 선생님' : '이름을 골라주세요';
+  $('pbSub').textContent  = [POSTER.subject, POSTER.dept].filter(Boolean).join(' · ');
+  const d=deviceClass();
+  $('pbCls').textContent  = d.grade ? `🏫 이 기기 : ${d.grade}학년${d.class_no?' '+d.class_no+'반':''}` : '';
+  $('pbToggle').textContent = POSTER.name ? '✏️ 바꾸기' : '👤 이름 고르기';
+}
+function togglePoster(){
+  document.body.classList.toggle('pickon');
+  if(document.body.classList.contains('pickon')) renderRoster();
+}
+
+async function loadRoster(){
+  if(!isShared() && !myAdmin?.is_owner) return;
+  const { data } = await sb.from('shared_posters').select('*')
+    .order('uses',{ascending:false}).order('name');
+  ROSTER = data || [];
+  renderRoster();
+}
+function renderRoster(){
+  const box=$('pbNames'); if(!box) return;
+  if(!ROSTER.length){
+    box.innerHTML='<span class="hint" style="margin:0">아직 등록된 이름이 없습니다. 아래에 성함을 적어주세요.</span>';
+    return;
+  }
+  box.innerHTML = ROSTER.map(r=>{
+    const sub=[r.subject,r.dept].filter(Boolean).join(' · ');
+    return `<button class="chip${r.name===POSTER.name?' on':''}" data-n="${esc(r.name)}"
+      onclick="pickPoster(this.dataset.n)" title="${esc(sub)}">${esc(r.name)}${
+      sub?` <span style="font-weight:600;opacity:.75">${esc(sub)}</span>`:''}<span class="x"
+      onclick="event.stopPropagation();removePoster(this.closest('.chip').dataset.n)">✕</span></button>`;
+  }).join('');
+}
+function pickPoster(name){
+  const r = ROSTER.find(x=>x.name===name); if(!r) return;
+  POSTER = { name:r.name, subject:r.subject||'', dept:r.dept||'' };
+  localStorage.setItem(LS_POSTER, JSON.stringify(POSTER));
+  $('pbNewName').value=''; $('pbNewSubj').value=''; $('pbNewDept').value='';
+  applyPoster();
+  document.body.classList.remove('pickon');
+  toast(`👤 ${POSTER.name} 선생님으로 시작합니다`);
+}
+async function savePoster(){
+  const name=$('pbNewName').value.trim();
+  if(!name){ toast('성함을 적어주세요'); $('pbNewName').focus(); return; }
+  POSTER = { name, subject:$('pbNewSubj').value.trim(), dept:$('pbNewDept').value };
+  localStorage.setItem(LS_POSTER, JSON.stringify(POSTER));
+  await sb.rpc('touch_poster', { p_name:POSTER.name, p_subject:POSTER.subject||null, p_dept:POSTER.dept||null })
+          .then(()=>{},()=>{});
+  await loadRoster();
+  applyPoster();
+  document.body.classList.remove('pickon');
+  toast(`👤 ${POSTER.name} 선생님으로 시작합니다`);
+}
+async function removePoster(name){
+  if(!confirm(`명단에서 "${name}" 을(를) 지울까요?\n(이미 올라간 공지는 그대로 남습니다)`)) return;
+  const { error } = await sb.from('shared_posters').delete().eq('name', name);
+  if(error){ toast('지우지 못했습니다: '+error.message); return; }
+  if(POSTER.name===name){ POSTER={name:'',subject:'',dept:''}; localStorage.removeItem(LS_POSTER); }
+  await loadRoster(); applyPoster();
+}
+/* 고르신 이름에 맞춰 과목·부서 칸을 미리 채웁니다 */
+function applyPoster(){
+  renderPosterBar();
+  if(!isShared()) return;
+  if(POSTER.dept && !$('nDept').value) $('nDept').value = POSTER.dept;
+  if(POSTER.subject && curCat==='교과' && !$('nSubj').value) $('nSubj').value = POSTER.subject;
+}
+
+/* ── 🏫 이 기기가 놓인 교실 ──
+   교실 전자칠판은 늘 같은 반이라, 한 번 정해두면 대상 학년·반이
+   미리 채워집니다. 다른 반에 잘못 올리는 사고를 막아줍니다. ── */
+function deviceClass(){
+  try{ const v=JSON.parse(localStorage.getItem(LS_DEVCLS)||'{}');
+       if(v.grade) return { grade:String(v.grade), class_no:v.class_no?String(v.class_no):'' }; }
+  catch(e){}
+  // 담임 선생님은 따로 정하지 않으셔도 우리 반이 기본이 됩니다
+  if(myAdmin?.hr_grade)
+    return { grade:String(myAdmin.hr_grade), class_no:myAdmin.hr_class?String(myAdmin.hr_class):'' };
+  return { grade:'', class_no:'' };
+}
+function saveDeviceClass(){
+  const g=$('pbDevGrade').value, c=$('pbDevClass').value;
+  if(!g){ localStorage.removeItem(LS_DEVCLS); toast('교실 지정을 해제했습니다'); }
+  else { localStorage.setItem(LS_DEVCLS, JSON.stringify({grade:g, class_no:c||''}));
+         toast(`🏫 ${g}학년${c?' '+c+'반':''}으로 맞췄습니다`); }
+  applyDeviceClass(true); renderPosterBar();
+}
+/* 학년·반 칸이 있는 모든 탭에 기본값을 채웁니다 (이미 고르신 값은 건드리지 않습니다) */
+function applyDeviceClass(force){
+  const d=deviceClass();
+  renderDeviceUrl();
+  if(!d.grade) return;
+  [['nGrade','nClass'],['sGrade','sClass'],['dGrade','dClass'],['aGrade','aClass'],
+   ['kGrade','kClass'],['lcGrade','lcClass'],['clGrade','clClass'],['roGrade','roClass'],
+   ['vGrade','vClass'],['bdGrade','bdClass'],['urlGrade','urlClass']].forEach(([gi,ci])=>{
+    const ge=$(gi), ce=$(ci);
+    if(ge && (force || !ge.value)) ge.value=d.grade;
+    if(ce && d.class_no && (force || !ce.value)) ce.value=d.class_no;
+  });
+  if(typeof makeUrl==='function') makeUrl();
+}
+/* 이 교실 전자칠판 주소 — 공동계정은 설정 탭이 없어 여기서 만들어 드립니다 */
+function renderDeviceUrl(){
+  const d=deviceClass(), wrap=$('pbUrlWrap'); if(!wrap) return;
+  if(!d.grade || !d.class_no){ wrap.style.display='none'; }
+  else {
+    wrap.style.display='block';
+    $('pbUrl').value = SCHOOL.link(siblingPage('display'), `class=${d.grade}-${d.class_no}`);
+  }
+  const dl=$('dispLink');   // 위쪽 미리보기 링크도 이 교실로 맞춰 둡니다
+  if(dl) dl.href = (d.grade && d.class_no)
+    ? SCHOOL.link(siblingPage('display'), `class=${d.grade}-${d.class_no}`) : SCHOOL.link(siblingPage('display'));
+}
+function copyPbUrl(){
+  const el=$('pbUrl'); el.select(); el.setSelectionRange(0,999);
+  navigator.clipboard.writeText(el.value).then(
+    ()=>toast('📋 주소를 복사했습니다'),
+    ()=>{ document.execCommand('copy'); toast('📋 주소를 복사했습니다'); });
+}
+
+/* ── ⏱ 노출 종료일 빠른 선택 ── */
+function setEnd(plusDays){
+  if(plusDays===null){ $('nEnd').value=''; toast('무기한으로 걸립니다'); return; }
+  const d=new Date(); d.setDate(d.getDate()+plusDays);
+  $('nEnd').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* ── ⚡ 자주 쓰는 공지 ── */
+const TEMPLATES = [
+  { k:'📦 준비물',   cat:'교과', t:'다음 시간 준비물',   b:'준비물 : \n못 가져오면 미리 말해주세요.' },
+  { k:'📍 이동수업', cat:'일반', t:'다음 시간은 이동수업입니다', b:'장소 : \n수업 시작 전까지 이동해 주세요.' },
+  { k:'📝 수행평가', cat:'교과', t:'수행평가 안내',       b:'일시 : \n범위 : \n준비물 : ' },
+  { k:'🎒 가정통신문', cat:'일반', t:'가정통신문 회신 안내', b:'제출 기한 : \n담임 선생님께 내주세요.' },
+  { k:'🏃 체육복',   cat:'일반', t:'체육복 착용 안내',     b:'해당 요일 : \n갈아입을 시간을 미리 확인해 주세요.' },
+  { k:'🚌 행사',     cat:'학년', t:'행사 안내',           b:'일시 : \n장소 : \n준비물 : ' },
+];
+function buildTemplates(){
+  const box=$('nTpl'); if(!box || box.dataset.built) return;
+  box.dataset.built='1';
+  TEMPLATES.forEach((tp,i)=>{
+    const b=document.createElement('button');
+    b.className='chip'; b.textContent=tp.k; b.onclick=()=>useTemplate(i);
+    box.appendChild(b);
+  });
+}
+function useTemplate(i){
+  const tp=TEMPLATES[i]; if(!tp) return;
+  pickCat(tp.cat);
+  if(!$('nTitle').value.trim()) $('nTitle').value = tp.t;
+  if(!$('nBody').value.trim())  $('nBody').value  = tp.b;
+  if(!$('nEnd').value) setEnd(6);          // 기본 1주일 — 오래된 공지가 쌓이지 않게
+  $('nTitle').focus();
+}
+
+/* ── 인증 (공지 전용 계정 — 질문나무와 별개) ── */
+function authTab(t){
+  $('atab-login').classList.toggle('on', t==='login');
+  $('atab-signup').classList.toggle('on', t==='signup');
+  $('loginForm').style.display  = t==='login'  ? 'block':'none';
+  $('signupForm').style.display = t==='signup' ? 'block':'none';
+}
+
+async function doLogin(){
+  const email=$('email').value.trim(), pw=$('pw').value;
+  const err=$('loginErr'); err.classList.remove('show');
+  if(!email||!pw){ err.textContent='이메일과 비밀번호를 입력하세요'; err.classList.add('show'); return; }
+  $('loginBtn').disabled=true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:pw });
+  if(error){ $('loginBtn').disabled=false;
+    err.textContent = /not confirmed/i.test(error.message)
+      ? '메일함의 인증 메일을 먼저 눌러 주세요. 메일이 오지 않으면 관리 담당 선생님께 알려 주세요(서버의 「이메일 확인」 설정을 꺼야 합니다).'
+      : '로그인 실패: '+error.message;
+    err.classList.add('show'); return; }
+  // 공지 전용 계정인지 확인 — 질문나무 계정으로는 들어올 수 없음
+  let { data:adm } = await sb.from('notice_admins').select('*').eq('auth_id', data.user.id).maybeSingle();
+  if(!adm){                          // 이메일 확인을 거쳐 가입한 경우 — 가입 때 적은 정보로 등록을 마칩니다
+    const pend = readPendingReg(email);
+    if(pend){
+      const { data:reg } = await sb.rpc('register_notice_admin', pend);
+      if(reg && reg!=='bad_code'){ clearPendingReg();
+        ({ data:adm } = await sb.from('notice_admins').select('*').eq('auth_id', data.user.id).maybeSingle()); }
+    }
+  }
+  $('loginBtn').disabled=false;
+  if(!adm){ await sb.auth.signOut();
+    err.textContent='공지 관리 권한이 없는 계정입니다. ‘가입’ 탭에서 공지 전용 계정을 만들어 주세요.';
+    err.classList.add('show'); return; }
+  if(adm.approved === false){ await sb.auth.signOut();
+    err.textContent='아직 승인 대기 중입니다. 관리 담당 선생님께 승인을 요청해 주세요.';
+    err.classList.add('show'); return; }
+  me=data.user; myAdmin=adm; myName=adm.name||email.split('@')[0]; READONLY=false;
+  enterDash();
+}
+
+/* 이메일 확인을 거치는 서버용 — 가입 때 적은 정보를 이 기기에 잠깐 기억 */
+const LS_PENDING_REG = SCHOOL.key('hnr_pending_reg');
+function savePendingReg(email, args){ try{ localStorage.setItem(LS_PENDING_REG, JSON.stringify({ email:email.toLowerCase(), args })); }catch(e){} }
+function readPendingReg(email){ try{ const v=JSON.parse(localStorage.getItem(LS_PENDING_REG)||'null');
+  return (v && v.email===email.toLowerCase()) ? v.args : null; }catch(e){ return null; } }
+function clearPendingReg(){ try{ localStorage.removeItem(LS_PENDING_REG); }catch(e){} }
+
+async function doSignup(){
+  const name=$('sgName').value.trim(), email=$('sgEmail').value.trim(), pw=$('sgPw').value;
+  const code=$('sgCode').value.trim(), subject=$('sgSubject').value.trim()||null;
+  const err=$('sgErr'); err.classList.remove('show');
+  if(!name){ err.textContent='이름을 입력하세요'; err.classList.add('show'); return; }
+  if(!email||pw.length<6){ err.textContent='이메일과 6자 이상 비밀번호를 입력하세요'; err.classList.add('show'); return; }
+  // 가입 코드 확인 — 코드 값을 받아오지 않고, 맞는지만 서버에 물어본다
+  const { data:ok, error:codeErr } = await sb.rpc('check_admin_code', { code });
+  if(codeErr){ err.textContent='가입 코드를 확인하지 못했습니다. 관리자에게 문의하세요. ('+codeErr.message+')'; err.classList.add('show'); return; }
+  if(ok !== true){ err.textContent='가입 코드가 올바르지 않습니다. 학교 담당자에게 문의하세요.'; err.classList.add('show'); return; }
+  const hrG=$('sgHrGrade').value, hrC=$('sgHrClass').value;
+  const prof = { name, subject, dept:$('sgDept').value||null,
+    hr_grade:(hrG&&hrC)?Number(hrG):null, hr_class:(hrG&&hrC)?Number(hrC):null };
+  $('sgBtn').disabled=true;
+  const { data, error } = await sb.auth.signUp({ email, password:pw });
+  if(error){ $('sgBtn').disabled=false; err.textContent='가입 실패: '+error.message; err.classList.add('show'); return; }
+  const uid=data.user?.id;
+  if(!uid || !data.session){         // 서버에 「이메일 확인」이 켜져 있음 — 확인 뒤 첫 로그인 때 등록을 마칩니다
+    savePendingReg(email, { p_code:code, p_name:prof.name, p_subject:prof.subject, p_dept:prof.dept,
+                            p_hr_grade:prof.hr_grade, p_hr_class:prof.hr_class });
+    $('sgBtn').disabled=false; authTab('login'); $('email').value=email;
+    const le=$('loginErr'); le.style.color='';
+    le.textContent='📧 메일함의 인증 메일을 누른 뒤 여기서 로그인하면 가입이 마무리됩니다.';
+    le.classList.add('show'); return; }
+  // 새로 설치한 학교는 서버가 가입 코드를 직접 확인하고 등록합니다 (첫 가입자는 관리 담당자)
+  let { data:reg, error:insErr } = await sb.rpc('register_notice_admin', {
+    p_code:code, p_name:prof.name, p_subject:prof.subject, p_dept:prof.dept,
+    p_hr_grade:prof.hr_grade, p_hr_class:prof.hr_class });
+  if(insErr && /register_notice_admin|PGRST202|not find the function/i.test(insErr.message+' '+(insErr.code||''))){
+    // 예전에 설치한 서버(해누리) — 직접 등록
+    ({ error:insErr } = await sb.from('notice_admins').insert(Object.assign({ auth_id:uid }, prof)));
+    reg = null;
+  }
+  $('sgBtn').disabled=false;
+  if(insErr){ err.textContent='계정은 만들어졌지만 프로필 저장 실패: '+insErr.message; err.classList.add('show'); return; }
+  if(reg==='bad_code'){ await sb.auth.signOut(); err.textContent='가입 코드가 올바르지 않습니다. 학교 담당자에게 문의하세요.'; err.classList.add('show'); return; }
+  if(reg==='owner'){                 // 이 학교 첫 가입자 — 바로 들어갑니다
+    toast('✅ 첫 가입자라 관리 담당자로 등록됐습니다'); checkSession(); return;
+  }
+  // 승인 대기 안내 후 로그인 화면으로
+  await sb.auth.signOut();
+  authTab('login');
+  const le=$('loginErr');
+  le.style.color='var(--green)';
+  le.textContent='✅ 가입되었습니다. 관리 담당 선생님이 승인하면 바로 사용할 수 있어요.';
+  le.classList.add('show');
+}
+
+function enterGuest(){ READONLY=true; me=null; myName='둘러보기'; enterDash(); }
+
+async function doLogout(){ if(!READONLY){ try{ await sb.auth.signOut(); }catch(e){} } location.reload(); }
+
+async function checkSession(){
+  const { data } = await sb.auth.getSession();
+  if(data.session){
+    const { data:adm } = await sb.from('notice_admins').select('*').eq('auth_id', data.session.user.id).maybeSingle();
+    if(adm && adm.approved !== false){ me=data.session.user; myAdmin=adm; myName=adm.name; READONLY=false; enterDash(); }
+  }
+}
+
+function enterDash(){
+  $('login').style.display='none'; $('dash').style.display='block';
+  document.body.classList.toggle('readonly', READONLY);
+  // 공동계정: 개인정보(쪽지)·설정·승인은 숨긴다
+  const shared = !!myAdmin?.is_shared;
+  document.body.classList.toggle('shared', shared);
+  // 학교 설정(학교명·가입 코드 등)은 관리 담당자만 바꿀 수 있습니다
+  $('cfgCard').style.display = (READONLY || myAdmin?.is_owner) ? '' : 'none';
+  if(shared && document.querySelector('.tab.on')?.dataset.p === 'msg') tab('notice');
+  $('whoami').textContent = READONLY ? '👀 둘러보기'
+    : (shared ? '👥 공동계정' : (myName+' 선생님'));
+  loadNotices(); loadScheds(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadVideos(); loadBirthdays(); loadCfg(); makeUrl();
+  if(!shared){ loadMsgs(false); refreshMsgBadge(); }   // 공동계정은 쪽지 조회 자체를 안 함
+  msgUrlHint(); buildSquadChips(); loadSquadCfg();
+  loadPalette('clean'); loadPalette('duty'); loadApprovals();
+  fillDeptSelects(); buildTemplates();
+  if(myAdmin?.dept) $('nDept').value = myAdmin.dept;   // 내 부서를 기본 선택
+  // 이 기기에 정해둔 교실 → 학년·반 칸에 미리 채웁니다
+  const dc = deviceClass();
+  $('pbDevGrade').value = dc.grade; $('pbDevClass').value = dc.class_no;
+  applyDeviceClass(true);
+  if(shared){                       // 공동계정: 올리시는 선생님을 고르게 합니다
+    loadPosterLocal(); renderPosterBar(); loadRoster(); applyPoster();
+    if(!POSTER.name) document.body.classList.add('pickon');
+  }
+  if(!READONLY && !shared) subscribeMsgs();
+}
+
+/* ── 탭 ── */
+function tab(p){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.p===p));
+  document.querySelectorAll('.panel').forEach(el=>el.classList.toggle('on',el.id==='p-'+p));
+  if(p==='msg') loadMsgs(true);   // 쪽지 탭을 연 순간 읽음 처리
+}
+
+/* ── 공지 ── */
+let curCat='일반';
+function pickCat(c){ curCat=c;
+  document.querySelectorAll('#catChips .chip').forEach(ch=>ch.classList.toggle('on',ch.dataset.c===c));
+  $('nSubjWrap').style.display = c==='교과' ? 'block' : 'none';
+  // 교과 선택 시 담당 과목 자동 입력
+  // (공동계정이면 지금 쓰시는 선생님의 과목, 개인계정이면 가입 때 적으신 과목)
+  const subj = isShared() ? POSTER.subject : myAdmin?.subject;
+  if(c==='교과' && !$('nSubj').value && subj) $('nSubj').value = subj;
+}
+/* ── 🧹 오래된 공지 정리 알림 ──
+   종료일 없이 2주 넘게 걸려 있는 공지를 모아서 알려준다 */
+function renderStaleWarning(list){
+  const box=$('staleBox'); if(!box) return;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const stale=(list||[]).filter(n=>{
+    if(n.end_at) return false;                       // 종료일 있으면 알아서 사라짐
+    const d=new Date(n.created_at);
+    return (today - d)/86400000 >= 14;               // 2주 이상
+  });
+  if(!stale.length){ box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = `🧹 <b>${stale.length}건</b>이 종료일 없이 2주 넘게 걸려 있습니다.
+    오래된 공지가 쌓이면 중요한 공지가 묻힙니다 — 확인 후 정리하거나 종료일을 넣어주세요.
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      ${stale.slice(0,6).map(n=>`<button class="chip" onclick="startEditNotice(${n.id})">${esc((n.title||'').slice(0,14))}</button>`).join('')}
+      ${stale.length>6?`<span class="hint">외 ${stale.length-6}건</span>`:''}
+    </div>`;
+}
+
+/* ── ✏️ 공지 수정 ── */
+let editingNoticeId = null;
+function startEditNotice(id){
+  const n = (noticeCache||[]).find(x=>x.id===id);
+  if(!n){ toast('공지를 찾지 못했습니다'); return; }
+  // 공동계정에서 다른 선생님이 올리신 글을 고칠 때는 한 번 여쭤봅니다
+  if(isShared() && n.author_name && n.author_name !== POSTER.name
+     && !confirm(`이 공지는 ${n.author_name} 선생님이 올리신 것입니다.\n고쳐도 괜찮을까요?`)) return;
+  editingNoticeId = id;
+  pickCat(n.category);
+  $('nTitle').value = n.title||'';
+  $('nBody').value  = n.body||'';
+  $('nLink').value  = n.link||'';
+  $('nSubj').value  = n.subject||'';
+  $('nGrade').value = n.grade ? String(n.grade) : '';
+  $('nClass').value = n.class_no ? String(n.class_no) : '';
+  $('nEnd').value   = n.end_at||'';
+  $('nDept').value  = n.dept||'';
+  $('nPin').checked = !!n.pinned;
+  $('nSave').textContent = '✏️ 수정 저장';
+  $('nCancel').style.display = 'block';
+  $('nTitle').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function cancelEditNotice(){
+  editingNoticeId = null;
+  ['nTitle','nBody','nSubj','nEnd','nLink','nClass'].forEach(id=>$(id).value='');
+  $('nDept').value = (isShared() ? POSTER.dept : myAdmin?.dept) || '';   // 소속 부서로 되돌림
+  $('nPin').checked=false;
+  $('nSave').textContent='공지 등록';
+  $('nCancel').style.display='none';
+  applyDeviceClass(true);            // 이 기기의 교실로 다시 맞춰 둡니다
+}
+
+async function saveNotice(){
+  const title=$('nTitle').value.trim();
+  if(!title){ toast('제목을 입력하세요'); return; }
+  if(needPoster()) return;                 // 공동계정: 올리시는 분부터 골라주세요
+  $('nSave').disabled=true;
+  const rec={ category:curCat, title, body:$('nBody').value.trim()||null,
+    grade:$('nGrade').value?Number($('nGrade').value):null,
+    class_no:($('nGrade').value && $('nClass').value)?Number($('nClass').value):null,
+    dept:$('nDept').value||null,
+    subject:curCat==='교과'?($('nSubj').value.trim()||null):null,
+    link:$('nLink').value.trim()||null,
+    pinned:$('nPin').checked, end_at:$('nEnd').value||null,
+    author_id:me.id, author_name:posterName() };
+  let error, rows;
+  if(editingNoticeId){
+    delete rec.author_id; delete rec.author_name;      // 작성자는 그대로 둔다
+    // .select() 로 실제 바뀐 행을 받아온다 (권한에 막히면 오류 없이 0건이 되므로)
+    ({ data: rows, error } = await sb.from('notices').update(rec).eq('id', editingNoticeId).select());
+  } else {
+    ({ data: rows, error } = await sb.from('notices').insert(rec).select());
+  }
+  $('nSave').disabled=false;
+  if(error){
+    toast(/policy|permission|row-level/i.test(error.message)
+      ? '수정 권한이 없습니다 (본인 공지 또는 우리 반 공지만 가능)'
+      : ((editingNoticeId?'수정':'등록')+' 실패: '+error.message));
+    return;
+  }
+  if(editingNoticeId && (!rows || !rows.length)){
+    toast('수정되지 않았습니다 — 본인 공지이거나 우리 반 공지여야 합니다');
+    return;
+  }
+  const wasEdit = !!editingNoticeId;
+  cancelEditNotice();
+  if(isShared() && POSTER.name && !wasEdit)   // 명단에 이름을 최신으로 남겨둡니다
+    sb.rpc('touch_poster', { p_name:POSTER.name, p_subject:POSTER.subject||null,
+                             p_dept:POSTER.dept||null }).then(()=>{},()=>{});
+  toast(wasEdit ? '✏️ 수정됐습니다' : `✅ ${posterName()} 선생님 이름으로 등록됐습니다`);
+  loadNotices();
+}
+let noticeCache = [];
+
+/* 내가 이 항목을 손댈 수 있나 (서버 규칙과 같은 조건) */
+function canEdit(n){
+  if(READONLY || !me) return false;
+  if(!n.author_id) return true;                    // 작성자 기록 없는 예전 자료
+  if(n.author_id === me.id) return true;           // 본인 것
+  if(myAdmin?.is_owner) return true;               // 관리담당자
+  return !!(myAdmin?.hr_grade && n.grade === myAdmin.hr_grade
+            && n.class_no && n.class_no === myAdmin.hr_class);   // 우리 반 것
+}
+async function loadNotices(){
+  const { data } = await sb.from('notices').select('*').order('pinned',{ascending:false}).order('created_at',{ascending:false});
+  const box=$('noticeList');
+  noticeCache = data || [];
+  renderStaleWarning(noticeCache);
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 공지가 없습니다</div>'; return; }
+  box.innerHTML = data.map(n=>{
+    const cat = n.category==='교과'&&n.subject?`교과·${esc(n.subject)}`:n.category;
+    const exp = n.end_at?` · ~${n.end_at}`:'';
+    return `<div class="item"><span class="tag tag-${n.category}">${esc(cat)}</span>
+      <div class="main"><div class="t">${n.pinned?'<span class="pin">📌 </span>':''}${esc(n.title)}${n.grade?` <span class="meta">[${n.grade}학년${n.class_no?' '+n.class_no+'반':''}]</span>`:''}</div>
+      ${n.body?`<div class="b">${esc(n.body)}</div>`:''}
+      <div class="meta">${n.dept?esc(n.dept)+' · ':''}${
+        // 공동계정에서는 누가 올린 글인지 눈에 띄게 — 남의 글을 실수로 지우지 않게
+        n.author_name ? (isShared() && n.author_name!==POSTER.name
+          ? `<b style="color:#b45309">${esc(n.author_name)} 선생님</b>`
+          : `<b>${esc(n.author_name)}</b>`) + ' · ' : ''
+      }${fmtDate(n.created_at)}${exp}${n.link?' · 🔗QR':''}</div></div>
+      ${canEdit(n)?`<button class="del" style="background:#eef2fa;color:#3b6ef5" onclick="startEditNotice(${n.id})">✏️ 수정</button>`:''}
+      <button class="del" data-title="${esc(n.title||'')}"
+              onclick="del('notices',${n.id},loadNotices,this.dataset.title)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 일정 ── */
+async function saveSched(){
+  const title=$('sTitle').value.trim(), start=$('sStart').value;
+  if(!title||!start){ toast('일정명과 시작일을 입력하세요'); return; }
+  $('sSave').disabled=true;
+  const sg=$('sGrade').value, sc=$('sClass').value;
+  const { error } = await sb.from('schedules').insert({ title, start_date:start,
+    end_date:$('sEnd').value||null, location:$('sLoc').value.trim()||null,
+    icon:$('sIcon').value||'📌',
+    grade: sg?Number(sg):null, class_no:(sg&&sc)?Number(sc):null,
+    author_id:me.id });
+  $('sSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('sTitle').value='';$('sStart').value='';$('sEnd').value='';$('sLoc').value='';$('sClass').value='';
+  toast('✅ 일정 추가됨'); loadScheds();
+}
+async function loadScheds(){
+  const { data } = await sb.from('schedules').select('*').order('start_date',{ascending:true});
+  const box=$('schedList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 일정이 없습니다</div>'; return; }
+  box.innerHTML = data.map(s=>{
+    const range = s.end_date&&s.end_date!==s.start_date?` ~ ${s.end_date}`:'';
+    const tgt = s.grade?`[${s.grade}학년${s.class_no?' '+s.class_no+'반':''}] `:'';
+    return `<div class="item"><span class="tag" style="background:#f5a623">${s.icon||'📌'}</span>
+      <div class="main"><div class="t">${tgt}${esc(s.title)}</div>
+      <div class="meta">${s.start_date}${range}${s.location?' · @'+esc(s.location):''}</div></div>
+      <button class="del" onclick="del('schedules',${s.id},loadScheds)">삭제</button></div>`;
+  }).join('');
+}
+
+
+/* ── 디데이 ── */
+const DDAY_ICON = { '시험':'📝','평가':'📊','방학':'🏖️','기타':'🎯' };
+function ddayIcon(){ $('dIcon').value = DDAY_ICON[$('dType').value] || '🎯'; }
+async function saveDday(){
+  const title=$('dTitle').value.trim(), date=$('dDate').value;
+  if(!title||!date){ toast('이름과 날짜를 입력하세요'); return; }
+  $('dSave').disabled=true;
+  const dg=$('dGrade').value, dc=$('dClass').value;
+  const { error } = await sb.from('ddays').insert({ title, target_date:date,
+    type:$('dType').value, icon:$('dIcon').value||'🎯',
+    grade: dg?Number(dg):null, class_no:(dg&&dc)?Number(dc):null,
+    author_id:me.id });
+  $('dSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('dTitle').value='';$('dClass').value='';
+  toast('✅ 디데이 추가됨'); loadDdays();
+}
+async function loadDdays(){
+  const { data } = await sb.from('ddays').select('*').order('target_date',{ascending:true});
+  const box=$('ddayList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 디데이가 없습니다</div>'; return; }
+  const t=new Date(); t.setHours(0,0,0,0);
+  box.innerHTML = data.map(x=>{
+    const n=Math.round((new Date(x.target_date+'T00:00')-t)/86400000);
+    const dtxt = n<0?`D+${-n} (지남)`:(n===0?'D-DAY':`D-${n}`);
+    const tgt = x.grade?`[${x.grade}학년${x.class_no?' '+x.class_no+'반':''}] `:'';
+    return `<div class="item"><span class="tag" style="background:#8b6cff">${x.icon||'🎯'} ${esc(x.type)}</span>
+      <div class="main"><div class="t">${tgt}${esc(x.title)} <span class="meta">${dtxt}</span></div>
+      <div class="meta">${x.target_date}</div></div>
+      <button class="del" onclick="del('ddays',${x.id},loadDdays)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 평가일정 ── */
+async function saveAssess(){
+  const subject=$('aSubject').value.trim(), title=$('aTitle').value.trim(), date=$('aDate').value;
+  if(!subject||!title||!date){ toast('과목·평가명·평가일을 입력하세요'); return; }
+  $('aSave').disabled=true;
+  const { error } = await sb.from('assessments').insert({ subject, title, assess_date:date,
+    assess_type:$('aType').value, grade:$('aGrade').value?Number($('aGrade').value):null,
+    class_no:($('aGrade').value && $('aClass').value)?Number($('aClass').value):null,
+    scope:$('aScope').value.trim()||null, author_id:me.id });
+  $('aSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('aTitle').value='';$('aScope').value='';$('aClass').value='';
+  toast('✅ 평가일정 추가됨'); loadAssess();
+}
+async function loadAssess(){
+  const today=new Date().toISOString().slice(0,10);
+  const { data } = await sb.from('assessments').select('*').gte('assess_date',today)
+    .order('assess_date',{ascending:true});
+  const box=$('assessList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">예정된 평가가 없습니다</div>'; return; }
+  box.innerHTML = data.map(a=>{
+    const g=a.grade?`${a.grade}학년${a.class_no?' '+a.class_no+'반':''} `:'';
+    const color=a.assess_type==='지필평가'?'#ef3b46':(a.assess_type==='수행평가'?'#d97706':'#3b6ef5');
+    return `<div class="item"><span class="tag" style="background:${color}">${esc(a.assess_type)}</span>
+      <div class="main"><div class="t">${g}${esc(a.subject)} · ${esc(a.title)}</div>
+      <div class="meta">${a.assess_date}${a.scope?' · 📖 '+esc(a.scope):''}</div></div>
+      <button class="del" onclick="del('assessments',${a.id},loadAssess)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 학생 호출 ── */
+async function saveCall(){
+  const g=$('kGrade').value, c=$('kClass').value;
+  const name=$('kName').value.trim();
+  if(!name){ toast('학생 이름을 입력하세요'); return; }
+  if(needPoster()) return;                 // 화면에 "○○ 선생님이 부르십니다"로 나갑니다
+  $('kSave').disabled=true;
+  const { error } = await sb.from('calls').insert({ student_name:name,
+    grade:g?Number(g):null, class_no:c?Number(c):null,
+    teacher_name:posterName(), location:$('kLoc').value.trim()||'교무실',
+    reason:$('kReason').value.trim()||null, author_id:me.id });
+  $('kSave').disabled=false;
+  if(error){ toast('호출 실패: '+error.message); return; }
+  $('kName').value=''; $('kReason').value='';
+  toast('📣 호출했어요'); loadCalls();
+}
+async function loadCalls(){
+  const { data } = await sb.from('calls').select('*').eq('status','active').order('created_at',{ascending:false});
+  const box=$('callList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">현재 호출 중인 학생이 없습니다</div>'; return; }
+  box.innerHTML = data.map(c=>{
+    const cls=`${c.grade??'?'}-${c.class_no??'?'}`;
+    const t=new Date(c.created_at);
+    return `<div class="item"><span class="tag" style="background:#b45309">${cls}</span>
+      <div class="main"><div class="t">${esc(c.student_name)} <span class="meta">← ${esc(c.teacher_name)} 선생님 · ${esc(c.location||'교무실')}</span></div>
+      <div class="meta">${c.reason?esc(c.reason)+' · ':''}${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')} 호출</div></div>
+      <button class="del" style="background:#e7f9f0;color:#0ea371" onclick="doneCall(${c.id})">✅ 완료</button></div>`;
+  }).join('');
+}
+async function doneCall(id){
+  const { error } = await sb.from('calls').update({ status:'done', done_at:new Date().toISOString() }).eq('id',id);
+  if(error){ toast('실패: '+error.message); return; }
+  toast('완료 처리됨'); loadCalls();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎬 영상 — 교실 화면에서 바로 재생
+   ═══════════════════════════════════════════════════════════════ */
+let videoCache = [], editingVideoId = null;
+
+function previewVideo(){
+  const box=$('vPrev'), raw=$('vUrl').value.trim();
+  if(!raw){ box.innerHTML=''; return; }
+  const v = parseVideo(raw);
+  if(!v){
+    box.innerHTML = `<div class="bad">이 주소는 화면 안에서 재생할 수 없습니다.<br>
+      유튜브·비메오 주소나 영상 파일(.mp4) 주소를 넣어주세요.</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="ok">
+    ${v.thumb?`<img src="${esc(v.thumb)}" alt="">`:''}
+    <div><div class="t">✅ ${esc(v.label)} 영상으로 확인됐습니다</div>
+    <div class="s">교실 화면에서 바로 재생됩니다</div></div></div>`;
+}
+
+async function saveVideo(){
+  const url=$('vUrl').value.trim(), title=$('vTitle').value.trim();
+  if(!url){ toast('영상 주소를 넣어주세요'); return; }
+  if(!parseVideo(url)){ toast('유튜브·비메오 주소나 .mp4 주소만 넣을 수 있습니다'); return; }
+  if(!title){ toast('제목을 입력하세요'); return; }
+  if(needPoster()) return;
+  $('vSave').disabled=true;
+  const g=$('vGrade').value, c=$('vClass').value;
+  const rec={ title, url, note:$('vNote').value.trim()||null,
+    grade:g?Number(g):null, class_no:(g&&c)?Number(c):null,
+    end_at:$('vEnd').value||null };
+  let error, rows;
+  if(editingVideoId){
+    ({ data:rows, error } = await sb.from('videos').update(rec).eq('id',editingVideoId).select());
+  } else {
+    rec.author_id=me.id; rec.author_name=posterName();
+    ({ data:rows, error } = await sb.from('videos').insert(rec).select());
+  }
+  $('vSave').disabled=false;
+  if(error){
+    toast(/relation|does not exist|schema cache/i.test(error.message)
+      ? '영상 표가 아직 없습니다 — VIDEOS.sql 을 한 번 실행해 주세요'
+      : ((editingVideoId?'수정':'등록')+' 실패: '+error.message));
+    return;
+  }
+  if(editingVideoId && (!rows||!rows.length)){
+    toast('수정되지 않았습니다 — 본인 영상이거나 우리 반 영상이어야 합니다'); return;
+  }
+  const wasEdit=!!editingVideoId;
+  cancelEditVideo();
+  toast(wasEdit?'✏️ 수정됐습니다':'🎬 영상이 등록됐습니다');
+  loadVideos();
+}
+function cancelEditVideo(){
+  editingVideoId=null;
+  ['vUrl','vTitle','vNote','vEnd','vClass'].forEach(id=>$(id).value='');
+  $('vPrev').innerHTML='';
+  $('vSave').textContent='영상 등록'; $('vCancel').style.display='none';
+  applyDeviceClass(true);
+}
+function startEditVideo(id){
+  const v=videoCache.find(x=>x.id===id); if(!v){ toast('영상을 찾지 못했습니다'); return; }
+  if(isShared() && v.author_name && v.author_name!==POSTER.name
+     && !confirm(`이 영상은 ${v.author_name} 선생님이 올리신 것입니다.\n고쳐도 괜찮을까요?`)) return;
+  editingVideoId=id;
+  $('vUrl').value=v.url||''; $('vTitle').value=v.title||''; $('vNote').value=v.note||'';
+  $('vGrade').value=v.grade?String(v.grade):''; $('vClass').value=v.class_no?String(v.class_no):'';
+  $('vEnd').value=v.end_at||'';
+  previewVideo();
+  $('vSave').textContent='✏️ 수정 저장'; $('vCancel').style.display='block';
+  $('vUrl').scrollIntoView({behavior:'smooth', block:'center'});
+}
+async function loadVideos(){
+  const { data, error } = await sb.from('videos').select('*')
+    .order('sort_order').order('created_at',{ascending:false});
+  const box=$('vidList'); if(!box) return;
+  if(error){
+    box.innerHTML = `<div class="empty">영상 표가 아직 없습니다 —
+      <b>VIDEOS.sql</b> 을 한 번 실행해 주세요</div>`;
+    return;
+  }
+  videoCache = data || [];
+  if(!videoCache.length){ box.innerHTML='<div class="empty">등록된 영상이 없습니다</div>'; return; }
+  box.innerHTML = videoCache.map(v=>{
+    const p=parseVideo(v.url);
+    const who = v.author_name
+      ? (isShared() && v.author_name!==POSTER.name
+          ? `<b style="color:#b45309">${esc(v.author_name)} 선생님</b> · `
+          : `<b>${esc(v.author_name)}</b> · `) : '';
+    return `<div class="item">
+      <span class="tag" style="background:#7c3aed">${esc(p?p.label:'주소 확인')}</span>
+      <div class="main"><div class="t">${esc(v.title)}${
+        v.grade?` <span class="meta">[${v.grade}학년${v.class_no?' '+v.class_no+'반':''}]</span>`:''}</div>
+      ${v.note?`<div class="b">${esc(v.note)}</div>`:''}
+      <div class="meta">${who}${fmtDate(v.created_at)}${v.end_at?` · ~${v.end_at}`:''}</div></div>
+      ${canEdit(v)?`<button class="del" style="background:#eef2fa;color:#3b6ef5" onclick="startEditVideo(${v.id})">✏️ 수정</button>`:''}
+      <button class="del" data-title="${esc(v.title||'')}"
+              onclick="del('videos',${v.id},loadVideos,this.dataset.title)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 📍 수업 장소 안내 ── */
+async function saveLoc(){
+  const date=$('lcDate').value, subject=$('lcSubject').value.trim(), loc=$('lcLoc').value.trim();
+  if(!date||!subject||!loc){ toast('날짜·과목·장소를 입력하세요'); return; }
+  $('lcSave').disabled=true;
+  const { error } = await sb.from('class_locations').insert({ loc_date:date,
+    grade:$('lcGrade').value?Number($('lcGrade').value):null,
+    class_no:$('lcClass').value?Number($('lcClass').value):null,
+    period:$('lcPeriod').value?Number($('lcPeriod').value):null,
+    subject, location:loc, note:$('lcNote').value.trim()||null, author_id:me.id });
+  $('lcSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('lcNote').value='';
+  toast('📍 장소 등록됨'); loadLocs();
+}
+async function loadLocs(){
+  const today=new Date().toISOString().slice(0,10);
+  const { data } = await sb.from('class_locations').select('*').gte('loc_date',today)
+    .order('loc_date').order('grade').order('period');
+  const box=$('locList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 장소 안내가 없습니다</div>'; return; }
+  box.innerHTML=data.map(l=>{
+    const who=`${l.grade?l.grade+'학년 ':''}${l.class_no?l.class_no+'반 ':''}${l.period?l.period+'교시':''}`.trim();
+    return `<div class="item"><span class="tag" style="background:#0ea371">${l.loc_date.slice(5)}</span>
+      <div class="main"><div class="t">${esc(l.subject)} → 📍 ${esc(l.location)}</div>
+      <div class="meta">${who||'전체'}${l.note?' · '+esc(l.note):''}</div></div>
+      <button class="del" onclick="del('class_locations',${l.id},loadLocs)">삭제</button></div>`;
+  }).join('');
+}
+
+/* ── 🧹 청소 조 ── */
+let curSquad = null;
+
+/* 반마다 조 편성이 다를 수 있어 개수·명칭을 반별로 저장한다
+   저장 위치: display_config 의 clean_squad_<학년>-<반>  (예: "8|조") */
+function squadCfgKey(){
+  const g=$('clGrade').value, c=$('clClass').value;
+  return (g&&c) ? `clean_squad_${g}-${c}` : null;
+}
+function buildSquadChips(){
+  const box=$('squadChips'); if(!box) return;
+  // 개수 선택지 준비 (2~12)
+  const sc=$('sqCount');
+  if(sc && !sc.options.length){
+    sc.innerHTML = Array.from({length:11},(_,i)=>i+2).map(n=>`<option value="${n}">${n}개</option>`).join('');
+    sc.value = '8';   // 만들자마자 첫 항목(2)이 잡히지 않도록 기본값 지정
+  }
+  const n = Number(sc?.value) || 8;
+  const unit = $('sqUnit')?.value || '조';
+  box.innerHTML = Array.from({length:n},(_,i)=>{
+    const label = (i+1)+unit;
+    return `<button class="chip" data-s="${label}" onclick="pickSquad('${label}')">${label}</button>`;
+  }).join('');
+  if(curSquad) pickSquad(curSquad);
+}
+function pickSquad(s){
+  curSquad = s || null;
+  document.querySelectorAll('#squadChips .chip').forEach(c=>c.classList.toggle('on', c.dataset.s===s));
+}
+// 반을 고르면 그 반의 조 편성 설정을 불러온다
+async function loadSquadCfg(){
+  const key=squadCfgKey(); if(!key) return;
+  const { data } = await sb.from('display_config').select('value').eq('key',key).maybeSingle();
+  const [n,u] = (data?.value || '8|조').split('|');
+  if($('sqCount').options.length===0) buildSquadChips();
+  $('sqCount').value = n || '8';
+  $('sqUnit').value  = u || '조';
+  buildSquadChips();
+}
+async function saveSquadCfg(){
+  buildSquadChips();
+  const key=squadCfgKey(); if(!key || READONLY) return;
+  const val = `${$('sqCount').value}|${$('sqUnit').value}`;
+  const { error } = await sb.from('display_config').upsert({ key, value: val });
+  if(error) toast('조 편성 저장 실패: '+error.message);
+}
+/* ── 🎨 반별 역할 목록 (선생님이 자유롭게 추가) ────────────────────
+   저장 위치: display_config 의  roles_clean_<학년>-<반>  /  roles_duty_<학년>-<반>
+   기본 목록으로 시작하고, 새 역할을 넣으면 그 반 목록에 계속 남습니다.   */
+const PALETTE_DEFAULT = {
+  clean: ['바닥 쓸기','바닥 걸레','칠판','창문','쓰레기통','사물함','복도','분리수거'],
+  duty : ['우유당번','전기·에어컨','알림장','창문·환기','재활용','칠판지우개','학습부장','급식도우미','TV·컴퓨터','화분'],
+};
+const PALETTE_UI = {
+  clean: { grade:'clGrade', cls:'clClass', box:'clRolePal', input:'clNewRole' },
+  duty : { grade:'roGrade', cls:'roClass', box:'roRolePal', input:'roNewRole' },
+};
+let palette = { clean:[], duty:[] };
+
+function paletteKey(kind){
+  const u=PALETTE_UI[kind];
+  const g=$(u.grade)?.value, c=$(u.cls)?.value;
+  return (g&&c) ? `roles_${kind}_${g}-${c}` : null;
+}
+async function loadPalette(kind){
+  const key=paletteKey(kind);
+  let list = PALETTE_DEFAULT[kind];
+  if(key){
+    const { data } = await sb.from('display_config').select('value').eq('key',key).maybeSingle();
+    if(data?.value) list = data.value.split('|').filter(Boolean);
+  }
+  palette[kind]=list; renderPalette(kind);
+}
+function renderPalette(kind){
+  const box=$(PALETTE_UI[kind].box); if(!box) return;
+  box.innerHTML = palette[kind].map(r=>
+    `<button class="chip" onclick="usePaletteRole('${kind}','${r.replace(/'/g,"\\'")}')">${esc(r)}</button>`
+    ).join('') || '<span class="hint">아직 역할이 없어요. 아래에서 추가해 주세요.</span>';
+}
+function usePaletteRole(kind, role){
+  if(kind==='clean') addCleanRow(role);
+  else preRole(DUTY_ICON[role] || '🙋', role);
+}
+async function addRoleToPalette(kind){
+  const inp=$(PALETTE_UI[kind].input);
+  const v=(inp.value||'').trim();
+  if(!v){ toast('역할 이름을 입력하세요'); return; }
+  if(palette[kind].includes(v)){ toast('이미 있는 역할이에요'); inp.value=''; return; }
+  palette[kind].push(v); renderPalette(kind); inp.value='';
+  const key=paletteKey(kind);
+  if(!key){ toast('학년·반을 먼저 고르면 저장돼요'); return; }
+  const { error } = await sb.from('display_config').upsert({ key, value: palette[kind].join('|') });
+  toast(error ? ('저장 실패: '+error.message) : `✅ '${v}' 추가됨`);
+}
+async function removeRoleFromPalette(kind, role){
+  palette[kind]=palette[kind].filter(r=>r!==role); renderPalette(kind);
+  const key=paletteKey(kind); if(!key) return;
+  await sb.from('display_config').upsert({ key, value: palette[kind].join('|') });
+}
+function addCleanRow(role='', name=null, count=1){
+  const box=$('clRows');
+  for(let i=0;i<count;i++){
+    const div=document.createElement('div');
+    div.className='row cleanrow-edit';
+    div.style.cssText='gap:8px;margin-bottom:8px';
+    div.innerHTML=`<input class="cl-role" list="cleanRoles" placeholder="역할 (예: 칠판)" value="${esc(role)}">
+      <input class="cl-name" placeholder="이름 (예: 김OO)" value="${esc(name||'')}">
+      <button class="ghost" style="flex:0 0 auto;padding:8px 12px" onclick="this.parentElement.remove()">✕</button>`;
+    box.appendChild(div);
+  }
+}
+function clearCleanRows(){ $('clRows').innerHTML=''; }
+function readCleanRows(){
+  return [...document.querySelectorAll('#clRows .cleanrow-edit')].map(d=>({
+    area: d.querySelector('.cl-role').value.trim(),
+    members: d.querySelector('.cl-name').value.trim()
+  })).filter(r=>r.area||r.members);   // 양쪽 다 비면 저장 안 함
+}
+
+// 학년·반을 바꾸면 그 반의 조 편성 + 저장 내용을 함께 불러온다
+async function onCleanClassChange(){
+  curSquad=null; $('sqCustom').value='';
+  await loadSquadCfg();
+  await loadPalette('clean');
+  loadClean();
+}
+// 1인1역 탭에서 학년·반을 바꿀 때
+async function onDutyClassChange(){
+  await loadPalette('duty');
+  loadRoles();
+}
+
+async function saveClean(){
+  const g=$('clGrade').value, c=$('clClass').value;
+  if(!g||!c){ toast('학년·반을 입력하세요'); return; }
+  const rows=readCleanRows();
+  if(!curSquad && !rows.length){ toast('조를 고르거나 역할·이름을 한 줄이라도 넣어주세요'); return; }
+  $('clSave').disabled=true;
+  // 반 단위 교체를 서버에서 한 번에 처리 (두 선생님이 동시에 저장해도 유실 없음)
+  const payload=[];
+  if(curSquad) payload.push({ area:'청소당번', members:curSquad,
+    note:$('clNote').value.trim()||null, sort_order:0 });
+  rows.forEach((r,i)=>payload.push({ area:r.area||' ', members:r.members||' ', sort_order:i+1 }));
+  const { error } = await sb.rpc('replace_cleaning', {
+    p_grade:Number(g), p_class:Number(c), p_rows:payload, p_author:me.id });
+  $('clSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  toast(`✅ ${g}-${c} 저장됨 (${payload.length}줄)`); loadClean();
+}
+async function loadClean(){
+  const g=$('clGrade').value, c=$('clClass').value;
+  let qy = sb.from('cleaning_duties').select('*');
+  if(g && c) qy = qy.eq('grade',Number(g)).eq('class_no',Number(c));
+  const { data } = await qy.order('grade',{ascending:true}).order('class_no',{ascending:true}).order('sort_order',{ascending:true}).order('id',{ascending:true});
+  const box=$('cleanList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 당번이 없습니다</div>'; return; }
+  box.innerHTML=data.map(c=>`<div class="item"><span class="tag" style="background:#3b6ef5">${c.grade}-${c.class_no}</span>
+    <div class="main"><div class="t">🧹 ${esc(c.members)}</div><div class="meta">${c.note?esc(c.note):(c.area!=='청소당번'?esc(c.area):'')}</div></div>
+    <button class="del" onclick="del('cleaning_duties',${c.id},loadClean)">삭제</button></div>`).join('');
+  // 현재 반의 저장 내용을 입력칸에 되불러오기
+  if(g && c){
+    const mineAll=data.filter(x=>String(x.grade)===g && String(x.class_no)===c);
+    const sq=mineAll.find(x=>x.area==='청소당번');
+    if(sq){
+      pickSquad(sq.members); $('clNote').value=sq.note||'';
+      // 칩에 없는 값(직접 입력한 조)이면 직접입력 칸에 되살린다
+      const inChips=[...document.querySelectorAll('#squadChips .chip')].some(c=>c.dataset.s===sq.members);
+      $('sqCustom').value = inChips ? '' : (sq.members||'');
+    }
+    clearCleanRows();
+    mineAll.filter(x=>x.area!=='청소당번')
+      .sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))
+      .forEach(x=>addCleanRow((x.area||'').trim(), (x.members||'').trim()));
+  }
+}
+
+/* ── 📬 받은 쪽지 (학생 → 선생님) ── */
+const MSG_COLOR = {'하고 싶은 말':'#3b6ef5','질문':'#7c5cff','건의':'#0ea371','고민·상담':'#d97706','도움 요청':'#ef3b46'};
+const MSG_ICON  = {'하고 싶은 말':'💬','질문':'❓','건의':'🙋','고민·상담':'😟','도움 요청':'🚨'};
+let msgFilterMode = 'mine';
+let myReadIds = new Set();          // 내가 읽은 쪽지 (교사별로 따로)
+
+// 나에게 온 쪽지인가 (받는 사람 미지정 = 전체 공용)
+function msgForMe(m){
+  if(m.to_auth_id) return m.to_auth_id === me?.id;
+  if(m.to_teacher && myName) return m.to_teacher.replace(/\s|선생님/g,'').includes(myName.replace(/\s/g,''));
+  return !m.to_teacher;             // 받는 사람 안 정한 쪽지는 모두에게
+}
+async function loadMyReads(){
+  if(!me) return;
+  const { data } = await sb.from('message_reads').select('message_id').eq('reader_id', me.id);
+  myReadIds = new Set((data||[]).map(r=>r.message_id));
+}
+function msgTab(f){
+  msgFilterMode=f;
+  document.querySelectorAll('#msgFilter .chip[data-f]').forEach(c=>c.classList.toggle('on',c.dataset.f===f));
+  loadMsgs(true);
+}
+// 배지 = '나에게 온 것 중 내가 아직 안 읽은 쪽지' 개수
+async function refreshMsgBadge(){
+  const b=$('msgBadge'); if(!b || !me) return;
+  await loadMyReads();
+  const { data, error } = await sb.from('messages').select('id,to_auth_id,to_teacher,status')
+    .neq('status','done').limit(300);
+  if(error){ b.style.display='none'; return; }
+  const n = (data||[]).filter(m=>msgForMe(m) && !myReadIds.has(m.id)).length;
+  if(n>0){ b.textContent=n; b.style.display='inline-block'; } else b.style.display='none';
+}
+// markRead=true 는 쪽지 탭을 실제로 열었을 때만
+async function loadMsgs(markRead){
+  let qy = sb.from('messages').select('*');
+  if(msgFilterMode==='done') qy = qy.eq('status','done');
+  else qy = qy.neq('status','done');
+  const { data:raw, error } = await qy.order('created_at',{ascending:false}).limit(200);
+  const box=$('msgList');
+  if(error){ box.innerHTML='<div class="empty">쪽지를 불러오지 못했습니다 — SQL을 실행했는지 확인하세요</div>'; return; }
+  await loadMyReads();
+
+  let data = raw||[];
+  if(msgFilterMode==='mine')        data = data.filter(msgForMe);
+  else if(msgFilterMode==='unread') data = data.filter(m=>!myReadIds.has(m.id));
+  await refreshMsgBadge();
+
+  if(!data.length){ box.innerHTML='<div class="empty">받은 쪽지가 없습니다</div>'; return; }
+  box.innerHTML = data.map(m=>{
+    const who = m.is_anonymous ? '<span class="anon">🕶️ 익명</span>'
+      : `${m.grade?m.grade+'-':''}${m.class_no??''} ${esc(m.student_name||'이름 없음')}`;
+    const to = m.to_teacher ? ` → ${esc(m.to_teacher)}` : '';
+    const d = new Date(m.created_at);
+    const when = `${d.getMonth()+1}.${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const isNew = !myReadIds.has(m.id);
+    return `<div class="msg ${isNew?'unread':''}">
+      <div class="top">
+        <span class="ctag" style="background:${MSG_COLOR[m.category]||'#6c7894'}">${MSG_ICON[m.category]||'💬'} ${esc(m.category)}</span>
+        <span class="who">${who}</span><span class="anon">${to}</span>
+        ${isNew?'<span class="ctag" style="background:#ef3b46">NEW</span>':''}
+        <span class="when">${when}</span>
+      </div>
+      <div class="body">${esc(m.body)}</div>
+      <div class="acts">
+        ${m.status!=='done'?`<button class="ok" onclick="msgDone(${m.id})">✅ 처리 완료</button>`:''}
+        <button onclick="msgDel(${m.id})">🗑️ 삭제</button>
+      </div></div>`;
+  }).join('');
+  // 쪽지 탭을 열었을 때 '내 읽음'만 기록 (다른 선생님 알림은 그대로)
+  if(markRead && !READONLY && me){
+    const fresh = data.filter(m=>!myReadIds.has(m.id)).map(m=>({message_id:m.id, reader_id:me.id}));
+    if(fresh.length){
+      await sb.from('message_reads').upsert(fresh, { onConflict:'message_id,reader_id' });
+      refreshMsgBadge();
+    }
+  }
+}
+async function msgDone(id){
+  const { error } = await sb.from('messages').update({status:'done'}).eq('id',id);
+  if(error){ toast('실패: '+error.message); return; }
+  toast('✅ 처리 완료'); loadMsgs(false);
+}
+async function msgDel(id){
+  if(!confirm('이 쪽지를 삭제할까요?')) return;
+  const { error } = await sb.from('messages').delete().eq('id',id);
+  if(error){ toast('실패: '+error.message); return; }
+  toast('🗑️ 삭제됨'); loadMsgs(false);
+}
+// 새 쪽지 실시간 알림
+function subscribeMsgs(){
+  sb.channel('msg-live').on('postgres_changes',
+    {event:'INSERT',schema:'public',table:'messages'}, ()=>{
+      toast('📬 새 쪽지가 왔어요!'); refreshMsgBadge();
+      if(document.getElementById('p-msg').classList.contains('on')) loadMsgs(true);
+    }).subscribe();
+}
+
+/* ── 🙋 1인1역 ── */
+const DUTY_ICON = { '우유당번':'🥛','전기·에어컨':'💡','알림장':'📋','창문·환기':'🪟','재활용':'♻️',
+  '칠판지우개':'🧴','학습부장':'📚','급식도우미':'🍚','TV·컴퓨터':'🖥️','화분':'🌱' };
+function preRole(icon, role){ $('roIcon').value=icon; $('roRole').value=role; $('roMember').focus(); }
+async function saveRole(){
+  const g=$('roGrade').value, c=$('roClass').value, role=$('roRole').value.trim(), mem=$('roMember').value.trim();
+  if(!g||!c||!role||!mem){ toast('학년·반·역할·담당을 모두 입력하세요'); return; }
+  $('roSave').disabled=true;
+  const { error } = await sb.from('class_roles').insert({ grade:Number(g), class_no:Number(c),
+    role, member:mem, icon:$('roIcon').value||'🙋', author_id:me.id });
+  $('roSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('roRole').value='';$('roMember').value='';$('roIcon').value='🙋';
+  toast('✅ 1인1역 추가됨'); loadRoles();
+}
+async function loadRoles(){
+  const g=$('roGrade').value, c=$('roClass').value;
+  let qy = sb.from('class_roles').select('*');
+  if(g && c) qy = qy.eq('grade',Number(g)).eq('class_no',Number(c));
+  const { data } = await qy.order('grade',{ascending:true}).order('class_no',{ascending:true}).order('sort_order',{ascending:true}).order('id',{ascending:true});
+  const box=$('roleList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 1인1역이 없습니다</div>'; return; }
+  box.innerHTML=data.map(r=>`<div class="item"><span class="tag" style="background:#7c5cff">${r.grade}-${r.class_no}</span>
+    <div class="main"><div class="t">${r.icon||'🙋'} ${esc(r.role)}</div><div class="meta">${esc(r.member)}</div></div>
+    <button class="del" onclick="del('class_roles',${r.id},loadRoles)">삭제</button></div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎂 생일 — 한 줄에 한 명, "이름 월/일"
+   ═══════════════════════════════════════════════════════════════ */
+/* 한 줄을 {name, month, day} 로 읽습니다. 못 읽으면 null.
+   받는 모양 : 김하늘 9/3 · 9.3 · 9-3 · 09/03 · 0903 · 9월 3일 · 2011-09-03 · 2011.9.3 */
+function parseBirthdayLine(line){
+  const s=line.replace(/\t/g,' ').trim(); if(!s) return null;
+  let m, name='', mo=0, dy=0;
+  if((m = s.match(/^(.+?)\s+(\d{4})[.\-\/]\s*(\d{1,2})[.\-\/]\s*(\d{1,2})일?\s*$/))){          // 2011-09-03
+    name=m[1]; mo=+m[3]; dy=+m[4];
+  } else if((m = s.match(/^(.+?)\s+(\d{1,2})\s*월\s*(\d{1,2})\s*일?\s*$/))){                   // 9월 3일
+    name=m[1]; mo=+m[2]; dy=+m[3];
+  } else if((m = s.match(/^(.+?)\s+(\d{1,2})\s*[.\-\/]\s*(\d{1,2})\s*$/))){                    // 9/3 · 9.3 · 9-3
+    name=m[1]; mo=+m[2]; dy=+m[3];
+  } else if((m = s.match(/^(.+?)\s+(\d{2})(\d{2})\s*$/))){                                    // 0903
+    name=m[1]; mo=+m[2]; dy=+m[3];
+  } else return null;
+  name=name.trim().replace(/[,，]$/,'');
+  if(!name || mo<1||mo>12 || dy<1||dy>31) return null;
+  return {name, month:mo, day:dy};
+}
+function previewBirthdays(){
+  const lines=$('bdText').value.split(/\r?\n/).filter(l=>l.trim());
+  const ok=[], bad=[];
+  lines.forEach(l=>{ const r=parseBirthdayLine(l); (r?ok:bad).push(r||l); });
+  const box=$('bdPreview');
+  if(!lines.length){ box.innerHTML=''; return; }
+  box.innerHTML = `읽힌 것 <b>${ok.length}명</b>`
+    + (bad.length ? ` · <span style="color:#b45309">못 읽은 줄 ${bad.length}개 : ${bad.map(esc).join(' / ')}</span>` : '');
+}
+$('bdText').addEventListener('input', previewBirthdays);
+
+async function saveBirthdays(){
+  const g=$('bdGrade').value, c=$('bdClass').value;
+  if(!g||!c){ toast('학년·반을 먼저 고르세요'); return; }
+  const lines=$('bdText').value.split(/\r?\n/).filter(l=>l.trim());
+  const rows=[], bad=[];
+  lines.forEach(l=>{ const r=parseBirthdayLine(l); if(r) rows.push({...r, grade:Number(g), class_no:Number(c), author_id:me.id}); else bad.push(l); });
+  if(!rows.length){ toast('읽을 수 있는 줄이 없습니다 — "이름 9/3" 처럼 적어주세요'); return; }
+  if(bad.length && !confirm(`${bad.length}줄은 못 읽어서 빼고 저장합니다.\n\n${bad.join('\n')}\n\n계속할까요?`)) return;
+  $('bdSave').disabled=true;
+  // 같은 사람·같은 날은 다시 넣지 않습니다
+  const { error } = await sb.from('birthdays').upsert(rows, { onConflict:'grade,class_no,name,month,day', ignoreDuplicates:true });
+  $('bdSave').disabled=false;
+  if(error){
+    toast(/relation|does not exist|schema cache/i.test(error.message)
+      ? '생일 표가 아직 없습니다 — BIRTHDAYS.sql 을 한 번 실행해 주세요'
+      : '저장 실패: '+error.message);
+    return;
+  }
+  $('bdText').value=''; previewBirthdays();
+  toast(`🎂 ${rows.length}명 저장했습니다`); loadBirthdays();
+}
+async function loadBirthdays(){
+  const g=$('bdGrade').value, c=$('bdClass').value, box=$('bdList');
+  if(!box) return;
+  if(!g||!c){ box.innerHTML='<div class="empty">학년·반을 고르면 보입니다</div>'; return; }
+  const { data, error } = await sb.from('birthdays').select('*')
+    .eq('grade',Number(g)).eq('class_no',Number(c)).order('month').order('day').order('name');
+  if(error){ box.innerHTML='<div class="empty">생일 표가 아직 없습니다 — <b>BIRTHDAYS.sql</b> 을 한 번 실행해 주세요</div>'; return; }
+  if(!data||!data.length){ box.innerHTML='<div class="empty">등록된 생일이 없습니다</div>'; return; }
+  const thisMo=new Date().getMonth()+1;
+  let html='', lastMo=0;
+  data.forEach(b=>{
+    if(b.month!==lastMo){
+      lastMo=b.month;
+      html+=`<div style="margin:10px 0 4px;font-weight:800;color:${b.month===thisMo?'#3b6ef5':'#6c7894'}">${b.month}월${b.month===thisMo?' · 이번 달':''}</div>`;
+    }
+    html+=`<div class="item"><span class="tag" style="background:#e84d92">${b.month}/${b.day}</span>
+      <div class="main"><div class="t">🎂 ${esc(b.name)}</div></div>
+      <button class="del" data-title="${esc(b.name)}" onclick="del('birthdays',${b.id},loadBirthdays,this.dataset.title)">삭제</button></div>`;
+  });
+  box.innerHTML=html;
+}
+
+/* ── 분실물 ── */
+async function uploadLostPhoto(file){
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  const path=`lost/${Date.now()}_${Math.random().toString(36).slice(2,6)}.${ext}`;
+  const { data, error }=await sb.storage.from('attachments').upload(path,file,{cacheControl:'3600',upsert:false});
+  if(error){ console.error('업로드 실패:',error.message); return null; }
+  return sb.storage.from('attachments').getPublicUrl(data.path).data.publicUrl;
+}
+async function saveLost(){
+  const name=$('loName').value.trim();
+  if(!name){ toast('물건 이름을 입력하세요'); return; }
+  $('loSave').disabled=true;
+  let photo=null; const f=$('loPhoto').files[0];
+  if(f){ toast('사진 업로드 중…'); photo=await uploadLostPhoto(f);
+    if(photo===null && f){ /* 업로드 실패해도 텍스트는 등록 */ } }
+  const { error }=await sb.from('lost_items').insert({ item_name:name,
+    found_place:$('loFound').value.trim()||null, keep_place:$('loKeep').value.trim()||'교무실',
+    photo_url:photo, author_id:me.id });
+  $('loSave').disabled=false;
+  if(error){ toast('실패: '+error.message); return; }
+  $('loName').value='';$('loFound').value='';$('loPhoto').value='';
+  toast('✅ 분실물 등록됨'); loadLost();
+}
+async function loadLost(){
+  const { data }=await sb.from('lost_items').select('*').eq('status','active').order('created_at',{ascending:false});
+  const box=$('lostList');
+  if(!data||!data.length){ box.innerHTML='<div class="empty">보관 중인 분실물이 없습니다</div>'; return; }
+  box.innerHTML=data.map(it=>`<div class="item">${it.photo_url?`<img src="${esc(it.photo_url)}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex:0 0 auto">`:'<span class="tag" style="background:#b45309">🔍</span>'}
+    <div class="main"><div class="t">${esc(it.item_name)}</div><div class="meta">${it.found_place?'발견: '+esc(it.found_place)+' · ':''}보관: ${esc(it.keep_place||'교무실')}</div></div>
+    <button class="del" style="background:#e7f9f0;color:#0ea371" onclick="returnLost(${it.id})">✅ 찾아감</button></div>`).join('');
+}
+async function returnLost(id){
+  const { error }=await sb.from('lost_items').update({status:'returned'}).eq('id',id);
+  if(error){ toast('실패: '+error.message); return; }
+  toast('찾아감 처리됨'); loadLost();
+}
+
+/* 같은 폴더의 형제 페이지 주소 (로컬 원본명 / 배포 짧은명 자동 판별) */
+function siblingPage(kind){
+  const base = location.href.split('?')[0].split('#')[0];
+  const dir  = base.replace(/[^/]*$/,'');
+  const file = base.slice(dir.length) || 'index.html';
+  const map = /^notice_/.test(file)
+    ? {display:'notice_display.html', admin:'notice_admin.html', message:'notice_message.html', guide:'notice_guide.html'}
+    : {display:'index.html',          admin:'admin.html',        message:'message.html',        guide:'guide.html'};
+  return dir + map[kind];
+}
+
+/* ── 👥 교사 계정 승인 (관리 담당자 전용) ── */
+async function loadApprovals(){
+  if(READONLY || !myAdmin?.is_owner) return;
+  $('approveCard').style.display='block';
+  const { data, error } = await sb.from('notice_admins').select('*').order('created_at',{ascending:false});
+  const box=$('approveList');
+  if(error){ box.innerHTML='<div class="empty">목록을 불러오지 못했습니다</div>'; return; }
+  if(!data?.length){ box.innerHTML='<div class="empty">가입한 선생님이 없습니다</div>'; return; }
+  box.innerHTML=data.map(a=>{
+    const wait = a.approved===false;
+    return `<div class="item">
+      <span class="tag" style="background:${wait?'#d97706':'#0ea371'}">${wait?'대기':'승인'}</span>
+      <div class="main"><div class="t">${esc(a.name||'(이름없음)')}${a.is_owner?' 👑':''}</div>
+        <div class="meta">${esc(a.subject||'과목 미지정')}</div></div>
+      ${wait
+        ? `<button class="del" style="background:#e7f9f0;color:#0ea371" onclick="setApproval('${a.auth_id}',true)">✅ 승인</button>`
+        : (a.is_owner ? '' : `<button class="del" onclick="setApproval('${a.auth_id}',false)">승인 취소</button>`)}
+    </div>`;
+  }).join('');
+}
+async function setApproval(authId, ok){
+  const { error } = await sb.from('notice_admins').update({ approved: ok }).eq('auth_id', authId);
+  if(error){ toast('실패: '+error.message); return; }
+  toast(ok?'✅ 승인했습니다':'승인을 취소했습니다'); loadApprovals();
+}
+
+/* 학생용 쪽지 페이지 주소 안내 */
+function msgUrlHint(){
+  const el=$('msgUrl'); if(el) el.textContent=SCHOOL.link(siblingPage('message'));
+  const dl=$('dispLink'); if(dl) dl.href=SCHOOL.link(siblingPage('display'));
+  const gl=$('guideLink'); if(gl) gl.href=SCHOOL.link(siblingPage('guide'));
+}
+
+/* ── 교실별 보드 주소 생성 ── */
+function makeUrl(){
+  const g=$('urlGrade').value, c=$('urlClass').value||'1';
+  $('urlOut').value=SCHOOL.link(siblingPage('display'), `class=${g}-${c}`);
+}
+
+/* ── 설정 ── */
+async function loadCfg(){
+  // 둘러보기(비로그인)에서는 설정값을 아예 불러오지 않는다 — 숨겨진 칸으로도 새지 않게
+  if(READONLY){
+    ['cfgSchool','cfgSlide','cfgAtpt','cfgSchoolCode','cfgCode'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
+    return;
+  }
+  const { data } = await sb.from('display_config').select('*');
+  const m={}; (data||[]).forEach(r=>m[r.key]=r.value);
+  $('cfgSchool').value=m.school_name||''; $('cfgSlide').value=m.slide_seconds||'12';
+  $('cfgAtpt').value=m.neis_atpt||''; $('cfgSchoolCode').value=m.neis_school||'';
+  $('cfgCode').value=m.admin_code||'';
+}
+async function saveCfg(){
+  $('cfgSave').disabled=true;
+  const rows=[{key:'school_name',value:$('cfgSchool').value},{key:'slide_seconds',value:$('cfgSlide').value},
+    {key:'neis_atpt',value:$('cfgAtpt').value},{key:'neis_school',value:$('cfgSchoolCode').value},
+    {key:'admin_code',value:$('cfgCode').value}];
+  const { error } = await sb.from('display_config').upsert(rows);
+  $('cfgSave').disabled=false;
+  toast(error?('실패: '+error.message):'✅ 설정 저장됨');
+}
+
+/* ── 공통 ── */
+async function del(table,id,reload,summary){
+  // 공동계정은 여러 선생님이 함께 쓰므로, 다른 분이 올리신 것이면 한 번 더 여쭤봅니다
+  let ask = '삭제할까요? 되돌릴 수 없습니다.';
+  if(isShared() && table==='notices'){
+    const n=(noticeCache||[]).find(x=>x.id===id);
+    if(n && n.author_name && n.author_name !== POSTER.name)
+      ask = `이 공지는 ${n.author_name} 선생님이 올리신 것입니다.\n\n"${n.title}"\n\n정말 지울까요? 되돌릴 수 없습니다.`;
+  }
+  if(!confirm(ask)) return;
+  // .select() 를 붙여 '실제로 지워진 행'을 받아온다.
+  // 권한에 막히면 오류 없이 0건이 되므로, 그걸 잡아내야 한다.
+  const { data, error } = await sb.from(table).delete().eq('id',id).select();
+  if(error){
+    toast(/policy|permission|row-level/i.test(error.message)
+      ? '삭제 권한이 없습니다 (본인이 올린 항목만 삭제 가능)'
+      : ('삭제 실패: '+error.message));
+    return;
+  }
+  if(!data || !data.length){
+    toast('삭제되지 않았습니다 — 본인이 올린 항목만 지울 수 있어요');
+    return;
+  }
+  // 누가 무엇을 지웠는지 기록
+  sb.from('audit_log').insert({ table_name:table, action:'delete', row_id:id,
+    summary:summary||null, actor_id:me?.id,
+    actor_name: posterName() || myName }).then(()=>{},()=>{});
+  toast('🗑️ 삭제됨'); reload();
+}
+function esc(s){ return (s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtDate(iso){ if(!iso)return''; const d=new Date(iso); return `${d.getMonth()+1}.${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+let toastT; function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+
+// 기본 날짜 = 오늘
+const today=new Date().toISOString().slice(0,10);
+$('sStart').value=today; $('dDate').value=today; $('aDate').value=today; $('lcDate').value=today;
+$('pw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+applySchool();
+fillDeptSelects();      // 로그인 전에도 가입 화면의 부서 목록이 보이도록
+checkSession();
+</script>
+<!-- 📱 홈 화면에 추가 -->
+<script>
+window.A2HS = { name:SCHOOL.short + ' 공지 관리', short:'공지 관리', theme:'#2563eb' };
+</script>
+<script src="a2hs.js?v=2610121"></script>
+</body>
+</html>
