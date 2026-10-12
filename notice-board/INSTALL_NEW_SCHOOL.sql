@@ -523,9 +523,13 @@ BEGIN
   CREATE POLICY notice_admins_owner_upd  ON notice_admins FOR UPDATE USING (is_notice_owner());
 
   -- ⚙️ 설정: 가입 코드는 선생님만 보고, 바꾸기는 관리 담당자만
+  --          (반마다 쓰는 조 편성·역할 목록은 승인된 선생님 누구나)
   CREATE POLICY display_config_read  ON display_config FOR SELECT USING (key <> 'admin_code' OR is_notice_staff());
   CREATE POLICY display_config_write ON display_config FOR ALL
     USING (is_notice_owner()) WITH CHECK (is_notice_owner());
+  CREATE POLICY display_config_class ON display_config FOR ALL
+    USING      (is_notice_staff() AND (key LIKE 'clean\_squad\_%' OR key LIKE 'roles\_%'))
+    WITH CHECK (is_notice_staff() AND (key LIKE 'clean\_squad\_%' OR key LIKE 'roles\_%'));
 END
 $rls$;
 

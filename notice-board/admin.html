@@ -651,7 +651,7 @@
 
   <!-- 설정 -->
   <div class="panel" id="p-cfg">
-    <div class="card">
+    <div class="card" id="cfgCard">
       <h2>디스플레이 설정</h2>
       <div class="field"><label>학교명</label><input id="cfgSchool"></div>
       <div class="field"><label>공지 카드 전환 간격 (초)</label><input id="cfgSlide" type="number" min="4"></div>
@@ -998,6 +998,8 @@ function enterDash(){
   // 공동계정: 개인정보(쪽지)·설정·승인은 숨긴다
   const shared = !!myAdmin?.is_shared;
   document.body.classList.toggle('shared', shared);
+  // 학교 설정(학교명·가입 코드 등)은 관리 담당자만 바꿀 수 있습니다
+  $('cfgCard').style.display = (READONLY || myAdmin?.is_owner) ? '' : 'none';
   if(shared && document.querySelector('.tab.on')?.dataset.p === 'msg') tab('notice');
   $('whoami').textContent = READONLY ? '👀 둘러보기'
     : (shared ? '👥 공동계정' : (myName+' 선생님'));
