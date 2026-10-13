@@ -18,12 +18,15 @@
 
 1. **한 번에 한 단계만** 안내하세요. 누를 메뉴·버튼 이름을 화면에 보이는 영어 그대로 적고, 각 단계 끝의 「✅ 확인」이 되면 다음 단계로 넘어가세요.
 2. 시작할 때 **6단계의 A·B 중 어느 쪽인지** 먼저 여쭤 보세요. 모르시면 A를 권하세요.
-3. SQL·코드에 값을 채워야 할 때는 선생님께 값을 받아 **고칠 곳 없이 그대로 붙여 넣을 수 있는 완성본 전체**를 코드 블록 하나로 드리세요.
-4. 선생님께 받을 값은 **세 가지뿐**입니다.
+3. **긴 SQL과 함수 코드는 직접 옮겨 적지 마세요.** 선생님이 아래 주소를 열어 전체 선택(Ctrl+A)·복사(Ctrl+C)하도록 안내하세요. 옮겨 적다 한 줄만 빠져도 보안 규칙이 빠질 수 있습니다.
+   - 설치 SQL 1부: `https://scienceisjo.github.io/class-tools/geowon/install-part1.txt` (부록 A-1과 같음)
+   - 시간표 함수 코드: `https://scienceisjo.github.io/class-tools/geowon/sync-timetable.txt` (부록 B와 같음)
+   AI가 값을 채워 드리는 것은 **부록 A-2(짧은 SQL)** 하나뿐입니다. 고칠 곳 없이 그대로 붙여 넣을 수 있는 완성본으로 드리세요.
+4. 선생님께 받을 값은 아래 세 가지입니다. B를 고르시면 깃허브 아이디도 여쭤 보세요.
    - 프로젝트 주소(Project URL, `https://…supabase.co`)
    - 공개 키(`sb_publishable_…` 또는 `eyJ…`로 시작하는 anon 키)
    - 가입 코드(선생님이 정하는 암호, 예: `geowon2026!`)
-5. **절대 받지 마세요**: secret 키(`sb_secret_…`), service_role 키, 데이터베이스 비밀번호, 계정 비밀번호. 선생님이 붙여 넣으려 하면 말려 주세요. 이미 붙여 넣으셨다면 Supabase → Project Settings → API Keys에서 그 키를 새로 바꾸도록(roll/revoke) 안내해 주세요.
+5. **절대 받지 마세요**: secret 키(`sb_secret_…`), service_role 키, 데이터베이스 비밀번호, 계정 비밀번호. 선생님이 붙여 넣으려 하면 말려 주세요. 이미 붙여 넣으셨다면 Supabase → Project Settings → API Keys에서 그 키를 새로 바꾸도록 안내해 주세요.
 6. SQL을 복사하기 전에 **브라우저 자동 번역을 끄도록** 꼭 안내하세요(번역이 SQL 글자를 바꿔 오류가 납니다).
 7. Supabase·GitHub 화면은 2026년 기준입니다. 메뉴 위치가 조금 다르면 비슷한 이름을 함께 찾아 주세요.
 8. 오류가 나면 아래 「🛠 문제 해결」 표를 먼저 보세요.
@@ -39,13 +42,13 @@
 |---|---|
 | 공지 (전체·학년·반·교과) · 긴급 공지 | 급식 (알레르기 번호, 나이스) |
 | 학생 호출 (「○○○ 교무실로」) | 학사일정 (방학·시험·공휴일, 나이스) |
-| 수업 장소 변경 · 시간표 변경 | **학급 시간표 + 결보강 변경** (컴시간알리미, 평일 아침 8:30) |
+| 수업 장소 변경 | **학급 시간표 + 결보강 변경** (컴시간알리미, 평일 아침 8:30) |
 | 디데이 · 수행평가 일정 · 주요 일정 | 지금 몇 교시 · 날씨 · 미세먼지 · 우산 안내 |
 | 영상 틀기 · 생일 · 청소당번 · 1인1역 · 분실물 | |
 
-학생은 전자칠판의 **📮 선생님께 말하기**로 담임·교과 선생님께 쪽지를 보낼 수 있습니다(익명 가능). 쪽지는 개인 계정으로 로그인한 선생님만 읽습니다.
+학생은 전자칠판의 **📮 선생님께 말하기**로 선생님께 쪽지를 보낼 수 있습니다(익명 가능). 쪽지는 개인 계정으로 로그인한 선생님만 읽습니다.
 
-### 🔗 거원중학교 주소
+### 🔗 거원중학교 주소 (6단계 A를 쓰실 때)
 
 | 화면 | 주소 | 누가 |
 |---|---|---|
@@ -54,7 +57,8 @@
 | 사용법 | `https://scienceisjo.github.io/class-tools/geowon/guide.html` | 선생님 (공유용 안내서) |
 | 학생 쪽지 | `https://scienceisjo.github.io/class-tools/geowon/message.html` | 학생 (휴대폰용) |
 
-지금 위 주소를 열면 「**곧 열립니다**」만 보입니다. 아래 세팅이 끝나면 바로 열립니다.
+- 지금 위 주소를 열면 「**곧 열립니다**」만 보입니다. 아래 세팅이 끝나면 바로 열립니다.
+- 6단계 **B**(직접 배포)를 하시면 위 주소 대신 `https://깃허브아이디.github.io/geowon-board/`를 씁니다. 뒤에 붙는 `admin.html`·`guide.html`·`message.html`은 같습니다.
 
 ---
 
@@ -110,7 +114,7 @@
 - [ ] 2단계 「이메일 확인」 끄기
 - [ ] 3단계 프로젝트 주소·공개 키 복사
 - [ ] 4단계 시간표 함수 올리기
-- [ ] 5단계 설치 SQL 실행
+- [ ] 5단계 설치 SQL 실행 (1부 그대로 → 2부 값 넣어서)
 - [ ] 6단계 화면 연결 — **A** 조승재 주소 그대로 / **B** 직접 배포
 - [ ] 7단계 첫 가입 (= 관리 담당자)
 - [ ] 8단계 시간표 처음 받아 보기
@@ -128,10 +132,11 @@
    - Project name: `geowon-board`
    - Database Password: **Generate a password** → 메모장 등에 따로 저장해 두세요(거의 쓸 일 없습니다. **AI에게 알려 주지 마세요**).
    - Region: **Northeast Asia (Seoul)**
+   - 「Automatically expose new tables」 같은 칸이 보이면 **기본값 그대로** 두세요. 필요한 권한은 5단계 SQL이 직접 줍니다.
 4. **Create new project** → 1~2분 기다립니다.
 
 ✅ 확인: 프로젝트 첫 화면(Project Overview)이 열리면 됩니다.
-ℹ️ 무료 요금제는 계정 하나에 프로젝트 2개까지 만들 수 있습니다.
+ℹ️ 무료 요금제는 계정 하나에 프로젝트 2개까지 쓸 수 있습니다.
 
 ### 2단계 · 「이메일 확인」 끄기
 
@@ -160,40 +165,51 @@
 
 ### 4단계 · 시간표 함수 올리기
 
-1. 왼쪽 **Edge Functions** → **Deploy a new function** → **Via Editor**를 고릅니다.
-2. 함수 이름을 정확히 **`sync-timetable`**로 적습니다.
-3. 편집기에 들어 있는 예시 코드를 **모두 지우고**, 아래 **부록 B** 코드를 통째로 붙여 넣습니다.
-4. **Deploy function**을 누릅니다.
-5. 다 올라가면 함수 화면의 **Details** 탭에서 **Verify JWT**(「Enforce JWT verification」으로 보일 수도 있음) 스위치를 **끄고** 저장합니다.
+1. 새 탭에서 `https://scienceisjo.github.io/class-tools/geowon/sync-timetable.txt`를 엽니다. **Ctrl+A**로 전체 선택하고 **Ctrl+C**로 복사합니다.
+2. Supabase 왼쪽 **Edge Functions** → **Deploy a new function** → **Via Editor**를 고릅니다.
+3. 함수 이름을 정확히 **`sync-timetable`**로 적습니다.
+4. 편집기에 들어 있는 예시 코드를 **모두 지우고**, 복사한 코드를 붙여 넣습니다(부록 B와 같은 내용).
+5. **Deploy function**을 누릅니다.
+6. 다 올라가면 함수 화면의 **Details** 탭에서 **Verify JWT**(「Enforce JWT verification」으로 보일 수도 있음) 스위치를 **끄고** 저장합니다.
    - 이유: 새 공개 키(`sb_publishable_`)는 JWT가 아니라서, 켜 두면 아침 예약 실행이 막힐 수 있습니다. 이 함수는 컴시간 시간표를 받아 오기만 하므로 꺼도 안전합니다.
    - 함수를 다시 Deploy하면 이 스위치가 다시 켜지는 경우가 있으니 그때마다 확인해 주세요.
 
 ✅ 확인: Edge Functions 목록에 `sync-timetable`이 보이면 됩니다. 실제로 돌려 보는 것은 8단계에서 합니다.
 
-### 5단계 · 설치 SQL 실행
+### 5단계 · 설치 SQL 실행 (두 번에 나눠서)
 
-> 🤖 AI에게: **부록 A**에서 아래 세 곳을 바꾼 **완성본 전체**를 드리세요.
+먼저 **브라우저 자동 번역을 끕니다.**
+
+**① 1부: 그대로 복사해서 실행**
+1. 새 탭에서 `https://scienceisjo.github.io/class-tools/geowon/install-part1.txt`를 열고 **Ctrl+A**, **Ctrl+C**로 복사합니다.
+   표 20개·권한 규칙·거원중학교 정보가 들어 있고, 고칠 곳이 없습니다(부록 A-1과 같은 내용).
+2. Supabase 왼쪽 **SQL Editor** → **New query**(또는 **+**) → 붙여 넣기 → **Run**(Ctrl+Enter)을 누릅니다.
+3. 「destructive operation」 같은 경고 창이 뜨면 **Run this query**를 누릅니다. 권한 규칙을 지우고 다시 만드는 부분 때문에 뜨는 경고이고, 새 프로젝트라 지워질 데이터는 없습니다.
+
+✅ 확인: 아래 결과 칸에 **Success**(No rows returned)가 나오면 됩니다.
+
+**② 2부: AI가 값을 넣어 준 짧은 SQL 실행**
+
+> 🤖 AI에게: **부록 A-2**에서 아래 세 곳을 바꾼 완성본을 드리세요. 짧은 SQL이라 통째로 드려도 됩니다.
+> - `__SIGNUP_CODE__` → 선생님이 정한 가입 코드 (영문·숫자, 예: `geowon2026!`, 작은따옴표 `'`는 쓰지 않게)
 > - `__PROJECT_URL__` → 프로젝트 주소 (끝에 `/` 없이, 예: `https://abcd.supabase.co`)
 > - `__ANON_KEY__` → 공개 키 (**두 군데** 모두)
-> - `__SIGNUP_CODE__` → 선생님이 정한 가입 코드 (영문·숫자, 예: `geowon2026!`)
->
-> 다른 값(거원중학교·나이스·컴시간·날씨 위치)은 이미 들어 있습니다.
 
-1. **브라우저 자동 번역을 끕니다.**
-2. 왼쪽 **SQL Editor** → **New query**(또는 **+**)를 누릅니다.
-3. AI가 준 완성본을 붙여 넣고 **Run**(Ctrl+Enter)을 누릅니다.
-4. 「destructive operation」 같은 경고 창이 뜨면 **Run this query**를 누릅니다. 권한 규칙을 지우고 다시 만드는 부분 때문에 뜨는 경고이고, 새 프로젝트라 지워질 데이터는 없습니다.
+1. SQL Editor에서 **New query**를 하나 더 열고, AI가 준 2부를 붙여 넣어 **Run**합니다.
 
-✅ 확인: 맨 아래 결과 한 줄이 **표_20개면_정상 = 20 · 학교 = 거원중학교 · 예약_1이면_정상 = 1**이면 성공입니다.
-여러 번 실행해도 괜찮습니다. 가입 코드는 나중에 관리 화면 ⚙️ 설정에서 바꿀 수 있습니다.
+✅ 확인: 맨 아래 결과 한 줄이 아래와 같으면 성공입니다.
+**표_20개면_정상 = 20 · 학교 = 거원중학교 · 권한규칙_수 = 59 · 가입코드_1이면_정상 = 1 · 예약_1이면_정상 = 1**
+
+- 권한규칙_수가 59보다 적으면 1부가 덜 복사된 것입니다. 1부를 다시 복사해서 실행해 주세요.
+- 두 부분 모두 여러 번 실행해도 괜찮습니다. 2부를 다시 실행하면 가입 코드가 그 값으로 바뀝니다. 가입 코드는 나중에 관리 화면 ⚙️ 설정에서도 바꿀 수 있습니다.
 
 ### 6단계 · 화면 연결 — A 또는 B
 
 #### A. 조승재 주소 그대로 쓰기 (가장 간단)
 
 1. 3단계의 **프로젝트 주소**와 **공개 키** 두 값을 조승재(해누리중)에게 보내 주세요(메신저로 보내셔도 됩니다).
-2. 제가 연결하면 1~2분 뒤 `https://scienceisjo.github.io/class-tools/geowon/`가 「곧 열립니다」 대신 반 고르기 화면으로 바뀝니다.
-3. 종 시간·요일변경·부서처럼 화면 설정을 바꿀 일이 생기면 저에게 알려 주세요. 공지·계정·쪽지는 모두 거원중학교 서버에 있으니 제가 볼 수 없습니다.
+2. 제가 연결하면 몇 분 뒤 `https://scienceisjo.github.io/class-tools/geowon/`가 「곧 열립니다」 대신 **어느 반 화면을 띄우실까요?**로 바뀝니다.
+3. 종 시간·요일변경·부서처럼 화면 설정을 바꿀 일이 생기면 저에게 알려 주세요. 공지·계정·쪽지는 모두 거원중학교 서버에 있어서 저는 볼 수 없습니다.
 
 #### B. 직접 배포 (화면까지 거원중학교에서 관리)
 
@@ -203,7 +219,7 @@
    - **Public** 선택 → **Create repository**
 3. 새 저장소 화면의 **uploading an existing file**을 누르고, 압축 푼 **파일들**(폴더가 아니라 안의 파일 전부)을 끌어다 놓은 뒤 → **Commit changes**를 누릅니다.
 4. 저장소에서 **school.js**를 열고 → 연필 모양(**Edit**)을 누릅니다. 아래 네 줄을 고쳐 **Commit changes**를 누릅니다.
-   > 🤖 AI에게: 선생님 값으로 바꾼 네 줄을 그대로 보여 드리세요. 따옴표와 쉼표는 그대로 둡니다.
+   > 🤖 AI에게: 선생님 값으로 바꾼 네 줄을 그대로 보여 드리세요. 따옴표와 줄 끝 쉼표는 그대로 둡니다.
 
    ```js
    "supabaseUrl": "https://프로젝트주소.supabase.co",
@@ -213,11 +229,11 @@
    ```
    `contact`는 사용법 페이지의 「문의」에 나오는 이름입니다.
 5. 저장소 **Settings** → 왼쪽 **Pages** → Source: **Deploy from a branch** → Branch: **main** / **(root)** → **Save**를 누릅니다.
-6. 1~2분 뒤 Pages 화면 위쪽에 `https://깃허브아이디.github.io/geowon-board/` 주소가 나옵니다.
+6. 보통 1~2분, 길면 10분쯤 뒤 Pages 화면 위쪽에 `https://깃허브아이디.github.io/geowon-board/` 주소(**Visit site**)가 나옵니다. 안 보이면 새로 고침해 보세요.
 
 ✅ 확인: 그 주소를 열면 「곧 열립니다」가 아니라 **어느 반 화면을 띄우실까요?**가 나오면 됩니다.
 
-- 나중에 설정을 바꿀 때는 `school.js`만 고치면 1~2분 뒤 반영됩니다. 전자칠판은 매일 새벽 4시쯤 저절로 새로 고침됩니다.
+- 나중에 설정을 바꿀 때는 `school.js`만 고치면 몇 분 뒤 반영됩니다. 전자칠판은 매일 새벽 4시쯤 저절로 새로 고침됩니다.
 - 새 기능이 담긴 묶음을 받으시면 **school.js만 빼고** 나머지 파일을 덮어 올리시면 됩니다.
 
 ### 7단계 · 첫 가입 (= 관리 담당자)
@@ -233,24 +249,25 @@
 
 ✅ 확인: 로그인 뒤 오른쪽 위에 「○○○ 선생님」이 보이고, ⚙️ 설정 탭에 「👥 교사 계정 승인」 카드가 보이면 됩니다.
 
-### 8단계 · 시간표 처음 받아 보기
+### 8단계 · 시간표 처음 받아 보기 (꼭 해 주세요)
 
-예약은 **평일 아침 8:30**에 저절로 돕니다. 지금 바로 받아 보려면 아래처럼 합니다.
+예약은 **평일 아침 8:30**에 저절로 돕니다. 함수가 제대로 도는지 지금 한 번 직접 돌려 봅니다.
 
 1. **Edge Functions → sync-timetable** → 오른쪽 위 **Test**(또는 **Invoke**) → **Send request**를 누릅니다.
-2. 응답이 `{"ok":true,"rows":90}`처럼 나오면 성공입니다. rows는 반 수 × 5일입니다(18개 반 × 5 = 90).
+2. 응답이 `{"ok":true,"rows":90}`처럼 나오면 됩니다. rows는 반 수 × 5일입니다(18개 반 × 5 = 90).
+3. SQL Editor에서 아래를 실행해 숫자를 확인합니다.
+   ```sql
+   SELECT count(*) AS 받은_시간표 FROM timetables;                                         -- 90 이면 정상
+   SELECT ok, rows, message, created_at FROM timetable_sync_log ORDER BY id DESC LIMIT 3;   -- 받기 기록
+   SELECT jobname, schedule, active FROM cron.job;                                         -- 아침 예약
+   ```
 
-SQL Editor에서도 확인할 수 있습니다.
-```sql
-SELECT ok, rows, message, created_at FROM timetable_sync_log ORDER BY id DESC LIMIT 3;   -- 받기 기록
-SELECT jobname, schedule, active FROM cron.job;                                         -- 아침 예약
-```
-
-✅ 확인: 교실 화면에서 반을 고르면 오른쪽에 그 반 시간표가 나옵니다.
+✅ 확인: Test 응답이 `"ok":true`이고 **받은_시간표 = 90**이면 성공입니다.
+⚠️ 교실 화면만 보고 판단하지 마세요. 교실 화면에는 미리 넣어 둔 시간표가 들어 있어서, 받기가 실패해도 시간표가 보입니다. 이때는 결보강 변경만 나오지 않습니다.
 
 ### 9단계 · 교실 전자칠판에 켜기
 
-1. 전자칠판 브라우저에서 교실 화면 주소를 엽니다.
+1. 전자칠판 브라우저에서 교실 화면 주소를 엽니다. A는 `https://scienceisjo.github.io/class-tools/geowon/`, B는 내 주소입니다.
 2. **우리 반**을 누르고, 화면 안내대로 **작업 표시줄에 고정**(또는 홈 화면에 추가)합니다. 다음부터는 아이콘 한 번이면 우리 반 화면이 열립니다.
 3. 전자칠판은 켜 두기만 하면 됩니다. 아침에 켜는 일은 학생 1인1역으로 맡기셔도 좋습니다.
 4. 선생님들께는 **사용법** 페이지(guide.html) 주소를 공유해 주세요.
@@ -266,32 +283,40 @@ SELECT jobname, schedule, active FROM cron.job;                                 
 | 「가입 코드가 올바르지 않습니다」 | 코드가 다름 | SQL Editor에서 `SELECT value FROM display_config WHERE key = 'admin_code';` |
 | 가입했는데 글이 안 올라감 · 「row-level security」 오류 | 아직 승인 전 | 관리 담당자가 ⚙️ 설정에서 승인 |
 | 관리 담당자가 엉뚱한 사람이 됨 | 다른 사람이 먼저 가입함 | 부록 C의 「관리 담당자 바꾸기」 SQL |
-| 시간표가 비어 있음 | 함수나 예약 문제 | 8단계 받기 기록에서 `message` 확인. 401·403이면 4단계 Verify JWT 끄기, 「컴시간 응답 오류」면 잠시 뒤 다시 |
-| 급식이 안 나옴 | 나이스 코드 문제이거나 방학 | 학기 중인데도 안 나오면 SQL Editor에서 `SELECT * FROM display_config;` 의 neis 값 확인 |
+| 시간표 받기 기록(8단계)에 **아무 줄도 없음** | 함수가 아예 안 돌았음 (대부분 Verify JWT가 켜져 있음) | SQL Editor에서 `SELECT status_code, content, created FROM net._http_response ORDER BY id DESC LIMIT 3;` 실행. 401이면 4단계 6번 Verify JWT 끄기. Edge Functions → sync-timetable → **Logs**에서도 보입니다 |
+| 받기 기록에 `ok = false`, message에 **permission denied** | 표 권한이 없음 (옛 설치 SQL) | 5단계 1부를 다시 복사해서 실행 |
+| 받기 기록에 `ok = false`, message에 **컴시간 응답 오류** | 컴시간 서버 일시 오류 | 잠시 뒤 8단계 Test 다시 |
+| 결보강 변경이 화면에 안 나옴 | 시간표 받기가 안 되고 있음 (화면엔 미리 넣은 시간표가 나옴) | 8단계 확인 다시 |
+| 급식이 안 나옴 | 나이스 코드 문제이거나 방학 | 학기 중인데도 안 나오면 SQL Editor에서 `SELECT * FROM display_config;`의 neis 값 확인 |
 | 오랜만에 열었더니 아무것도 안 나옴 | 무료 프로젝트는 7일 넘게 아무 요청이 없으면 잠듦 (방학 등) | Supabase 대시보드에서 **Resume project** |
-| SQL 실행 때 이상한 문법 오류 | 자동 번역이 SQL을 바꿈 | 번역을 끄고 다시 복사 |
+| SQL 실행 때 이상한 문법 오류 | 자동 번역이 SQL을 바꿨거나 덜 복사됨 | 번역을 끄고, 주소에서 다시 전체 복사 |
 
 ---
 
 ## 7. 학교에 맞게 채우기 (자료를 AI에게 주고 하세요)
 
+`school.js`는 **B(직접 배포)** 에서만 직접 고칩니다. **A**에서는 바꿀 내용을 조승재에게 알려 주세요.
+
 ### 📅 학사일정 (선택)
 나이스 학사일정(방학·시험·공휴일)은 저절로 나옵니다. 학교 자체 행사(창체, 축제, 체험학습, 요일변경 수업 등)를 「주요일정」에 더 넣고 싶으시면 이렇게 하세요.
 - 학사일정 파일(한글·PDF·사진)을 AI에게 주고 「**부록 D 양식으로 SQL 만들어 줘**」라고 하신 뒤, SQL Editor에서 실행합니다.
-- 하나씩 넣으실 때는 관리 화면의 📅 일정 탭을 쓰시면 됩니다.
+- 하나씩 넣으실 때는 관리 화면의 **📅 주요일정** 탭을 쓰시면 됩니다.
 
 ### 🔁 요일변경 수업 (예: 수요일에 금요일 시간표로 수업)
 그날 교실 화면이 바뀐 요일의 시간표를 보여 줍니다. `school.js`의 `daySwap`에 날짜와 요일 번호(1=월 2=화 3=수 4=목 5=금)를 넣습니다.
 ```js
 "daySwap": { "2026-11-03": 5, "2027-01-06": 5 },
 ```
-A는 날짜를 조승재에게 알려 주시고, B는 `school.js`를 직접 고칩니다.
 
 ### 🔔 종 시간
 `school.js`의 `bell`입니다. 한 줄에 시간 하나이고, `days`는 그 요일에만 있는 교시입니다(2=화, 4=목).
 ```js
 { "label": "7교시", "s": "15:10", "e": "15:55", "days": [2, 4] }
 ```
+
+### 🏫 반 목록에서 빼기 (예: 없는 1학년 6반)
+반 고르기 화면은 `school.js`의 `ttBase`(미리 넣어 둔 시간표)에서 반 목록을 만듭니다. `ttBase` 안에서 `"1-6": [`로 시작해 짝이 맞는 `]`까지의 덩어리를 통째로 지웁니다. 덩어리 사이 쉼표가 하나만 남도록 주의하세요. 컴시간 시간표 받기는 그대로 둡니다.
+> 🤖 AI에게: 선생님이 school.js 내용을 붙여 주시면, 그 반을 뺀 `ttBase` 부분을 정확한 JSON으로 다시 드리세요.
 
 ### 🏢 부서 · 🏃 특별실
 `school.js`의 `depts`(부서 이름 목록)와 `places`(`["이모지", "장소 이름"]` 목록)입니다.
@@ -313,7 +338,7 @@ A는 날짜를 조승재에게 알려 주시고, B는 `school.js`를 직접 고�
 
 ---
 
-## 부록 A · 설치 SQL (거원중학교 값 채움 — 남은 칸 3개: `__PROJECT_URL__` · `__ANON_KEY__` · `__SIGNUP_CODE__`)
+## 부록 A-1 · 설치 SQL 1부 (고칠 곳 없음 — `https://scienceisjo.github.io/class-tools/geowon/install-part1.txt` 와 같음)
 
 ```sql
 -- ═══════════════════════════════════════════════════════════════════
@@ -750,8 +775,10 @@ CREATE TRIGGER trg_notice_admins_guard BEFORE UPDATE ON notice_admins
 --    읽기: 교실 화면(로그인 없음)이 읽어야 하는 것은 누구나
 --    쓰기: 승인된 선생님만 / 고치기·지우기: 본인 · 관리 담당자 · 그 반 담임
 -- ───────────────────────────────────────────────────────────────────
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+-- 2026-05-30 이후 새 프로젝트는 표 권한을 저절로 주지 않으므로 직접 줍니다
+-- (service_role = 시간표 함수가 쓰는 서버 역할)
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
 
 DO $rls$
 DECLARE
@@ -775,7 +802,7 @@ BEGIN
       'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters']
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
-    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON %I TO anon, authenticated', t);   -- 이 앱 표만
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON %I TO anon, authenticated, service_role', t);   -- 이 앱 표만
   END LOOP;
 
   -- 교실 화면이 읽는 표: 누구나 읽기
@@ -895,15 +922,25 @@ INSERT INTO display_config (key, value) VALUES
   ('neis_school',   '7130170'),
   ('weather_lat',   '37.4937'),
   ('weather_lon',   '127.1490'),
-  ('comcigan_code', '83839'),
-  ('admin_code',    '__SIGNUP_CODE__')
+  ('comcigan_code', '83839')
 ON CONFLICT (key) DO NOTHING;
+```
 
+---
 
--- ───────────────────────────────────────────────────────────────────
--- 8. 컴시간 시간표 매일 아침 8시 30분(한국시간) 자동 받기
+## 부록 A-2 · 설치 SQL 2부 (AI가 값 세 개를 넣어 완성: `__SIGNUP_CODE__` · `__PROJECT_URL__` · `__ANON_KEY__`)
+
+```sql
+-- ═══════════════════════════════════════════════════════════════════
+-- ▼ 학교마다 다른 값 — 가입 코드 · 프로젝트 주소 · 공개 키 (여기부터 끝까지)
+-- ═══════════════════════════════════════════════════════════════════
+
+-- 8. 선생님 가입 코드 (다시 실행하면 이 값으로 바뀝니다)
+INSERT INTO display_config (key, value) VALUES ('admin_code', '__SIGNUP_CODE__')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+-- 9. 컴시간 시간표 매일 아침 8시 30분(한국시간) 자동 받기
 --    (sync-timetable 함수를 먼저 올려 두어야 실제로 받아집니다)
--- ───────────────────────────────────────────────────────────────────
 DO $cron$
 BEGIN
   PERFORM cron.unschedule('sync-timetable-daily');
@@ -931,12 +968,15 @@ SELECT
       'calls','cleaning_duties','lost_items','class_roles','class_locations','messages','message_reads',
       'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters')) AS 표_20개면_정상,
   (SELECT value FROM display_config WHERE key = 'school_name')                          AS 학교,
+  (SELECT count(*) FROM pg_policies WHERE schemaname = 'public')                        AS 권한규칙_수,
+  (SELECT count(*) FROM display_config WHERE key = 'admin_code' AND value <> ''
+     AND value NOT LIKE '%SIGNUP_CODE%')                                                AS 가입코드_1이면_정상,
   (SELECT count(*) FROM cron.job WHERE jobname = 'sync-timetable-daily')               AS 예약_1이면_정상;
 ```
 
 ---
 
-## 부록 B · 시간표 함수 `sync-timetable` (Edge Function에 통째로 붙여 넣기)
+## 부록 B · 시간표 함수 `sync-timetable` (`https://scienceisjo.github.io/class-tools/geowon/sync-timetable.txt` 와 같음)
 
 ```ts
 // ═══════════════════════════════════════════════════════════════════
@@ -1092,49 +1132,61 @@ Deno.serve(async () => {
 공동계정은 공지·호출 등은 쓸 수 있지만 **학생 쪽지는 볼 수 없고**, 글을 올릴 때마다 「지금 쓰시는 선생님」 이름을 고르게 됩니다.
 
 ```sql
-UPDATE notice_admins
-   SET approved = true, is_shared = true, is_owner = false, name = '공동계정'
- WHERE auth_id = (SELECT id FROM auth.users WHERE email = '공동계정이메일@example.com');
+DO $$
+DECLARE v uuid := (SELECT id FROM auth.users WHERE lower(email) = lower('공동계정이메일@example.com'));
+BEGIN
+  IF v IS NULL OR NOT EXISTS (SELECT 1 FROM notice_admins WHERE auth_id = v) THEN
+    RAISE EXCEPTION '그 이메일로 가입한 계정이 없습니다. 먼저 관리 화면에서 가입한 뒤 다시 실행하세요';
+  END IF;
+  UPDATE notice_admins SET approved = true, is_shared = true, is_owner = false, name = '공동계정'
+   WHERE auth_id = v;
+END $$;
 SELECT u.email, na.name, na.approved, na.is_shared, na.is_owner
   FROM notice_admins na JOIN auth.users u ON u.id = na.auth_id;
 ```
 
-**관리 담당자 바꾸기.** 다른 사람이 먼저 가입해 관리 담당자가 됐을 때 씁니다.
+**관리 담당자 바꾸기.** 다른 사람이 먼저 가입해 관리 담당자가 됐을 때 씁니다. 새 관리 담당자가 먼저 관리 화면에서 **가입**해 있어야 합니다(승인 대기여도 됩니다).
 
 ```sql
-UPDATE notice_admins SET is_owner = false;
-UPDATE notice_admins SET approved = true, is_owner = true
- WHERE auth_id = (SELECT id FROM auth.users WHERE email = '관리담당자이메일@example.com');
+DO $$
+DECLARE v uuid := (SELECT id FROM auth.users WHERE lower(email) = lower('관리담당자이메일@example.com'));
+BEGIN
+  IF v IS NULL OR NOT EXISTS (SELECT 1 FROM notice_admins WHERE auth_id = v) THEN
+    RAISE EXCEPTION '그 이메일로 가입한 선생님이 없습니다. 먼저 관리 화면에서 가입한 뒤 다시 실행하세요';
+  END IF;
+  UPDATE notice_admins SET is_owner = (auth_id = v), approved = (approved OR auth_id = v);
+END $$;
+SELECT u.email, na.name, na.approved, na.is_owner
+  FROM notice_admins na JOIN auth.users u ON u.id = na.auth_id;
 ```
 
 ---
 
 ## 부록 D · 학사일정 SQL 양식 (AI가 학사일정 파일을 보고 채움)
 
-> 🤖 AI에게: 선생님이 준 학사일정에서 **학교 자체 행사**를 골라 아래 형식으로 만드세요.
-> - 날짜는 `YYYY-MM-DD`이고, 하루짜리는 `end_date`를 `NULL`로 둡니다.
-> - 아이콘은 아래 표에서 고릅니다. 맨 위 `DELETE`는 다시 실행해도 겹치지 않게 하는 줄이니 그대로 둡니다.
-> - 학년 행사는 제목에 「(1학년)」처럼 적습니다.
+> 🤖 AI에게: 선생님이 준 학사일정에서 **학교 자체 행사만** 골라 아래 형식으로 만드세요.
+> - 나이스에서 저절로 나오는 **개학·방학·지필고사·공휴일은 넣지 마세요**(교실 화면에 두 번 나옵니다).
+> - 날짜는 `YYYY-MM-DD`이고, 하루짜리는 `end_date`를 `NULL`로 둡니다. 학년 행사는 제목에 「(1학년)」처럼 적습니다.
+> - 아이콘은 아래 표에서 고릅니다.
+> - 맨 위 `DELETE`는 다시 실행해도 겹치지 않게 하는 줄이니 그대로 두세요. **예전에 SQL로 넣은 줄만** 지우고, 선생님들이 관리 화면에서 넣은 일정은 지우지 않습니다.
 
 | 아이콘 | 쓰임 |
 |---|---|
-| 🏫 | 개학·방학식·시업식 |
-| 📝 | 지필고사·평가 |
-| 🎌 | 공휴일·재량휴업일 |
-| 🎓 | 창체·졸업식·입학식 |
+| 🎓 | 창체·입학식·졸업식 |
 | 🎨 | 체험학습·현장학습 |
-| 🏖️ | 방학 |
 | 🔁 | 요일변경 수업 |
-| 🎤 | 축제·발표회 |
+| 🎤 | 축제·발표회·대회 |
 | ✏️ | 단축수업·기타 |
+| 🏫 | 학교 행사 (전체) |
 
 ```sql
-DELETE FROM schedules WHERE icon IN ('🏫','📝','🎌','🎓','🎨','🏖️','🔁','🎤','✏️');
+DELETE FROM schedules
+ WHERE author_id IS NULL AND icon IN ('🏫','🎓','🎨','🔁','🎤','✏️');
 
 INSERT INTO schedules (title, start_date, end_date, icon) VALUES
-  ('개학',                    '2026-08-18', NULL,         '🏫'),
-  ('2학기 기말고사 (3학년)',  '2026-10-28', '2026-10-30', '📝'),
+  ('창체 · 동아리 발표',      '2026-11-06', NULL,         '🎓'),
   ('금요일 수업 (화요일)',    '2026-11-03', NULL,         '🔁'),
+  ('현장체험학습 (2학년)',    '2026-11-12', NULL,         '🎨'),
   ('학교 축제',               '2026-12-30', NULL,         '🎤');
 
 SELECT title, start_date, end_date, icon FROM schedules ORDER BY start_date;

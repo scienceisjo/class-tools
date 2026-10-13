@@ -432,8 +432,10 @@ CREATE TRIGGER trg_notice_admins_guard BEFORE UPDATE ON notice_admins
 --    읽기: 교실 화면(로그인 없음)이 읽어야 하는 것은 누구나
 --    쓰기: 승인된 선생님만 / 고치기·지우기: 본인 · 관리 담당자 · 그 반 담임
 -- ───────────────────────────────────────────────────────────────────
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+-- 2026-05-30 이후 새 프로젝트는 표 권한을 저절로 주지 않으므로 직접 줍니다
+-- (service_role = 시간표 함수가 쓰는 서버 역할)
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
 
 DO $rls$
 DECLARE
@@ -457,7 +459,7 @@ BEGIN
       'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters']
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
-    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON %I TO anon, authenticated', t);   -- 이 앱 표만
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON %I TO anon, authenticated, service_role', t);   -- 이 앱 표만
   END LOOP;
 
   -- 교실 화면이 읽는 표: 누구나 읽기
@@ -577,15 +579,20 @@ INSERT INTO display_config (key, value) VALUES
   ('neis_school',   '__NEIS_SCHOOL__'),
   ('weather_lat',   '__LAT__'),
   ('weather_lon',   '__LON__'),
-  ('comcigan_code', '__COMCIGAN__'),
-  ('admin_code',    '__SIGNUP_CODE__')
+  ('comcigan_code', '__COMCIGAN__')
 ON CONFLICT (key) DO NOTHING;
 
 
--- ───────────────────────────────────────────────────────────────────
--- 8. 컴시간 시간표 매일 아침 8시 30분(한국시간) 자동 받기
+-- ═══════════════════════════════════════════════════════════════════
+-- ▼ 학교마다 다른 값 — 가입 코드 · 프로젝트 주소 · 공개 키 (여기부터 끝까지)
+-- ═══════════════════════════════════════════════════════════════════
+
+-- 8. 선생님 가입 코드 (다시 실행하면 이 값으로 바뀝니다)
+INSERT INTO display_config (key, value) VALUES ('admin_code', '__SIGNUP_CODE__')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+-- 9. 컴시간 시간표 매일 아침 8시 30분(한국시간) 자동 받기
 --    (sync-timetable 함수를 먼저 올려 두어야 실제로 받아집니다)
--- ───────────────────────────────────────────────────────────────────
 DO $cron$
 BEGIN
   PERFORM cron.unschedule('sync-timetable-daily');
@@ -613,4 +620,7 @@ SELECT
       'calls','cleaning_duties','lost_items','class_roles','class_locations','messages','message_reads',
       'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters')) AS 표_20개면_정상,
   (SELECT value FROM display_config WHERE key = 'school_name')                          AS 학교,
+  (SELECT count(*) FROM pg_policies WHERE schemaname = 'public')                        AS 권한규칙_수,
+  (SELECT count(*) FROM display_config WHERE key = 'admin_code' AND value <> ''
+     AND value NOT LIKE '%SIGNUP_CODE%')                                                AS 가입코드_1이면_정상,
   (SELECT count(*) FROM cron.job WHERE jobname = 'sync-timetable-daily')               AS 예약_1이면_정상;

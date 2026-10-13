@@ -384,6 +384,8 @@
   // 학교가 파일을 자기 주소에 옮겨 올린 경우 — 만들 때 박힌 주소를 school.js 의 home 으로
   if(window.SCHOOL_BUILD_HOME && SCHOOL.home && SCHOOL.home !== window.SCHOOL_BUILD_HOME)
     swaps.unshift([window.SCHOOL_BUILD_HOME, SCHOOL.home]);
+  // 옮겨 올린 학교가 school.js 에 문의처를 적으면, 만들 때 넣은 「학교 담당 선생님」 자리에
+  if(SCHOOL.contact) swaps.push(['학교 담당 선생님', SCHOOL.contact]);
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   const nodes = []; while(w.nextNode()) nodes.push(w.currentNode);
   nodes.forEach(n => { let t = n.nodeValue, t0 = t; swaps.forEach(([a,b]) => { t = t.split(a).join(b); }); if(t !== t0) n.nodeValue = t; });
