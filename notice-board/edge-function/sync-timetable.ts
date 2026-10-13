@@ -90,10 +90,23 @@ function buildRows(d: any) {
   return rows;
 }
 
+// 서버 전용 키 — 예전 프로젝트는 SUPABASE_SERVICE_ROLE_KEY,
+// 새 키(sb_secret_)만 있는 프로젝트는 SUPABASE_SECRET_KEYS(JSON) 의 default
+function serverKey(): string {
+  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacy) return legacy;
+  try {
+    const keys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}");
+    return keys.default || Object.values(keys)[0] as string;
+  } catch {
+    return "";
+  }
+}
+
 Deno.serve(async () => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,   // RLS 우회 (서버 전용 키)
+    serverKey(),                                  // RLS 우회 (서버 전용 키)
   );
 
   try {

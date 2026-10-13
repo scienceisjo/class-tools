@@ -598,7 +598,7 @@ SELECT cron.schedule(
   $job$
   SELECT net.http_post(
     url     := '__PROJECT_URL__/functions/v1/sync-timetable',
-    headers := '{"Content-Type":"application/json","Authorization":"Bearer __ANON_KEY__"}'::jsonb,
+    headers := '{"Content-Type":"application/json","apikey":"__ANON_KEY__","Authorization":"Bearer __ANON_KEY__"}'::jsonb,
     body    := '{}'::jsonb
   );
   $job$
