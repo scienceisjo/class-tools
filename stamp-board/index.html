@@ -239,6 +239,153 @@ main{flex:1;padding:14px 0 90px}
 /* 밝은 배경의 개별 이미지가 선택 카드 색과 자연스럽게 어울리도록 한다. */
 .dex-i img.charimg,.pick-i img.charimg{mix-blend-mode:multiply}
 .pick-i .t{font-size:11.5px;font-weight:900;margin-top:3px}
+
+/* ══ 🔔 골든벨 — 문제은행 · 무대 · 패자부활 가챠 (2026-10-16) ══ */
+.gbtabs{display:flex;gap:5px;background:rgba(0,0,0,.045);padding:4px;border-radius:13px;margin:4px 0 12px}
+.gbtabs button{flex:1;padding:9px 4px;border-radius:10px;font-size:var(--fs-xxs);font-weight:900;color:var(--ink2)}
+.gbtabs button.on{background:#fff;color:var(--ac-d);box-shadow:0 2px 7px rgba(0,0,0,.09)}
+.gbsec{margin-top:12px}
+.gbsec>.k{font-size:11.5px;font-weight:900;color:var(--ink2);margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.gbunit{border:2px solid var(--line);border-radius:14px;padding:10px;background:#fff;margin-bottom:8px}
+.gbunit-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:12.5px;font-weight:900}
+.gbsh{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:12px;border:2px solid var(--line);
+  background:#fff;font-size:12px;font-weight:800;color:var(--ink2);text-align:left;line-height:1.3}
+.gbsh .n{font-size:10.5px;font-weight:900;color:var(--mute)}
+.gbsh.on{border-color:var(--ac);background:#FFF4EA;color:var(--ac-d)}
+.gbsh.on .n{color:var(--ac)}
+.gbq-row{display:flex;gap:8px;align-items:flex-start;padding:9px 10px;border:2px solid var(--line);border-radius:12px;background:#fff;margin-bottom:6px}
+.gbq-row.in{border-color:var(--ok);background:#F4FBF5}
+.gbq-row .tx{flex:1;min-width:0;font-size:13px;font-weight:700;line-height:1.5;word-break:keep-all}
+.gbq-row .tx .ans{color:var(--ok-d);font-weight:900}
+.gbq-row .tx .ch{display:block;font-size:11.5px;color:var(--ink2);font-weight:600;margin-top:2px}
+.gbq-row .mt{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.gbq-add{flex:0 0 auto;min-width:46px;padding:7px 9px;border-radius:10px;background:var(--ac);color:#fff;font-size:12px;font-weight:900}
+.gbq-row.in .gbq-add{background:var(--ok-d)}
+.gbtag{display:inline-block;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:900;background:#F1E9D8;color:var(--ink2);white-space:nowrap}
+.gbtag.ox{background:#E7F0FF;color:#2f5fb3} .gbtag.mc{background:#F3E8FF;color:#7a3fb8} .gbtag.short{background:#E8F7EC;color:#2f7d45}
+.gbtag.used{background:#FFF0E0;color:#b5651d} .gbtag.hot{background:#FFE5E5;color:#c0392b}
+.gbblur .tx{filter:blur(6px);user-select:none}
+.gbtoday{border:2px dashed var(--ac);border-radius:14px;padding:11px;background:#FFFAF4;margin-top:12px}
+.gbtoday ol{margin:0;padding:0;list-style:none}
+.gbtoday li{display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1.5px dashed var(--line)}
+.gbtoday li:last-child{border-bottom:none}
+.gbtoday li.over{opacity:.4}
+.gbtoday .no{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--ac);color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center}
+.gbtoday .tx{flex:1;min-width:0;font-size:12.5px;font-weight:700;line-height:1.45;word-break:keep-all}
+.gbtoday.blur .tx .qq{filter:blur(5px);user-select:none}
+.gbtoday .tx .src{display:block;font-size:10.5px;color:var(--mute);font-weight:800}
+.gbmini{flex:0 0 auto;padding:4px 7px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:11px;font-weight:900;color:var(--ink2)}
+.gbbig{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:14px;
+  background:linear-gradient(135deg,#ffcf4a,#ff9a3c);color:#3a2300;font-size:var(--fs-m);font-weight:900;box-shadow:0 5px 16px rgba(255,154,60,.35)}
+.gbbig:active{transform:translateY(2px)}
+
+/* 무대 — 전자칠판 뒷자리에서도 보이게 */
+.gbs{position:relative;overflow:hidden;border-radius:22px;margin-bottom:12px;color:#fff;
+  padding:clamp(14px,2.6vw,28px) clamp(14px,3vw,34px) clamp(16px,2.6vw,28px);
+  background:radial-gradient(120% 90% at 50% -12%,#3b55a8 0%,#1a2554 46%,#0b1029 100%);
+  box-shadow:0 12px 40px rgba(10,16,41,.35),inset 0 0 0 2px rgba(255,214,102,.32)}
+.gbs::before{content:'';position:absolute;left:50%;top:-40%;width:70%;height:120%;transform:translateX(-50%);
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,236,170,.16),transparent 62%);pointer-events:none}
+.gbs.rv{background:radial-gradient(120% 90% at 50% -12%,#b2462a 0%,#5a1a12 46%,#250807 100%);box-shadow:0 12px 40px rgba(60,10,5,.4),inset 0 0 0 2px rgba(255,170,90,.45)}
+.gbs>*{position:relative}
+.gbs-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-weight:800;font-size:clamp(13px,1.5vw,18px);color:#cdd6ff}
+.gbs.rv .gbs-top{color:#ffd9c4}
+.gbs-alive b{color:#ffd666;font-size:1.55em;font-variant-numeric:tabular-nums}
+.gbs-dots{display:flex;gap:6px}
+.gbs-dots i{width:clamp(9px,1.1vw,14px);height:clamp(9px,1.1vw,14px);border-radius:50%;background:rgba(255,255,255,.18)}
+.gbs-dots i.d{background:#ffd666} .gbs-dots i.c{background:#fff;box-shadow:0 0 0 3px rgba(255,214,102,.5)}
+.gbs-no{text-align:center;font-size:clamp(24px,4vw,54px);font-weight:900;color:#ffd666;text-shadow:0 0 20px rgba(255,214,102,.45);margin-top:2px;letter-spacing:-.01em}
+.gbs-meta{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-top:4px;font-size:clamp(12px,1.35vw,17px);font-weight:800;color:#b9c4f2}
+.gbs-meta .p{padding:3px 11px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff}
+.gbs-meta .p.ox{background:#2f5fb3} .gbs-meta .p.mc{background:#7a3fb8} .gbs-meta .p.short{background:#2f7d45}
+.gbs-q{font-size:clamp(22px,3.5vw,52px);font-weight:900;line-height:1.4;text-align:center;word-break:keep-all;margin:14px auto 4px;max-width:1150px}
+.gbs-q.dim{color:#9aa6d8;font-size:clamp(18px,2.4vw,34px)}
+.gbs-ch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(8px,1vw,14px);max-width:1080px;margin:14px auto 0}
+.gbs-c{display:flex;gap:10px;align-items:baseline;text-align:left;padding:clamp(9px,1.2vw,16px) clamp(12px,1.5vw,20px);border-radius:16px;
+  background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.18);font-size:clamp(16px,2.3vw,32px);font-weight:800;line-height:1.35;word-break:keep-all;transition:all .3s}
+.gbs-c b{color:#ffd666;flex:0 0 auto}
+.gbs-c.ok{background:rgba(92,184,110,.32);border-color:#86e698;transform:scale(1.03)}
+.gbs-c.no{opacity:.4}
+.gbs-ox{display:flex;justify-content:center;gap:clamp(20px,6vw,80px);margin-top:14px}
+.gbs-ox span{width:clamp(64px,9vw,128px);height:clamp(64px,9vw,128px);border-radius:50%;display:grid;place-items:center;
+  font-size:clamp(38px,5.6vw,80px);font-weight:900;border:4px solid rgba(255,255,255,.22);transition:all .35s}
+.gbs-ox .o{color:#8cc4ff} .gbs-ox .x{color:#ff9a9a}
+.gbs-ox span.ok{background:rgba(255,214,102,.22);border-color:#ffd666;transform:scale(1.14);box-shadow:0 0 30px rgba(255,214,102,.45)}
+.gbs-ox span.no{opacity:.28}
+.gbs-ans{margin:16px auto 0;text-align:center;padding-top:14px;border-top:2px dashed rgba(255,255,255,.22);max-width:1080px;animation:gbpop .4s ease}
+.gbs-ans .k{font-size:clamp(12px,1.3vw,16px);color:#aab6e8;font-weight:800}
+.gbs-ans .v{font-size:clamp(24px,3.8vw,56px);font-weight:900;color:#86e698;line-height:1.3;word-break:keep-all}
+.gbs-ans .e{font-size:clamp(14px,1.6vw,22px);color:#dde4ff;font-weight:600;margin-top:6px;line-height:1.5;word-break:keep-all}
+@keyframes gbpop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.gbs-tm{display:flex;align-items:center;gap:12px;max-width:900px;margin:16px auto 0}
+.gbs-tb{flex:1;height:12px;border-radius:999px;background:rgba(255,255,255,.13);overflow:hidden}
+.gbs-tb i{display:block;height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#86e698,#ffd666 60%,#ff8a5c)}
+.gbs-ts{min-width:2.4em;text-align:right;font-size:clamp(24px,3.4vw,50px);font-weight:900;font-variant-numeric:tabular-nums;color:#fff}
+.gbs-ts.warn{color:#ff8a5c;animation:gbblink .5s infinite alternate}
+.gbs-ts.end{color:#ff8a5c}
+@keyframes gbblink{to{opacity:.45}}
+.gbs-btns{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px}
+.gbs-b{padding:clamp(8px,1vw,12px) clamp(14px,1.6vw,22px);border-radius:999px;font-weight:900;font-size:clamp(13px,1.45vw,18px);
+  background:rgba(255,255,255,.12);color:#fff;border:2px solid rgba(255,255,255,.22)}
+.gbs-b.y{background:#ffd666;color:#1a1f3c;border-color:transparent;box-shadow:0 4px 16px rgba(255,214,102,.35)}
+.gbs-b.r{background:#ff7a59;color:#fff;border-color:transparent}
+.gbs-b:disabled{opacity:.35}
+.gbs-kbd{font-size:11px;color:#8f9bd0;text-align:center;margin-top:10px;font-weight:700}
+.gbs.rv .gbs-kbd{color:#e6a58c}
+.gbs-ban{text-align:center;font-size:clamp(22px,3.4vw,48px);font-weight:900;color:#ffb27a;text-shadow:0 0 22px rgba(255,140,60,.55)}
+body.gbfocus #s-tea .hdr,body.gbfocus #app-credit{display:none}
+body.gbfocus #s-tea main.wrap{max-width:1400px}
+
+/* 🎰 패자부활 가챠 */
+.gbg{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;justify-content:safe center;gap:clamp(6px,1.6vh,20px);overflow-y:auto;
+  color:#fff;background:radial-gradient(circle at 50% 28%,#3a2a7a 0%,#160f3a 55%,#08061a 100%);padding:16px;overflow-x:hidden}
+.gbg-t{font-size:clamp(22px,min(4.4vw,6vh),58px);font-weight:900;letter-spacing:-.02em;text-align:center;text-shadow:0 0 24px rgba(255,120,200,.55)}
+.gbg-s{font-size:clamp(13px,1.6vw,20px);font-weight:700;color:#cbbcff;text-align:center}
+.gm{position:relative;width:clamp(150px,min(26vw,30vh),330px);transform-origin:50% 100%;flex:0 0 auto}
+.gm.shake{animation:gmshake .12s linear infinite}
+@keyframes gmshake{0%{transform:rotate(-2deg) translateY(0)}50%{transform:rotate(2deg) translateY(-3px)}100%{transform:rotate(-2deg) translateY(0)}}
+.gm-dome{position:relative;width:100%;aspect-ratio:1/1;border-radius:50%;overflow:hidden;
+  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.55),rgba(255,255,255,.08) 34%,rgba(160,200,255,.12) 70%,rgba(255,255,255,.22));
+  border:6px solid rgba(255,255,255,.55);box-shadow:inset 0 -18px 40px rgba(0,0,0,.25),0 0 40px rgba(140,120,255,.35)}
+.gm-cap{position:absolute;width:20%;aspect-ratio:1/1;border-radius:50%;box-shadow:inset -4px -5px 0 rgba(0,0,0,.18)}
+.gm-cap::after{content:'';position:absolute;left:0;right:0;top:0;height:50%;border-radius:999px 999px 0 0;background:rgba(255,255,255,.75)}
+.gm.shake .gm-cap{animation:gmjig .18s ease-in-out infinite alternate}
+@keyframes gmjig{to{transform:translate(4px,-7px) rotate(25deg)}}
+.gm-neck{width:46%;height:14px;margin:-4px auto 0;background:#c9c3e8;border-radius:4px}
+.gm-body{position:relative;width:86%;margin:0 auto;aspect-ratio:2/1;border-radius:18px 18px 26px 26px;
+  background:linear-gradient(180deg,#ff5b7f,#d82c5a);box-shadow:inset 0 -10px 0 rgba(0,0,0,.18),0 10px 30px rgba(0,0,0,.4)}
+.gm-knob{position:absolute;left:14%;top:22%;width:30%;aspect-ratio:1/1;border-radius:50%;background:#ffe38a;border:5px solid #fff3c4;
+  box-shadow:0 4px 0 rgba(0,0,0,.2);display:grid;place-items:center;transition:transform 1.4s cubic-bezier(.5,0,.3,1)}
+.gm-knob::before{content:'';width:76%;height:20%;background:#d99a1a;border-radius:6px}
+.gm-knob.turn{transform:rotate(720deg)}
+.gm-chute{position:absolute;right:12%;top:30%;width:32%;height:46%;border-radius:12px;background:#3a0f22;box-shadow:inset 0 6px 10px rgba(0,0,0,.6)}
+.gm-lbl{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:clamp(11px,1.2vw,15px);font-weight:900;color:#ffe0ea;letter-spacing:.12em}
+.gm-drop{position:absolute;right:16%;top:32%;width:24%;aspect-ratio:1/1;opacity:0;z-index:3}
+.gm-drop.go{animation:gmdrop 1s cubic-bezier(.3,.6,.4,1) forwards}
+@keyframes gmdrop{0%{opacity:1;transform:translateY(0) scale(.6)}55%{opacity:1;transform:translateY(150%) scale(1.25)}
+  75%{transform:translateY(118%) scale(1.25)}100%{opacity:1;transform:translateY(150%) scale(1.25)}}
+.gm-drop .h1,.gm-drop .h2{position:absolute;left:0;right:0;height:50%;transition:transform .5s ease,opacity .5s}
+.gm-drop .h1{top:0;border-radius:999px 999px 0 0;background:rgba(255,255,255,.88)}
+.gm-drop .h2{bottom:0;border-radius:0 0 999px 999px}
+.gm-drop.open .h1{transform:translate(-30px,-60px) rotate(-70deg);opacity:0}
+.gm-drop.open .h2{transform:translate(30px,40px) rotate(60deg);opacity:0}
+.gbg-res{min-height:clamp(70px,12vh,170px);margin-top:clamp(18px,5vh,60px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.gbg-res .big{font-size:clamp(28px,min(6.4vw,8.5vh),92px);font-weight:900;line-height:1.1;animation:gbzoom .55s cubic-bezier(.2,1.6,.4,1)}
+.gbg-res .big.win{color:#ffd666;text-shadow:0 0 34px rgba(255,200,80,.8)}
+.gbg-res .big.lose{color:#b9b3d6;text-shadow:0 0 20px rgba(120,100,200,.6)}
+.gbg-res .small{font-size:clamp(14px,1.8vw,24px);font-weight:800;color:#e8defe;margin-top:8px}
+@keyframes gbzoom{from{transform:scale(.2);opacity:0}to{transform:none;opacity:1}}
+.gbg-p{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;font-size:12.5px;font-weight:800;color:#cbbcff}
+.gbg-p button{padding:6px 12px;border-radius:999px;border:2px solid rgba(255,255,255,.25);color:#fff;font-weight:900;font-size:12.5px}
+.gbg-p button.on{background:#ff5b9a;border-color:transparent}
+.gbg-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.gbg-btn{padding:clamp(11px,1.4vw,16px) clamp(20px,2.6vw,36px);border-radius:999px;font-size:clamp(15px,1.9vw,24px);font-weight:900;
+  background:linear-gradient(135deg,#ffd666,#ff8a3c);color:#2a1300;box-shadow:0 6px 22px rgba(255,150,60,.45)}
+.gbg-btn.g{background:rgba(255,255,255,.14);color:#fff;box-shadow:none;border:2px solid rgba(255,255,255,.3)}
+.gbg-btn:disabled{opacity:.4}
+.gbg-x{position:absolute;top:14px;right:16px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font-weight:900;font-size:13px}
+.gbg-cf{position:absolute;top:-20px;width:10px;height:16px;border-radius:2px;animation:gbcf linear forwards;pointer-events:none}
+@keyframes gbcf{to{transform:translateY(110vh) rotate(720deg)}}
 footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;font-weight:700;line-height:1.7}
 </style>
 </head>
@@ -351,7 +498,7 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
 
 <footer class="wrap" id="app-credit">
   © 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br>
-  <span style="opacity:.85">과학 칭찬도장판 · 최종 업데이트 2026-08-16</span>
+  <span style="opacity:.85">과학 칭찬도장판 · 최종 업데이트 2026-10-16</span>
 </footer>
 
 <script>
@@ -1148,7 +1295,8 @@ async function bootTeacher(){
     await loadTeacherObs();
     await loadClasses();
     await loadPlans();
-    goScr('s-tea'); teaTab('give');
+    goScr('s-tea'); teaTab(/^#gb/.test(location.hash) ? 'gb' : 'give');
+    gbbLoad();          /* 골든벨 문제은행은 뒤에서 받아 둔다 */
   } finally { hideLoad(); }
 }
 async function loadTeacherObs(){
@@ -1168,6 +1316,7 @@ function teaTab(k){
   if(k==='cp')   renderCoupons();
   if(k==='out')  renderExport();
   window.scrollTo(0,0);
+  document.body.classList.toggle('gbfocus', k === 'gb' && !!document.fullscreenElement);
   if(k === 'gb') renderGB();
 }
 
@@ -1857,14 +2006,25 @@ function gbClear(){ GB = null; try{ localStorage.removeItem(GB_KEY); }catch(e){}
 /* ══════════════════════════════════════════════════════════════════════════
    📝 골든벨 문제 — 칠판에 띄우는 몫
 
-   문제도 DB 에 두지 않는다(골든벨은 «새 테이블 없음» 이 원칙). 대신 집에서 만든
-   문제를 학교 전자칠판에서 열 수 있게 JSON 내보내기·불러오기를 둔다.
+   문제도 DB 에 두지 않는다(골든벨은 «새 테이블 없음» 이 원칙).
+   2026-10-16 문제은행: 1·2학년 학습지로 만든 문제를 승재쌤과학(scienceclass/goldenbell/
+   bank.json)에 올려 두고, 받은 것을 이 기기 localStorage 에도 넣어 둔다(인터넷이 끊겨도 그대로).
+   «오늘 낼 문제»(gb_qs_v1)를 채우는 길은 세 가지 —
+     🎲 랜덤 출제(학습지 범위를 골라 뽑기) · ✋ 골라서 출제(은행에서 담기) · ✏️ 직접 쓰기(⭐ 내 문제)
    목록이 비어 있으면 문제 칸이 아예 안 나온다 — 예전처럼 선생님이 구두로 낸다.
    ══════════════════════════════════════════════════════════════════════════ */
 var GBQ_KEY = 'gb_qs_v1';
-var GBQ = null;        // [{q:'문제', a:'정답'}]
-var _gbEdit = false;   // 문제 편집기를 펼쳤는지
+var GBQ = null;        // [{q,a, id?,t?,lv?,ch?,acc?,ex?,src?,g?}]
 var _gbEditIx = -1;    // 고치는 중인 문제 번호(-1 이면 새로 추가)
+var _gbWT = 'short';   // 직접 쓰기 — 문제 유형
+var _gbDraft = null;   // 유형을 바꿀 때 적던 글을 잃지 않게
+var _gbPickSh = null;  // 골라서 출제 — 보고 있는 학습지
+var _gbFind = '';      // 골라서 출제 — 찾는 낱말
+var GB_CIRC = ['①','②','③','④','⑤','⑥'];
+
+function gbLs(k, d){ try{ var v = localStorage.getItem(k); return v == null ? d : v; }catch(e){ return d; } }
+function gbLsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+function gbLsJ(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } }
 
 function gbqLoad(){
   if(GBQ) return GBQ;
@@ -1878,24 +2038,280 @@ function gbqAt(round){ var l = gbqLoad(); return l[round-1] || null; }
 /* 따옴표까지 막아야 value="…" 안에 넣을 수 있다 — esc 는 & < > 만 막는다 */
 function escq(s){ return esc(s).replace(/"/g, '&quot;'); }
 
-function gbqToggleEdit(){ _gbEdit = !_gbEdit; _gbEditIx = -1; renderGB(); }
-function gbqEdit(i){ _gbEditIx = i; renderGB(); }
-function gbqCancel(){ _gbEditIx = -1; renderGB(); }
+/* ── 📚 문제은행 ─────────────────────────────────────────────────────────── */
+var GBB_URL = '/scienceclass/goldenbell/bank.json';
+var GBB_CACHE = 'gb_bank_cache_v1';
+var GBB = null;          // {v, grades:[{g,name,units:[{id,name,sheets:[{id,no,t,qs:[…]}]}]}]}
+var GBB_IDX = {};        // 문제 id → {q, sheet, unit, g}
+var _gbbSt = 'idle';     // idle · loading · net(서버) · cache(이 기기) · none
 
-function gbqAdd(){
-  var qi = $('gbqQ'), ai = $('gbqA');
-  var q = qi ? qi.value.trim() : '', a = ai ? ai.value.trim() : '';
-  if(!q){ toast('문제를 적어주세요'); if(qi) qi.focus(); return; }
-  gbqLoad();
-  if(_gbEditIx >= 0 && GBQ[_gbEditIx]) GBQ[_gbEditIx] = { q:q, a:a };
-  else GBQ.push({ q:q, a:a });
-  _gbEditIx = -1;
-  gbqSave(); renderGB();
+function gbbIndex(){
+  GBB_IDX = {};
+  if(!GBB || !GBB.grades) return;
+  GBB.grades.forEach(function(G){
+    (G.units || []).forEach(function(U){
+      (U.sheets || []).forEach(function(Sh){
+        (Sh.qs || []).forEach(function(q){ GBB_IDX[q.id] = { q:q, sheet:Sh, unit:U, g:G.g }; });
+      });
+    });
+  });
 }
+function gbbLoad(){
+  if(_gbbSt === 'loading' || _gbbSt === 'net') return;
+  if(!GBB){
+    var c = gbLsJ(GBB_CACHE, null);
+    if(c && c.grades){ GBB = c; gbbIndex(); _gbbSt = 'cache'; }
+  }
+  _gbbSt = 'loading';
+  fetch(GBB_URL, { cache:'no-cache' })
+    .then(function(r){ if(!r.ok) throw r.status; return r.json(); })
+    .then(function(j){
+      if(!j || !j.grades) throw 0;
+      GBB = j; gbbIndex(); _gbbSt = 'net';
+      gbLsSet(GBB_CACHE, JSON.stringify(j));
+      gbRerender();
+    })
+    .catch(function(){ _gbbSt = GBB ? 'cache' : 'none'; gbRerender(); });
+}
+/* 글을 쓰는 중이면 다시 그리지 않는다 — 적던 문제가 날아간다 */
+function gbRerender(){
+  var p = $('p-gb'), a = document.activeElement;
+  if(!p || !p.classList.contains('on')) return;
+  if(a && p.contains(a) && /INPUT|TEXTAREA/.test(a.tagName)) return;
+  renderGB();
+}
+function gbbCount(){ return Object.keys(GBB_IDX).length; }
+function gbbGrade(g){
+  if(!GBB) return null;
+  for(var i=0;i<GBB.grades.length;i++) if(GBB.grades[i].g === g) return GBB.grades[i];
+  return null;
+}
+function gbbSheets(g){
+  var G = gbbGrade(g), out = [];
+  if(G) G.units.forEach(function(U){ U.sheets.forEach(function(s){ out.push(s); }); });
+  return out;
+}
+function gbSrcLabel(x){ return x.g + '학년 학습지 ' + x.sheet.no + ' · ' + x.sheet.t; }
+
+/* 은행 문제 → 오늘 목록에 넣을 사본(은행이 바뀌어도 오늘 목록은 그대로 남게) */
+function gbQById(id){
+  var x = GBB_IDX[id], q, m, i;
+  if(x){
+    q = x.q;
+    var o = { id:q.id, t:q.t, lv:q.lv, q:q.q, a:q.a, src:gbSrcLabel(x), g:x.g };
+    if(q.ch) o.ch = q.ch.slice();
+    if(q.acc) o.acc = q.acc.slice();
+    if(q.ex) o.ex = q.ex;
+    return o;
+  }
+  m = gbmyAll();
+  for(i=0;i<m.length;i++) if(m[i].id === id) return JSON.parse(JSON.stringify(m[i]));
+  return null;
+}
+function gbSheetOf(id){
+  if(!id) return '';
+  if(GBB_IDX[id]) return GBB_IDX[id].sheet.id;
+  return id.indexOf('my-') === 0 ? 'my' : '';
+}
+
+/* 문제를 고르는 학년 — 반을 골랐으면 그 반 학년 */
+function gbPanelG(){
+  if(S.selClass && gbbGrade(S.selClass.grade)) return S.selClass.grade;
+  var g = parseInt(gbLs('gb_g', ''), 10);
+  if(gbbGrade(g)) return g;
+  return (GBB && GBB.grades.length) ? GBB.grades[0].g : ((S.selClass && S.selClass.grade) || 0);
+}
+function gbPlayG(){ return (GB && gbbGrade(GB.g)) ? GB.g : gbPanelG(); }
+function gbSetG(g){ gbLsSet('gb_g', String(g)); _gbPickSh = null; renderGB(); }
+function gbGradeChips(){
+  if(!GBB || GBB.grades.length < 2) return '';
+  if(S.selClass && gbbGrade(S.selClass.grade)) return '';
+  var g = gbPanelG();
+  return '<div class="gbsec"><div class="k">학년</div><div class="chips">' +
+    GBB.grades.map(function(G){
+      return '<button class="chip' + (G.g === g ? ' on' : '') + '" onclick="gbSetG(' + G.g + ')">' + esc(G.name) + '</button>';
+    }).join('') + '</div></div>';
+}
+
+/* ── ⭐ 내 문제 — 직접 쓴 문제를 이 기기에 모아 두고 다시 골라 쓴다 ── */
+var GBMY_KEY = 'gb_my_v1';
+function gbmyAll(){ var a = gbLsJ(GBMY_KEY, []); return a instanceof Array ? a : []; }
+function gbmySave(a){ try{ localStorage.setItem(GBMY_KEY, JSON.stringify(a)); }catch(e){ toast('저장 공간이 가득 찼어요'); } }
+function gbmyFor(g){ return gbmyAll().filter(function(q){ return !q.g || !g || q.g === g; }); }
+function gbmyDel(id){
+  if(!confirm('내 문제에서 지울까요? (오늘 목록에 담긴 것은 그대로 둡니다)')) return;
+  gbmySave(gbmyAll().filter(function(q){ return q.id !== id; }));
+  renderGB();
+}
+
+/* ── 🎯 범위(랜덤 출제) — 학년마다 따로 기억한다 ── */
+function gbRangeGet(g){
+  var r = gbLsJ('gb_range_v1', {}), a = r['g' + g];
+  if(a instanceof Array) return a;
+  return gbbSheets(g).map(function(s){ return s.id; });     /* 처음엔 전부 */
+}
+function gbRangeSet(g, a){
+  var r = gbLsJ('gb_range_v1', {});
+  if(!r || typeof r !== 'object') r = {};
+  r['g' + g] = a; gbLsSet('gb_range_v1', JSON.stringify(r));
+}
+function gbRangeToggle(g, id){
+  var a = gbRangeGet(g).slice(), i = a.indexOf(id);
+  if(i >= 0) a.splice(i, 1); else a.push(id);
+  gbRangeSet(g, a); renderGB();
+}
+function gbRangeUnit(g, uid){
+  var G = gbbGrade(g), U = null, i;
+  if(!G) return;
+  for(i=0;i<G.units.length;i++) if(G.units[i].id === uid) U = G.units[i];
+  if(!U) return;
+  var a = gbRangeGet(g).slice(), ids = U.sheets.map(function(s){ return s.id; });
+  var all = ids.every(function(id){ return a.indexOf(id) >= 0; });
+  ids.forEach(function(id){
+    var k = a.indexOf(id);
+    if(all && k >= 0) a.splice(k, 1);
+    if(!all && k < 0) a.push(id);
+  });
+  gbRangeSet(g, a); renderGB();
+}
+function gbRangePreset(g, k){
+  var ids = gbbSheets(g).map(function(s){ return s.id; }), keepMy = gbRangeGet(g).indexOf('my') >= 0;
+  var a = k === 'last1' ? ids.slice(-1) : k === 'last2' ? ids.slice(-2) : ids;
+  if(keepMy) a = a.concat(['my']);
+  gbRangeSet(g, a); renderGB();
+}
+/* 범위에 든 문제 id — loose 면 범위가 비었을 때 그 학년 전체로 */
+function gbPool(g, loose){
+  var rg = gbRangeGet(g), out = [];
+  gbbSheets(g).forEach(function(s){
+    if(rg.indexOf(s.id) < 0) return;
+    s.qs.forEach(function(q){ out.push(q.id); });
+  });
+  if(rg.indexOf('my') >= 0) gbmyFor(g).forEach(function(q){ out.push(q.id); });
+  if(!out.length && loose){
+    gbbSheets(g).forEach(function(s){ s.qs.forEach(function(q){ out.push(q.id); }); });
+  }
+  return out;
+}
+
+/* ── 🔁 반마다 낸 문제 · 📊 문제별 탈락률 (이 기기에만) ── */
+var GBUSED_KEY = 'gb_used_v1';     /* {'2-3': {문제id:'2026-10-16'}} */
+var GBSTAT_KEY = 'gb_qstat_v1';    /* {문제id: {n:낸 횟수, p:푼 사람, x:탈락}} */
+function gbClsKey(){
+  if(GB) return GB.g + '-' + GB.c;
+  return S.selClass ? S.selClass.grade + '-' + S.selClass.cls : '';
+}
+function gbUsedOf(k){ var m = gbLsJ(GBUSED_KEY, {}); return (k && m && m[k]) || {}; }
+function gbMarkUsed(q){
+  if(!q || !q.id) return;
+  var k = gbClsKey(); if(!k) return;
+  var m = gbLsJ(GBUSED_KEY, {}); if(!m || typeof m !== 'object') m = {};
+  (m[k] = m[k] || {})[q.id] = todayStr();
+  gbLsSet(GBUSED_KEY, JSON.stringify(m));
+}
+function gbUsedReset(){
+  var k = gbClsKey(); if(!k) return;
+  if(!confirm(k.replace('-', '학년 ') + '반에서 낸 문제 기록을 지울까요?\n(다음 랜덤 출제부터 다시 전부 나올 수 있어요)')) return;
+  var m = gbLsJ(GBUSED_KEY, {}); delete m[k]; gbLsSet(GBUSED_KEY, JSON.stringify(m));
+  renderGB();
+}
+function gbStatRec(q, p, x){
+  if(!q || !q.id || !p) return;
+  var m = gbLsJ(GBSTAT_KEY, {}); if(!m || typeof m !== 'object') m = {};
+  var s = m[q.id] || { n:0, p:0, x:0 };
+  s.n++; s.p += p; s.x += x; m[q.id] = s;
+  gbLsSet(GBSTAT_KEY, JSON.stringify(m));
+}
+function gbStatTag(st, id){
+  var s = st && st[id];
+  if(!s || !s.p) return '';
+  var r = Math.round(s.x / s.p * 100);
+  return '<span class="gbtag' + (r >= 40 ? ' hot' : '') + '" title="' + s.n + '번 냈어요">탈락 ' + r + '%</span>';
+}
+
+function gbTypeName(t){ return t === 'ox' ? 'O/X' : t === 'mc' ? '객관식' : t === 'short' ? '단답' : ''; }
+function gbTypeTag(q){ return q && q.t ? '<span class="gbtag ' + q.t + '">' + gbTypeName(q.t) + '</span>' : ''; }
+function gbLvTag(q){ return q && q.lv ? '<span class="gbtag">' + '★★★'.slice(0, q.lv) + '</span>' : ''; }
+function gbAnsIx(q){
+  if(!q || q.t !== 'mc' || !q.a) return -1;
+  return GB_CIRC.indexOf(String(q.a).trim().charAt(0));
+}
+function gbShuffle(a){
+  for(var i=a.length-1;i>0;i--){ var j = Math.floor(Math.random()*(i+1)), t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+
+/* ── 🎲 뽑기 ── */
+function gbWantN(){
+  if(GB && !GB.ready && gbMatchesClass()) return GB.total;
+  var n = parseInt(gbLs('gb_cnt', '4'), 10);
+  return n > 0 ? n : 4;
+}
+function gbSetWant(n){
+  gbLsSet('gb_cnt', String(n));
+  if(GB && !GB.ready && gbMatchesClass()){ GB.total = n; gbSave(); }
+  renderGB();
+}
+function gbOpt(k){ gbLsSet(k, gbLs(k, '1') === '1' ? '0' : '1'); renderGB(); }
+
+function gbDraw(){
+  var g = gbPanelG(), n = gbWantN(), pool = gbPool(g, false);
+  if(!pool.length){ toast('범위에 든 문제가 없어요 — 학습지를 하나 이상 눌러 주세요'); return; }
+  var used = gbUsedOf(gbClsKey()), noRep = gbLs('gb_norep', '1') === '1';
+  var fresh = noRep ? pool.filter(function(id){ return !used[id]; }) : pool.slice();
+  var mixed = false;
+  if(fresh.length < n){
+    var rest = gbShuffle(pool.filter(function(id){ return fresh.indexOf(id) < 0; }));
+    mixed = noRep && rest.length > 0;
+    fresh = fresh.concat(rest.slice(0, n - fresh.length));
+  }
+  /* 학습지마다 섞은 뒤 번갈아 뽑는다 — 한 학습지에만 몰리지 않게 */
+  var by = {}, order = [], pick = [], i, any;
+  fresh.forEach(function(id){
+    var s = gbSheetOf(id) || '?';
+    if(!by[s]){ by[s] = []; order.push(s); }
+    by[s].push(id);
+  });
+  gbShuffle(order);
+  order.forEach(function(s){ gbShuffle(by[s]); });
+  while(pick.length < n){
+    any = false;
+    for(i=0;i<order.length && pick.length < n;i++){
+      if(by[order[i]].length){ pick.push(by[order[i]].shift()); any = true; }
+    }
+    if(!any) break;
+  }
+  var qs = pick.map(gbQById).filter(Boolean);
+  if(gbLs('gb_easy', '1') === '1'){
+    qs = qs.map(function(q, k){ return { q:q, k:k }; })
+           .sort(function(a, b){ return ((a.q.lv || 2) - (b.q.lv || 2)) || (a.k - b.k); })
+           .map(function(x){ return x.q; });
+  }
+  GBQ = qs; _gbEditIx = -1;
+  gbqSave(); gbSyn('pop'); renderGB();
+  toast('🎲 ' + qs.length + '문제를 뽑았어요' + (mixed ? ' · 이 반에서 낸 문제도 섞였어요' : ''));
+}
+
+/* 진행 중에 바꿔 낼 문제 — 오늘 목록·이 반에서 낸 문제는 되도록 피하고, 같은 학습지를 먼저 */
+function gbSpare(pref){
+  var g = gbPlayG(), pool = gbPool(g, true), inList = {}, used = gbUsedOf(gbClsKey());
+  gbqLoad().forEach(function(q){ if(q && q.id) inList[q.id] = 1; });
+  if(GB && GB.rvq) GB.rvq.forEach(function(id){ inList[id] = 1; });
+  var c = pool.filter(function(id){ return !inList[id]; });
+  var c2 = c.filter(function(id){ return !used[id]; });
+  if(c2.length) c = c2;
+  if(pref){
+    var c3 = c.filter(function(id){ return gbSheetOf(id) === pref; });
+    if(c3.length) c = c3;
+  }
+  if(!c.length) return null;
+  return gbQById(c[Math.floor(Math.random() * c.length)]);
+}
+
+/* ── 오늘 목록 손질 ── */
 function gbqDel(i){
   gbqLoad();
   if(!GBQ[i]) return;
-  if(!confirm((i+1) + '번 문제를 지울까요?')) return;
   GBQ.splice(i, 1);
   if(_gbEditIx === i) _gbEditIx = -1;
   gbqSave(); renderGB();
@@ -1908,17 +2324,162 @@ function gbqMove(i, d){
   _gbEditIx = -1;
   gbqSave(); renderGB();
 }
-
-/* 집 기기 → 학교 기기. 로그인은 따라오지만 문제는 이 기기에만 있다. */
-function gbqExport(){
+function gbqSwap(i){
   gbqLoad();
-  if(!GBQ.length){ toast('내보낼 문제가 없어요'); return; }
-  var blob = new Blob([JSON.stringify(GBQ, null, 2)], {type:'application/json'});
+  if(!GBQ[i]) return;
+  var q = gbSpare(gbSheetOf(GBQ[i].id));
+  if(!q){ toast('바꿀 문제가 범위에 더 없어요'); return; }
+  GBQ[i] = q; gbqSave(); gbSyn('pop'); renderGB();
+}
+function gbqShuffle(){ gbqLoad(); gbShuffle(GBQ); gbqSave(); renderGB(); }
+function gbqClear(){
+  gbqLoad();
+  if(!GBQ.length) return;
+  if(!confirm('오늘 목록을 비울까요? (문제은행·내 문제는 그대로예요)')) return;
+  GBQ = []; _gbEditIx = -1; gbqSave(); renderGB();
+}
+function gbPeek(){ gbLsSet('gb_peek', gbLs('gb_peek', '0') === '1' ? '0' : '1'); renderGB(); }
+function gbMode(m){ gbLsSet('gb_mode', m); if(m !== 'write'){ _gbEditIx = -1; _gbDraft = null; } renderGB(); }
+
+/* ── ✋ 골라서 출제 ── */
+function gbPickSh(id){ _gbPickSh = id; _gbFind = ''; renderGB(); }
+function gbFindIn(v){ _gbFind = v; var el = $('gbPickList'); if(el) el.innerHTML = gbPickList(); }
+function gbPickToggle(id){
+  gbqLoad();
+  var ix = -1, i;
+  for(i=0;i<GBQ.length;i++) if(GBQ[i] && GBQ[i].id === id) ix = i;
+  if(ix >= 0) GBQ.splice(ix, 1);
+  else { var q = gbQById(id); if(q) GBQ.push(q); }
+  gbqSave();
+  var el = $('gbPickList'), td = $('gbToday');
+  if(el) el.innerHTML = gbPickList();
+  if(td) td.outerHTML = gbTodayUI();
+}
+function gbPickList(){
+  var g = gbPanelG(), f = _gbFind.trim().toLowerCase(), list = [], h = '';
+  var peek = gbLs('gb_peek', '0') === '1';
+  if(f){
+    gbbSheets(g).forEach(function(s){ s.qs.forEach(function(q){ list.push(q); }); });
+    gbmyFor(g).forEach(function(q){ list.push(q); });
+    list = list.filter(function(q){
+      return (q.q + ' ' + (q.a || '') + ' ' + (q.ch || []).join(' ')).toLowerCase().indexOf(f) >= 0;
+    });
+  } else if(_gbPickSh === 'my'){
+    list = gbmyFor(g);
+  } else {
+    gbbSheets(g).forEach(function(s){ if(s.id === _gbPickSh) list = s.qs; });
+  }
+  if(!list.length){
+    return '<div class="empty" style="padding:20px"><p>' +
+      (f ? '찾는 낱말이 들어간 문제가 없어요' : _gbPickSh === 'my' ? '아직 내 문제가 없어요 — ✏️ 직접 쓰기에서 만들 수 있어요' : '문제가 없어요') + '</p></div>';
+  }
+  var inList = {}, used = gbUsedOf(gbClsKey()), st = gbLsJ(GBSTAT_KEY, {});
+  gbqLoad().forEach(function(q){ if(q && q.id) inList[q.id] = 1; });
+  list.forEach(function(q){
+    var inn = !!inList[q.id], mine = q.id && q.id.indexOf('my-') === 0, x = GBB_IDX[q.id];
+    h += '<div class="gbq-row' + (inn ? ' in' : '') + '"><div class="tx">' + esc(q.q) +
+         (q.ch ? '<span class="ch">' + q.ch.map(function(c, i){ return GB_CIRC[i] + ' ' + esc(c); }).join(' · ') + '</span>' : '') +
+         (peek && q.a ? ' <span class="ans">→ ' + esc(q.a) + '</span>' : '') +
+         '<div class="mt">' + gbTypeTag(q) + gbLvTag(q) +
+         (f && x ? '<span class="gbtag">학습지 ' + x.sheet.no + '</span>' : '') +
+         (f && mine ? '<span class="gbtag">⭐ 내 문제</span>' : '') +
+         (used[q.id] ? '<span class="gbtag used">이 반에서 냄 ' + used[q.id].slice(5).replace('-', '/') + '</span>' : '') +
+         gbStatTag(st, q.id) + '</div></div>' +
+         (mine ? '<button class="gbmini" title="내 문제에서 지우기" onclick="gbmyDel(\'' + q.id + '\')">✕</button>' : '') +
+         '<button class="gbq-add" onclick="gbPickToggle(\'' + q.id + '\')">' + (inn ? '✓ 담김' : '＋ 담기') + '</button></div>';
+  });
+  return h;
+}
+
+/* ── ✏️ 직접 쓰기 ── */
+function gbWType(t){
+  var qi = $('gbqQ'), ai = $('gbqA'), ci = $('gbqC'), ei = $('gbqE');
+  _gbDraft = { q: qi ? qi.value : '', a: ai ? ai.value : '', c: ci ? ci.value : '', e: ei ? ei.value : '' };
+  _gbWT = t; renderGB();
+}
+function gbqEdit(i){
+  var l = gbqLoad(); if(!l[i]) return;
+  _gbEditIx = i; _gbWT = l[i].t || 'short'; _gbDraft = null;
+  gbLsSet('gb_mode', 'write'); renderGB();
+  var el = $('gbqQ'); if(el){ el.scrollIntoView({ block:'center' }); el.focus(); }
+}
+function gbqCancel(){ _gbEditIx = -1; _gbDraft = null; renderGB(); }
+function gbNumOf(s){
+  s = String(s || '').trim();
+  var i = GB_CIRC.indexOf(s.charAt(0));
+  if(i >= 0) return i + 1;
+  var n = parseInt(s, 10);
+  return n > 0 ? n : 0;
+}
+function gbqAdd(){
+  var qi = $('gbqQ'), ai = $('gbqA'), ci = $('gbqC'), ei = $('gbqE'), mi = $('gbqMy');
+  var q = qi ? qi.value.trim() : '', a = ai ? ai.value.trim() : '', e = ei ? ei.value.trim() : '';
+  var l = gbqLoad(), ed = (_gbEditIx >= 0 && l[_gbEditIx]) ? l[_gbEditIx] : null, t = _gbWT, ch = null, n;
+  if(!q){ toast('문제를 적어주세요'); if(qi) qi.focus(); return; }
+  if(t === 'mc'){
+    ch = (ci ? ci.value : '').split('\n').map(function(s){ return s.replace(/^\s*[①-⑥0-9]+[.)]?\s*/, '').trim(); }).filter(Boolean);
+    if(ch.length < 2){ toast('보기를 두 개 이상, 한 줄에 하나씩 적어주세요'); if(ci) ci.focus(); return; }
+    if(ch.length > 6) ch = ch.slice(0, 6);
+    if(a){
+      n = gbNumOf(a);
+      if(!n || n > ch.length){ toast('정답은 보기 번호로 적어주세요 (1~' + ch.length + ')'); if(ai) ai.focus(); return; }
+      a = GB_CIRC[n - 1];
+    }
+  }
+  if(t === 'ox' && a){
+    if(/^[oO○ㅇ0]/.test(a)) a = 'O';
+    else if(/^[xX×✕]/.test(a)) a = 'X';
+    else { toast('O/X 문제의 정답은 O 또는 X 로 적어주세요'); if(ai) ai.focus(); return; }
+  }
+  var item = { q:q, a:a, t:t };
+  if(ch) item.ch = ch;
+  if(e) item.ex = e;
+  if(ed){
+    ['id','src','lv','g','acc'].forEach(function(k){ if(ed[k] != null) item[k] = ed[k]; });
+    GBQ[_gbEditIx] = item;
+    /* 내 문제를 고쳤으면 내 문제 보관함도 같이 고친다 */
+    if(item.id && item.id.indexOf('my-') === 0){
+      gbmySave(gbmyAll().map(function(m){ return m.id === item.id ? item : m; }));
+    }
+  } else {
+    item.id = 'my-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    item.src = '⭐ 내 문제';
+    item.g = gbPanelG() || 0;
+    GBQ.push(item);
+    if(!mi || mi.checked){ var m = gbmyAll(); m.push(item); gbmySave(m); }
+  }
+  _gbEditIx = -1; _gbDraft = null;
+  gbqSave(); renderGB();
+  toast(ed ? '고쳤어요' : '오늘 목록에 넣었어요');
+}
+
+/* 집 기기 → 학교 기기. 문제은행은 어디서나 저절로 오고, 오늘 목록·내 문제만 파일로 옮긴다. */
+function gbqExport(){
+  var today = gbqLoad(), mine = gbmyAll();
+  if(!today.length && !mine.length){ toast('내보낼 문제가 없어요'); return; }
+  var data = { format:'goldenbell', v:2, saved:todayStr(), today:today, mine:mine };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = '골든벨_문제_' + todayStr() + '.json';
   a.click(); URL.revokeObjectURL(a.href);
-  toast('문제 ' + GBQ.length + '개를 내려받았어요');
+  toast('오늘 ' + today.length + '개 · 내 문제 ' + mine.length + '개를 내려받았어요');
+}
+function gbqClean(arr){
+  var out = [], i, it, o;
+  if(!(arr instanceof Array)) return out;
+  for(i=0;i<arr.length;i++){
+    it = arr[i];
+    if(!it || typeof it.q !== 'string' || !it.q.trim()) continue;
+    o = { q:String(it.q), a:String(it.a == null ? '' : it.a) };
+    ['id','t','src','ex'].forEach(function(k){ if(typeof it[k] === 'string' && it[k]) o[k] = it[k]; });
+    if(it.lv) o.lv = +it.lv || undefined;
+    if(it.g) o.g = +it.g || undefined;
+    if(it.ch instanceof Array) o.ch = it.ch.map(String);
+    if(it.acc instanceof Array) o.acc = it.acc.map(String);
+    out.push(o);
+  }
+  return out;
 }
 function gbqImport(input){
   var f = input && input.files && input.files[0];
@@ -1926,108 +2487,303 @@ function gbqImport(input){
   var r = new FileReader();
   r.onload = function(){
     try{
-      var arr = JSON.parse(String(r.result)), out = [], i, it;
-      if(!(arr instanceof Array)) throw 0;
-      for(i=0;i<arr.length;i++){
-        it = arr[i];
-        if(it && typeof it.q === 'string' && it.q.trim()) out.push({ q:String(it.q), a:String(it.a == null ? '' : it.a) });
+      var j = JSON.parse(String(r.result)), today, mine = [], msg = [];
+      if(j instanceof Array) today = gbqClean(j);                       /* 예전 파일: 오늘 목록만 */
+      else if(j && typeof j === 'object'){ today = gbqClean(j.today); mine = gbqClean(j.mine); }
+      else throw 0;
+      if(!today.length && !mine.length) throw 0;
+      if(today.length){ GBQ = today; _gbEditIx = -1; gbqSave(); msg.push('오늘 ' + today.length + '개'); }
+      if(mine.length){
+        var have = gbmyAll(), seen = {}, add = 0;
+        have.forEach(function(q){ seen[q.id || q.q] = 1; });
+        mine.forEach(function(q){
+          if(!q.id) q.id = 'my-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+          if(!seen[q.id]){ have.push(q); seen[q.id] = 1; add++; }
+        });
+        gbmySave(have); msg.push('내 문제 ' + add + '개');
       }
-      if(!out.length) throw 0;
-      GBQ = out; _gbEditIx = -1;
-      gbqSave(); renderGB();
-      toast('문제 ' + out.length + '개를 불러왔어요');
+      renderGB();
+      toast(msg.join(' · ') + '를 불러왔어요');
     }catch(e){ toast('올바른 골든벨 문제 파일이 아니에요'); }
   };
   r.readAsText(f);
-  input.value = '';     /* 같은 파일을 다시 골라도 불러와지게 */
+  input.value = '';     /* 같은 파일을 다시 골라도 불러와지게 — f 를 먼저 잡아 두었으니 비워도 된다 */
 }
 
-/* 준비 화면의 문제 칸 — 접으면 목록만, 펴면 편집기 */
-/* 시작 전(GB 가 아직 없을 때)에도 불린다 — 문제는 반·진행과 무관하게 미리 넣어둔다 */
+/* ── 준비 화면의 문제 칸 ── */
+function gbbBadge(){
+  var n = gbbCount();
+  if(_gbbSt === 'loading' && !n) return '<span class="chip sm">📚 문제은행 불러오는 중…</span>';
+  if(!n) return '<span class="chip sm" title="인터넷이 되면 다시 받아요" onclick="_gbbSt=\'idle\';gbbLoad()">📚 문제은행 없음 · 다시</span>';
+  return '<span class="chip sm" style="border-color:var(--ok);color:var(--ok-d)" title="' +
+         (_gbbSt === 'net' ? '승재쌤과학에서 받았고 이 기기에도 저장했어요' : '인터넷 없이 이 기기에 저장해 둔 문제은행이에요') + '">📚 문제은행 ' + n +
+         (_gbbSt === 'net' ? '' : ' · 이 기기') + '</span>';
+}
 function gbqPanel(){
-  var l = gbqLoad(), tot = (GB && GB.total) || 0, h, i;
-  var use = tot ? Math.min(tot, l.length) : l.length;
-  h = '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">📝 오늘 낼 문제</h3>' +
-      '<button class="chip sm" onclick="gbqToggleEdit()">' +
-      (_gbEdit ? '접기' : (l.length ? '고치기' : '문제 넣기')) + '</button></div>';
-  if(!l.length){
-    h += '<div class="sub">넣어둔 문제가 없어요. 이대로 시작하면 <b>선생님이 구두로</b> 내는 예전 방식으로 진행돼요.</div>';
-  } else if(!tot){
-    h += '<div class="sub"><b style="color:var(--ac-d)">' + l.length +
-         '개</b> 준비돼 있어요 · 시작할 때 고른 문제 수만큼 앞에서부터 씁니다</div>';
-  } else {
-    h += '<div class="sub">' + l.length + '개 중 <b style="color:var(--ac-d)">앞에서 ' + use + '개</b>를 씁니다' +
-         (l.length > use ? ' · 나머지 ' + (l.length - use) + '개는 다음에' : '') + '</div>';
-    if(l.length < GB.total){
-      h += '<div class="sub" style="color:var(--ac-d)">' + (GB.total - l.length) +
-           '문제는 화면에 안 떠요 — 그건 구두로 내면 됩니다</div>';
-    }
-    h += '<ol style="margin:9px 0 0;padding-left:20px;font-size:13px;line-height:1.7">';
-    for(i=0;i<l.length;i++){
-      h += '<li' + (i < use ? '' : ' style="opacity:.38"') + '>' + esc(l[i].q) +
-           (l[i].a ? ' <b style="color:var(--ok-d)">→ ' + esc(l[i].a) + '</b>' : '') + '</li>';
-    }
-    h += '</ol>';
-  }
-  if(_gbEdit) h += gbqEditor();
-  return h + '</div>';
-}
-
-function gbqEditor(){
-  var l = gbqLoad(), ed = (_gbEditIx >= 0 && l[_gbEditIx]) ? l[_gbEditIx] : null, h, i;
-  h = '<div style="margin-top:13px;padding-top:13px;border-top:2px dashed var(--line)">' +
-      '<textarea class="inp" id="gbqQ" rows="2" placeholder="문제 (예: 마찰한 두 물체가 서로 밀어냈다면 두 물체의 전하는 같은 종류일까, 다른 종류일까?)">' +
-      (ed ? esc(ed.q) : '') + '</textarea>' +
-      '<input class="inp" id="gbqA" style="margin-top:7px" placeholder="정답 (비워두면 정답 공개 버튼이 안 나와요)" value="' +
-      (ed ? escq(ed.a) : '') + '">' +
-      '<div style="display:flex;gap:7px;margin-top:9px">' +
-      '<button class="btn g" style="flex:1" onclick="gbqAdd()">' + (ed ? '✔ 이대로 고치기' : '+ 문제 추가') + '</button>' +
-      (ed ? '<button class="chip sm" style="flex:0 0 auto;padding-left:16px;padding-right:16px" onclick="gbqCancel()">취소</button>' : '') +
-      '</div>';
-  if(l.length){
-    h += '<div style="display:flex;flex-direction:column;gap:6px;margin-top:11px">';
-    for(i=0;i<l.length;i++){
-      h += '<div style="display:flex;gap:5px;align-items:center;padding:8px 10px;border:2px solid var(--line);border-radius:12px;background:#fff' +
-           (i === _gbEditIx ? ';border-color:var(--ac)' : '') + '">' +
-           '<b style="flex:0 0 auto;color:var(--ac-d);font-size:13px">' + (i+1) + '</b>' +
-           '<div style="flex:1;min-width:0;font-size:13px;line-height:1.45">' + esc(l[i].q) +
-           (l[i].a ? '<b style="color:var(--ok-d)"> → ' + esc(l[i].a) + '</b>' : '') + '</div>' +
-           '<button class="chip sm" onclick="gbqMove(' + i + ',-1)">↑</button>' +
-           '<button class="chip sm" onclick="gbqMove(' + i + ',1)">↓</button>' +
-           '<button class="chip sm" onclick="gbqEdit(' + i + ')">고침</button>' +
-           '<button class="chip sm" onclick="gbqDel(' + i + ')">✕</button>' +
-           '</div>';
-    }
-    h += '</div>';
-  }
+  if(_gbbSt === 'idle') gbbLoad();
+  var mode = gbLs('gb_mode', 'rand'), h;
+  if(mode !== 'rand' && mode !== 'pick' && mode !== 'write') mode = 'rand';
+  h = '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">📝 오늘 낼 문제</h3>' + gbbBadge() + '</div>' +
+      '<div class="gbtabs">' +
+      [['rand','🎲 랜덤 출제'], ['pick','✋ 골라서 출제'], ['write','✏️ 직접 쓰기']].map(function(m){
+        return '<button class="' + (mode === m[0] ? 'on' : '') + '" onclick="gbMode(\'' + m[0] + '\')">' + m[1] + '</button>';
+      }).join('') + '</div>';
+  h += mode === 'rand' ? gbRandUI() : mode === 'pick' ? gbPickUI() : gbWriteUI();
+  h += gbTodayUI();
   h += '<div style="display:flex;gap:7px;margin-top:11px;flex-wrap:wrap">' +
        '<button class="chip sm" onclick="gbqExport()">⬇ 파일로 내보내기</button>' +
        '<label class="chip sm" style="cursor:pointer">⬆ 파일에서 불러오기' +
        '<input type="file" accept=".json,application/json" style="display:none" onchange="gbqImport(this)"></label>' +
        '</div>' +
-       '<div class="sub" style="margin-top:7px">문제는 이 기기에만 저장돼요. 집에서 만들었다면 파일로 내보내 학교 기기에서 불러오세요.</div>';
+       '<div class="sub" style="margin-top:7px">문제은행은 어느 기기에서나 저절로 받아요. 오늘 목록과 ⭐ 내 문제는 이 기기에만 있으니, 다른 기기로 옮길 때 파일로 내보내 주세요.</div>';
   return h + '</div>';
+}
+function gbNoBank(){
+  return '<div class="empty" style="padding:22px"><div class="e">📚</div><p>' +
+    (_gbbSt === 'loading' ? '문제은행을 불러오는 중이에요…' :
+     '문제은행을 불러오지 못했어요.<br>인터넷이 되면 <b>📚 문제은행</b>을 눌러 다시 받거나, <b>✏️ 직접 쓰기</b>로 넣어 주세요.') + '</p></div>';
+}
+function gbRandUI(){
+  if(!GBB) return gbNoBank();
+  var g = gbPanelG(), G = gbbGrade(g), rg = gbRangeGet(g), h = gbGradeChips(), n = gbWantN();
+  if(!G) return h + gbNoBank();
+  h += '<div class="gbsec"><div class="k">범위 <span style="font-weight:700;color:var(--mute)">누른 학습지에서만 나와요</span>' +
+       '<span style="margin-left:auto;display:flex;gap:4px">' +
+       '<button class="chip sm" onclick="gbRangePreset(' + g + ',\'all\')">전체</button>' +
+       '<button class="chip sm" onclick="gbRangePreset(' + g + ',\'last2\')">최근 2개</button>' +
+       '<button class="chip sm" onclick="gbRangePreset(' + g + ',\'last1\')">최근 1개</button></span></div>';
+  G.units.forEach(function(U){
+    var all = U.sheets.every(function(s){ return rg.indexOf(s.id) >= 0; });
+    h += '<div class="gbunit"><div class="gbunit-h"><span>' + esc(U.name) + '</span>' +
+         '<button class="chip sm' + (all ? ' on' : '') + '" onclick="gbRangeUnit(' + g + ',\'' + U.id + '\')">단원 전체</button></div><div class="chips">';
+    U.sheets.forEach(function(s){
+      h += '<button class="gbsh' + (rg.indexOf(s.id) >= 0 ? ' on' : '') + '" onclick="gbRangeToggle(' + g + ',\'' + s.id + '\')">' +
+           '<span class="n">학습지 ' + s.no + '</span>' + esc(s.t) + ' <span class="n">' + s.qs.length + '</span></button>';
+    });
+    h += '</div></div>';
+  });
+  var my = gbmyFor(g);
+  if(my.length){
+    h += '<div class="chips"><button class="gbsh' + (rg.indexOf('my') >= 0 ? ' on' : '') + '" onclick="gbRangeToggle(' + g + ',\'my\')">' +
+         '⭐ 내 문제 <span class="n">' + my.length + '</span></button></div>';
+  }
+  h += '</div>';
+  h += '<div class="gbsec"><div class="k">문제 수</div><div class="chips">' +
+       [3,4,5,7,10].map(function(k){
+         return '<button class="chip' + (n === k ? ' on' : '') + '" onclick="gbSetWant(' + k + ')">' + k + '문제</button>';
+       }).join('') + '</div></div>';
+  var easy = gbLs('gb_easy', '1') === '1', norep = gbLs('gb_norep', '1') === '1', ck = gbClsKey();
+  var usedN = Object.keys(gbUsedOf(ck)).length;
+  h += '<div class="gbsec"><div class="chips">' +
+       '<button class="chip sm' + (easy ? ' on' : '') + '" onclick="gbOpt(\'gb_easy\')">📈 쉬운 문제부터</button>' +
+       (ck ? '<button class="chip sm' + (norep ? ' on' : '') + '" onclick="gbOpt(\'gb_norep\')">🔁 이 반에서 낸 문제 빼기</button>' : '') +
+       '</div>' +
+       (ck && usedN ? '<div class="sub" style="margin-top:6px">' + ck.replace('-', '학년 ') + '반에서 지금까지 낸 문제 ' + usedN + '개 · ' +
+         '<button class="chip sm" onclick="gbUsedReset()">기록 지우기</button></div>' : '') + '</div>';
+  h += '<button class="gbbig" style="margin-top:12px" onclick="gbDraw()">🎲 ' + n + '문제 뽑기' +
+       ' <span style="font-size:.68em;opacity:.75">범위 ' + gbPool(g, false).length + '문제</span></button>';
+  return h;
+}
+function gbPickUI(){
+  var g = gbPanelG(), sheets = gbbSheets(g), my = gbmyFor(g), h = gbGradeChips();
+  if(!sheets.length && !my.length) return h + gbNoBank();
+  var ok = _gbPickSh === 'my' || sheets.some(function(s){ return s.id === _gbPickSh; });
+  if(!ok) _gbPickSh = sheets.length ? sheets[sheets.length - 1].id : 'my';
+  h += '<div class="gbsec"><div class="k">학습지</div><div class="chips">';
+  sheets.forEach(function(s){
+    h += '<button class="gbsh' + (s.id === _gbPickSh && !_gbFind ? ' on' : '') + '" onclick="gbPickSh(\'' + s.id + '\')">' +
+         '<span class="n">' + s.no + '</span>' + esc(s.t) + '</button>';
+  });
+  h += '<button class="gbsh' + (_gbPickSh === 'my' && !_gbFind ? ' on' : '') + '" onclick="gbPickSh(\'my\')">⭐ 내 문제 <span class="n">' + my.length + '</span></button>';
+  h += '</div></div>';
+  h += '<input class="inp" id="gbFind" style="margin-top:10px" placeholder="🔍 낱말로 찾기 (이 학년 문제 전체에서)" value="' + escq(_gbFind) + '" oninput="gbFindIn(this.value)">';
+  h += '<div class="sub" style="margin:8px 0 6px">＋ 담기를 누르면 오늘 목록에 들어가고, 한 번 더 누르면 빠져요.' +
+       (gbLs('gb_peek', '0') === '1' ? '' : ' 정답은 아래 <b>👁 문제·정답 보기</b>를 켜면 보여요.') + '</div>';
+  h += '<div id="gbPickList">' + gbPickList() + '</div>';
+  return h;
+}
+function gbWriteUI(){
+  var l = gbqLoad(), ed = (_gbEditIx >= 0 && l[_gbEditIx]) ? l[_gbEditIx] : null, t = _gbWT, d = _gbDraft, h;
+  var vq = d ? d.q : (ed ? ed.q : ''), va = d ? d.a : (ed ? ed.a : ''), vc = d ? d.c : (ed && ed.ch ? ed.ch.join('\n') : ''), ve = d ? d.e : (ed ? (ed.ex || '') : '');
+  h = (ed ? '<div class="sub" style="margin-bottom:8px;color:var(--ac-d)"><b>' + (_gbEditIx + 1) + '번 문제</b>를 고치는 중이에요</div>' : '') +
+      '<div class="chips" style="margin-bottom:8px">' +
+      [['short','단답'], ['ox','O/X'], ['mc','객관식']].map(function(m){
+        return '<button class="chip sm' + (t === m[0] ? ' on' : '') + '" onclick="gbWType(\'' + m[0] + '\')">' + m[1] + '</button>';
+      }).join('') + '</div>' +
+      '<textarea class="inp" id="gbqQ" rows="2" placeholder="' +
+      (t === 'ox' ? '맞거나 틀린 문장 (예: 전류가 흐르지 않아도 코일 주위에 자기장이 생긴다.)' :
+       t === 'mc' ? '묻는 말 (예: 전동기를 이용한 전기 기구가 아닌 것은?)' :
+       '문제 (예: 같은 종류의 전기를 띤 두 물체 사이에 작용하는 전기력은?)') + '">' + esc(vq) + '</textarea>';
+  if(t === 'mc') h += '<textarea class="inp" id="gbqC" rows="4" style="margin-top:7px" placeholder="보기를 한 줄에 하나씩 (2~6개)">' + esc(vc) + '</textarea>';
+  h += '<input class="inp" id="gbqA" style="margin-top:7px" placeholder="' +
+       (t === 'ox' ? '정답: O 또는 X' : t === 'mc' ? '정답 번호 (예: 2)' : '정답 (비워두면 정답 공개 버튼이 안 나와요)') +
+       '" value="' + escq(va) + '">' +
+       '<input class="inp" id="gbqE" style="margin-top:7px" placeholder="해설 한 줄 (선택 — 정답 공개 때 작게 나와요)" value="' + escq(ve) + '">';
+  if(!ed) h += '<label class="sub" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="gbqMy" checked> ⭐ 내 문제에도 저장 (다음에 다시 골라 쓸 수 있어요)</label>';
+  h += '<div style="display:flex;gap:7px;margin-top:9px">' +
+       '<button class="btn g" style="flex:1" onclick="gbqAdd()">' + (ed ? '✔ 이대로 고치기' : '＋ 오늘 목록에 넣기') + '</button>' +
+       (ed ? '<button class="chip sm" style="flex:0 0 auto;padding-left:16px;padding-right:16px" onclick="gbqCancel()">취소</button>' : '') +
+       '</div>';
+  return h;
+}
+function gbTodayUI(){
+  var l = gbqLoad(), peek = gbLs('gb_peek', '0') === '1';
+  var tot = (GB && !GB.ready && gbMatchesClass()) ? GB.total : 0, h, i, q, use;
+  h = '<div class="gbtoday' + (peek ? '' : ' blur') + '" id="gbToday"><div class="hd" style="margin-bottom:6px">' +
+      '<b style="font-size:13px;color:var(--ac-d)">📋 오늘 목록 ' + l.length + '개</b>' +
+      '<span style="display:flex;gap:4px;flex-wrap:wrap">' +
+      '<button class="chip sm" onclick="gbPeek()">' + (peek ? '🙈 가리기' : '👁 문제·정답 보기') + '</button>' +
+      (l.length > 1 ? '<button class="chip sm" onclick="gbqShuffle()">🔀 섞기</button>' : '') +
+      (l.length ? '<button class="chip sm" onclick="gbqClear()">비우기</button>' : '') + '</span></div>';
+  if(!l.length){
+    return h + '<div class="sub">아직 비어 있어요. 이대로 시작하면 <b>선생님이 구두로</b> 내는 예전 방식으로 진행돼요.</div></div>';
+  }
+  if(!peek) h += '<div class="sub" style="margin-bottom:4px">학생들이 화면을 보고 있을 수 있어서 문제·정답을 흐리게 가려 두었어요.</div>';
+  if(tot){
+    use = Math.min(tot, l.length);
+    h += '<div class="sub" style="margin-bottom:4px">' + (l.length > use ? '앞에서 <b style="color:var(--ac-d)">' + use + '개</b>를 내고, 나머지는 다음에 써요' :
+         l.length < tot ? '<b style="color:var(--ac-d)">' + (tot - l.length) + '문제</b>는 화면에 안 떠요 — 그건 구두로 내면 됩니다' :
+         '<b style="color:var(--ac-d)">' + use + '문제</b> 모두 냅니다') + '</div>';
+  }
+  h += '<ol>';
+  for(i=0;i<l.length;i++){
+    q = l[i];
+    h += '<li' + (tot && i >= tot ? ' class="over"' : '') + '><span class="no">' + (i + 1) + '</span>' +
+         '<div class="tx"><span class="src">' + esc(q.src || '직접 쓴 문제') + ' ' + gbTypeTag(q) + gbLvTag(q) + '</span>' +
+         '<span class="qq">' + esc(q.q) + (q.a ? ' <b style="color:var(--ok-d)">→ ' + esc(q.a) + '</b>' : '') + '</span></div>' +
+         '<button class="gbmini" onclick="gbqMove(' + i + ',-1)">↑</button>' +
+         '<button class="gbmini" onclick="gbqMove(' + i + ',1)">↓</button>' +
+         (q.id && GBB_IDX[q.id] ? '<button class="gbmini" title="같은 학습지의 다른 문제로 바꾸기" onclick="gbqSwap(' + i + ')">🔄</button>' : '') +
+         '<button class="gbmini" onclick="gbqEdit(' + i + ')">고침</button>' +
+         '<button class="gbmini" onclick="gbqDel(' + i + ')">✕</button></li>';
+  }
+  return h + '</ol></div>';
 }
 
-/* 진행 중 화면에 띄우는 문제 — 넣어둔 게 없으면 아무것도 안 그린다 */
-function gbqShow(){
-  var q = gbqAt(GB.round), h;
-  if(!q) return '';
-  h = '<div class="card" style="text-align:center;padding:22px 16px">' +
-      '<div style="font-size:clamp(20px,3.4vw,44px);font-weight:900;line-height:1.4;word-break:keep-all">' +
-      esc(q.q) + '</div>';
-  if(!q.a) return h + '</div>';
-  if(GB.rev){
-    h += '<div style="margin-top:15px;padding-top:14px;border-top:2px dashed var(--line)">' +
-         '<div style="font-size:12px;font-weight:800;color:var(--mute)">정답</div>' +
-         '<div style="font-size:clamp(19px,3vw,38px);font-weight:900;color:var(--ok-d);line-height:1.35;word-break:keep-all">' +
-         esc(q.a) + '</div></div>';
+/* ══════════════════════════════════════════════════════════════════════════
+   🎤 무대 — 문제·보기·타이머·정답을 전자칠판에 크게
+   ══════════════════════════════════════════════════════════════════════════ */
+function gbStage(q, o){
+  var rev = !!o.rev, ai = gbAnsIx(q), h, A;
+  h = '<div class="gbs' + (o.rv ? ' rv' : '') + '">' +
+      '<div class="gbs-top"><span>' + esc(o.cls) + '</span>' + (o.dots || '') +
+      '<span class="gbs-alive">' + o.aliveLab + ' <b>' + o.alive + '</b>명</span></div>' +
+      (o.rv ? '<div class="gbs-ban">🔥 패자부활전</div>' : '<div class="gbs-no">' + o.no + '번 문제</div>');
+  if(q){
+    h += '<div class="gbs-meta">' + (q.t ? '<span class="p ' + q.t + '">' + gbTypeName(q.t) + '</span>' : '') +
+         (q.src ? '<span>' + esc(q.src) + '</span>' : '') +
+         (q.lv ? '<span>' + '★★★'.slice(0, q.lv) + '</span>' : '') + '</div>' +
+         '<div class="gbs-q">' + esc(q.q) + '</div>';
+    if(q.t === 'mc' && q.ch){
+      h += '<div class="gbs-ch">' + q.ch.map(function(c, i){
+        return '<div class="gbs-c' + (rev && ai >= 0 ? (i === ai ? ' ok' : ' no') : '') + '"><b>' + GB_CIRC[i] + '</b><span>' + esc(c) + '</span></div>';
+      }).join('') + '</div>';
+    }
+    if(q.t === 'ox'){
+      A = String(q.a || '').trim().toUpperCase();
+      h += '<div class="gbs-ox"><span class="o' + (rev && A ? (A === 'O' ? ' ok' : ' no') : '') + '">O</span>' +
+           '<span class="x' + (rev && A ? (A === 'X' ? ' ok' : ' no') : '') + '">X</span></div>';
+    }
   } else {
-    h += '<button class="chip" style="margin-top:15px;padding:11px 22px" onclick="gbReveal()">👀 정답 공개</button>';
+    h += '<div class="gbs-q dim">' + (o.rv ? '선생님이 부활 문제를 내 주세요' : '선생님이 문제를 읽어 주세요') + '</div>';
   }
+  var tl = gbTL(), tv = gbTimerView();
+  if(tl && !rev){
+    h += '<div class="gbs-tm"><div class="gbs-tb"><i id="gbTB" style="width:' + tv.w + '%"></i></div>' +
+         '<div class="gbs-ts' + tv.cls + '" id="gbTS">' + tv.s + '</div></div>';
+  }
+  if(q && q.a && rev){
+    h += '<div class="gbs-ans"><div class="k">정답</div><div class="v">' +
+         esc(q.t === 'mc' && q.ch && ai >= 0 && q.ch[ai] ? q.a + ' ' + q.ch[ai] : q.a) + '</div>' +
+         (q.acc && q.acc.length ? '<div class="e">같이 인정: ' + esc(q.acc.join(', ')) + '</div>' : '') +
+         (q.ex ? '<div class="e">' + esc(q.ex) + '</div>' : '') + '</div>';
+  }
+  h += '<div class="gbs-btns">' + o.btns + '</div>' +
+       '<div class="gbs-kbd">' + o.kbd + '</div>';
   return h + '</div>';
 }
-function gbReveal(){ if(!GB) return; GB.rev = 1; gbSave(); renderGB(); }
+function gbDots(){
+  var h = '<span class="gbs-dots">', r;
+  for(r=1;r<=GB.total;r++) h += '<i class="' + (r < GB.round ? 'd' : r === GB.round ? 'c' : '') + '"></i>';
+  return h + '</span>';
+}
+function gbCurQ(){ return GB ? (GB.rv ? GB.rv.q : gbqAt(GB.round)) : null; }
+function gbRevNow(){ return GB ? (GB.rv ? !!GB.rv.rev : !!GB.rev) : false; }
+
+function gbReveal(){
+  if(!GB) return;
+  if(GB.rv) GB.rv.rev = 1; else GB.rev = 1;
+  gbTimerStop(); gbSave(); gbSyn('ding'); renderGB();
+}
+/* 문제를 바꿔 낸다 — 정답을 열기 전에만(너무 어렵거나 이미 아는 문제일 때) */
+function gbSwapCur(){
+  if(!GB || !GB.ready) return;
+  if(GB.rv){
+    var nq = gbSpare(GB.rv.q ? gbSheetOf(GB.rv.q.id) : null);
+    if(!nq){ toast('바꿀 문제가 범위에 더 없어요'); return; }
+    GB.rv.q = nq; GB.rv.rev = 0; (GB.rvq = GB.rvq || []).push(nq.id);
+    gbMarkUsed(nq); gbTimerStop(); gbSave(); gbSyn('pop'); renderGB(); return;
+  }
+  gbqLoad();
+  var cur = GBQ[GB.round - 1];
+  if(!cur){ toast('이 번호는 구두로 내는 문제예요'); return; }
+  var q = gbSpare(gbSheetOf(cur.id));
+  if(!q){ toast('바꿀 문제가 범위에 더 없어요'); return; }
+  GBQ[GB.round - 1] = q; gbqSave();
+  GB.rev = 0; gbMarkUsed(q); gbTimerStop(); gbSave(); gbSyn('pop'); renderGB();
+}
+
+/* ── ⏱ 제한 시간 ── */
+var _gbT = null;     /* {key, end, done, last, iv} — 화면을 다시 그려도 계속 간다 */
+function gbTL(){ var n = parseInt(gbLs('gb_tl', '0'), 10); return n > 0 ? n : 0; }
+function gbSetTL(n){ gbLsSet('gb_tl', String(n)); gbTimerStop(); renderGB(); }
+function gbTKey(){ return GB ? (GB.rv ? 'rv' + GB.round + '-' + ((GB.rvq || []).length) : 'r' + GB.round) : ''; }
+function gbTimerView(){
+  var tl = gbTL();
+  if(!_gbT || _gbT.key !== gbTKey()) return { w:100, s:tl, cls:'' };
+  var left = Math.max(0, _gbT.end - Date.now()), s = Math.ceil(left / 1000);
+  return { w: tl ? left / (tl * 1000) * 100 : 0, s: s, cls: left <= 0 ? ' end' : s <= 5 ? ' warn' : '' };
+}
+function gbTimerStart(){
+  var tl = gbTL();
+  if(!tl || !GB || !GB.ready || gbRevNow()) return;
+  gbTimerStop();
+  _gbT = { key: gbTKey(), end: Date.now() + tl * 1000, done:false, last:tl };
+  gbSyn('go');
+  _gbT.iv = setInterval(gbTimerTick, 100);
+  gbTimerTick();
+  var b = $('gbTBtn'); if(b) b.textContent = '⏹ 그만 (스페이스)';
+}
+function gbTimerTick(){
+  if(!_gbT) return;
+  var v = gbTimerView(), b = $('gbTB'), t = $('gbTS');
+  if(b) b.style.width = v.w + '%';
+  if(t){ t.textContent = v.s; t.className = 'gbs-ts' + v.cls; }
+  if(v.s !== _gbT.last){ _gbT.last = v.s; if(v.s <= 5 && v.s > 0) gbSyn('tick'); }
+  if(_gbT.end - Date.now() <= 0 && !_gbT.done){
+    _gbT.done = true; clearInterval(_gbT.iv);
+    gbSyn('buzz');
+    setTimeout(function(){ gbSfx('show'); }, 650);     /* 🙌 정답을 들어주세요 */
+    var bb = $('gbTBtn'); if(bb) bb.textContent = '⏱ 시간 끝';
+  }
+}
+function gbTimerStop(){ if(_gbT){ clearInterval(_gbT.iv); _gbT = null; } }
+function gbTimerBtn(){
+  if(_gbT && _gbT.key === gbTKey() && !_gbT.done){ _gbT.end = Date.now(); gbTimerTick(); return; }
+  gbTimerStart();
+}
+
+/* 스페이스 하나로 굴러가게 — 타이머 → 정답 공개 → 다음 문제 */
+function gbSpace(){
+  if(!GB || !GB.ready) return;
+  if(GB.done && !GB.rv) return;
+  var q = gbCurQ(), rev = gbRevNow(), tl = gbTL(), mine = _gbT && _gbT.key === gbTKey();
+  if(!rev && tl && !mine){ gbTimerStart(); return; }
+  if(!rev && mine && !_gbT.done){ _gbT.end = Date.now(); gbTimerTick(); return; }
+  if(!rev && q && q.a){ gbReveal(); return; }
+  if(GB.rv) return;            /* 부활전은 «부활전 끝» 단추로만 닫는다 */
+  gbNext();
+}
 
 /* 전자칠판 — 주소창·탭까지 걷어내야 뒷자리에서 글씨가 보인다 */
 function gbFull(){
@@ -2037,6 +2793,33 @@ function gbFull(){
     else { toast('이 브라우저는 전체화면을 지원하지 않아요'); }
   }catch(e){}
 }
+document.addEventListener('fullscreenchange', function(){
+  var p = $('p-gb');
+  document.body.classList.toggle('gbfocus', !!document.fullscreenElement && !!p && p.classList.contains('on'));
+});
+
+/* 단축키 — 글을 쓰는 중에는 건드리지 않는다. 한글 자판이어도 되게 e.code 로 본다 */
+document.addEventListener('keydown', function(e){
+  var p = $('p-gb'), st = $('s-tea');
+  if(!p || !p.classList.contains('on') || !st || !st.classList.contains('on')) return;
+  var tg = e.target, tn = tg && tg.tagName;
+  if(tn === 'INPUT' || tn === 'TEXTAREA' || tn === 'SELECT' || (tg && tg.isContentEditable)) return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if($('gbGacha')){
+    if(e.code === 'Space' || e.key === 'Enter'){ e.preventDefault(); gbgSpace(); }
+    else if(e.key === 'Escape') gbgClose();
+    return;
+  }
+  if(!GB || !GB.ready || !gbMatchesClass()) return;
+  if(e.code === 'Space'){ e.preventDefault(); gbSpace(); }
+  else if(e.key === 'ArrowLeft'){ e.preventDefault(); if(GB.rv) gbRvCancel(); else gbBack(); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); if(!GB.rv && !GB.done) gbNext(); }
+  else if(e.code === 'KeyF') gbFull();
+  else if(e.code === 'KeyG') gbGacha();
+  else if(e.code === 'KeyR'){ if(!gbRevNow() && gbCurQ() && gbCurQ().a) gbReveal(); }
+  else if(e.code === 'KeyT') gbTimerBtn();
+  else if(e.code === 'KeyS') gbSwapCur();
+});
 
 /* 도장 주기 탭의 반 칩과 같은 목록을 쓰되, 고르면 골든벨 화면을 다시 그린다 */
 function renderGBClassChips(){
@@ -2050,10 +2833,11 @@ function renderGBClassChips(){
   }
   el.innerHTML = h;
 }
-async function gbPickClass(g,c){ await pickClass(g,c); renderGB(); }
+async function gbPickClass(g,c){ await pickClass(g,c); _gbPickSh = null; renderGB(); }
 
 function gbAliveIds(){ return GB ? Object.keys(GB.alive) : []; }
 function gbLabel(id){ return (GB && GB.names[id]) || '학생'; }
+function gbOutIds(){ return GB ? Object.keys(GB.out).filter(function(id){ return GB.out[id] > 0; }) : []; }
 
 /* 진행 중이던 골든벨이 이 반 것이 맞는지 */
 function gbMatchesClass(){
@@ -2076,37 +2860,55 @@ function closeGB(){ teaTab('give'); }
 
 /* ── 준비: 전원 참가, 결석·불참만 빼고 시작 ── */
 function gbSetup(){
-  var names = {}, alive = {}, i, s;
+  var names = {}, alive = {}, i, s, n = parseInt(gbLs('gb_cnt', '4'), 10);
   for(i=0;i<S.students.length;i++){
     s = S.students[i];
     names[s.id] = (s.number ? s.number + '. ' : '') + (s.name || '');
     alive[s.id] = 1;
   }
-  GB = { g:S.selClass.grade, c:S.selClass.cls, total:4, round:1,
+  GB = { g:S.selClass.grade, c:S.selClass.cls, total:(n > 0 ? n : 4), round:1,
          alive:alive, out:{}, names:names, done:false, ready:false };
   gbSave();
 }
 
-function gbSetTotal(n){ if(!GB) return; GB.total = n; gbSave(); renderGB(); }
+function gbSetTotal(n){ gbSetWant(n); }
 
 /* 준비 단계에서 누르면 «오늘 안 함»(결석 등) — 시작 뒤에는 «탈락» */
 function gbTap(id){
   if(!GB) return;
   if(GB.alive[id]){ delete GB.alive[id]; GB.out[id] = GB.ready ? GB.round : 0; }
-  else { delete GB.out[id]; GB.alive[id] = 1; }
+  else { delete GB.out[id]; GB.alive[id] = 1; if(GB.rvd) delete GB.rvd[id]; }
   gbSave(); renderGB();
 }
 
 function gbStart(){
   if(!GB) return;
   if(!gbAliveIds().length){ toast('참가할 학생이 없어요'); return; }
-  GB.ready = true; GB.round = 1; GB.rev = 0; gbSave();
+  GB.ready = true; GB.round = 1; GB.rev = 0; GB.st = {}; GB.rvd = {}; GB.rv = null; GB.rvq = []; GB.gacha = [];
+  gbSave();
+  gbTimerStop();
+  gbMarkUsed(gbqAt(1));
   gbPlayBgm();          /* 교사가 누른 직후라 브라우저가 소리를 막지 않는다 */
   renderGB();
+  window.scrollTo(0, 0);
+}
+
+/* 이번 문제에서 몇 명이 떨어졌는지 — 문제별 탈락률로 모은다(한 판에 한 번만) */
+function gbStatRound(){
+  if(!GB || !GB.ready) return;
+  GB.st = GB.st || {};
+  if(GB.st[GB.round]) return;
+  var q = gbqAt(GB.round); if(!q || !q.id) return;
+  var x = 0, id;
+  for(id in GB.out){ if(GB.out[id] === GB.round) x++; }
+  gbStatRec(q, gbAliveIds().length + x, x);
+  GB.st[GB.round] = 1;
 }
 
 function gbNext(){
-  if(!GB) return;
+  if(!GB || GB.rv) return;
+  gbStatRound();
+  gbTimerStop();
   GB.rev = 0;           /* 문제가 바뀌면 정답은 다시 감춘다 */
   if(GB.round >= GB.total){
     GB.done = true;
@@ -2114,25 +2916,45 @@ function gbNext(){
     if(gbAliveIds().length) gbSfx('fanfare');
   } else {
     GB.round += 1;
+    gbMarkUsed(gbqAt(GB.round));
     gbSfx('write');     /* 다음 문제 — «정답을 써주세요» */
   }
   gbSave(); renderGB();
+  window.scrollTo(0, 0);
 }
 function gbBack(){
-  if(!GB || GB.round <= 1) return;
-  if(GB.done) gbPlayBgm();     /* 결과에서 되돌아왔으면 배경음을 다시 켠다 */
+  if(!GB || GB.rv || GB.round <= 1 && !GB.done) return;
+  gbTimerStop();
+  if(GB.done){          /* 결과에서 되돌아오면 마지막 문제로 — 배경음을 다시 켠다 */
+    GB.done = false; GB.rev = 0; gbPlayBgm(); gbSave(); renderGB(); return;
+  }
   /* 한 라운드 되돌리기 — 그 라운드에서 탈락한 사람을 모두 되살린다 */
   var r = GB.round, id;
   for(id in GB.out){ if(GB.out[id] === r){ delete GB.out[id]; GB.alive[id] = 1; } }
-  GB.round -= 1; GB.done = false; GB.rev = 0; gbSave(); renderGB();
+  GB.round -= 1; GB.rev = 0; gbSave(); renderGB();
 }
 function gbReset(){
   if(!confirm('지금까지 진행한 걸 지우고 처음부터 다시 할까요?')) return;
+  gbTimerStop(); gbgClose(true);
   gbSetup(); renderGB();
 }
 function gbQuit(){
   if(!confirm('골든벨을 끝내고 나갈까요? (도장을 아직 안 찍었다면 기록은 사라집니다)')) return;
+  gbTimerStop(); gbgClose(true);
   gbStopBgm(); gbClear(); closeGB();
+}
+/* 끝난 뒤 «한 문제 더» — 부활한 사람까지 다 같이 연장전 */
+function gbExtend(){
+  if(!GB || !GB.done) return;
+  GB.total += 1; GB.round = GB.total; GB.done = false; GB.rev = 0;
+  if(!gbqAt(GB.round)){
+    gbqLoad();
+    var q = GBQ.length === GB.round - 1 ? gbSpare(null) : null;
+    if(q){ GBQ.push(q); gbqSave(); }
+  }
+  gbMarkUsed(gbqAt(GB.round));
+  gbSave(); gbPlayBgm(); gbSfx('write'); renderGB();
+  window.scrollTo(0, 0);
 }
 
 /* 가장 오래 살아남은 사람들 — 아무도 끝까지 못 갔을 때 쓴다 */
@@ -2144,10 +2966,220 @@ function gbFurthest(){
   return { round: best, ids: list };
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   🔥 패자부활전 — 가챠로 «할지 말지»를 정하고, 부활 문제를 맞힌 사람을 살린다
+   ══════════════════════════════════════════════════════════════════════════ */
+function gbRvStart(){
+  if(!GB || !GB.ready) return;
+  if(!gbOutIds().length){ toast('탈락한 사람이 없어요'); return; }
+  gbTimerStop();
+  var q = gbSpare(null);
+  GB.rv = { q:q, rev:0, ids:{} };
+  if(q){ (GB.rvq = GB.rvq || []).push(q.id); gbMarkUsed(q); }
+  gbSave(); gbSfx('write'); renderGB();
+  window.scrollTo(0, 0);
+}
+function gbRvTap(id){
+  if(!GB || !GB.rv) return;
+  if(GB.rv.ids[id] != null){ GB.out[id] = GB.rv.ids[id]; delete GB.alive[id]; delete GB.rv.ids[id]; }
+  else if(GB.out[id] > 0){ GB.rv.ids[id] = GB.out[id]; delete GB.out[id]; GB.alive[id] = 1; gbSyn('pop'); }
+  gbSave(); renderGB();
+}
+function gbRvEnd(){
+  if(!GB || !GB.rv) return;
+  var ids = Object.keys(GB.rv.ids), i;
+  GB.rvd = GB.rvd || {};
+  for(i=0;i<ids.length;i++) GB.rvd[ids[i]] = GB.round;
+  GB.rvn = (GB.rvn || 0) + 1;
+  GB.rv = null; gbTimerStop(); gbSave();
+  if(ids.length){ gbSfx('fanfare'); toast('🔥 ' + ids.length + '명 부활!'); }
+  else toast('이번엔 아무도 부활하지 못했어요');
+  if(GB.done && ids.length) gbPlayBgm();
+  renderGB();
+  window.scrollTo(0, 0);
+}
+function gbRvCancel(){
+  if(!GB || !GB.rv) return;
+  if(!confirm('패자부활전을 없던 일로 할까요? (살린 사람도 다시 탈락으로 돌아가요)')) return;
+  var id;
+  for(id in GB.rv.ids){ GB.out[id] = GB.rv.ids[id]; delete GB.alive[id]; }
+  GB.rv = null; gbTimerStop(); gbSave(); renderGB();
+}
+function gbRvCards(){
+  var list = S.students.slice().sort(function(a,b){ return (a.number||0) - (b.number||0); });
+  var h = '', i, s, inRv, out;
+  for(i=0;i<list.length;i++){
+    s = list[i];
+    inRv = GB.rv.ids[s.id] != null; out = GB.out[s.id] > 0;
+    if(!inRv && !out) continue;
+    h += '<button class="stu' + (inRv ? ' sel' : '') + '"' + (inRv ? '' : ' style="opacity:.6"') +
+         ' onclick="gbRvTap(\'' + s.id + '\')">' +
+         '<span class="stu-c' + (inRv ? '' : ' zero') + '">' + (inRv ? '🔥' : GB.out[s.id] + '번') + '</span>' +
+         '<div class="stu-n">' + esc((s.number ? s.number + '. ' : '') + (s.name || '')) + '</div>' +
+         '<div class="stu-m">' + (inRv ? '부활!' : GB.out[s.id] + '번에서 탈락') + '</div></button>';
+  }
+  return h || '<div class="empty" style="grid-column:1/-1"><p>탈락한 사람이 없어요</p></div>';
+}
+
+/* ── 🎰 가챠 ── */
+var _gbg = null;      /* {st:'ready'|'spin'|'done', win} */
+function gbGachaP(){ var n = parseInt(gbLs('gb_gacha_p', '50'), 10); return (n > 0 && n < 100) ? n : 50; }
+function gbgSetP(n){
+  gbLsSet('gb_gacha_p', String(n));
+  var el = $('gbgP'); if(el) el.innerHTML = gbgPChips();
+}
+function gbgPChips(){
+  var p = gbGachaP();
+  return '부활 확률 ' + [30, 50, 70].map(function(k){
+    return '<button class="' + (p === k ? 'on' : '') + '" onclick="gbgSetP(' + k + ')">' + k + '%</button>';
+  }).join('');
+}
+function gbGacha(){
+  if(!GB || !GB.ready){ toast('골든벨을 시작한 뒤에 쓸 수 있어요'); return; }
+  if(GB.rv){ toast('패자부활전이 진행 중이에요'); return; }
+  if($('gbGacha')) return;
+  var outN = gbOutIds().length;
+  if(!outN){ toast('아직 탈락한 사람이 없어요'); return; }
+  gbTimerStop();
+  var cols = ['#ff5b7f','#ffcc33','#5bc0ff','#7ee08f','#c38bff','#ff9a3c','#ffffff'], caps = '', i, x, y;
+  for(i=0;i<16;i++){
+    x = 8 + Math.random() * 66; y = 38 + Math.random() * 44;
+    caps += '<span class="gm-cap" style="left:' + x.toFixed(1) + '%;top:' + y.toFixed(1) + '%;background:' +
+            cols[i % cols.length] + ';animation-delay:-' + (Math.random() * .3).toFixed(2) + 's"></span>';
+  }
+  var el = document.createElement('div');
+  el.id = 'gbGacha'; el.className = 'gbg';
+  el.innerHTML = '<button class="gbg-x" onclick="gbgClose()">✕ 닫기</button>' +
+    '<div class="gbg-t">🎰 패자부활전 가챠</div>' +
+    '<div class="gbg-s">탈락한 ' + outN + '명에게 한 번 더 기회가 올까?</div>' +
+    '<div class="gm" id="gbgM"><div class="gm-dome">' + caps + '</div><div class="gm-neck"></div>' +
+    '<div class="gm-body"><div class="gm-knob" id="gbgK"></div><div class="gm-chute"></div><div class="gm-lbl">REVIVAL</div>' +
+    '<div class="gm-drop" id="gbgD"><div class="h1"></div><div class="h2" id="gbgH2"></div></div></div></div>' +
+    '<div class="gbg-res" id="gbgR"><div class="small">레버를 돌려 주세요</div></div>' +
+    '<div class="gbg-p" id="gbgP">' + gbgPChips() + '</div>' +
+    '<div class="gbg-btns" id="gbgB"><button class="gbg-btn" onclick="gbgPull()">🎰 레버 돌리기</button></div>' +
+    '<div class="gbs-kbd" style="color:#9d8fd6">스페이스 = 돌리기 · Esc = 닫기</div>';
+  document.body.appendChild(el);
+  _gbg = { st:'ready' };
+}
+function gbgPull(){
+  if(!_gbg || _gbg.st !== 'ready') return;
+  _gbg.st = 'spin';
+  var win = Math.random() * 100 < gbGachaP();
+  _gbg.win = win;
+  $('gbgP').style.visibility = 'hidden';
+  $('gbgB').innerHTML = '';
+  $('gbgR').innerHTML = '<div class="small">두구두구두구…</div>';
+  $('gbgM').classList.add('shake'); $('gbgK').classList.add('turn');
+  gbSyn('roll');
+  setTimeout(function(){
+    if(!_gbg) return;
+    $('gbgM').classList.remove('shake');
+    $('gbgH2').style.background = win ? '#ffcc33' : '#8a7cc2';
+    $('gbgD').classList.add('go');
+    gbSyn('drop');
+    setTimeout(function(){
+      if(!_gbg) return;
+      $('gbgD').classList.add('open');
+      gbSyn(win ? 'win' : 'lose');
+      if(win){
+        gbConfetti();
+        $('gbgR').innerHTML = '<div class="big win">🔥 패자부활전 개최!</div><div class="small">탈락한 사람에게 한 번 더 기회가 왔어요</div>';
+        $('gbgB').innerHTML = '<button class="gbg-btn" onclick="gbgGo()">🔥 부활전 시작</button><button class="gbg-btn g" onclick="gbgClose()">나중에</button>';
+      } else {
+        $('gbgR').innerHTML = '<div class="big lose">💤 부활은 없다!</div><div class="small">이번엔 그대로 갑니다</div>';
+        $('gbgB').innerHTML = '<button class="gbg-btn g" onclick="gbgClose()">계속하기</button>';
+      }
+      _gbg.st = 'done';
+      if(GB){ (GB.gacha = GB.gacha || []).push({ r:GB.round, w:win ? 1 : 0 }); gbSave(); }
+    }, 1150);
+  }, 2300);
+}
+function gbgGo(){ gbgClose(true); gbRvStart(); }
+function gbgClose(quiet){
+  var el = $('gbGacha'); if(el) el.remove();
+  _gbg = null;
+  if(!quiet && GB) renderGB();
+}
+function gbgSpace(){
+  if(!_gbg) return;
+  if(_gbg.st === 'ready') gbgPull();
+  else if(_gbg.st === 'done'){ if(_gbg.win) gbgGo(); else gbgClose(); }
+}
+function gbConfetti(){
+  var el = $('gbGacha'); if(!el) return;
+  var cols = ['#ffd666','#ff5b9a','#5bc0ff','#7ee08f','#c38bff','#ffffff'], i, c;
+  for(i=0;i<70;i++){
+    c = document.createElement('span');
+    c.className = 'gbg-cf';
+    c.style.left = (Math.random() * 100) + '%';
+    c.style.background = cols[i % cols.length];
+    c.style.animationDuration = (1.6 + Math.random() * 1.6) + 's';
+    c.style.animationDelay = (Math.random() * .5) + 's';
+    el.appendChild(c);
+  }
+}
+
+/* ── 🔊 합성음 — 파일 없이 바로 나는 짧은 신호(타이머·가챠) ── */
+var _gbAC = null;
+function gbAC(){
+  try{
+    if(!_gbAC){ var C = window.AudioContext || window.webkitAudioContext; if(!C) return null; _gbAC = new C(); }
+    if(_gbAC.state === 'suspended') _gbAC.resume();
+    return _gbAC;
+  }catch(e){ return null; }
+}
+function gbTone(ac, f, t, d, type, v, f2){
+  var o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || 'sine';
+  o.frequency.setValueAtTime(f, t);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v), t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t + d + 0.03);
+}
+function gbNoise(ac, t, d, v){
+  var n = Math.floor(ac.sampleRate * d), b = ac.createBuffer(1, n, ac.sampleRate), x = b.getChannelData(0), i;
+  for(i=0;i<n;i++) x[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  var s = ac.createBufferSource(), g = ac.createGain(), f = ac.createBiquadFilter();
+  f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = .8;
+  s.buffer = b; g.gain.value = v;
+  s.connect(f); f.connect(g); g.connect(ac.destination);
+  s.start(t);
+}
+function gbSyn(k){
+  if(!gbSndOn()) return;
+  var ac = gbAC(); if(!ac) return;
+  var t = ac.currentTime + 0.02, v = Math.max(0.08, gbVol()), tt, gap;
+  try{
+    if(k === 'tick') gbTone(ac, 1320, t, 0.06, 'square', 0.12 * v);
+    else if(k === 'go'){ gbTone(ac, 660, t, 0.12, 'triangle', 0.3 * v); gbTone(ac, 990, t + 0.12, 0.2, 'triangle', 0.3 * v); }
+    else if(k === 'buzz') gbTone(ac, 190, t, 0.7, 'sawtooth', 0.22 * v, 120);
+    else if(k === 'ding'){ gbTone(ac, 1046, t, 0.55, 'sine', 0.35 * v); gbTone(ac, 1568, t + 0.09, 0.7, 'sine', 0.25 * v); }
+    else if(k === 'pop') gbTone(ac, 480, t, 0.13, 'sine', 0.3 * v, 1150);
+    else if(k === 'roll'){
+      tt = t; gap = 0.12;
+      while(tt < t + 2.2){ gbNoise(ac, tt, 0.07, 0.9 * v); tt += gap; gap = Math.max(0.035, gap * 0.92); }
+    }
+    else if(k === 'drop'){ gbTone(ac, 900, t, 0.3, 'sine', 0.28 * v, 220); gbTone(ac, 240, t + 0.5, 0.12, 'triangle', 0.3 * v); gbTone(ac, 240, t + 0.68, 0.08, 'triangle', 0.18 * v); }
+    else if(k === 'win'){
+      [523, 659, 784, 1046].forEach(function(f, i){ gbTone(ac, f, t + i * 0.1, 0.32, 'triangle', 0.3 * v); });
+      gbTone(ac, 1318, t + 0.45, 0.9, 'sine', 0.26 * v); gbTone(ac, 1568, t + 0.45, 0.9, 'sine', 0.18 * v);
+    }
+    else if(k === 'lose'){
+      [392, 370, 349].forEach(function(f, i){ gbTone(ac, f, t + i * 0.3, 0.28, 'sawtooth', 0.16 * v); });
+      gbTone(ac, 330, t + 0.9, 0.9, 'sawtooth', 0.16 * v, 250);
+    }
+  }catch(e){}
+}
+
 /* ── 화면 ── */
 function renderGB(){
   var el = $('p-gb'); if(!el) return;
   if(!GB) gbLoad();
+  if(_gbbSt === 'idle') gbbLoad();     /* 진행 중에 새로고침해도 부활 문제·바꿀 문제를 꺼낼 수 있게 */
 
   /* 반을 안 골랐거나 시작 전이면 여기서 끝 */
   if(!S.selClass){
@@ -2169,7 +3201,7 @@ function renderGB(){
     renderGBClassChips(); return;
   }
 
-  var alive = gbAliveIds(), h = '';
+  var alive = gbAliveIds(), h = '', q, tl = gbTL();
   var cls = GB.g + '학년 ' + GB.c + '반';
 
   if(!GB.ready){
@@ -2178,41 +3210,66 @@ function renderGB(){
     h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">🔔 골든벨 · ' + cls + '</h3></div>' +
          '<div class="sub">문제 수를 고르고, <b>오늘 없는 사람만</b> 눌러서 빼주세요.</div>' +
          '<div class="chips" style="margin-top:10px">';
-    [3,4,5].forEach(function(n){
+    [3,4,5,7,10].forEach(function(n){
       h += '<button class="chip' + (GB.total===n?' on':'') + '" onclick="gbSetTotal(' + n + ')">' + n + '문제</button>';
     });
     h += '</div>' +
+         '<div class="gbsec"><div class="k">⏱ 문제마다 제한 시간</div><div class="chips">' +
+         [0,10,20,30,60].map(function(n){
+           return '<button class="chip sm' + (tl===n?' on':'') + '" onclick="gbSetTL(' + n + ')">' + (n ? n + '초' : '없음') + '</button>';
+         }).join('') + '</div></div>' +
          '<div class="sub" style="margin-top:12px"><b style="color:var(--ac-d)">' + alive.length + '명</b> 참가</div>' +
          '<div class="stu-grid" style="margin-top:8px">' + gbCards() + '</div>' +
          gbSndBar() +
-         '<div style="margin-top:12px"><button class="chip sm" onclick="gbFull()">⛶ 전체화면</button></div>' +
+         '<div style="margin-top:12px"><button class="chip sm" onclick="gbFull()">⛶ 전체화면 (F)</button></div>' +
          '<button class="btn g" style="margin-top:12px" onclick="gbStart()">🔔 시작 (' + GB.total + '문제)</button>' +
          '<button class="btn" style="margin-top:8px;background:var(--line);color:var(--tx)" onclick="closeGB()">← 도장 주기로</button>' +
          '</div>';
     el.innerHTML = h; return;
   }
 
+  if(GB.rv){
+    /* 🔥 패자부활전 */
+    q = GB.rv.q;
+    var rvN = Object.keys(GB.rv.ids).length, timerOn = _gbT && _gbT.key === gbTKey() && !_gbT.done;
+    h += gbStage(q, { rv:true, rev:GB.rv.rev, cls:cls + ' · 골든벨', aliveLab:'부활', alive:rvN,
+      btns: (tl && !GB.rv.rev ? '<button class="gbs-b" id="gbTBtn" onclick="gbTimerBtn()">' + (timerOn ? '⏹ 그만 (스페이스)' : '⏱ ' + tl + '초 시작') + '</button>' : '') +
+            (q && q.a && !GB.rv.rev ? '<button class="gbs-b y" onclick="gbReveal()">👀 정답 공개</button>' : '') +
+            (!GB.rv.rev && gbbCount() ? '<button class="gbs-b" onclick="gbSwapCur()">🔄 다른 문제</button>' : '') +
+            '<button class="gbs-b r" onclick="gbRvEnd()">✔ 부활전 끝 (' + rvN + '명 부활)</button>',
+      kbd: '맞힌 사람을 아래에서 누르면 부활해요 · 스페이스 = ' + (tl ? '타이머 → ' : '') + '정답 공개 · ← 부활전 취소' });
+    h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">🔥 부활 문제를 맞힌 사람</h3>' +
+         '<span class="sub">눌러서 살리기 · 다시 누르면 취소</span></div>' +
+         '<div class="stu-grid">' + gbRvCards() + '</div></div>';
+    h += '<div class="card"><div style="display:flex;gap:8px">' +
+         '<button class="chip sm" style="flex:1" onclick="gbRvCancel()">↩ 부활전 취소</button>' +
+         '<button class="chip sm" style="flex:1" onclick="gbFull()">⛶ 전체화면</button></div>' + gbSndBar() + '</div>';
+    el.innerHTML = h; return;
+  }
+
   if(!GB.done){
     /* 진행 */
-    h += '<div class="card" style="text-align:center">' +
-         '<div class="sub">' + cls + ' · 골든벨</div>' +
-         '<div style="font-size:2.6em;font-weight:900;color:var(--ac-d);line-height:1.1;margin:4px 0">' +
-         GB.round + '번 문제</div>' +
-         '<div style="font-size:var(--fs-m);font-weight:800">남은 사람 <b style="color:var(--ok-d)">' +
-         alive.length + '명</b> <span style="color:var(--mute);font-weight:600">/ ' + GB.total + '문제 중 ' + GB.round + '</span></div>' +
-         '<div class="sub" style="margin-top:6px">답을 <b>틀린 사람만</b> 누르세요. 잘못 눌렀으면 다시 누르면 살아나요.</div>' +
-         '</div>';
-    h += gbqShow();
-    h += '<div class="card"><div class="stu-grid">' + gbCards() + '</div></div>';
+    q = gbqAt(GB.round);
+    var tOn = _gbT && _gbT.key === gbTKey(), outN = gbOutIds().length;
+    h += gbStage(q, { rv:false, rev:GB.rev, no:GB.round, cls:cls + ' · 골든벨', dots:gbDots(), aliveLab:'생존', alive:alive.length,
+      btns: (tl && !GB.rev ? '<button class="gbs-b" id="gbTBtn" onclick="gbTimerBtn()">' +
+               (tOn ? (_gbT.done ? '⏱ 시간 끝' : '⏹ 그만 (스페이스)') : '⏱ ' + tl + '초 시작') + '</button>' : '') +
+            (q && q.a && !GB.rev ? '<button class="gbs-b y" onclick="gbReveal()">👀 정답 공개</button>' : '') +
+            (q && !GB.rev && gbbCount() ? '<button class="gbs-b" onclick="gbSwapCur()">🔄 문제 바꾸기</button>' : '') +
+            (outN ? '<button class="gbs-b" onclick="gbGacha()">🎰 패자부활 가챠</button>' : '') +
+            '<button class="gbs-b' + (GB.rev || !q || !q.a ? ' y' : '') + '" onclick="gbNext()">' +
+            (GB.round >= GB.total ? '🏁 결과 보기' : '다음 문제 →') + '</button>',
+      kbd: '스페이스 = ' + (tl ? '타이머 → ' : '') + '정답 공개 → 다음 · ← 앞 문제 · S 문제 바꾸기 · G 가챠 · F 전체화면' });
+    h += '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">답을 <b style="color:var(--bad)">틀린 사람만</b> 누르세요</h3>' +
+         '<span class="sub">잘못 눌렀으면 다시 누르면 살아나요</span></div>' +
+         '<div class="stu-grid">' + gbCards() + '</div></div>';
     /* 진행 중 효과음 — 교사가 말로 하는 신호를 소리로 대신한다 */
     h += '<div class="card"><div style="display:flex;gap:7px">' +
          '<button class="chip" style="flex:1;padding:11px 0" onclick="gbSfx(\'write\')">✍️ 정답을 써주세요</button>' +
          '<button class="chip" style="flex:1;padding:11px 0" onclick="gbSfx(\'show\')">🙌 정답을 들어주세요</button>' +
          '</div>' + gbSndBar() + '</div>';
-    h += '<div class="card"><button class="btn g" onclick="gbNext()">' +
-         (GB.round >= GB.total ? '🏁 결과 보기' : '다음 문제 (' + (GB.round+1) + '번) →') + '</button>' +
-         '<div style="display:flex;gap:8px;margin-top:9px">' +
-         '<button class="chip sm" style="flex:1" onclick="gbBack()">↩ 앞 문제로</button>' +
+    h += '<div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap">' +
+         '<button class="chip sm" style="flex:1" onclick="gbBack()"' + (GB.round <= 1 ? ' disabled' : '') + '>↩ 앞 문제로</button>' +
          '<button class="chip sm" style="flex:1" onclick="gbReset()">처음부터</button>' +
          '<button class="chip sm" style="flex:1" onclick="gbQuit()">그만두기</button>' +
          '<button class="chip sm" style="flex:1" onclick="gbFull()">⛶ 전체화면</button>' +
@@ -2221,11 +3278,15 @@ function renderGB(){
   }
 
   /* 결과 */
+  var outAll = gbOutIds().length, rvdN = GB.rvd ? Object.keys(GB.rvd).filter(function(id){ return GB.alive[id]; }).length : 0;
   h += '<div class="card" style="text-align:center">' +
        '<div style="font-size:2.2em">' + (alive.length ? '🎉' : '😮') + '</div>' +
        '<div style="font-size:var(--fs-l);font-weight:900;color:var(--ac-d)">' +
        (alive.length ? alive.length + '명 생존!' : '끝까지 간 사람이 없어요') + '</div>' +
-       '<div class="sub">' + cls + ' · ' + GB.total + '문제</div></div>';
+       '<div class="sub">' + cls + ' · ' + GB.total + '문제' + (rvdN ? ' · 🔥 부활해서 남은 사람 ' + rvdN + '명' : '') + '</div>' +
+       '<div style="display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:12px">' +
+       (outAll ? '<button class="chip" onclick="gbGacha()">🎰 패자부활 가챠</button>' : '') +
+       '<button class="chip" onclick="gbExtend()">➕ 한 문제 더</button></div></div>';
 
   /* 🏅 시상식 음악 — 여기가 «틀 곡을 고르는» 자리다. 도장을 찍고 탭이 넘어가도
      고른 곡은 계속 나가고, 아래쪽 떠 있는 줄에서 멈출 수 있다. */
@@ -2240,7 +3301,8 @@ function renderGB(){
 
   if(alive.length){
     h += '<div class="card"><h3 style="font-size:var(--fs-s)">🏅 끝까지 남은 사람</h3>' +
-         '<div class="sub" style="margin:6px 0 9px">이 사람들에게 도장을 찍습니다</div>' +
+         '<div class="sub" style="margin:6px 0 9px">이 사람들에게 도장을 찍습니다' +
+         (rvdN ? ' · 🔥 부활한 사람은 기록에 «패자부활전을 거쳐»가 붙어요' : '') + '</div>' +
          '<div class="stu-grid">' + gbCards(true) + '</div>' +
          '<button class="btn g" style="margin-top:13px" onclick="gbAward()">🏅 ' + alive.length + '명에게 도장 찍기</button></div>';
   } else {
@@ -2253,19 +3315,25 @@ function renderGB(){
             f.ids.length + '명에게 도장 찍기</button>' : '') + '</div>';
   }
 
-  /* 라운드별로 몇 명이 떨어졌는지 — 문제가 너무 어려웠는지 바로 보인다 */
-  var perRound = [], r, n, id;
+  /* 문제별로 몇 명이 떨어졌는지 — 문제가 너무 어려웠는지 바로 보인다 */
+  var r, n, id, rq, rows = '';
   for(r=1;r<=GB.total;r++){
     n = 0; for(id in GB.out){ if(GB.out[id]===r) n++; }
-    perRound.push(r + '번 ' + n + '명');
+    rq = gbqAt(r);
+    rows += '<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1.5px dashed var(--line);font-size:12.5px;font-weight:700">' +
+            '<b style="flex:0 0 auto;color:var(--ac-d)">' + r + '번</b>' +
+            '<span style="flex:1;min-width:0;line-height:1.45;word-break:keep-all">' + (rq ? esc(rq.q) : '<span style="color:var(--mute)">구두로 낸 문제</span>') + '</span>' +
+            '<b style="flex:0 0 auto;color:' + (n ? 'var(--bad)' : 'var(--ok-d)') + '">' + n + '명</b></div>';
   }
-  h += '<div class="card"><h3 style="font-size:var(--fs-s)">문제별 탈락</h3>' +
-       '<div class="sub" style="margin-top:6px">' + perRound.join(' · ') + '</div></div>';
+  var gch = GB.gacha || [];
+  h += '<div class="card"><h3 style="font-size:var(--fs-s)">문제별 탈락</h3><div style="margin-top:6px">' + rows + '</div>' +
+       (gch.length ? '<div class="sub" style="margin-top:8px">🎰 가챠 ' + gch.length + '번 · 부활전 ' +
+         gch.filter(function(x){ return x.w; }).length + '번</div>' : '') + '</div>';
 
   h += '<div class="card">' + gbSndBar(true) + '</div>';   /* 시상식 줄은 위 칸에 있다 */
 
   h += '<div class="card"><div style="display:flex;gap:8px">' +
-       '<button class="chip sm" style="flex:1" onclick="gbBack()">↩ 앞 문제로</button>' +
+       '<button class="chip sm" style="flex:1" onclick="gbBack()">↩ 마지막 문제로</button>' +
        '<button class="chip sm" style="flex:1" onclick="gbReset()">처음부터</button>' +
        '<button class="chip sm" style="flex:1" onclick="gbQuit()">그만두기</button>' +
        '</div></div>';
@@ -2286,7 +3354,7 @@ function gbCards(onlyAlive){
          '<span class="stu-c' + (out ? ' zero' : '') + '">' +
          (out ? (GB.out[s.id] ? GB.out[s.id] + '번' : '—') : '○') + '</span>' +
          '<div class="stu-n">' + esc((s.number ? s.number + '. ' : '') + (s.name || '')) + '</div>' +
-         '<div class="stu-m">' + (out ? (GB.out[s.id] ? GB.out[s.id] + '번에서' : '오늘 안 함') : '생존') + '</div>' +
+         '<div class="stu-m">' + (out ? (GB.out[s.id] ? GB.out[s.id] + '번에서' : '오늘 안 함') : (GB.rvd && GB.rvd[s.id] ? '🔥 부활' : '생존')) + '</div>' +
          '</button>';
   }
   return h || '<div class="empty" style="grid-column:1/-1"><p>아무도 없어요</p></div>';
@@ -2316,10 +3384,13 @@ async function gbDoAward(ids, upto, partial){
     var rows = [], s;
     for(i=0;i<ids.length;i++){
       s = byId[ids[i]] || {};
+      var b1 = (!partial && GB.rvd && GB.rvd[ids[i]])
+        ? ((say ? say + ' — ' : '') + '수업 여는 골든벨 ' + GB.total + '문제에서 패자부활전을 거쳐 끝까지 남음')
+        : beh;
       rows.push({
         student_id: ids[i], school_year: nowYear(), semester: nowSem(),
         class_no_snap: s.class_no || GB.c || null, number_snap: s.number || null,
-        category: 'concept', behavior: beh,
+        category: 'concept', behavior: b1,
         lesson_note: note ? (note + ' · 골든벨') : '골든벨',
         observed_on: today
       });
@@ -2340,7 +3411,7 @@ async function gbDoAward(ids, upto, partial){
     }
     /* 결과 화면에서 이미 곡을 고르셨으면 그걸 그대로 둔다 — 골라둔 게 없을 때만 기본곡 */
     if(!_gbAwardKey) gbAwardPlay('award');
-    gbClear();
+    gbTimerStop(); gbClear();
     await loadTeacherObs(); await loadStudents();
     closeGB();
     toast('🏅 ' + saved + '명에게 도장을 찍었어요!');
