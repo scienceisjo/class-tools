@@ -354,7 +354,7 @@ body.gbfocus #s-tea main.wrap{max-width:1400px}
 .gm-neck{width:46%;height:14px;margin:-4px auto 0;background:#c9c3e8;border-radius:4px}
 .gm-body{position:relative;width:86%;margin:0 auto;aspect-ratio:2/1;border-radius:18px 18px 26px 26px;
   background:linear-gradient(180deg,#ff5b7f,#d82c5a);box-shadow:inset 0 -10px 0 rgba(0,0,0,.18),0 10px 30px rgba(0,0,0,.4)}
-.gm-knob{position:absolute;left:14%;top:22%;width:30%;aspect-ratio:1/1;border-radius:50%;background:#ffe38a;border:5px solid #fff3c4;
+.gm-knob{position:absolute;left:14%;top:11%;width:27%;aspect-ratio:1/1;border-radius:50%;background:#ffe38a;border:5px solid #fff3c4;
   box-shadow:0 4px 0 rgba(0,0,0,.2);display:grid;place-items:center;transition:transform 1.4s cubic-bezier(.5,0,.3,1)}
 .gm-knob::before{content:'';width:76%;height:20%;background:#d99a1a;border-radius:6px}
 .gm-knob.turn{transform:rotate(720deg)}
@@ -386,6 +386,61 @@ body.gbfocus #s-tea main.wrap{max-width:1400px}
 .gbg-x{position:absolute;top:14px;right:16px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font-weight:900;font-size:13px}
 .gbg-cf{position:absolute;top:-20px;width:10px;height:16px;border-radius:2px;animation:gbcf linear forwards;pointer-events:none}
 @keyframes gbcf{to{transform:translateY(110vh) rotate(720deg)}}
+/* 🎃 할로윈 꾸밈 (body.gbhw — 골든벨 탭에 있을 때만) */
+body.gbhw{background-color:#1a0f29;
+  background-image:radial-gradient(rgba(255,255,255,.22) 1px,transparent 1.6px),radial-gradient(rgba(255,170,80,.16) 1px,transparent 1.6px);
+  background-size:52px 52px,26px 26px;background-position:0 0,13px 19px}
+body.gbhw #app-credit{color:#b9a8d8}
+body.gbhw #p-gb::before{content:'🎃  HAPPY HALLOWEEN · 트릭 오어 트릿 골든벨  👻';display:block;text-align:center;
+  font-weight:900;font-size:var(--fs-s);letter-spacing:.02em;color:#ffb347;padding:11px 12px;margin-bottom:12px;border-radius:16px;
+  background:linear-gradient(90deg,#2a0f3d,#5a2380 50%,#2a0f3d);box-shadow:0 0 0 2px rgba(255,138,31,.45),0 8px 24px rgba(0,0,0,.3);text-shadow:0 0 14px rgba(255,140,40,.55)}
+body.gbfocus.gbhw #p-gb::before{display:none}
+body.gbhw #p-gb .card{border-color:#f0a35e;background:#fffaf2}
+body.gbhw #p-gb .chip.on{background:#e8670f}
+body.gbhw .gbtabs button.on{color:#c2540a}
+body.gbhw .gbbig{background:linear-gradient(135deg,#ff9a3c,#ff6a00 45%,#7b3fe4);color:#fff;box-shadow:0 6px 18px rgba(123,63,228,.35)}
+body.gbhw .gbtoday{border-color:#e8670f;background:#fff4e6}
+body.gbhw #p-gb .stu.sel{border-color:#e8670f;background:#fff1e0}
+body.gbhw .gbs{background:radial-gradient(circle at 78% 9%,rgba(255,196,110,.55) 0,rgba(255,150,60,.2) 9%,transparent 24%),
+  radial-gradient(120% 90% at 50% -12%,#4b1d6b 0%,#1c0d2e 50%,#0b0612 100%);
+  box-shadow:0 12px 40px rgba(20,6,30,.45),inset 0 0 0 2px rgba(255,138,31,.6)}
+body.gbhw .gbs::before{background:radial-gradient(ellipse at 50% 0%,rgba(255,170,80,.14),transparent 62%)}
+body.gbhw .gbs-no{color:#ff9d3c;text-shadow:0 0 22px rgba(255,120,30,.6)}
+body.gbhw .gbs-alive b{color:#ffb347}
+body.gbhw .gbs-dots i.d{background:#ff8a1f} body.gbhw .gbs-dots i.c{box-shadow:0 0 0 3px rgba(255,138,31,.55)}
+body.gbhw .gbs-c b{color:#ffb347}
+body.gbhw .gbs-b.y{background:#ff9d3c;color:#2a0f00}
+body.gbhw .gbs-tb i{background:linear-gradient(90deg,#9be564,#ff9d3c 60%,#ff4d4d)}
+body.gbhw .gbs.rv{background:radial-gradient(circle at 78% 9%,rgba(200,255,150,.35) 0,rgba(120,220,90,.12) 9%,transparent 24%),
+  radial-gradient(120% 90% at 50% -12%,#1f5c2a 0%,#0e2a14 50%,#050f07 100%);box-shadow:0 12px 40px rgba(5,20,8,.45),inset 0 0 0 2px rgba(155,229,100,.55)}
+body.gbhw .gbs.rv .gbs-ban{color:#b8f27c;text-shadow:0 0 22px rgba(130,230,80,.6)}
+.gbs>.hw-deco,.gbg>.hw-deco{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.hw-deco span{position:absolute;line-height:1}
+.hw-deco .moon{right:19%;top:2.5%;width:clamp(36px,5vw,70px);height:clamp(36px,5vw,70px);border-radius:50%;
+  background:radial-gradient(circle at 38% 38%,#fff3c4,#ffc65c 70%);box-shadow:0 0 40px rgba(255,190,90,.65);opacity:.85}
+.hw-deco .web{left:-2px;top:-4px;font-size:clamp(38px,5vw,70px);opacity:.38}
+.hw-deco .bat{font-size:clamp(18px,2.2vw,30px);opacity:.75;animation:hwbat 13s linear infinite}
+.hw-deco .b1{top:16%;animation-delay:-2s} .hw-deco .b2{top:30%;animation-delay:-7s;animation-duration:16s;font-size:clamp(14px,1.6vw,22px)}
+.hw-deco .b3{top:9%;animation-delay:-11s;animation-duration:19s}
+@keyframes hwbat{0%{left:-8%;transform:translateY(0) scaleX(1)}25%{transform:translateY(-14px)}50%{transform:translateY(8px)}75%{transform:translateY(-10px)}100%{left:106%;transform:translateY(0)}}
+.hw-deco .gh{left:2.5%;bottom:20%;font-size:clamp(26px,3.4vw,48px);opacity:.45;animation:hwgh 4.5s ease-in-out infinite}
+@keyframes hwgh{50%{transform:translateY(-12px) rotate(-6deg);opacity:.25}}
+.hw-deco .pk{bottom:6px;font-size:clamp(24px,3.2vw,46px);opacity:.85;animation:hwpk 2.6s ease-in-out infinite}
+.hw-deco .p1{left:2%} .hw-deco .p2{right:2%;animation-delay:-1.3s}
+@keyframes hwpk{50%{transform:scale(1.08) rotate(4deg);filter:drop-shadow(0 0 10px rgba(255,140,30,.8))}}
+body.gbhw .gbg{background:radial-gradient(circle at 80% 14%,rgba(255,196,110,.4) 0,transparent 18%),radial-gradient(circle at 50% 30%,#4b1d6b 0%,#1c0d2e 55%,#07040c 100%)}
+body.gbhw .gbg-t{text-shadow:0 0 26px rgba(255,140,40,.7)}
+body.gbhw .gm-body{background:linear-gradient(180deg,#ff9a3c,#e2601a)}
+body.gbhw .gm-knob{background:#7b3fe4;border-color:#c9a8ff}
+body.gbhw .gm-knob::before{background:#ffd166}
+body.gbhw .gm-lbl{color:#2a0f00;letter-spacing:.06em}
+body.gbhw .gm-dome{border-color:rgba(255,190,120,.6);box-shadow:inset 0 -18px 40px rgba(0,0,0,.3),0 0 40px rgba(255,140,40,.35)}
+body.gbhw .gbg-btn{background:linear-gradient(135deg,#ff9d3c,#ff6a00);color:#2a0f00}
+body.gbhw .gbg-btn.g{background:rgba(255,255,255,.14);color:#fff}
+body.gbhw .gbg-p button.on{background:#ff8a1f}
+.gbg-cf.hw{background:none;width:auto;height:auto;font-size:clamp(18px,2.4vw,30px)}
+.gbg>:not(.hw-deco):not(.gbg-x):not(.gbg-cf){position:relative;z-index:1}
+@media (prefers-reduced-motion:reduce){.hw-deco span{animation:none!important}}
 footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;font-weight:700;line-height:1.7}
 </style>
 </head>
@@ -1317,6 +1372,7 @@ function teaTab(k){
   if(k==='out')  renderExport();
   window.scrollTo(0,0);
   document.body.classList.toggle('gbfocus', k === 'gb' && !!document.fullscreenElement);
+  gbHWApply(k);
   if(k === 'gb') renderGB();
 }
 
@@ -1936,7 +1992,7 @@ function gbSndBar(noAward){
   var lab = 'font-size:11px;color:var(--mute);font-weight:700';
   var h = '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:9px">' +
           '<button class="chip sm" onclick="gbToggleSnd()">' + (on ? '🔊 소리 켜짐' : '🔇 소리 꺼짐') + '</button>';
-  if(!on) return h + '</div>';
+  if(!on) return h + '</div>' + gbHWChip();
 
   /* ── 배경음 ── */
   h += '<span style="' + lab + '">배경음</span>';
@@ -1988,7 +2044,7 @@ function gbSndBar(noAward){
        ' oninput="gbSetVol(this.value)" style="flex:1;min-width:110px;accent-color:var(--ac)">' +
        '<b id="gbVolLab" style="flex:0 0 auto;font-size:12px;color:var(--ac-d);min-width:38px;text-align:right">' +
        Math.round(gbVol()*100) + '%</b>';
-  return h + '</div>';
+  return h + '</div>' + gbHWChip();
 }
 
 var GB_KEY = 'gb_state_v1';
@@ -2665,10 +2721,10 @@ function gbTodayUI(){
    ══════════════════════════════════════════════════════════════════════════ */
 function gbStage(q, o){
   var rev = !!o.rev, ai = gbAnsIx(q), h, A;
-  h = '<div class="gbs' + (o.rv ? ' rv' : '') + '">' +
+  h = '<div class="gbs' + (o.rv ? ' rv' : '') + '">' + (gbHW() ? gbHWDeco() : '') +
       '<div class="gbs-top"><span>' + esc(o.cls) + '</span>' + (o.dots || '') +
       '<span class="gbs-alive">' + o.aliveLab + ' <b>' + o.alive + '</b>명</span></div>' +
-      (o.rv ? '<div class="gbs-ban">🔥 패자부활전</div>' : '<div class="gbs-no">' + o.no + '번 문제</div>');
+      (o.rv ? '<div class="gbs-ban">' + (gbHW() ? '🧟 좀비 부활전' : '🔥 패자부활전') + '</div>' : '<div class="gbs-no">' + o.no + '번 문제</div>');
   if(q){
     h += '<div class="gbs-meta">' + (q.t ? '<span class="p ' + q.t + '">' + gbTypeName(q.t) + '</span>' : '') +
          (q.src ? '<span>' + esc(q.src) + '</span>' : '') +
@@ -3041,7 +3097,8 @@ function gbGacha(){
   var outN = gbOutIds().length;
   if(!outN){ toast('아직 탈락한 사람이 없어요'); return; }
   gbTimerStop();
-  var cols = ['#ff5b7f','#ffcc33','#5bc0ff','#7ee08f','#c38bff','#ff9a3c','#ffffff'], caps = '', i, x, y;
+  var hw = gbHW(), cols = hw ? ['#ff8a1f','#7b3fe4','#9be564','#ff8a1f','#2b2b2b','#ffd166','#c0392b']
+                            : ['#ff5b7f','#ffcc33','#5bc0ff','#7ee08f','#c38bff','#ff9a3c','#ffffff'], caps = '', i, x, y;
   for(i=0;i<16;i++){
     x = 8 + Math.random() * 66; y = 38 + Math.random() * 44;
     caps += '<span class="gm-cap" style="left:' + x.toFixed(1) + '%;top:' + y.toFixed(1) + '%;background:' +
@@ -3050,10 +3107,10 @@ function gbGacha(){
   var el = document.createElement('div');
   el.id = 'gbGacha'; el.className = 'gbg';
   el.innerHTML = '<button class="gbg-x" onclick="gbgClose()">✕ 닫기</button>' +
-    '<div class="gbg-t">🎰 패자부활전 가챠</div>' +
+    '<div class="gbg-t">' + (hw ? '🎃 트릭 오어 트릿 가챠' : '🎰 패자부활전 가챠') + '</div>' + (hw ? gbHWDeco() : '') +
     '<div class="gbg-s">탈락한 ' + outN + '명에게 한 번 더 기회가 올까?</div>' +
     '<div class="gm" id="gbgM"><div class="gm-dome">' + caps + '</div><div class="gm-neck"></div>' +
-    '<div class="gm-body"><div class="gm-knob" id="gbgK"></div><div class="gm-chute"></div><div class="gm-lbl">REVIVAL</div>' +
+    '<div class="gm-body"><div class="gm-knob" id="gbgK"></div><div class="gm-chute"></div><div class="gm-lbl">' + (hw ? 'TRICK or TREAT' : 'REVIVAL') + '</div>' +
     '<div class="gm-drop" id="gbgD"><div class="h1"></div><div class="h2" id="gbgH2"></div></div></div></div>' +
     '<div class="gbg-res" id="gbgR"><div class="small">레버를 돌려 주세요</div></div>' +
     '<div class="gbg-p" id="gbgP">' + gbgPChips() + '</div>' +
@@ -3081,13 +3138,17 @@ function gbgPull(){
     setTimeout(function(){
       if(!_gbg) return;
       $('gbgD').classList.add('open');
-      gbSyn(win ? 'win' : 'lose');
+      gbSyn(win ? 'win' : (gbHW() ? 'ghost' : 'lose'));
       if(win){
         gbConfetti();
-        $('gbgR').innerHTML = '<div class="big win">🔥 패자부활전 개최!</div><div class="small">탈락한 사람에게 한 번 더 기회가 왔어요</div>';
-        $('gbgB').innerHTML = '<button class="gbg-btn" onclick="gbgGo()">🔥 부활전 시작</button><button class="gbg-btn g" onclick="gbgClose()">나중에</button>';
+        $('gbgR').innerHTML = gbHW()
+          ? '<div class="big win">🍬 트릿! 좀비 부활전 개최</div><div class="small">탈락한 사람이 무덤에서 일어날 기회가 왔어요</div>'
+          : '<div class="big win">🔥 패자부활전 개최!</div><div class="small">탈락한 사람에게 한 번 더 기회가 왔어요</div>';
+        $('gbgB').innerHTML = '<button class="gbg-btn" onclick="gbgGo()">' + (gbHW() ? '🧟 부활전 시작' : '🔥 부활전 시작') + '</button><button class="gbg-btn g" onclick="gbgClose()">나중에</button>';
       } else {
-        $('gbgR').innerHTML = '<div class="big lose">💤 부활은 없다!</div><div class="small">이번엔 그대로 갑니다</div>';
+        $('gbgR').innerHTML = gbHW()
+          ? '<div class="big lose">👻 트릭! 부활은 없다</div><div class="small">유령은 그대로 유령으로 남아요</div>'
+          : '<div class="big lose">💤 부활은 없다!</div><div class="small">이번엔 그대로 갑니다</div>';
         $('gbgB').innerHTML = '<button class="gbg-btn g" onclick="gbgClose()">계속하기</button>';
       }
       _gbg.st = 'done';
@@ -3113,11 +3174,42 @@ function gbConfetti(){
     c = document.createElement('span');
     c.className = 'gbg-cf';
     c.style.left = (Math.random() * 100) + '%';
-    c.style.background = cols[i % cols.length];
+    if(gbHW()){ c.className = 'gbg-cf hw'; c.textContent = ['🍬','🍭','🎃','🍫','👻','🦇'][i % 6]; }
+    else c.style.background = cols[i % cols.length];
     c.style.animationDuration = (1.6 + Math.random() * 1.6) + 's';
     c.style.animationDelay = (Math.random() * .5) + 's';
     el.appendChild(c);
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   🎃 할로윈 꾸밈 — 골든벨 탭만. 10/1~11/1 에는 저절로 켜지고, 그 밖에는 원래 모습.
+   단추로 직접 켜고 끌 수 있다(gb_theme = hw | basic, 지우면 다시 «날짜 따라»).
+   ══════════════════════════════════════════════════════════════════════════ */
+function gbHW(){
+  var m = gbLs('gb_theme', 'auto');
+  if(m === 'hw') return true;
+  if(m === 'basic') return false;
+  var d = new Date(), mo = d.getMonth() + 1;
+  return mo === 10 || (mo === 11 && d.getDate() <= 1);
+}
+function gbHWApply(k){
+  var on = gbHW();
+  if(k == null){ var p = $('p-gb'); k = p && p.classList.contains('on') ? 'gb' : ''; }
+  document.body.classList.toggle('gbhw', on && k === 'gb');
+  var tb = document.querySelector('#s-tea .tab[data-p="gb"]');
+  if(tb) tb.textContent = (on ? '🎃' : '🔔') + ' 골든벨';
+}
+function gbHWToggle(){ gbLsSet('gb_theme', gbHW() ? 'basic' : 'hw'); gbHWApply('gb'); renderGB(); }
+function gbHWChip(){
+  return '<div class="chips" style="margin-top:8px"><button class="chip sm" onclick="gbHWToggle()">' +
+         (gbHW() ? '🎃 할로윈 꾸밈 켜짐 — 누르면 끄기' : '🎃 할로윈 꾸밈 켜기') + '</button></div>';
+}
+/* 무대 장식 — 글자보다 뒤에, 눈에 거슬리지 않게 */
+function gbHWDeco(){
+  return '<div class="hw-deco" aria-hidden="true"><span class="moon"></span><span class="web">🕸️</span>' +
+         '<span class="bat b1">🦇</span><span class="bat b2">🦇</span><span class="bat b3">🦇</span>' +
+         '<span class="gh">👻</span><span class="pk p1">🎃</span><span class="pk p2">🎃</span></div>';
 }
 
 /* ── 🔊 합성음 — 파일 없이 바로 나는 짧은 신호(타이머·가챠) ── */
@@ -3168,6 +3260,13 @@ function gbSyn(k){
       [523, 659, 784, 1046].forEach(function(f, i){ gbTone(ac, f, t + i * 0.1, 0.32, 'triangle', 0.3 * v); });
       gbTone(ac, 1318, t + 0.45, 0.9, 'sine', 0.26 * v); gbTone(ac, 1568, t + 0.45, 0.9, 'sine', 0.18 * v);
     }
+    else if(k === 'ghost'){
+      var o = ac.createOscillator(), g = ac.createGain(), lf = ac.createOscillator(), lg = ac.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(620, t); o.frequency.exponentialRampToValueAtTime(260, t + 1.6);
+      lf.frequency.value = 6; lg.gain.value = 18; lf.connect(lg); lg.connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22 * v, t + 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
+      o.connect(g); g.connect(ac.destination); o.start(t); lf.start(t); o.stop(t + 1.75); lf.stop(t + 1.75);
+    }
     else if(k === 'lose'){
       [392, 370, 349].forEach(function(f, i){ gbTone(ac, f, t + i * 0.3, 0.28, 'sawtooth', 0.16 * v); });
       gbTone(ac, 330, t + 0.9, 0.9, 'sawtooth', 0.16 * v, 250);
@@ -3180,6 +3279,7 @@ function renderGB(){
   var el = $('p-gb'); if(!el) return;
   if(!GB) gbLoad();
   if(_gbbSt === 'idle') gbbLoad();     /* 진행 중에 새로고침해도 부활 문제·바꿀 문제를 꺼낼 수 있게 */
+  gbHWApply('gb');
 
   /* 반을 안 골랐거나 시작 전이면 여기서 끝 */
   if(!S.selClass){
@@ -3352,7 +3452,7 @@ function gbCards(onlyAlive){
          (out ? ' style="opacity:.42"' : '') +
          (onlyAlive ? '' : ' onclick="gbTap(\'' + s.id + '\')"') + '>' +
          '<span class="stu-c' + (out ? ' zero' : '') + '">' +
-         (out ? (GB.out[s.id] ? GB.out[s.id] + '번' : '—') : '○') + '</span>' +
+         (out ? (GB.out[s.id] ? (gbHW() ? '👻' : GB.out[s.id] + '번') : '—') : '○') + '</span>' +
          '<div class="stu-n">' + esc((s.number ? s.number + '. ' : '') + (s.name || '')) + '</div>' +
          '<div class="stu-m">' + (out ? (GB.out[s.id] ? GB.out[s.id] + '번에서' : '오늘 안 함') : (GB.rvd && GB.rvd[s.id] ? '🔥 부활' : '생존')) + '</div>' +
          '</button>';
