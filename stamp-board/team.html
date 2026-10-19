@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>👥 모둠 골든벨 · 문제 내기</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#C2703E">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--paper:#FBF6E9;--card:#FFFDF7;--ink:#3A3226;--ink2:#6B5F4E;--mute:#A39682;--line:#E0D3B8;--ac:#C2703E;--ac-d:#9C5427;--ok:#5CB86E;--ok-d:#3D8B4F;--bad:#D9534F;
+  --font:'Pretendard Variable',Pretendard,-apple-system,system-ui,'Malgun Gothic',sans-serif}
+body.hw{--paper:#1a0f29;--ac:#e8670f;--ac-d:#b34d06}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);color:var(--ink);background:var(--paper);min-height:100dvh;padding:max(14px,env(safe-area-inset-top)) 16px 28px;-webkit-font-smoothing:antialiased}
+body.hw{background-image:radial-gradient(rgba(255,255,255,.18) 1px,transparent 1.6px);background-size:40px 40px}
+button,input,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{border:none;background:none;cursor:pointer}
+.wrap{max-width:560px;margin:0 auto}
+h1{font-size:22px;font-weight:900;text-align:center;letter-spacing:-.02em}
+body.hw h1{color:#ffb347}
+.lead{text-align:center;font-size:13px;font-weight:700;color:var(--ink2);margin:4px 0 14px}
+body.hw .lead{color:#d8c8f0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 4px 18px rgba(120,100,70,.08)}
+.k{font-size:13px;font-weight:900;color:var(--ink2);margin-bottom:8px}
+.inp{width:100%;padding:12px 13px;border:2px solid var(--line);border-radius:12px;background:#fff;font-size:16px;font-weight:600;outline:none}
+.inp:focus{border-color:var(--ac)}
+textarea.inp{resize:vertical;line-height:1.5}
+.code{font-size:34px;font-weight:900;letter-spacing:.3em;text-align:center}
+.btn{display:block;width:100%;padding:15px;border-radius:14px;background:var(--ac);color:#fff;font-size:17px;font-weight:900;margin-top:12px;box-shadow:0 4px 14px rgba(194,112,62,.3)}
+.btn:disabled{opacity:.4;box-shadow:none}
+.btn.g{background:var(--ok-d)}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.tm{padding:12px 8px;border-radius:14px;border:2px solid var(--line);background:#fff;text-align:center;font-weight:900;font-size:16px;line-height:1.3}
+.tm .e{display:block;font-size:30px}
+.tm small{display:block;font-size:11.5px;font-weight:800;color:var(--mute);margin-top:3px}
+.tm.on{border-color:var(--ac);background:#FFF1E4}
+.tm.done small{color:var(--ok-d)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:9px 15px;border-radius:999px;border:2px solid var(--line);background:#fff;font-size:14px;font-weight:900;color:var(--ink2)}
+.chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.ox{display:flex;gap:12px;justify-content:center}
+.ox button{width:84px;height:84px;border-radius:50%;border:3px solid var(--line);background:#fff;font-size:40px;font-weight:900}
+.ox button.o{color:#2f5fb3} .ox button.x{color:#c0392b}
+.ox button.on{border-color:var(--ac);background:#FFF1E4;transform:scale(1.06)}
+.mc{display:flex;flex-direction:column;gap:7px}
+.mc .row{display:flex;gap:8px;align-items:center}
+.mc .row button{flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:2px solid var(--line);background:#fff;font-size:17px;font-weight:900}
+.mc .row button.on{background:var(--ok-d);border-color:var(--ok-d);color:#fff}
+.cnt{text-align:right;font-size:11.5px;font-weight:800;color:var(--mute);margin-top:4px}
+.chk{display:flex;flex-direction:column;gap:7px}
+.chk label{display:flex;gap:9px;align-items:flex-start;font-size:14px;font-weight:700;line-height:1.45}
+.chk input{width:20px;height:20px;flex:0 0 auto;margin-top:1px;accent-color:var(--ok-d)}
+.st{margin-top:10px;padding:12px;border-radius:12px;font-size:14px;font-weight:800;line-height:1.5;text-align:center}
+.st.ok{background:#E8F7EC;color:var(--ok-d)} .st.bad{background:#FDECEC;color:var(--bad)} .st.wait{background:#FFF6E8;color:var(--ac-d)}
+.due{text-align:center;font-weight:900;font-size:15px;color:var(--ac-d)}
+.big{text-align:center;padding:26px 8px}
+.big .e{font-size:48px}
+.big p{font-size:16px;font-weight:800;line-height:1.6;margin-top:6px}
+.sub{font-size:12.5px;color:var(--ink2);font-weight:600;line-height:1.55}
+.link{display:block;text-align:center;font-size:12.5px;font-weight:800;color:var(--ac-d);margin-top:10px}
+#app-credit{text-align:center;font-size:11px;color:var(--mute);margin-top:18px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>👥 모둠 골든벨 · 문제 내기</h1>
+  <div class="lead">우리 모둠이 만든 문제를 다른 모둠이 풀어요</div>
+  <div id="app"></div>
+  <footer id="app-credit">
+    © 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br>
+    <span style="opacity:.85">모둠 골든벨 · 최종 업데이트 2026-10-19</span>
+  </footer>
+</div>
+<script>
+/* 👥 모둠 골든벨 — 학생 기기. 전자칠판(칭찬 도장판)이 띄운 방 번호로 Supabase 방송 채널 'gbt-<번호>' 에 들어가
+   모둠 문제 하나를 보낸다. 로그인 없음 · 이름은 오가지 않음(모둠 번호·출석 번호만). */
+var SB_URL = 'https://hmzklbrksfdhzsgwzfyg.supabase.co';
+var SB_KEY = 'sb_publishable_OFVhbjVPbJiMWXVz2nKQuw_m6RmVVZE';
+var sb = window.supabase.createClient(SB_URL, SB_KEY);
+var CIRC = ['①','②','③','④'];
+var P = { st:'code', code:'', ch:null, info:null, team:0, t:'short', ox:'', mcA:0, sending:false, msg:null, tries:0, sentAt:0 };
+P.dev = (function(){
+  try{ var d = localStorage.getItem('gbt_dev'); if(!d){ d = 'd' + Math.random().toString(36).slice(2, 10); localStorage.setItem('gbt_dev', d); } return d; }
+  catch(e){ return 'd' + Math.random().toString(36).slice(2, 10); }
+})();
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+(function(){ var d = new Date(), m = d.getMonth() + 1; if(m === 10 || (m === 11 && d.getDate() <= 1)) document.body.classList.add('hw'); })();
+
+/* 적던 문제는 기기에 잠깐 남겨 둔다 — 새로고침해도 다시 안 써도 되게 */
+function draftKey(){ return 'gbt_draft_' + P.code + '_' + P.team; }
+function saveDraft(){
+  if(!P.team) return;
+  var d = { t:P.t, q:($('q') || {}).value || '', a:($('a') || {}).value || '', ox:P.ox, mcA:P.mcA, ex:($('ex') || {}).value || '',
+            ch:[0,1,2,3].map(function(i){ return ($('c' + i) || {}).value || ''; }) };
+  try{ localStorage.setItem(draftKey(), JSON.stringify(d)); }catch(e){}
+}
+function loadDraft(){ try{ return JSON.parse(localStorage.getItem(draftKey()) || 'null'); }catch(e){ return null; } }
+
+function join(code){
+  code = String(code || '').replace(/\D/g, '').slice(0, 4);
+  if(code.length !== 4){ alert('방 번호 네 자리를 넣어 주세요'); return; }
+  if(P.ch){ try{ sb.removeChannel(P.ch); }catch(e){} }
+  P.code = code; P.st = 'join'; P.info = null; draw();
+  P.ch = sb.channel('gbt-' + code, { config:{ broadcast:{ self:false } } });
+  P.ch.on('broadcast', { event:'tb' }, function(m){ onMsg(m.payload || {}); });
+  P.ch.subscribe(function(s){
+    if(s === 'SUBSCRIBED'){ send({ k:'hello' }); setTimeout(function(){ if(!P.info){ P.st = 'nobody'; draw(); } }, 5000); }
+    else if(s === 'CHANNEL_ERROR' || s === 'TIMED_OUT'){ P.st = 'nobody'; draw(); }
+  });
+  try{ history.replaceState(null, '', location.pathname + '?c=' + code); }catch(e){}
+}
+function send(p){ try{ if(P.ch) P.ch.send({ type:'broadcast', event:'tb', payload:p }); }catch(e){} }
+function onMsg(p){
+  if(p.k === 'info'){
+    var first = !P.info;
+    P.info = p; p.rx = Date.now();
+    if(!p.open){ P.st = 'closed'; }
+    else if(P.st === 'join' || P.st === 'nobody' || P.st === 'closed'){ P.st = P.team ? 'write' : 'team'; }
+    if(first || P.st !== 'write') draw(); else drawTop();
+    return;
+  }
+  if(p.k === 'ack' && p.dev === P.dev){
+    P.sending = false; clearTimeout(P.retry);
+    P.msg = p.ok ? { c:'ok', t:'✅ 전자칠판에 도착했어요!' + (p.n > 1 ? ' (' + p.n + '번째로 고친 문제)' : '') + '<br>고치고 싶으면 고쳐서 다시 보내면 마지막 것만 써요.' }
+                 : { c:'bad', t:'❌ ' + esc(p.msg || '다시 보내 주세요') };
+    drawStatus();
+  }
+}
+function pickTeam(no){ P.team = no; P.st = 'write'; P.msg = null; var d = loadDraft(); if(d){ P.t = d.t; P.ox = d.ox; P.mcA = d.mcA; } draw(); if(d) fillDraft(d); }
+function fillDraft(d){
+  if($('q')) $('q').value = d.q || '';
+  if($('a')) $('a').value = d.a || '';
+  if($('ex')) $('ex').value = d.ex || '';
+  [0,1,2,3].forEach(function(i){ if($('c' + i)) $('c' + i).value = (d.ch || [])[i] || ''; });
+  count();
+}
+function setType(t){ saveDraft(); P.t = t; draw(); fillDraft(loadDraft() || {}); }
+function setOX(v){ P.ox = v; saveDraft(); draw(); fillDraft(loadDraft() || {}); }
+function setMcA(i){ P.mcA = i; saveDraft(); draw(); fillDraft(loadDraft() || {}); }
+function count(){ var q = $('q'), c = $('qc'); if(q && c) c.textContent = q.value.length + ' / 120'; chk(); }
+function chk(){
+  var b = $('sendBtn'); if(!b) return;
+  var all = ['k1','k2','k3'].every(function(id){ return $(id) && $(id).checked; });
+  b.disabled = !all || P.sending;
+}
+function build(){
+  var q = $('q').value.trim(), a = '', ch = null;
+  if(!q){ return '문제를 써 주세요'; }
+  if(P.t === 'short'){ a = $('a').value.trim(); if(!a) return '정답을 써 주세요'; }
+  if(P.t === 'ox'){ a = P.ox; if(!a) return 'O인지 X인지 정답을 골라 주세요'; }
+  if(P.t === 'mc'){
+    ch = [0,1,2,3].map(function(i){ return $('c' + i).value.trim(); });
+    if(!ch[P.mcA]) return '정답으로 고른 보기에 글을 써 주세요';
+    var filled = ch.filter(Boolean).length;
+    if(filled < 2) return '보기를 두 개 이상 써 주세요';
+    /* 빈 보기를 빼면서 정답 번호도 맞춘다 */
+    var keep = [], ans = 0;
+    ch.forEach(function(c, i){ if(c){ if(i === P.mcA) ans = keep.length; keep.push(c); } });
+    ch = keep; a = String(ans + 1);
+  }
+  return { t:P.t, q:q, a:a, ch:ch, ex:$('ex').value.trim() };
+}
+function submit(){
+  var q = build();
+  if(typeof q === 'string'){ P.msg = { c:'bad', t:'✏️ ' + q }; drawStatus(); return; }
+  saveDraft();
+  P.sending = true; P.tries = 0; P.msg = { c:'wait', t:'📨 보내는 중…' }; drawStatus(); chk();
+  var go = function(){
+    P.tries++;
+    send({ k:'sub', dev:P.dev, team:P.team, q:q });
+    P.retry = setTimeout(function(){
+      if(!P.sending) return;
+      if(P.tries < 4) go();
+      else { P.sending = false; P.msg = { c:'bad', t:'전자칠판이 대답이 없어요. 방 번호가 맞는지 보고, 선생님께 말씀드려요.' }; drawStatus(); chk(); }
+    }, 2500);
+  };
+  go();
+}
+
+function drawTop(){
+  var el = $('top'); if(!el || !P.info) return;
+  var t = P.info.teams.filter(function(x){ return x.no === P.team; })[0];
+  el.innerHTML = '<div class="sub" style="text-align:center">' + esc(P.info.cls) + '반 · 방 ' + P.code +
+                 (t ? ' · <b>' + t.emo + ' ' + t.no + '모둠</b> <a href="#" onclick="P.st=\'team\';draw();return false" style="color:var(--ac-d)">바꾸기</a>' : '') + '</div>' +
+                 (P.info.due > 0 ? '<div class="due" style="margin-top:6px">⏱ 남은 시간 약 ' + Math.max(1, Math.round((P.info.due - (Date.now() - P.info.rx)) / 60000)) + '분</div>' :
+                  P.info.due < 0 ? '<div class="due" style="margin-top:6px">⏰ 시간이 다 됐어요 — 얼른 보내 주세요!</div>' : '');
+}
+function drawStatus(){ var el = $('status'); if(!el) return; el.innerHTML = P.msg ? '<div class="st ' + P.msg.c + '">' + P.msg.t + '</div>' : ''; }
+function draw(){
+  var app = $('app'), h = '';
+  if(P.st === 'code'){
+    h = '<div class="card"><div class="k">전자칠판에 나온 방 번호</div>' +
+        '<input class="inp code" id="code" inputmode="numeric" maxlength="4" placeholder="0000" onkeydown="if(event.key===\'Enter\')join(this.value)">' +
+        '<button class="btn" onclick="join($(\'code\').value)">들어가기</button></div>';
+    app.innerHTML = h; setTimeout(function(){ var c = $('code'); if(c) c.focus(); }, 50); return;
+  }
+  if(P.st === 'join'){ app.innerHTML = '<div class="card big"><div class="e">🔎</div><p>방 ' + P.code + '을 찾는 중…</p></div>'; return; }
+  if(P.st === 'nobody'){
+    app.innerHTML = '<div class="card big"><div class="e">🤔</div><p>방 ' + P.code + '이 열려 있지 않아요.<br>번호를 다시 확인해 주세요.</p>' +
+      '<button class="btn" onclick="P.st=\'code\';draw()">방 번호 다시 넣기</button></div>'; return;
+  }
+  if(P.st === 'closed'){
+    app.innerHTML = '<div class="card big"><div class="e">🔔</div><p>문제 내기가 끝났어요!<br>이제 전자칠판을 보세요.</p></div>'; return;
+  }
+  if(P.st === 'team'){
+    h = '<div class="card"><div id="top"></div><div class="k" style="margin-top:10px">우리 모둠을 골라요</div><div class="teams">' +
+        P.info.teams.map(function(t){
+          return '<button class="tm' + (t.no === P.team ? ' on' : '') + (t.done ? ' done' : '') + '" onclick="pickTeam(' + t.no + ')">' +
+                 '<span class="e">' + t.emo + '</span>' + t.no + '모둠<small>' + (t.nums.length ? t.nums.join('·') + '번' : '') + (t.done ? ' · ✅ 냈어요' : '') + '</small></button>';
+        }).join('') + '</div><div class="sub" style="margin-top:10px">출석 번호를 보고 우리 모둠을 찾아요. 모둠에서 <b>한 사람만</b> 보내면 돼요.</div></div>';
+    app.innerHTML = h; drawTop(); return;
+  }
+  /* write */
+  h = '<div class="card"><div id="top"></div></div>';
+  h += '<div class="card"><div class="k">① 문제 모양</div><div class="chips">' +
+       [['short','✏️ 단답'], ['ox','⭕ O/X'], ['mc','🔢 객관식']].map(function(m){
+         return '<button class="chip' + (P.t === m[0] ? ' on' : '') + '" onclick="setType(\'' + m[0] + '\')">' + m[1] + '</button>';
+       }).join('') + '</div>' +
+       '<div class="sub" style="margin-top:8px">' + (P.t === 'ox' ? '맞거나 틀린 문장 하나를 써요.' : P.t === 'mc' ? '묻는 말과 보기를 써요. 정답 보기 옆 번호를 눌러요.' : '답이 낱말 하나나 숫자로 딱 정해지게 물어요.') + '</div></div>';
+  h += '<div class="card"><div class="k">② 문제</div>' +
+       '<textarea class="inp" id="q" rows="3" maxlength="120" oninput="count();saveDraft()" placeholder="' +
+       (P.t === 'ox' ? '예) 기체의 압력은 아래쪽으로만 작용한다.' : P.t === 'mc' ? '예) 전류의 방향을 반대로 바꾸면 어떻게 될까?' : '예) 일정한 면적에 작용하는 힘을 무엇이라고 할까?') + '"></textarea><div class="cnt" id="qc">0 / 120</div>';
+  if(P.t === 'mc'){
+    h += '<div class="mc" style="margin-top:8px">' + [0,1,2,3].map(function(i){
+      return '<div class="row"><button class="' + (P.mcA === i ? 'on' : '') + '" onclick="setMcA(' + i + ')">' + CIRC[i] + '</button>' +
+             '<input class="inp" id="c' + i + '" maxlength="60" oninput="saveDraft()" placeholder="보기 ' + (i + 1) + (i >= 2 ? ' (없어도 돼요)' : '') + '"></div>';
+    }).join('') + '<div class="sub">초록 번호가 정답이에요.</div></div>';
+  }
+  h += '</div>';
+  h += '<div class="card"><div class="k">③ 정답</div>';
+  if(P.t === 'short') h += '<input class="inp" id="a" maxlength="60" oninput="saveDraft()" placeholder="정답 (낱말 하나 · 숫자는 단위까지)">';
+  else if(P.t === 'ox') h += '<div class="ox"><button class="o' + (P.ox === 'O' ? ' on' : '') + '" onclick="setOX(\'O\')">O</button><button class="x' + (P.ox === 'X' ? ' on' : '') + '" onclick="setOX(\'X\')">X</button></div>';
+  else h += '<div class="sub">② 에서 고른 <b style="color:var(--ok-d)">' + CIRC[P.mcA] + '</b> 이 정답이에요.</div>';
+  h += '<input class="inp" id="ex" maxlength="100" oninput="saveDraft()" style="margin-top:10px" placeholder="한 줄 풀이 (선택) — 정답을 공개할 때 같이 나와요">';
+  h += '</div>';
+  h += '<div class="card"><div class="k">④ 보내기 전에 모둠이 같이 확인해요</div><div class="chk">' +
+       '<label><input type="checkbox" id="k1" onchange="chk()"><span>답이 <b>하나로</b> 정해진다</span></label>' +
+       '<label><input type="checkbox" id="k2" onchange="chk()"><span>다른 모둠이 <b>10초 안에</b> 종이에 쓸 수 있다</span></label>' +
+       '<label><input type="checkbox" id="k3" onchange="chk()"><span>우리가 <b>수업에서 배운 내용</b>이다</span></label></div>' +
+       '<div class="sub" style="margin-top:8px">💡 다른 모둠 중 <b>맞히는 모둠과 틀리는 모둠이 둘 다</b> 나오면 우리 모둠이 <b>보너스 +1점</b>! 너무 쉽거나 너무 어려우면 보너스가 없어요.</div>' +
+       '<button class="btn g" id="sendBtn" onclick="submit()" disabled>📨 전자칠판으로 보내기</button><div id="status"></div></div>';
+  app.innerHTML = h;
+  drawTop(); drawStatus(); count();
+}
+
+var qc = new URLSearchParams(location.search).get('c');
+draw();
+if(qc && /^\d{4}$/.test(qc)) join(qc);
+</script>
+</body>
+</html>

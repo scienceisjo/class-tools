@@ -2764,7 +2764,7 @@ function gbStage(q, o){
   var rev = !!o.rev, ai = gbAnsIx(q), h, A;
   h = '<div class="gbs' + (o.rv ? ' rv' : '') + '">' + (gbHW() ? gbHWDeco() : '') +
       '<div class="gbs-top"><span>' + esc(o.cls) + '</span>' + (o.dots || '') +
-      '<span class="gbs-alive">' + o.aliveLab + ' <b>' + o.alive + '</b>명</span></div>' +
+      '<span class="gbs-alive">' + o.aliveLab + ' <b>' + o.alive + '</b>' + (o.unit || '명') + '</span></div>' +
       (o.rv ? '<div class="gbs-ban">' + (gbHW() ? '🧟 좀비 부활전' : '🔥 패자부활전') + '</div>' : '<div class="gbs-no">' + o.no + '번 문제</div>');
   if(q){
     h += '<div class="gbs-meta">' + (q.t ? '<span class="p ' + q.t + '">' + gbTypeName(q.t) + '</span>' : '') +
@@ -2909,6 +2909,7 @@ document.addEventListener('keydown', function(e){
     else if(e.key === 'Escape') gbgClose();
     return;
   }
+  if(window.gbTeamOn && gbTeamOn()){ gbTeamKey(e); return; }     /* 👥 모둠 골든벨 */
   if(!GB || !GB.ready || !gbMatchesClass()) return;
   if(e.code === 'Space'){ e.preventDefault(); gbSpace(); }
   else if(e.key === 'ArrowLeft'){ e.preventDefault(); if(GB.rv) gbRvCancel(); else gbBack(); }
@@ -3638,6 +3639,7 @@ function gbRmState(){
   var s = { k:'state', bid:_gbRm.bid, dev:(/Mobi|Android/i.test(navigator.userAgent) ? '휴대폰' : '전자칠판/PC'), t:Date.now(), ph:'idle' };
   if(!S.selClass) return s;
   s.cls = S.selClass.grade + '-' + S.selClass.cls;
+  if(window.gbTeamOn && gbTeamOn()) return s;          /* 모둠 골든벨은 리모컨 밖 */
   if(!GB || !gbMatchesClass()) return s;
   s.ph = !GB.ready ? 'setup' : GB.rv ? 'rv' : GB.done ? 'done' : 'play';
   s.round = GB.round; s.total = GB.total; s.alive = gbAliveIds().length; s.outN = gbOutIds().length;
@@ -3722,7 +3724,15 @@ function gbAfterRender(){
   gbRmPill();
   gbRmKick();
 }
-function renderGB(){ gbRender0(); gbAfterRender(); }
+/* 👥 모둠 골든벨(team-bell.js)이면 그 화면을, 아니면 개인 골든벨 — 위에 모드 막대 */
+function renderGB(){
+  if(window.gbTeamOn && gbTeamOn()) gbTeamRender();
+  else {
+    gbRender0();
+    var el = $('p-gb'); if(el && window.gbModeBar) el.insertAdjacentHTML('afterbegin', gbModeBar());
+  }
+  gbAfterRender();
+}
 
 /* ── 화면 ── */
 function gbRender0(){
@@ -4366,5 +4376,6 @@ $('mdl').addEventListener('click', function(e){ if(e.target===this) closeMdl(); 
   }
 })();
 </script>
+<script src="team-bell.js?v=20261019"></script>
 </body>
 </html>
