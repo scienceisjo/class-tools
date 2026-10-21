@@ -593,8 +593,9 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
 <div class="load" id="load"><div class="spin"></div></div>
 
 <footer class="wrap" id="app-credit">
+  <img src="/scienceclass/lab/hnr-tech-mark.webp" alt="HNR TECH" style="display:block;width:auto;height:28px;object-fit:contain;margin:0 auto 6px"><br>
   © 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br>
-  <span style="opacity:.85">과학 칭찬도장판 · 최종 업데이트 2026-10-16</span>
+  <span style="opacity:.85">과학 칭찬도장판 · 최종 업데이트 2026-10-21</span>
 </footer>
 
 <script>
@@ -2138,7 +2139,7 @@ function escq(s){ return esc(s).replace(/"/g, '&quot;'); }
 /* ── 📚 문제은행 ─────────────────────────────────────────────────────────── */
 var GBB_URL = '/scienceclass/goldenbell/bank.json';
 var GBB_CACHE = 'gb_bank_cache_v1';
-var GBB = null;          // {v, grades:[{g,name,units:[{id,name,sheets:[{id,no,t,qs:[…]}]}]}]}
+var GBB = null;          // sheet.random===false: 골라서 출제에는 보이되 기본 랜덤 범위에서는 제외
 var GBB_IDX = {};        // 문제 id → {q, sheet, unit, g}
 var _gbbSt = 'idle';     // idle · loading · net(서버) · cache(이 기기) · none
 
@@ -2245,7 +2246,8 @@ function gbmyDel(id){
 function gbRangeGet(g){
   var r = gbLsJ('gb_range_v1', {}), a = r['g' + g];
   if(a instanceof Array) return a;
-  return gbbSheets(g).map(function(s){ return s.id; });     /* 처음엔 전부 */
+  return gbbSheets(g).filter(function(s){ return s.random !== false; })
+                     .map(function(s){ return s.id; });     /* 보너스는 처음엔 랜덤 범위에서 뺀다 */
 }
 function gbRangeSet(g, a){
   var r = gbLsJ('gb_range_v1', {});
@@ -2272,7 +2274,8 @@ function gbRangeUnit(g, uid){
   gbRangeSet(g, a); renderGB();
 }
 function gbRangePreset(g, k){
-  var ids = gbbSheets(g).map(function(s){ return s.id; }), keepMy = gbRangeGet(g).indexOf('my') >= 0;
+  var ids = gbbSheets(g).filter(function(s){ return s.random !== false; })
+                        .map(function(s){ return s.id; }), keepMy = gbRangeGet(g).indexOf('my') >= 0;
   var a = k === 'last1' ? ids.slice(-1) : k === 'last2' ? ids.slice(-2) : ids;
   if(keepMy) a = a.concat(['my']);
   gbRangeSet(g, a); renderGB();
@@ -2286,7 +2289,8 @@ function gbPool(g, loose){
   });
   if(rg.indexOf('my') >= 0) gbmyFor(g).forEach(function(q){ out.push(q.id); });
   if(!out.length && loose){
-    gbbSheets(g).forEach(function(s){ s.qs.forEach(function(q){ out.push(q.id); }); });
+    gbbSheets(g).filter(function(s){ return s.random !== false; })
+                .forEach(function(s){ s.qs.forEach(function(q){ out.push(q.id); }); });
   }
   return out;
 }
@@ -2685,7 +2689,10 @@ function gbPickUI(){
   var g = gbPanelG(), sheets = gbbSheets(g), my = gbmyFor(g), h = gbGradeChips();
   if(!sheets.length && !my.length) return h + gbNoBank();
   var ok = _gbPickSh === 'my' || sheets.some(function(s){ return s.id === _gbPickSh; });
-  if(!ok) _gbPickSh = sheets.length ? sheets[sheets.length - 1].id : 'my';
+  if(!ok){
+    var regular = sheets.filter(function(s){ return s.random !== false; });
+    _gbPickSh = regular.length ? regular[regular.length - 1].id : sheets.length ? sheets[sheets.length - 1].id : 'my';
+  }
   h += '<div class="gbsec"><div class="k">학습지</div><div class="chips">';
   sheets.forEach(function(s){
     h += '<button class="gbsh' + (s.id === _gbPickSh && !_gbFind ? ' on' : '') + '" onclick="gbPickSh(\'' + s.id + '\')">' +
