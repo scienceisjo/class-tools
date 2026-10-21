@@ -4,9 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>🏅 과학 칭찬도장판</title>
-<meta name="theme-color" content="#C2703E">
+<meta name="theme-color" content="#0f2622">
 <meta name="description" content="칭찬을 모으면 나만의 캐릭터가 자라는 과학 칭찬도장판">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="packs.js?v=world-packs-20260914"></script>
 <style>
@@ -483,16 +485,88 @@ body.gbhw .gbg-p button.on{background:#ff8a1f}
 .gbh-ban .t{font-size:var(--fs-l);font-weight:900;color:#9a6a00}
 .gbh-ban .s{font-size:var(--fs-xs);font-weight:800;color:var(--ink2);margin:4px 0 9px;line-height:1.6}
 footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;font-weight:700;line-height:1.7}
+/* ══════════ 🌳 과학 시간 숲 테마 (2026-10-22) — 과학 시간 메인(scienceclass)과 같은 글꼴·색·숲 머리 ══════════
+   제목·단추·탭 = 주아 · 본문 = 고운돋움 · 큰 제목 = 고운바탕 / 초록(잎) 강조 · 금빛(뿌리) 포인트 · 얇은 선과 부드러운 그림자 */
+:root{
+  --paper:#fdf7ea; --paper2:#f4ead4; --card:#fffdf6;
+  --ink:#2f2a20; --ink2:#5d5342; --mute:#7d7160;
+  --line:#e2d2ae; --line2:#d3c094;
+  --ac:#2f7d55; --ac-d:#24603f; --ac-l:#dcefe3;
+  --ok:#4a9e70; --ok-d:#2f7d55; --warn:#e0912b;
+  --gold:#f2c97a; --night:#0f2622;
+  --jua:"Jua",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font:"Gowun Dodum","Pretendard Variable",Pretendard,-apple-system,system-ui,"Malgun Gothic",sans-serif;
+  --sh:0 14px 34px -20px rgba(72,56,24,.5);
+}
+body{background:var(--paper);background-image:none}
+/* 글꼴 — 제목·단추·탭·숫자는 주아(굵기 400), 본문은 고운돋움 */
+.lg-t,.hdr-t,.card h3,.char-name,.peek-tx .nm,.tab,.lg-tab,.btn,.cnt .n,.mdl-in h3,.chip{font-family:var(--jua);font-weight:400;letter-spacing:0}
+.card h3{font-size:clamp(17px,4vw,20px)}
+.char-name{font-size:clamp(21px,5vw,27px)}
+/* 선·면 — 2px 테두리를 1.5px 로, 카드는 메인의 방 카드처럼 위가 살짝 밝은 종이 */
+.card,.lg-card{border-width:1.5px;border-radius:18px;background:linear-gradient(180deg,#fffdf4,var(--paper))}
+.cnt,.inp,.btn.ghost,.peek{border-width:1.5px}
+.inp{background:#fffdf8}
+.btn{border-radius:999px;font-size:clamp(15.5px,3.8vw,17.5px);box-shadow:0 10px 22px -12px rgba(36,96,63,.7)}
+.btn.g{box-shadow:0 10px 22px -12px rgba(36,96,63,.7)}
+.btn.ghost{box-shadow:none}
+.stu.sel{background:#eef7f1;box-shadow:0 3px 10px rgba(47,125,85,.2)}
+.dex-i.now{box-shadow:0 0 0 3px rgba(47,125,85,.16)}
+.bar>i{background:linear-gradient(90deg,var(--gold),var(--ac))}
+.cnt.earn .n{color:#b07a1f}
+
+/* ── 머리(학생·교사 공통) — 메인의 밤 숲과 같은 짙은 초록 띠, 아래 금빛 뿌리 선 ── */
+.hdr{background:linear-gradient(180deg,#0b1d1b 0%,#15302a 100%);backdrop-filter:none;border-bottom:none;color:#f6ead2;
+  box-shadow:0 1px 0 rgba(242,201,122,.35),0 10px 26px -18px rgba(0,0,0,.6)}
+.hdr::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background-image:radial-gradient(1.2px 1.2px at 12% 30%,#fff7d6 50%,transparent 51%),radial-gradient(1px 1px at 33% 18%,#fff7d6 50%,transparent 51%),
+  radial-gradient(1.3px 1.3px at 58% 36%,#ffe7a8 50%,transparent 51%),radial-gradient(1px 1px at 76% 14%,#fff7d6 50%,transparent 51%),
+  radial-gradient(1.2px 1.2px at 91% 40%,#ffe7a8 50%,transparent 51%)}
+.hdr-in,.hdr .tabs{position:relative}
+.hdr-t{color:#fff4dc;font-size:clamp(17px,4vw,20px)}
+.hdr-b{background:rgba(255,255,255,.08);border-color:rgba(242,201,122,.4);color:#f2dcae}
+.tabs{gap:6px;padding:2px 0 12px}
+.tab{min-height:42px;border-radius:999px;font-size:clamp(14px,3.4vw,15.5px);color:#e9dcc0;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16)}
+.tab.on{background:var(--gold);border-color:var(--gold);color:#2a2214;box-shadow:0 6px 18px -8px rgba(242,201,122,.8)}
+main.wrap{padding-top:18px}
+@media(max-width:560px){#s-login .lg-ttl{top:58px}#s-login .lg-back{top:10px;left:10px;font-size:12px;padding:6px 10px}}
+
+/* ── 들어가는 화면 — 메인과 같은 숲(forest.js) 위에 제목, 그 아래 카드 ── */
+#s-login{justify-content:flex-start;padding:0 0 40px}
+.lg-hero{position:relative;width:100%;height:clamp(300px,46vh,440px);overflow:hidden;background:linear-gradient(180deg,#0b1d22 0%,#13302a 70%,#0d1712 100%);color:#f6ead2}
+.lg-hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.lg-hero .fz-lays{display:none}
+.lg-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:90px;pointer-events:none;background:linear-gradient(rgba(253,247,234,0),var(--paper))}
+.lg-ttl{position:absolute;left:0;right:0;top:clamp(18px,5vh,46px);text-align:center;padding:0 16px;pointer-events:none;z-index:1}
+.lg-ttl .kick{font:600 11.5px/1 "Pretendard Variable",Pretendard,sans-serif;letter-spacing:.3em;color:var(--gold)}
+.lg-ttl h1{margin-top:12px;font:700 clamp(28px,5vw,46px)/1.2 "Gowun Batang",serif;letter-spacing:-.02em;color:#fff4dc;text-shadow:0 6px 34px rgba(0,0,0,.5)}
+.lg-ttl p{margin-top:10px;font-size:clamp(13.5px,3.4vw,16px);color:#e3d3b1;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.lg-back{position:absolute;left:14px;top:12px;z-index:2;font-size:13px;color:#f2dcae;text-decoration:none;padding:7px 12px;border-radius:999px;
+  background:rgba(0,0,0,.22);border:1px solid rgba(242,201,122,.35)}
+.lg-back:hover{background:rgba(0,0,0,.35)}
+#s-login .lg-card{position:relative;z-index:2;margin-top:clamp(-110px,-12vh,-70px)}
+#s-login .lg-logo{width:76px;height:76px;margin:-66px auto 4px;display:grid;place-items:center;font-size:44px;border-radius:50%;
+  background:radial-gradient(circle at 50% 40%,#fffbe9,#f6e7c2);border:1.5px solid #e3cf9f;box-shadow:0 10px 26px -12px rgba(120,80,20,.6)}
+#s-login .lg-t{display:none}
+#s-login .lg-s{font-size:var(--fs-xs)}
+.lg-tabs{background:var(--paper2);border-radius:999px}
+.lg-tab{border-radius:999px;font-size:clamp(14.5px,3.6vw,16px)}
+.lg-tab.on{color:var(--ac-d)}
 </style>
 </head>
 <body>
 
 <!-- ══════════ 로그인 ══════════ -->
 <div class="scr on" id="s-login">
+  <section class="lg-hero" id="lgHero" aria-hidden="true">
+    <canvas id="lgCv"></canvas><div class="fz-lays" id="lgLays"></div>
+    <div class="lg-ttl"><div class="kick">HAENURI SCIENCE · 2026</div><h1>과학 칭찬도장판</h1><p>칭찬을 모으면 나만의 캐릭터가 자라요</p></div>
+  </section>
+  <a class="lg-back" href="/scienceclass/">← 과학 시간</a>
   <div class="lg-card">
     <div class="lg-logo">🏅</div>
     <div class="lg-t">과학 칭찬도장판</div>
-    <div class="lg-s">칭찬을 모으면 나만의 캐릭터가 자라요<br><b id="schoolName">해누리중학교</b></div>
+    <div class="lg-s"><b id="schoolName">해누리중학교</b></div>
 
     <div class="lg-tabs">
       <button class="lg-tab on" data-lg="student" onclick="lgTab('student')">🧒 학생</button>
@@ -595,7 +669,7 @@ footer{padding:18px 0 26px;text-align:center;color:var(--mute);font-size:11px;fo
 <footer class="wrap" id="app-credit">
   <img src="/scienceclass/lab/hnr-tech-mark.webp" alt="HNR TECH" style="display:block;width:auto;height:28px;object-fit:contain;margin:0 auto 6px"><br>
   © 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br>
-  <span style="opacity:.85">과학 칭찬도장판 · 최종 업데이트 2026-10-21</span>
+  <span style="opacity:.85">과학 칭찬도장판 · 최종 업데이트 2026-10-22</span>
 </footer>
 
 <script>
@@ -4384,5 +4458,29 @@ $('mdl').addEventListener('click', function(e){ if(e.target===this) closeMdl(); 
 })();
 </script>
 <script src="team-bell.js?v=20261019"></script>
+<script id="lg-forest">
+/* 🌳 들어가는 화면의 숲 — 과학 시간 메인과 같은 엔진(scienceclass/forest.js)을 빌려 쓴다.
+   못 불러오면(오프라인·다른 학교 사본) 짙은 초록 그라데이션만 남는다. 로그인 화면을 떠나면 멈추고, 돌아오면 다시 그린다. */
+(function(){
+  var api = null;
+  function start(){
+    if(api || !window.Forest || !document.getElementById('s-login').classList.contains('on')) return;
+    api = Forest({ box:document.getElementById('lgHero'), canvas:document.getElementById('lgCv'), lays:document.getElementById('lgLays'), mode:'hero',
+      trees:[ {id:'a',f:.06,s:.95,name:'',hue:[160,34]}, {id:'b',f:.2,s:.78,name:'',hue:[146,38]}, {id:'c',f:.35,s:.66,name:'',hue:[138,44]},
+              {id:'d',f:.66,s:.66,name:'',hue:[96,36]}, {id:'e',f:.8,s:.8,name:'',hue:[170,30]}, {id:'f',f:.94,s:.96,name:'',hue:[120,30]} ],
+      hubs:[ {id:'h1',f:.3,d:.2,name:'',links:['a','b','c','d']}, {id:'h2',f:.7,d:.5,name:'',links:['c','d','e','f']} ] });
+  }
+  var go0 = window.goScr;
+  window.goScr = function(id){
+    go0(id);
+    if(id === 's-login') start();
+    else if(api){ try{ api.destroy(); }catch(e){} api = null; }
+  };
+  var sc = document.createElement('script');
+  sc.src = 'https://scienceisjo.github.io/scienceclass/forest.js';
+  sc.onload = start;
+  document.head.appendChild(sc);
+})();
+</script>
 </body>
 </html>
