@@ -669,7 +669,7 @@ main.wrap{padding-top:18px}
 <footer class="wrap" id="app-credit">
   <img src="/scienceclass/lab/hnr-tech-mark.webp" alt="HNR TECH" style="display:block;width:auto;height:28px;object-fit:contain;margin:0 auto 6px"><br>
   © 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br>
-  <span style="opacity:.85">과학 칭찬도장판 · 최종 업데이트 2026-10-22</span>
+  <span style="opacity:.85">과학 칭찬도장판 · 최종 업데이트 2026-10-27</span>
 </footer>
 
 <script>
@@ -2263,7 +2263,9 @@ function gbbSheets(g){
   if(G) G.units.forEach(function(U){ U.sheets.forEach(function(s){ out.push(s); }); });
   return out;
 }
-function gbSrcLabel(x){ return x.g + '학년 학습지 ' + x.sheet.no + ' · ' + x.sheet.t; }
+/* 학습지 이름 — 별과 우주처럼 번호를 따로 매긴 묶음은 bank.json 의 lab(예: 1차시)·unit.short(별과 우주)를 쓴다 */
+function gbShLab(s){ return s.lab || ('학습지 ' + s.no); }
+function gbSrcLabel(x){ return x.g + '학년 ' + (x.sheet.lab && x.unit.short ? x.unit.short + ' ' : '') + gbShLab(x.sheet) + ' · ' + x.sheet.t; }
 
 /* 은행 문제 → 오늘 목록에 넣을 사본(은행이 바뀌어도 오늘 목록은 그대로 남게) */
 function gbQById(id){
@@ -2556,7 +2558,7 @@ function gbPickList(){
          (q.ch ? '<span class="ch">' + q.ch.map(function(c, i){ return GB_CIRC[i] + ' ' + esc(c); }).join(' · ') + '</span>' : '') +
          (peek && q.a ? ' <span class="ans">→ ' + esc(q.a) + '</span>' : '') +
          '<div class="mt">' + gbTypeTag(q) + gbLvTag(q) +
-         (f && x ? '<span class="gbtag">학습지 ' + x.sheet.no + '</span>' : '') +
+         (f && x ? '<span class="gbtag">' + (x.unit.short && x.sheet.lab ? x.unit.short + ' ' : '') + gbShLab(x.sheet) + '</span>' : '') +
          (f && mine ? '<span class="gbtag">⭐ 내 문제</span>' : '') +
          (used[q.id] ? '<span class="gbtag used">이 반에서 냄 ' + used[q.id].slice(5).replace('-', '/') + '</span>' : '') +
          gbStatTag(st, q.id) + '</div></div>' +
@@ -2733,7 +2735,7 @@ function gbRandUI(){
          '<button class="chip sm' + (all ? ' on' : '') + '" onclick="gbRangeUnit(' + g + ',\'' + U.id + '\')">단원 전체</button></div><div class="chips">';
     U.sheets.forEach(function(s){
       h += '<button class="gbsh' + (rg.indexOf(s.id) >= 0 ? ' on' : '') + '" onclick="gbRangeToggle(' + g + ',\'' + s.id + '\')">' +
-           '<span class="n">학습지 ' + s.no + '</span>' + esc(s.t) + ' <span class="n">' + s.qs.length + '</span></button>';
+           '<span class="n">' + gbShLab(s) + '</span>' + esc(s.t) + ' <span class="n">' + s.qs.length + '</span></button>';
     });
     h += '</div></div>';
   });
@@ -2770,7 +2772,7 @@ function gbPickUI(){
   h += '<div class="gbsec"><div class="k">학습지</div><div class="chips">';
   sheets.forEach(function(s){
     h += '<button class="gbsh' + (s.id === _gbPickSh && !_gbFind ? ' on' : '') + '" onclick="gbPickSh(\'' + s.id + '\')">' +
-         '<span class="n">' + s.no + '</span>' + esc(s.t) + '</button>';
+         '<span class="n">' + (s.lab || s.no) + '</span>' + esc(s.t) + '</button>';
   });
   h += '<button class="gbsh' + (_gbPickSh === 'my' && !_gbFind ? ' on' : '') + '" onclick="gbPickSh(\'my\')">⭐ 내 문제 <span class="n">' + my.length + '</span></button>';
   h += '</div></div>';
