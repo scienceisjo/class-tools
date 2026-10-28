@@ -60,6 +60,25 @@ textarea.inp{resize:vertical;line-height:1.5}
 .big p{font-size:16px;font-weight:800;line-height:1.6;margin-top:6px}
 .sub{font-size:12.5px;color:var(--ink2);font-weight:600;line-height:1.55}
 .link{display:block;text-align:center;font-size:12.5px;font-weight:800;color:var(--ac-d);margin-top:10px}
+/* 내가 낸 문제 목록 · 선생님 피드백 (2026-10-29) */
+.qi{border:2px solid var(--line);border-radius:14px;padding:12px;background:#fff;margin-top:9px}
+.qi.fix{border-color:var(--ac);background:#FFF8EF}
+.qi.ok{border-color:var(--ok)}
+.qi.nf{animation:nf 1s ease 3}
+@keyframes nf{50%{box-shadow:0 0 0 5px rgba(232,103,15,.25)}}
+.qh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;font-weight:900;color:var(--ink2)}
+.bd{padding:2px 9px;border-radius:999px;background:#F1E9D8}
+.qi.fix .bd{background:var(--ac);color:#fff}
+.qi.ok .bd{background:#E8F7EC;color:var(--ok-d)}
+.qq{font-size:15px;font-weight:800;line-height:1.5;margin-top:6px;word-break:keep-all}
+.qa{font-size:13px;font-weight:800;color:var(--ok-d);margin-top:3px}
+.fb{margin-top:8px;padding:9px 11px;border-radius:10px;background:#FFF1E4;border-left:4px solid var(--ac);font-size:14px;font-weight:700;line-height:1.55;word-break:keep-all}
+.qi.ok .fb{background:#E8F7EC;border-left-color:var(--ok)}
+.think{margin-top:7px;font-size:12.5px;font-weight:800;color:var(--ac-d);line-height:1.5}
+.qb{display:flex;gap:6px;margin-top:9px}
+.qb button{flex:1;padding:9px;border-radius:10px;border:2px solid var(--line);background:#fff;font-size:13.5px;font-weight:900}
+.qb button.go{flex:2;background:var(--ac);border-color:var(--ac);color:#fff}
+.alert{padding:12px;border-radius:12px;background:var(--ac);color:#fff;font-weight:900;text-align:center;margin-bottom:12px}
 #app-credit{text-align:center;font-size:11px;color:var(--mute);margin-top:18px;line-height:1.7}
 </style>
 </head>
@@ -70,17 +89,21 @@ textarea.inp{resize:vertical;line-height:1.5}
   <div id="app"></div>
   <footer id="app-credit">
     © 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br>
-    <span style="opacity:.85">모둠 골든벨 · 최종 업데이트 2026-10-19</span>
+    <span style="opacity:.85">모둠 골든벨 · 최종 업데이트 2026-10-29</span>
   </footer>
 </div>
 <script>
 /* 👥 모둠 골든벨 — 학생 기기. 전자칠판(칭찬 도장판)이 띄운 방 번호로 Supabase 방송 채널 'gbt-<번호>' 에 들어가
-   모둠 문제 하나를 보낸다. 로그인 없음 · 이름은 오가지 않음(모둠 번호·출석 번호만). */
+   모둠 문제를 몇 개든 보낸다. 선생님이 ✅ 통과 / ✏️ 피드백을 보내면 그 문제를 낸 이 기기에 뜨고,
+   피드백을 보고 «무엇을 고쳤는지» 한 줄과 함께 고쳐 다시 보낸다(2026-10-29).
+   로그인 없음 · 이름은 오가지 않음(모둠 번호·출석 번호만) · 전자칠판은 «이 기기가 낸 문제»만 돌려준다. */
 var SB_URL = 'https://hmzklbrksfdhzsgwzfyg.supabase.co';
 var SB_KEY = 'sb_publishable_OFVhbjVPbJiMWXVz2nKQuw_m6RmVVZE';
 var sb = window.supabase.createClient(SB_URL, SB_KEY);
 var CIRC = ['①','②','③','④'];
-var P = { st:'code', code:'', ch:null, info:null, team:0, t:'short', ox:'', mcA:0, sending:false, msg:null, tries:0, sentAt:0 };
+var TYPE = { short:'단답', ox:'O/X', mc:'객관식' };
+var P = { st:'code', code:'', ch:null, info:null, team:0, t:'short', ox:'', mcA:0, sending:false, msg:null, tries:0, sentAt:0,
+          mine:[], edit:'', rid:'', alert:'' };
 P.dev = (function(){
   try{ var d = localStorage.getItem('gbt_dev'); if(!d){ d = 'd' + Math.random().toString(36).slice(2, 10); localStorage.setItem('gbt_dev', d); } return d; }
   catch(e){ return 'd' + Math.random().toString(36).slice(2, 10); }
@@ -89,15 +112,26 @@ function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
 (function(){ var d = new Date(), m = d.getMonth() + 1; if(m === 10 || (m === 11 && d.getDate() <= 1)) document.body.classList.add('hw'); })();
 
-/* 적던 문제는 기기에 잠깐 남겨 둔다 — 새로고침해도 다시 안 써도 되게 */
-function draftKey(){ return 'gbt_draft_' + P.code + '_' + P.team; }
+/* 적던 문제는 기기에 잠깐 남겨 둔다 — 새로고침해도 다시 안 써도 되게(새 문제·고치는 문제마다 따로) */
+function draftKey(){ return 'gbt_draft_' + P.code + '_' + (P.edit ? P.edit : 'new' + P.team); }
 function saveDraft(){
   if(!P.team) return;
   var d = { t:P.t, q:($('q') || {}).value || '', a:($('a') || {}).value || '', ox:P.ox, mcA:P.mcA, ex:($('ex') || {}).value || '',
-            ch:[0,1,2,3].map(function(i){ return ($('c' + i) || {}).value || ''; }) };
+            ch:[0,1,2,3].map(function(i){ return ($('c' + i) || {}).value || ''; }), note:($('note') || {}).value || '' };
   try{ localStorage.setItem(draftKey(), JSON.stringify(d)); }catch(e){}
 }
 function loadDraft(){ try{ return JSON.parse(localStorage.getItem(draftKey()) || 'null'); }catch(e){ return null; } }
+function dropDraft(){ try{ localStorage.removeItem(draftKey()); }catch(e){} }
+function mineQ(id){ for(var i=0;i<P.mine.length;i++) if(P.mine[i].id === id) return P.mine[i]; return null; }
+/* 고치는 문제를 글 칸에 옮길 모양으로 */
+function qToDraft(m){
+  var d = { t:m.t, q:m.q, a:m.t === 'short' ? m.a : '', ox:m.t === 'ox' ? m.a : '', mcA:0, ex:m.ex || '', ch:['','','',''], note:'' };
+  if(m.t === 'mc'){ (m.ch || []).forEach(function(c, i){ if(i < 4) d.ch[i] = c; }); d.mcA = Math.max(0, CIRC.indexOf(String(m.a).charAt(0))); }
+  return d;
+}
+/* 선생님 피드백 — 처음 본 것만 반짝이게(이 기기에 «본 것» 기록) */
+function fbSeen(){ try{ return JSON.parse(localStorage.getItem('gbt_fbseen') || '{}'); }catch(e){ return {}; } }
+function fbKey(m){ return m.fb ? m.id + ':' + m.fb.at : ''; }
 
 function join(code){
   code = String(code || '').replace(/\D/g, '').slice(0, 4);
@@ -107,33 +141,74 @@ function join(code){
   P.ch = sb.channel('gbt-' + code, { config:{ broadcast:{ self:false } } });
   P.ch.on('broadcast', { event:'tb' }, function(m){ onMsg(m.payload || {}); });
   P.ch.subscribe(function(s){
-    if(s === 'SUBSCRIBED'){ send({ k:'hello' }); setTimeout(function(){ if(!P.info){ P.st = 'nobody'; draw(); } }, 5000); }
+    if(s === 'SUBSCRIBED'){ hello(); setTimeout(function(){ if(!P.info){ P.st = 'nobody'; draw(); } }, 5000); }
     else if(s === 'CHANNEL_ERROR' || s === 'TIMED_OUT'){ P.st = 'nobody'; draw(); }
   });
   try{ history.replaceState(null, '', location.pathname + '?c=' + code); }catch(e){}
 }
 function send(p){ try{ if(P.ch) P.ch.send({ type:'broadcast', event:'tb', payload:p }); }catch(e){} }
+/* 인사하면 전자칠판이 모둠 정보와 «이 기기가 낸 문제»를 보내 준다 — 피드백을 놓치지 않게 가끔 다시 묻는다 */
+function hello(){ send({ k:'hello', dev:P.dev }); }
+setInterval(function(){ if(P.ch && P.st !== 'code' && P.st !== 'closed' && document.visibilityState === 'visible') hello(); }, 20000);
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && P.ch) hello(); });
 function onMsg(p){
   if(p.k === 'info'){
-    var first = !P.info;
+    var first = !P.info, was = P.st;
     P.info = p; p.rx = Date.now();
     if(!p.open){ P.st = 'closed'; }
-    else if(P.st === 'join' || P.st === 'nobody' || P.st === 'closed'){ P.st = P.team ? 'write' : 'team'; }
-    if(first || P.st !== 'write') draw(); else drawTop();
+    else if(P.st === 'join' || P.st === 'nobody' || P.st === 'closed'){ P.st = P.team ? 'list' : 'team'; }
+    if(first || P.st !== was || P.st === 'team') draw(); else drawTop();
     return;
   }
-  if(p.k === 'ack' && p.dev === P.dev){
+  if(p.k === 'mine' && p.dev === P.dev){
+    var old = JSON.stringify(P.mine), seen = fbSeen();
+    P.mine = p.list || [];
+    var fresh = P.mine.filter(function(m){ return m.fb && !seen[fbKey(m)]; });
+    if(fresh.length){
+      try{ navigator.vibrate && navigator.vibrate([60, 60, 60]); }catch(e){}
+      if(P.st !== 'list') P.alert = '💬 선생님 피드백이 ' + fresh.length + '개 왔어요!';
+    }
+    if(JSON.stringify(P.mine) === old) return;
+    if(P.st === 'list') draw();
+    else if(P.st === 'write'){ drawAlert(); drawFb(); }
+    return;
+  }
+  if(p.k === 'ack' && p.dev === P.dev && (!p.rid || p.rid === P.rid)){
     P.sending = false; clearTimeout(P.retry);
-    P.msg = p.ok ? { c:'ok', t:'✅ 전자칠판에 도착했어요!' + (p.n > 1 ? ' (' + p.n + '번째로 고친 문제)' : '') + '<br>고치고 싶으면 고쳐서 다시 보내면 마지막 것만 써요.' }
-                 : { c:'bad', t:'❌ ' + esc(p.msg || '다시 보내 주세요') };
-    drawStatus();
+    if(p.ok){
+      dropDraft();
+      P.msg = { c:'ok', t:'✅ 전자칠판에 도착했어요!' + (p.n > 1 ? ' (' + p.n + '번째로 고친 문제)' : '') + ' 선생님이 확인하면 여기에 떠요.' }; P.msgT = Date.now();
+      P.edit = ''; P.st = 'list'; draw(); window.scrollTo(0, 0);
+    } else {
+      P.msg = { c:'bad', t:'❌ ' + esc(p.msg || '다시 보내 주세요') };
+      drawStatus(); chk();
+    }
   }
 }
-function pickTeam(no){ P.team = no; P.st = 'write'; P.msg = null; var d = loadDraft(); if(d){ P.t = d.t; P.ox = d.ox; P.mcA = d.mcA; } draw(); if(d) fillDraft(d); }
+/* 모둠을 고르면 — 이 기기에서 낸 문제가 있으면 목록, 없으면 바로 새 문제 */
+function pickTeam(no){ P.team = no; P.msg = null; if(P.mine.length) { P.st = 'list'; draw(); } else newQ(); }
+function newQ(){ P.edit = ''; P.st = 'write'; P.msg = null; openForm(loadDraft()); }
+function editQ(id){
+  var m = mineQ(id); if(!m) return;
+  P.edit = id; P.st = 'write'; P.msg = null;
+  openForm(loadDraft() || qToDraft(m));
+  var s = fbSeen(); if(m.fb && !s[fbKey(m)]) s[fbKey(m)] = Date.now(); try{ localStorage.setItem('gbt_fbseen', JSON.stringify(s)); }catch(e){}
+}
+function openForm(d){
+  if(d){ P.t = d.t || 'short'; P.ox = d.ox || ''; P.mcA = d.mcA || 0; } else { P.ox = ''; P.mcA = 0; }
+  draw(); if(d) fillDraft(d); window.scrollTo(0, 0);
+}
+function delQ(id){
+  if(!confirm('이 문제를 지울까요?')) return;
+  P.mine = P.mine.filter(function(m){ return m.id !== id; });
+  send({ k:'del', dev:P.dev, id:id }); draw();
+}
+function backList(){ saveDraft(); P.edit = ''; P.st = 'list'; P.msg = null; draw(); }
 function fillDraft(d){
   if($('q')) $('q').value = d.q || '';
   if($('a')) $('a').value = d.a || '';
   if($('ex')) $('ex').value = d.ex || '';
+  if($('note')) $('note').value = d.note || '';
   [0,1,2,3].forEach(function(i){ if($('c' + i)) $('c' + i).value = (d.ch || [])[i] || ''; });
   count();
 }
@@ -166,11 +241,16 @@ function build(){
 function submit(){
   var q = build();
   if(typeof q === 'string'){ P.msg = { c:'bad', t:'✏️ ' + q }; drawStatus(); return; }
+  var m = P.edit ? mineQ(P.edit) : null, note = (($('note') || {}).value || '').trim();
+  /* 피드백을 받은 문제는 «무엇을 고쳤는지» 한 줄을 꼭 — 모둠이 피드백을 보고 고민한 흔적 */
+  if(m && m.st === 'fix' && !note){ P.msg = { c:'bad', t:'✏️ 피드백을 보고 무엇을 고쳤는지 한 줄 써 주세요' }; drawStatus(); if($('note')) $('note').focus(); return; }
   saveDraft();
   P.sending = true; P.tries = 0; P.msg = { c:'wait', t:'📨 보내는 중…' }; drawStatus(); chk();
+  P.rid = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  var team = m ? m.team : P.team, id = m ? m.id : '';
   var go = function(){
     P.tries++;
-    send({ k:'sub', dev:P.dev, team:P.team, q:q });
+    send({ k:'sub', dev:P.dev, rid:P.rid, team:team, id:id, note:note, q:q });
     P.retry = setTimeout(function(){
       if(!P.sending) return;
       if(P.tries < 4) go();
@@ -189,6 +269,42 @@ function drawTop(){
                   P.info.due < 0 ? '<div class="due" style="margin-top:6px">⏰ 시간이 다 됐어요 — 얼른 보내 주세요!</div>' : '');
 }
 function drawStatus(){ var el = $('status'); if(!el) return; el.innerHTML = P.msg ? '<div class="st ' + P.msg.c + '">' + P.msg.t + '</div>' : ''; }
+function drawAlert(){
+  var el = $('alert'); if(!el) return;
+  el.innerHTML = P.alert ? '<div class="alert" onclick="P.alert=\'\';backList()">' + esc(P.alert) + ' 눌러서 보기</div>' : '';
+}
+/* 고치는 중인 문제의 피드백 칸 — 글을 쓰는 중에도 이 칸만 바꾼다 */
+function drawFb(){
+  var el = $('fbBox'), m = P.edit ? mineQ(P.edit) : null; if(!el) return;
+  if(!m || !m.fb || !m.fb.t){ el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="card" style="border-color:var(--ac)"><div class="k">💬 선생님 피드백</div><div class="fb" style="margin-top:0">' + esc(m.fb.t) + '</div>' +
+    (m.st === 'fix' ? '<div class="think">🤔 모둠이 함께 생각해 봐요 — 피드백대로 하려면 <b>무엇을</b>, <b>왜</b> 바꿔야 할까?</div>' : '') + '</div>';
+}
+function stBadge(m){
+  if(m.st === 'ok') return '✅ 통과!';
+  if(m.st === 'fix') return '✏️ 고쳐 볼 점이 있어요';
+  return m.n > 1 ? '🔁 고쳐서 보냄 · 선생님 확인 기다리는 중' : '⏳ 선생님 확인 기다리는 중';
+}
+function listHTML(){
+  var seen = fbSeen(), h = '';
+  var mine = P.mine.slice().sort(function(a, b){ var r = { fix:0, new:1, ok:2 }; return (r[a.st] || 0) - (r[b.st] || 0); });
+  mine.forEach(function(m){
+    /* 새 피드백은 처음 본 뒤 몇 초 동안 반짝인다(곧이어 목록이 다시 그려져도) */
+    var k = fbKey(m), nf = m.fb && (!seen[k] || Date.now() - seen[k] < 6000), ai = m.t === 'mc' ? CIRC.indexOf(String(m.a).charAt(0)) : -1;
+    if(m.fb && !seen[k]) seen[k] = Date.now();
+    h += '<div class="qi ' + (m.st || 'new') + (nf ? ' nf' : '') + '"><div class="qh"><span class="bd">' + stBadge(m) + '</span>' +
+         '<span>' + TYPE[m.t] + '</span>' + (m.team !== P.team ? '<span>' + m.team + '모둠</span>' : '') + (m.byT ? '<span>선생님이 고침</span>' : '') + '</div>' +
+         '<div class="qq">' + esc(m.q) + '</div>' +
+         (m.ch ? '<div class="sub">' + m.ch.map(function(c, i){ return CIRC[i] + ' ' + esc(c); }).join(' &nbsp; ') + '</div>' : '') +
+         '<div class="qa">정답: ' + esc(m.a) + (ai >= 0 && m.ch && m.ch[ai] ? ' ' + esc(m.ch[ai]) : '') + '</div>' +
+         (m.fb && m.fb.t ? '<div class="fb"><b>💬 선생님</b> ' + esc(m.fb.t) + '</div>' : '') +
+         (m.st === 'fix' ? '<div class="think">🤔 피드백을 보고 모둠이 함께 고민해 봐요 — 무엇을, 왜 바꿀까?</div>' : '') +
+         '<div class="qb"><button class="' + (m.st === 'fix' ? 'go' : '') + '" onclick="editQ(\'' + m.id + '\')">✏️ ' + (m.st === 'fix' ? '고쳐서 보내기' : '고치기') + '</button>' +
+         '<button onclick="delQ(\'' + m.id + '\')">🗑 지우기</button></div></div>';
+  });
+  try{ localStorage.setItem('gbt_fbseen', JSON.stringify(seen)); }catch(e){}
+  return h;
+}
 function draw(){
   var app = $('app'), h = '';
   if(P.st === 'code'){
@@ -209,12 +325,27 @@ function draw(){
     h = '<div class="card"><div id="top"></div><div class="k" style="margin-top:10px">우리 모둠을 골라요</div><div class="teams">' +
         P.info.teams.map(function(t){
           return '<button class="tm' + (t.no === P.team ? ' on' : '') + (t.done ? ' done' : '') + '" onclick="pickTeam(' + t.no + ')">' +
-                 '<span class="e">' + t.emo + '</span>' + t.no + '모둠<small>' + (t.nums.length ? t.nums.join('·') + '번' : '') + (t.done ? ' · ✅ 냈어요' : '') + '</small></button>';
-        }).join('') + '</div><div class="sub" style="margin-top:10px">출석 번호를 보고 우리 모둠을 찾아요. 모둠에서 <b>한 사람만</b> 보내면 돼요.</div></div>';
+                 '<span class="e">' + t.emo + '</span>' + t.no + '모둠<small>' + (t.nums.length ? t.nums.join('·') + '번' : '') + (t.cnt ? ' · 📨 ' + t.cnt + '개' : '') + '</small></button>';
+        }).join('') + '</div><div class="sub" style="margin-top:10px">출석 번호를 보고 우리 모둠을 찾아요. 문제는 <b>몇 개든</b> 보내도 돼요. 선생님 피드백은 문제를 보낸 기기로 와요.</div></div>';
     app.innerHTML = h; drawTop(); return;
   }
-  /* write */
-  h = '<div class="card"><div id="top"></div></div>';
+  if(P.st === 'list'){
+    P.alert = '';
+    /* 보낸 뒤 «도착했어요» 한 줄은 잠깐 남겨 둔다(곧이어 목록이 다시 그려져도) */
+    var showMsg = P.msg && P.msg.c === 'ok' && Date.now() - (P.msgT || 0) < 8000;
+    h = '<div class="card"><div id="top"></div></div>' + (showMsg ? '<div class="st ok" style="margin:-4px 0 12px">' + P.msg.t + '</div>' : '') +
+        '<div class="card"><div class="k">📋 이 기기에서 보낸 문제 ' + P.mine.length + '개</div>' +
+        (P.mine.length ? listHTML() : '<div class="sub">아직 보낸 문제가 없어요.</div>') +
+        '<button class="btn" onclick="newQ()">＋ 새 문제 쓰기</button>' +
+        '<div class="sub" style="margin-top:8px">선생님이 ✅ 통과시킨 문제 가운데서 골든벨 문제를 뽑아요. ✏️ 피드백이 오면 모둠이 같이 보고 고쳐서 다시 보내요.</div></div>';
+    app.innerHTML = h; drawTop(); return;
+  }
+  /* write — 새 문제 또는 고치는 문제 */
+  var em = P.edit ? mineQ(P.edit) : null;
+  h = '<div class="card"><div id="top"></div></div><div id="alert"></div>' +
+      '<div class="k" style="display:flex;justify-content:space-between;align-items:center;margin:0 4px 8px"><span>' + (em ? '✏️ 문제 고치기' : '✍️ 새 문제') + '</span>' +
+      (P.mine.length || em ? '<a href="#" onclick="backList();return false" style="color:var(--ac-d)">← 내 문제 목록</a>' : '') + '</div>' +
+      '<div id="fbBox"></div>';
   h += '<div class="card"><div class="k">① 문제 모양</div><div class="chips">' +
        [['short','✏️ 단답'], ['ox','⭕ O/X'], ['mc','🔢 객관식']].map(function(m){
          return '<button class="chip' + (P.t === m[0] ? ' on' : '') + '" onclick="setType(\'' + m[0] + '\')">' + m[1] + '</button>';
@@ -236,14 +367,19 @@ function draw(){
   else h += '<div class="sub">② 에서 고른 <b style="color:var(--ok-d)">' + CIRC[P.mcA] + '</b> 이 정답이에요.</div>';
   h += '<input class="inp" id="ex" maxlength="100" oninput="saveDraft()" style="margin-top:10px" placeholder="한 줄 풀이 (선택) — 정답을 공개할 때 같이 나와요">';
   h += '</div>';
+  if(em && (em.st === 'fix' || (em.fb && em.fb.t))){
+    h += '<div class="card"><div class="k">🔧 무엇을 고쳤나요?' + (em.st === 'fix' ? '' : ' (선택)') + '</div>' +
+         '<input class="inp" id="note" maxlength="100" oninput="saveDraft()" placeholder="예) 답이 두 개가 될 수 있어서 «가장»을 넣었어요">' +
+         '<div class="sub" style="margin-top:6px">선생님이 고친 점을 보고 다시 확인해요.</div></div>';
+  }
   h += '<div class="card"><div class="k">④ 보내기 전에 모둠이 같이 확인해요</div><div class="chk">' +
        '<label><input type="checkbox" id="k1" onchange="chk()"><span>답이 <b>하나로</b> 정해진다</span></label>' +
        '<label><input type="checkbox" id="k2" onchange="chk()"><span>다른 모둠이 <b>10초 안에</b> 종이에 쓸 수 있다</span></label>' +
        '<label><input type="checkbox" id="k3" onchange="chk()"><span>우리가 <b>수업에서 배운 내용</b>이다</span></label></div>' +
        '<div class="sub" style="margin-top:8px">💡 다른 모둠 중 <b>맞히는 모둠과 틀리는 모둠이 둘 다</b> 나오면 우리 모둠이 <b>보너스 +1점</b>! 너무 쉽거나 너무 어려우면 보너스가 없어요.</div>' +
-       '<button class="btn g" id="sendBtn" onclick="submit()" disabled>📨 전자칠판으로 보내기</button><div id="status"></div></div>';
+       '<button class="btn g" id="sendBtn" onclick="submit()" disabled>📨 ' + (em ? '고쳐서 다시 보내기' : '전자칠판으로 보내기') + '</button><div id="status"></div></div>';
   app.innerHTML = h;
-  drawTop(); drawStatus(); count();
+  drawTop(); drawStatus(); drawAlert(); drawFb(); count();
 }
 
 var qc = new URLSearchParams(location.search).get('c');
