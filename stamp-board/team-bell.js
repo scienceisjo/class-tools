@@ -61,7 +61,7 @@ var _tbRngOpen = false, _tbRngIv = 0;
 function tbRngSheets(){ return gbbSheets(TB.g).filter(function(s){ return s.random !== false; }); }
 function tbSheet(id){ var a = gbbSheets(TB.g), i; for(i=0;i<a.length;i++) if(a[i].id === id) return a[i]; return null; }
 function tbRng(){ if(!TB.rng) TB.rng = { sel:(gbLsJ('gb_trng_sel_v1', {}) || {})[TB.g] || [], map:{} }; return TB.rng; }
-function tbRngOf(no){ return TB.rng && TB.rng.map && TB.rng.map[no] && TB.rng.map[no].s && TB.rng.map[no].s.length ? TB.rng.map[no] : null; }
+function tbRngOf(no){ return TB.rmode !== 'jig' && TB.rng && TB.rng.map && TB.rng.map[no] && TB.rng.map[no].s && TB.rng.map[no].s.length ? TB.rng.map[no] : null; }
 function tbRngAny(){ return TB.teams.some(function(t){ return tbRngOf(t.no); }); }
 /* 범위 이름 — 'short' 칩·출처용(🔀 2차시 + 5차시) · 'mid' 전자칠판(3차시 · 겉보기·절대 등급과 별의 색) · 'long' 학생 화면(제목까지 모두) */
 function tbRngTxt(no, mode){
@@ -75,6 +75,7 @@ function tbRngSelSave(){ var o = gbLsJ('gb_trng_sel_v1', {}) || {}; o[TB.g] = tb
 function tbRngSel(id){
   var r = tbRng(), i = r.sel.indexOf(id);
   if(i >= 0) r.sel.splice(i, 1); else r.sel.push(id);
+  if(TB.rmode === 'jig' && TB.jig) TB.jig.who = {};   /* 직소 파트가 바뀌면 다시 뽑기 */
   tbRngSelSave(); tbSave(); renderGB();
 }
 function tbRngUnit(uid){
@@ -85,6 +86,7 @@ function tbRngUnit(uid){
   all = ids.every(function(id){ return r.sel.indexOf(id) >= 0; });
   r.sel = r.sel.filter(function(id){ return ids.indexOf(id) < 0; });
   if(!all) r.sel = r.sel.concat(ids);
+  if(TB.rmode === 'jig' && TB.jig) TB.jig.who = {};
   tbRngSelSave(); tbSave(); renderGB();
 }
 /* 나누기 — 학습지는 문제은행 순서대로 보이게 정렬 */
@@ -148,15 +150,34 @@ function tbRngStage(){
     return x ? '<div class="tb-rg"><b>' + tbName(t) + '</b><span>' + esc(x) + '</span></div>' : '';
   }).join('') + '</div>';
 }
-/* 범위 고르기·뽑기 칸 */
+/* 학습지 고르기 칩(단원별) — 모둠별 범위와 직소가 같이 쓴다 */
+function tbSheetPicker(){
+  var G = gbbGrade(TB.g), R = tbRng();
+  return G.units.map(function(U){
+    var ss = U.sheets.filter(function(s){ return s.random !== false; });
+    if(!ss.length) return '';
+    var all = ss.every(function(s){ return R.sel.indexOf(s.id) >= 0; });
+    return '<div class="gbunit"><div class="gbunit-h"><span>' + esc(U.name) + '</span>' +
+           '<button class="chip sm' + (all ? ' on' : '') + '" onclick="tbRngUnit(\'' + U.id + '\')">' + (all ? '모두 빼기' : '모두 고르기') + '</button></div><div class="chips">' +
+           ss.map(function(s){
+             return '<button class="gbsh' + (R.sel.indexOf(s.id) >= 0 ? ' on' : '') + '" onclick="tbRngSel(\'' + s.id + '\')"><span class="n">' + esc(s.lab || s.no) + '</span>' + esc(s.t) + '</button>';
+           }).join('') + '</div></div>';
+  }).join('');
+}
+function tbRMode(m){ if(_tbRngIv || _tbJigIv) return; TB.rmode = m; tbSave(); tbSendInfo(); renderGB(); }
+/* 범위 고르기·뽑기 칸 — 📚 모둠마다 다른 범위 / 🧩 직소(모둠 안에서 파트를 나눠 전문가 모둠으로) */
 function tbRngCard(){
-  var G = gbbGrade(TB.g), R = tbRng(), any = tbRngAny(), n = TB.teams.length, k = R.sel.length, h;
-  h = '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">📚 모둠별 범위</h3>' +
-      '<span class="sub">' + (any ? '모둠마다 다른 범위로 만들어요' : '범위를 나누면 문제가 덜 겹치고 단원 전체를 복습해요') + '</span></div>';
+  var G = gbbGrade(TB.g), R = tbRng(), any = tbRngAny(), n = TB.teams.length, k = R.sel.length, h, jig = TB.rmode === 'jig';
+  h = '<div class="card"><div class="hd"><h3 style="font-size:var(--fs-s)">' + (jig ? '🧩 직소 — 전문가 모둠' : '📚 모둠별 범위') + '</h3>' +
+      '<span class="sub">' + (jig ? '모둠 안에서 파트를 나눠 맡고, 같은 파트끼리 전문가 모둠으로' :
+                              any ? '모둠마다 다른 범위로 만들어요' : '범위를 나누면 문제가 덜 겹치고 단원 전체를 복습해요') + '</span></div>' +
+      '<div class="chips" style="margin-bottom:10px"><button class="chip sm' + (jig ? '' : ' on') + '" onclick="tbRMode(\'team\')">📚 모둠마다 다른 범위</button>' +
+      '<button class="chip sm' + (jig ? ' on' : '') + '" onclick="tbRMode(\'jig\')">🧩 직소 — 전문가 모둠</button></div>';
   if(!G){
     if(typeof _gbbSt !== 'undefined' && _gbbSt === 'idle') gbbLoad();
     return h + '<div class="sub">문제은행을 불러오는 중이에요…</div></div>';
   }
+  if(jig) return h + tbJigCard() + '</div>';
   if(any && !_tbRngOpen){
     h += '<div class="chips">' + TB.teams.map(function(t){
       var x = tbRngTxt(t.no, 'short');
@@ -169,23 +190,121 @@ function tbRngCard(){
       '<button class="chip sm" style="flex:1" onclick="tbRngClear()">범위 없이</button></div></div>';
     return h;
   }
-  h += '<div class="sub" style="margin-bottom:8px">범위로 쓸 학습지를 고르고 🎲 뽑으면 모둠마다 랜덤으로 나눠요.</div>' +
-       G.units.map(function(U){
-         var ss = U.sheets.filter(function(s){ return s.random !== false; });
-         if(!ss.length) return '';
-         var all = ss.every(function(s){ return R.sel.indexOf(s.id) >= 0; });
-         return '<div class="gbunit"><div class="gbunit-h"><span>' + esc(U.name) + '</span>' +
-                '<button class="chip sm' + (all ? ' on' : '') + '" onclick="tbRngUnit(\'' + U.id + '\')">' + (all ? '모두 빼기' : '모두 고르기') + '</button></div><div class="chips">' +
-                ss.map(function(s){
-                  return '<button class="gbsh' + (R.sel.indexOf(s.id) >= 0 ? ' on' : '') + '" onclick="tbRngSel(\'' + s.id + '\')"><span class="n">' + esc(s.lab || s.no) + '</span>' + esc(s.t) + '</button>';
-                }).join('') + '</div></div>';
-       }).join('') +
+  h += '<div class="sub" style="margin-bottom:8px">범위로 쓸 학습지를 고르고 🎲 뽑으면 모둠마다 랜덤으로 나눠요.</div>' + tbSheetPicker() +
        '<div class="sub" style="margin-top:4px">' + (!k ? '학습지를 골라 주세요.' :
          '학습지 ' + k + '개 → ' + n + '모둠 · ' + (k === n ? '모둠마다 하나씩 맡아요' :
            k > n ? '몇 모둠은 두 개를 맡아요' : '남는 ' + (n - k) + '모둠은 두 학습지를 🔀 섞어 물어요')) + '</div>' +
        '<div style="display:flex;gap:7px;margin-top:10px">' +
          (any ? '<button class="chip sm" style="flex:1" onclick="tbRngOpen(false)">취소</button>' : '') +
          '<button class="gbbig" style="flex:3;margin:0' + (k ? '' : ';opacity:.5') + '" onclick="tbRngDraw()"' + (k ? '' : ' disabled') + '>🎲 범위 뽑기</button></div></div>';
+  return h;
+}
+/* ══ 🧩 직소 — 전문가 모둠 (2026-10-30) ══════════════════════════════════════
+   고른 학습지를 차례대로 k개 파트로 나누고, 모둠마다 사람들을 파트에 랜덤으로 나눈다(모둠마다 모든 파트를 덮게,
+   인원이 많으면 남는 사람은 사람이 적은 파트로, 적으면 덜 찬 파트부터). 같은 파트끼리 전문가 모둠에 모여
+   핵심 개념·헷갈리는 점·문제 아이디어를 정리하고, 우리 모둠으로 돌아와 가르친 뒤 «내 파트 문제»를 다듬어 보낸다.
+   골든벨에서 그 파트 문제가 나오면 모둠마다 그 파트 전문가는 쉿 🤫 — 미리 잘 가르쳐야 한다.
+   TB.jig = { k 파트 수, who{학생 id: 파트}, split 'auto'|'one'|'two', shh } */
+var _tbJigIv = 0, TB_PC = ['①','②','③','④','⑤','⑥'];
+function tbJig(){ return TB.jig || (TB.jig = { k:4, who:{}, split:'auto', shh:1 }); }
+function tbJigOn(){ return TB && TB.rmode === 'jig'; }
+function tbJigParts(){
+  var R = tbRng(), sel = tbRngSheets().filter(function(s){ return R.sel.indexOf(s.id) >= 0; });
+  var n = sel.length, k = Math.min(tbJig().k, n), out = [], i, at = 0, c;
+  for(i=0;i<k;i++){ c = Math.floor(n / k) + (i < n % k ? 1 : 0); out.push(sel.slice(at, at + c)); at += c; }
+  return out;
+}
+/* 파트 이름 — 짧게(① 학습지 1·2) / 길게(① 학습지 1 마찰하면 생기는 전기 · 학습지 2 정전기 유도) */
+function tbPartName(i, long){
+  var p = tbJigParts()[i]; if(!p) return '';
+  if(!long) return TB_PC[i] + ' ' + (p[0].lab ? p.map(gbShLab).join('·') : '학습지 ' + p.map(function(s){ return s.no; }).join('·'));
+  return TB_PC[i] + ' ' + p.map(function(s){ return gbShLab(s) + ' ' + s.t; }).join(' · ');
+}
+function tbJigReady(){ return tbJigOn() && Object.keys(tbJig().who).length > 0 && tbJigParts().length > 0; }
+function tbPartOf(id){ var w = tbJig().who[id]; return w == null ? -1 : w; }
+function tbJigDeal(){
+  var k = tbJigParts().length, cnt = [], who = {}, i;
+  for(i=0;i<k;i++) cnt.push(0);
+  var low = function(skip){
+    var best = [], m = 1e9, j;
+    for(j=0;j<k;j++){ if(skip[j]) continue; if(cnt[j] < m){ m = cnt[j]; best = [j]; } else if(cnt[j] === m) best.push(j); }
+    return best.length ? best[Math.floor(Math.random() * best.length)] : low({});
+  };
+  gbShuffle(TB.teams.slice()).forEach(function(t){
+    var used = {}, nu = 0;
+    gbShuffle(t.ids.slice()).forEach(function(id){
+      var p = low(used); who[id] = p; cnt[p]++; used[p] = 1; nu++;
+      if(nu >= k){ used = {}; nu = 0; }       /* 모든 파트를 한 번씩 채웠으면 남는 사람은 다시 적은 파트로 */
+    });
+  });
+  return who;
+}
+function tbJigDraw(){
+  if(!tbJigParts().length){ toast('직소로 나눌 학습지를 먼저 골라 주세요'); return; }
+  if(_tbJigIv) return;
+  var J = tbJig(), k = 0;
+  _tbJigIv = setInterval(function(){
+    J.who = tbJigDeal(); k++;
+    if(k >= 12){ clearInterval(_tbJigIv); _tbJigIv = 0; _tbRngOpen = false; tbSave(); tbSendInfo(); gbSyn('pop'); renderGB(); return; }
+    gbSyn('tick'); renderGB();
+  }, 90);
+}
+function tbJigSet(key, v){
+  var J = tbJig(); J[key] = v;
+  if(key === 'k') J.who = {};             /* 파트 수가 바뀌면 다시 뽑아야 한다 */
+  tbSave(); tbSendInfo(); renderGB();
+}
+/* 전문가 모둠 — 파트마다 사람들, 많으면 탁자 둘(앞 모둠 번호 A · 뒤 B) */
+function tbJigGroups(){
+  var J = tbJig(), parts = tbJigParts();
+  return parts.map(function(p, i){
+    var ids = [];
+    TB.teams.forEach(function(t){ t.ids.forEach(function(id){ if(J.who[id] === i) ids.push({ id:id, no:t.no }); }); });
+    ids.sort(function(a, b){ return a.no - b.no || ((tbStu(a.id) || {}).number || 0) - ((tbStu(b.id) || {}).number || 0); });
+    var two = J.split === 'two' || (J.split !== 'one' && ids.length > 6), half = Math.ceil(ids.length / 2);
+    return { i:i, tables: two ? [ids.slice(0, half), ids.slice(half)] : [ids] };
+  });
+}
+/* 전자칠판 무대 위 — 전문가 모둠표(학생들이 자기 이름을 찾아 이동) */
+function tbJigStage(){
+  if(!tbJigReady()) return '';
+  return '<div class="tb-jgs' + (_tbJigIv ? ' spin' : '') + '">' + tbJigGroups().map(function(g){
+    var p = tbJigParts()[g.i];
+    return '<div class="tb-jg"><div class="h">' + TB_PC[g.i] + ' 전문가<small>' + esc(p.map(function(s){ return gbShLab(s) + ' ' + s.t; }).join(' · ')) + '</small></div>' +
+      g.tables.map(function(tb, k){
+        return '<div class="t">' + (g.tables.length > 1 ? '<b>' + 'AB'.charAt(k) + ' 탁자</b>' : '') +
+               tb.map(function(x){ return '<span>' + tbEmo(x.no - 1) + esc(tbLabel(x.id)) + '</span>'; }).join('') + '</div>';
+      }).join('') + '</div>';
+  }).join('') + '</div>';
+}
+/* 직소 칸 — 학습지 고르기 → 파트 수 → 🎲 전문가 뽑기 */
+function tbJigCard(){
+  var J = tbJig(), R = tbRng(), parts = tbJigParts(), ready = tbJigReady(), h = '';
+  var sizes = TB.teams.map(function(t){ return t.ids.length; }), mn = Math.min.apply(null, sizes), mx = Math.max.apply(null, sizes);
+  if(ready && !_tbRngOpen){
+    h += '<div class="sub">' + parts.length + '개 파트 · 모둠마다 모든 파트를 한 명 이상 맡아요' + (mx > parts.length ? ' (인원이 많은 모둠은 한 파트를 둘이)' : '') +
+         (mn < parts.length ? ' · ' + mn + '명 모둠은 ' + (parts.length - mn) + '파트가 비어요' : '') + '</div>' +
+         '<div class="tb-jlist">' + TB.teams.map(function(t){
+           return '<div><b>' + tbName(t) + '</b> ' + t.ids.map(function(id){ var p = tbPartOf(id); return esc(tbLabel(id)) + ' ' + (p >= 0 ? TB_PC[p] : '–'); }).join(' · ') + '</div>';
+         }).join('') + '</div>';
+  } else {
+    h += '<div class="sub" style="margin-bottom:8px">학습지를 고르면 차례대로 파트로 묶어요. 모둠 인원에 맞춰 파트 수를 정해요.</div>' + tbSheetPicker() +
+         (parts.length ? '<div class="gbsec"><div class="k">🧩 파트 ' + parts.length + '개</div><div style="font-size:12.5px;font-weight:800;line-height:1.7">' +
+           parts.map(function(p, i){ return esc(tbPartName(i, true)); }).join('<br>') + '</div></div>' : '');
+  }
+  h += '<div class="gbsec"><div class="k">파트 수 <span class="sub" style="font-weight:700">모둠 인원 ' + (mn === mx ? mn : mn + '~' + mx) + '명</span></div><div class="chips">' +
+       [2,3,4,5,6].filter(function(k){ return k <= Math.max(2, R.sel.length); }).map(function(k){
+         return '<button class="chip sm' + (J.k === k ? ' on' : '') + '" onclick="tbJigSet(\'k\',' + k + ')">' + k + '파트</button>';
+       }).join('') + '</div></div>' +
+       '<div class="gbsec"><div class="k">전문가 모둠 자리</div><div class="chips">' +
+       [['auto','6명 넘으면 탁자 둘'], ['one','한 탁자'], ['two','늘 탁자 둘']].map(function(m){
+         return '<button class="chip sm' + (J.split === m[0] ? ' on' : '') + '" onclick="tbJigSet(\'split\',\'' + m[0] + '\')">' + m[1] + '</button>';
+       }).join('') +
+       '<button class="chip sm' + (J.shh ? ' on' : '') + '" onclick="tbJigSet(\'shh\',' + (J.shh ? 0 : 1) + ')">🤫 골든벨 때 그 파트 전문가는 쉿</button></div></div>' +
+       '<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">' +
+       (ready && !_tbRngOpen ? '<button class="chip sm" style="flex:1" onclick="tbRngOpen(true)">📚 학습지 다시 고르기</button>' : '') +
+       (ready && _tbRngOpen ? '<button class="chip sm" style="flex:1" onclick="tbRngOpen(false)">취소</button>' : '') +
+       '<button class="gbbig" style="flex:3;margin:0' + (parts.length ? '' : ';opacity:.5') + '" onclick="tbJigDraw()"' + (parts.length ? '' : ' disabled') + '>🎲 ' + (ready ? '전문가 다시 뽑기' : '전문가 뽑기') + '</button></div>';
   return h;
 }
 function tbSave(){ try{ localStorage.setItem(TB_KEY, JSON.stringify(TB)); }catch(e){} }
@@ -434,15 +553,20 @@ function tbInfo(){
              var n = tbTeamQs(t.no).length;
              return { no:t.no, emo:tbEmo(t.no - 1),
                       nums: t.ids.map(function(id){ return (tbStu(id) || {}).number; }).filter(Boolean),
-                      cnt:n, done: n ? 1 : 0, rng:tbRngTxt(t.no, 'long'), rs:tbRngTxt(t.no, 'short') };
-           }) : [] };
+                      cnt:n, done: n ? 1 : 0, rng:tbRngTxt(t.no, 'long'), rs:tbRngTxt(t.no, 'short'),
+                      jig: tbJigReady() ? t.ids.map(function(id){ return [(tbStu(id) || {}).number || 0, tbPartOf(id)]; }) : null };
+           }) : [],
+           /* 🧩 직소 파트 — 학생이 «내 파트»를 골라 문제에 붙인다 */
+           parts: TB && tbJigReady() ? tbJigParts().map(function(p, i){ return { s:tbPartName(i, false), l:tbPartName(i, true) }; }) : null };
 }
+/* 문제에 붙은 직소 파트 번호(없으면 -1) — 파트가 지금 있는 범위 안일 때만 */
+function tbQPart(q){ var p = q && q.part != null ? +q.part : -1; return p >= 0 && tbJigReady() && p < tbJigParts().length ? p : -1; }
 function tbSendInfo(){ tbSend(tbInfo()); }
 /* 그 기기가 낸 문제만 상태·피드백과 함께 돌려준다 — 다른 모둠 문제는 보내지 않는다 */
 function tbMine(dev){
   return tbQs().filter(function(q){ return q.dev === dev; }).map(function(q){
     return { id:q.id, team:q.team, t:q.t, q:q.q, a:q.a, ch:q.ch || null, ex:q.ex || '', n:q.n || 1,
-             st:q.st || 'new', fb:q.fb || null, note:q.note || '', byT:q.byT ? 1 : 0 };
+             st:q.st || 'new', fb:q.fb || null, note:q.note || '', byT:q.byT ? 1 : 0, part:q.part == null ? -1 : q.part };
   });
 }
 function tbSendMine(dev){ if(dev && dev !== 'teacher') tbSend({ k:'mine', dev:dev, list:tbMine(dev) }); }
@@ -484,7 +608,7 @@ function tbIn(p){
   if(!t){ ack(false, '모둠 번호를 다시 골라 주세요'); return; }
   var q = tbCleanQ(p.q);
   if(!q){ ack(false, '문제와 정답을 모두 채워 주세요'); return; }
-  var old = p.id ? tbQ(p.id) : null, now = Date.now();
+  var old = p.id ? tbQ(p.id) : null, now = Date.now(), part = parseInt(p.part, 10);
   if(old && old.dev !== p.dev){ ack(false, '이 문제는 다른 기기에서 낸 문제라 여기서 고칠 수 없어요.'); return; }
   if(old){                             /* 고쳐 보냄 — 고치기 전 판·피드백은 남겨 둔다 */
     old.prev = tbQBody(old); tbQSet(old, q);
@@ -495,6 +619,7 @@ function tbIn(p){
     q.id = tbNewId(); q.team = no; q.dev = p.dev; q.at = now; q.n = 1; q.st = 'new';
     tbQs().push(q);
   }
+  if(part >= 0 && part < 6) q.part = part; else if(!old) delete q.part;   /* 🧩 직소 파트 */
   if(p.rid){
     TB.rids[p.rid] = q.id;
     var ks = Object.keys(TB.rids); if(ks.length > 300) ks.slice(0, ks.length - 300).forEach(function(k){ delete TB.rids[k]; });
@@ -543,7 +668,12 @@ function tbMakeUI(){
   var pool = tbPoolQs(), k = tbWantN(pool.length), firstNew = tbNextNew('');
   h = '<div class="gbs tb-make">' + (gbHW() ? gbHWDeco() : '') +
       '<div class="gbs-top"><span>' + TB.g + '학년 ' + TB.c + '반 · 👥 모둠 골든벨</span><span class="tb-live' + (_tbLiveSt === 'on' ? ' on' : '') + '" id="tbLive">' + tbLiveTxt() + '</span></div>' +
-      '<div class="gbs-no">모둠 문제 만들기!</div>' + tbRngStage() +
+      (tbJigOn() ? '<div class="gbs-no">🧩 직소로 문제 만들기!</div>' +
+         '<div class="tb-steps"><span><b>1</b>전문가 모둠으로<br><small>내 파트 핵심 개념 · 헷갈리는 점 · 문제 아이디어</small></span>' +
+         '<span><b>2</b>우리 모둠으로<br><small>한 사람씩 내 파트 가르치기</small></span>' +
+         '<span><b>3</b>내 파트 문제<br><small>모둠이 같이 다듬어 보내기</small></span>' +
+         '<span><b>4</b>🔔 골든벨<br><small>' + (tbJig().shh ? '그 파트 전문가는 🤫 쉿' : '모둠끼리 서로 풀기') + '</small></span></div>' + tbJigStage()
+       : '<div class="gbs-no">모둠 문제 만들기!</div>' + tbRngStage()) +
       '<div class="tb-join"><div class="qr" id="tbQR"><span>QR 만드는 중…</span></div>' +
       '<div class="tx"><div class="l">휴대폰·크롬북으로 QR을 찍거나 주소창에</div><div class="u">' + esc(tbShortUrl()) + '</div>' +
       '<div class="l" style="margin-top:10px">방 번호</div><div class="code">' + TB.code + '</div></div></div>';
@@ -564,11 +694,18 @@ function tbMakeUI(){
        '<div class="tb-stat">' +
        TB.teams.map(function(t){
          var tq = tbTeamQs(t.no);
-         var rx = tbRngTxt(t.no, 'short');
+         var rx = tbRngTxt(t.no, 'short'), pc = '';
+         /* 🧩 직소면 파트마다 문제가 왔는지(①✅ ②⏳ …) */
+         if(tbJigReady()) pc = tbJigParts().map(function(p, i){
+           var has = tq.some(function(q){ return tbQPart(q) === i; });
+           return '<span style="margin-right:6px;color:' + (has ? 'var(--ok-d)' : 'var(--mute)') + '">' + TB_PC[i] + (has ? '✅' : '⏳') + '</span>';
+         }).join('');
          return '<div class="tb-st' + (tq.length ? ' ok' : '') + '"><div class="nm">' + tbName(t) + ' <span class="gbtag">' + tq.length + '개</span></div>' +
                 (rx ? '<div class="st" style="margin:2px 0 0">📚 ' + esc(rx) + '</div>' : '') +
+                (pc ? '<div class="st" style="margin:2px 0 0">🧩 ' + pc + '</div>' : '') +
                 '<div class="tb-qs">' + (tq.length ? tq.map(function(q, i){
-                  return '<button class="tbq ' + (q.st || 'new') + '" title="' + tbStTxt(q) + '" onclick="tbReview(\'' + q.id + '\')">' + tbStIco(q) + ' ' + (i + 1) + '</button>';
+                  var qp = tbQPart(q);
+                  return '<button class="tbq ' + (q.st || 'new') + '" title="' + tbStTxt(q) + '" onclick="tbReview(\'' + q.id + '\')">' + tbStIco(q) + ' ' + (qp >= 0 ? TB_PC[qp] : (i + 1)) + '</button>';
                 }).join('') : '<span class="st">⏳ 만드는 중</span>') + '</div>' +
                 '<div class="bt"><button class="gbmini" onclick="tbWrite(' + t.no + ')">✏️ 대신 쓰기</button></div></div>';
        }).join('') + '</div>';
@@ -623,6 +760,7 @@ function tbReview(id){
     '<div class="sub" style="margin:3px 0 10px">' + tbStIco(q) + ' ' + tbStTxt(q) + (q.n > 1 ? ' · ' + q.n + '번째 판' : '') +
       (q.byT ? ' · 선생님이 고침' : '') + (paper ? ' · 종이로 받아 선생님이 넣은 문제' : '') + (left ? ' · 이 문제 말고 검토 전 ' + left + '개' : '') +
       (tbRngOf(q.team) ? '<br>📚 맡은 범위: <b>' + esc(tbRngTxt(q.team, 'long')) + '</b>' : '') +
+      (tbQPart(q) >= 0 ? '<br>🧩 파트: <b>' + esc(tbPartName(tbQPart(q), true)) + '</b>' : '') +
       '<br><b style="color:var(--bad)">학생들이 화면을 보고 있으면 문제가 들켜요!</b></div>' +
     (q.fb && q.fb.t && q.n > (q.fb.n || 1) ? '<div class="tb-fbold"><b>💬 지난 피드백</b> ' + esc(q.fb.t) + '</div>' : '') +
     (q.note ? '<div class="tb-fbold" style="border-color:var(--ok)"><b>🔧 모둠이 고친 점</b> ' + esc(q.note) + '</div>' : '') +
@@ -662,13 +800,14 @@ function tbFb(id, st){
   renderGB();
 }
 /* 종이로 받은 문제를 선생님이 대신 넣거나(새 문제), 낸 문제를 직접 손본다(id) */
-var _tbWT = 'short', _tbWId = '';
+var _tbWT = 'short', _tbWId = '', _tbWP = -1;
 function tbWrite(no, id){
   var s = id ? tbQ(id) : null;
   if(s) no = s.team;
   var t = tbTeam(no); if(!t) return;
   _tbWId = s ? s.id : '';
   _tbWT = s ? s.t : _tbWT;
+  _tbWP = s && s.part != null ? s.part : -1;
   tbWriteDraw(no, s ? { q:s.q, a:s.a, c:(s.ch || []).join('\n'), e:s.ex || '' } : null);
   $('mdl').classList.add('show');
 }
@@ -679,6 +818,9 @@ function tbWriteDraw(no, d){
     '<div class="chips" style="margin:10px 0 8px">' + [['short','단답'], ['ox','O/X'], ['mc','객관식']].map(function(m){
       return '<button class="chip sm' + (ty === m[0] ? ' on' : '') + '" onclick="tbWType(' + no + ',\'' + m[0] + '\')">' + m[1] + '</button>';
     }).join('') + '</div>' +
+    (tbJigReady() ? '<div class="chips" style="margin:0 0 8px">' + tbJigParts().map(function(x, i){
+      return '<button class="chip sm' + (_tbWP === i ? ' on' : '') + '" onclick="tbWPart(' + no + ',' + i + ')">🧩 ' + esc(tbPartName(i, false)) + '</button>';
+    }).join('') + '</div>' : '') +
     '<textarea class="inp" id="tbwQ" rows="3" placeholder="문제">' + esc(d.q) + '</textarea>' +
     (ty === 'mc' ? '<textarea class="inp" id="tbwC" rows="4" style="margin-top:7px" placeholder="보기를 한 줄에 하나씩 (2~4개)">' + esc(d.c) + '</textarea>' : '') +
     '<input class="inp" id="tbwA" style="margin-top:7px" placeholder="' + (ty === 'ox' ? '정답: O 또는 X' : ty === 'mc' ? '정답 번호 (예: 2)' : '정답') + '" value="' + escq(d.a) + '">' +
@@ -686,10 +828,9 @@ function tbWriteDraw(no, d){
     '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn" style="flex:1;background:var(--line);color:var(--ink)" onclick="closeMdl()">취소</button>' +
     '<button class="btn g" style="flex:1" onclick="tbWriteSave(' + no + ')">✔ 넣기</button></div>';
 }
-function tbWType(no, ty){
-  var d = { q:($('tbwQ') || {}).value || '', a:($('tbwA') || {}).value || '', c:($('tbwC') || {}).value || '', e:($('tbwE') || {}).value || '' };
-  _tbWT = ty; tbWriteDraw(no, d);
-}
+function tbWDraft(){ return { q:($('tbwQ') || {}).value || '', a:($('tbwA') || {}).value || '', c:($('tbwC') || {}).value || '', e:($('tbwE') || {}).value || '' }; }
+function tbWType(no, ty){ var d = tbWDraft(); _tbWT = ty; tbWriteDraw(no, d); }
+function tbWPart(no, i){ var d = tbWDraft(); _tbWP = _tbWP === i ? -1 : i; tbWriteDraw(no, d); }
 function tbWriteSave(no){
   var raw = { t:_tbWT, q:$('tbwQ').value, a:$('tbwA').value, ex:$('tbwE').value,
               ch:$('tbwC') ? $('tbwC').value.split('\n').map(function(s){ return s.replace(/^\s*[①-④0-9]+[.)]?\s*/, ''); }) : null };
@@ -704,6 +845,7 @@ function tbWriteSave(no){
     q.id = tbNewId(); q.team = no; q.dev = 'teacher'; q.at = Date.now(); q.n = 1; q.st = 'ok';
     tbQs().push(q);
   }
+  if(_tbWP >= 0) (old || q).part = _tbWP;   /* 🧩 직소 파트 */
   _tbWId = '';
   tbSave(); closeMdl(); tbSendInfo(); renderGB();
   toast('✔ ' + no + '모둠 문제를 ' + (old ? '고쳤어요' : '넣었어요'));
@@ -722,10 +864,17 @@ function tbDraw(pool, k){
     nos.forEach(function(no){ gbShuffle(by[no]); });
     while(out.length < k && any){
       any = false;
-      nos.forEach(function(no){ if(out.length < k && by[no].length){ out.push(by[no].shift()); any = true; } });
+      nos.forEach(function(no){ if(out.length < k && by[no].length){ out.push(tbTakeLowPart(by[no], out)); any = true; } });
     }
   });
   return gbShuffle(out);
+}
+/* 🧩 직소면 지금까지 덜 뽑힌 파트의 문제를 먼저 꺼낸다(파트가 고르게 나오게) — 아니면 맨 앞 것 */
+function tbTakeLowPart(arr, out){
+  var cnt = {}, bi = 0, bc = 1e9;
+  out.forEach(function(q){ var p = tbQPart(q); if(p >= 0) cnt[p] = (cnt[p] || 0) + 1; });
+  arr.forEach(function(q, i){ var p = tbQPart(q), c = p >= 0 ? (cnt[p] || 0) : 0; if(c < bc){ bc = c; bi = i; } });
+  return arr.splice(bi, 1)[0];
 }
 function tbStart(){
   var pool = tbPoolQs(), k = tbWantN(pool.length);
@@ -746,7 +895,10 @@ function tbCurQ(){
   if(!TB || !TB.order) return null;
   var s = tbQ(TB.order[TB.qi]), t = s && tbTeam(s.team);
   if(!s || !t) return null;
-  var rx = tbRngTxt(t.no, 'short'), q = { t:s.t, q:s.q, a:s.a, src:tbName(t) + ' 출제' + (rx ? ' · ' + rx : '') };
+  var rx = tbRngTxt(t.no, 'short'), qp = tbQPart(s);
+  /* 🧩 직소 — 그 파트 전문가는 쉿(모둠마다 그 파트를 맡은 사람이 있다) */
+  if(qp >= 0) rx = tbPartName(qp, false) + (tbJig().shh ? ' · 🤫 모둠마다 ' + TB_PC[qp] + ' 전문가는 쉿!' : '');
+  var q = { t:s.t, q:s.q, a:s.a, src:tbName(t) + ' 출제' + (rx ? ' · ' + rx : '') };
   if(s.ch) q.ch = s.ch;
   if(s.ex) q.ex = s.ex;
   return q;
@@ -1027,6 +1179,20 @@ function gbTeamKey(e){
     '.tb-rg b{display:block;font-size:clamp(13px,1.4vw,18px);color:#ffd666}',
     '.tb-rg span{display:block;font-size:clamp(12.5px,1.35vw,17px);font-weight:800;color:#fff;word-break:keep-all}',
     '.tb-rngs.spin .tb-rg{animation:tbjig .12s linear infinite alternate}',
+    '.tb-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-width:1100px;margin:12px auto 4px}',
+    '.tb-steps span{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);border-radius:14px;padding:8px 10px;font-size:clamp(13px,1.4vw,18px);font-weight:900;color:#fff;line-height:1.35;text-align:left}',
+    '.tb-steps b{display:inline-grid;place-items:center;width:1.5em;height:1.5em;border-radius:50%;background:#ffd666;color:#1a1f3c;margin-right:6px}',
+    '.tb-steps small{font-size:.78em;font-weight:700;color:#dfe5ff}',
+    '.tb-jgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;max-width:1300px;margin:12px auto 6px}',
+    '.tb-jgs.spin .tb-jg{animation:tbjig .12s linear infinite alternate}',
+    '.tb-jg{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,214,102,.55);border-radius:16px;padding:10px 12px;text-align:left}',
+    '.tb-jg .h{font-size:clamp(17px,2vw,26px);font-weight:900;color:#ffd666;line-height:1.25}',
+    '.tb-jg .h small{display:block;font-size:.55em;font-weight:800;color:#dfe5ff;margin-top:2px;word-break:keep-all}',
+    '.tb-jg .t{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:8px;align-items:center}',
+    '.tb-jg .t b{flex:0 0 100%;font-size:clamp(11px,1.1vw,14px);color:#ffd666}',
+    '.tb-jg .t span{padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.14);font-size:clamp(12.5px,1.35vw,17px);font-weight:800;color:#fff}',
+    '.tb-jlist{display:flex;flex-direction:column;gap:4px;margin-top:8px;font-size:12.5px;font-weight:700;line-height:1.5}',
+    '@media (max-width:700px){.tb-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}',
     '.tb-due{min-width:3.2em;text-align:right;font-size:clamp(26px,3.4vw,46px);font-weight:900;font-variant-numeric:tabular-nums}',
     '.tb-due.warn{color:#ff8a5c;animation:gbblink .5s infinite alternate}',
     '.tb-tips{max-width:900px;margin:14px auto 0;font-size:clamp(12.5px,1.4vw,17px);font-weight:700;color:#dfe5ff;text-align:center;line-height:1.6}',

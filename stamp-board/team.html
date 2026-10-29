@@ -93,7 +93,7 @@ textarea.inp{resize:vertical;line-height:1.5}
   <div id="app"></div>
   <footer id="app-credit">
     © 2026 조승재(과학이조선생) · 해누리중학교 · All rights reserved<br>
-    <span style="opacity:.85">모둠 골든벨 · 최종 업데이트 2026-10-29</span>
+    <span style="opacity:.85">모둠 골든벨 · 최종 업데이트 2026-10-30</span>
   </footer>
 </div>
 <script>
@@ -107,7 +107,7 @@ var sb = window.supabase.createClient(SB_URL, SB_KEY);
 var CIRC = ['①','②','③','④'];
 var TYPE = { short:'단답', ox:'O/X', mc:'객관식' };
 var P = { st:'code', code:'', ch:null, info:null, team:0, t:'short', ox:'', mcA:0, sending:false, msg:null, tries:0, sentAt:0,
-          mine:[], edit:'', rid:'', alert:'' };
+          mine:[], edit:'', rid:'', alert:'', part:-1 };
 P.dev = (function(){
   try{ var d = localStorage.getItem('gbt_dev'); if(!d){ d = 'd' + Math.random().toString(36).slice(2, 10); localStorage.setItem('gbt_dev', d); } return d; }
   catch(e){ return 'd' + Math.random().toString(36).slice(2, 10); }
@@ -121,7 +121,7 @@ function draftKey(){ return 'gbt_draft_' + P.code + '_' + (P.edit ? P.edit : 'ne
 function saveDraft(){
   if(!P.team) return;
   var d = { t:P.t, q:($('q') || {}).value || '', a:($('a') || {}).value || '', ox:P.ox, mcA:P.mcA, ex:($('ex') || {}).value || '',
-            ch:[0,1,2,3].map(function(i){ return ($('c' + i) || {}).value || ''; }), note:($('note') || {}).value || '' };
+            ch:[0,1,2,3].map(function(i){ return ($('c' + i) || {}).value || ''; }), note:($('note') || {}).value || '', part:P.part };
   try{ localStorage.setItem(draftKey(), JSON.stringify(d)); }catch(e){}
 }
 function loadDraft(){ try{ return JSON.parse(localStorage.getItem(draftKey()) || 'null'); }catch(e){ return null; } }
@@ -129,7 +129,7 @@ function dropDraft(){ try{ localStorage.removeItem(draftKey()); }catch(e){} }
 function mineQ(id){ for(var i=0;i<P.mine.length;i++) if(P.mine[i].id === id) return P.mine[i]; return null; }
 /* 고치는 문제를 글 칸에 옮길 모양으로 */
 function qToDraft(m){
-  var d = { t:m.t, q:m.q, a:m.t === 'short' ? m.a : '', ox:m.t === 'ox' ? m.a : '', mcA:0, ex:m.ex || '', ch:['','','',''], note:'' };
+  var d = { t:m.t, q:m.q, a:m.t === 'short' ? m.a : '', ox:m.t === 'ox' ? m.a : '', mcA:0, ex:m.ex || '', ch:['','','',''], note:'', part:m.part == null ? -1 : m.part };
   if(m.t === 'mc'){ (m.ch || []).forEach(function(c, i){ if(i < 4) d.ch[i] = c; }); d.mcA = Math.max(0, CIRC.indexOf(String(m.a).charAt(0))); }
   return d;
 }
@@ -199,7 +199,7 @@ function editQ(id){
   var s = fbSeen(); if(m.fb && !s[fbKey(m)]) s[fbKey(m)] = Date.now(); try{ localStorage.setItem('gbt_fbseen', JSON.stringify(s)); }catch(e){}
 }
 function openForm(d){
-  if(d){ P.t = d.t || 'short'; P.ox = d.ox || ''; P.mcA = d.mcA || 0; } else { P.ox = ''; P.mcA = 0; }
+  if(d){ P.t = d.t || 'short'; P.ox = d.ox || ''; P.mcA = d.mcA || 0; P.part = d.part == null ? -1 : d.part; } else { P.ox = ''; P.mcA = 0; P.part = -1; }
   draw(); if(d) fillDraft(d); window.scrollTo(0, 0);
 }
 function delQ(id){
@@ -219,6 +219,8 @@ function fillDraft(d){
 function setType(t){ saveDraft(); P.t = t; draw(); fillDraft(loadDraft() || {}); }
 function setOX(v){ P.ox = v; saveDraft(); draw(); fillDraft(loadDraft() || {}); }
 function setMcA(i){ P.mcA = i; saveDraft(); draw(); fillDraft(loadDraft() || {}); }
+/* 🧩 직소 — 내가 전문가 모둠에서 맡은 파트 */
+function setPart(i){ P.part = i; saveDraft(); draw(); fillDraft(loadDraft() || {}); }
 function count(){ var q = $('q'), c = $('qc'); if(q && c) c.textContent = q.value.length + ' / 120'; chk(); }
 function chk(){
   var b = $('sendBtn'); if(!b) return;
@@ -248,13 +250,14 @@ function submit(){
   var m = P.edit ? mineQ(P.edit) : null, note = (($('note') || {}).value || '').trim();
   /* 피드백을 받은 문제는 «무엇을 고쳤는지» 한 줄을 꼭 — 모둠이 피드백을 보고 고민한 흔적 */
   if(m && m.st === 'fix' && !note){ P.msg = { c:'bad', t:'✏️ 피드백을 보고 무엇을 고쳤는지 한 줄 써 주세요' }; drawStatus(); if($('note')) $('note').focus(); return; }
+  if(P.info && P.info.parts && P.part < 0){ P.msg = { c:'bad', t:'🧩 맨 위에서 내 파트를 골라 주세요' }; drawStatus(); window.scrollTo(0, 0); return; }
   saveDraft();
   P.sending = true; P.tries = 0; P.msg = { c:'wait', t:'📨 보내는 중…' }; drawStatus(); chk();
   P.rid = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   var team = m ? m.team : P.team, id = m ? m.id : '';
   var go = function(){
     P.tries++;
-    send({ k:'sub', dev:P.dev, rid:P.rid, team:team, id:id, note:note, q:q });
+    send({ k:'sub', dev:P.dev, rid:P.rid, team:team, id:id, note:note, part:P.part, q:q });
     P.retry = setTimeout(function(){
       if(!P.sending) return;
       if(P.tries < 4) go();
@@ -271,6 +274,10 @@ function drawTop(){
                  (t ? ' · <b>' + t.emo + ' ' + t.no + '모둠</b> <a href="#" onclick="P.st=\'team\';draw();return false" style="color:var(--ac-d)">바꾸기</a>' : '') + '</div>' +
                  (t && t.rng ? '<div class="rng">📚 우리 모둠 범위<b>' + esc(t.rng) + '</b>' +
                    (t.rng.indexOf('🔀') === 0 ? '<span>두 학습지 내용을 이어서 묻는 문제를 만들어요</span>' : '<span>이 범위에서 문제를 만들어요</span>') + '</div>' : '') +
+                 (t && t.jig && P.info.parts ? '<div class="rng">🧩 우리 모둠 전문가<b>' +
+                   t.jig.map(function(x){ return x[0] + '번 ' + (x[1] >= 0 && P.info.parts[x[1]] ? P.info.parts[x[1]].s.charAt(0) : '–'); }).join(' · ') + '</b>' +
+                   '<span>' + P.info.parts.map(function(x){ return esc(x.s); }).join(' · ') + '</span>' +
+                   '<span style="margin-top:4px">같은 파트끼리 전문가 모둠에 모였다가 돌아와서 가르치고, <b>내 파트 문제</b>를 모둠이 같이 다듬어 보내요</span></div>' : '') +
                  (P.info.due > 0 ? '<div class="due" style="margin-top:6px">⏱ 남은 시간 약 ' + Math.max(1, Math.round((P.info.due - (Date.now() - P.info.rx)) / 60000)) + '분</div>' :
                   P.info.due < 0 ? '<div class="due" style="margin-top:6px">⏰ 시간이 다 됐어요 — 얼른 보내 주세요!</div>' : '');
 }
@@ -299,7 +306,7 @@ function listHTML(){
     var k = fbKey(m), nf = m.fb && (!seen[k] || Date.now() - seen[k] < 6000), ai = m.t === 'mc' ? CIRC.indexOf(String(m.a).charAt(0)) : -1;
     if(m.fb && !seen[k]) seen[k] = Date.now();
     h += '<div class="qi ' + (m.st || 'new') + (nf ? ' nf' : '') + '"><div class="qh"><span class="bd">' + stBadge(m) + '</span>' +
-         '<span>' + TYPE[m.t] + '</span>' + (m.team !== P.team ? '<span>' + m.team + '모둠</span>' : '') + (m.byT ? '<span>선생님이 고침</span>' : '') + '</div>' +
+         '<span>' + TYPE[m.t] + '</span>' + (m.part >= 0 && P.info && P.info.parts && P.info.parts[m.part] ? '<span>🧩 ' + esc(P.info.parts[m.part].s) + '</span>' : '') + (m.team !== P.team ? '<span>' + m.team + '모둠</span>' : '') + (m.byT ? '<span>선생님이 고침</span>' : '') + '</div>' +
          '<div class="qq">' + esc(m.q) + '</div>' +
          (m.ch ? '<div class="sub">' + m.ch.map(function(c, i){ return CIRC[i] + ' ' + esc(c); }).join(' &nbsp; ') + '</div>' : '') +
          '<div class="qa">정답: ' + esc(m.a) + (ai >= 0 && m.ch && m.ch[ai] ? ' ' + esc(m.ch[ai]) : '') + '</div>' +
@@ -353,6 +360,11 @@ function draw(){
       '<div class="k" style="display:flex;justify-content:space-between;align-items:center;margin:0 4px 8px"><span>' + (em ? '✏️ 문제 고치기' : '✍️ 새 문제') + '</span>' +
       (P.mine.length || em ? '<a href="#" onclick="backList();return false" style="color:var(--ac-d)">← 내 문제 목록</a>' : '') + '</div>' +
       '<div id="fbBox"></div>';
+  if(P.info && P.info.parts){
+    h += '<div class="card"' + (P.part < 0 ? ' style="border-color:var(--ac)"' : '') + '><div class="k">🧩 내 파트 — 전문가 모둠에서 맡은 파트</div><div class="chips">' +
+         P.info.parts.map(function(x, i){ return '<button class="chip' + (P.part === i ? ' on' : '') + '" onclick="setPart(' + i + ')">' + esc(x.s) + '</button>'; }).join('') + '</div>' +
+         '<div class="sub" style="margin-top:8px">' + (P.part >= 0 && P.info.parts[P.part] ? esc(P.info.parts[P.part].l) : '맨 위 «우리 모둠 전문가»에서 내 번호를 찾아요') + '</div></div>';
+  }
   h += '<div class="card"><div class="k">① 문제 모양</div><div class="chips">' +
        [['short','✏️ 단답'], ['ox','⭕ O/X'], ['mc','🔢 객관식']].map(function(m){
          return '<button class="chip' + (P.t === m[0] ? ' on' : '') + '" onclick="setType(\'' + m[0] + '\')">' + m[1] + '</button>';
