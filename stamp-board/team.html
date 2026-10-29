@@ -78,6 +78,10 @@ textarea.inp{resize:vertical;line-height:1.5}
 .qb{display:flex;gap:6px;margin-top:9px}
 .qb button{flex:1;padding:9px;border-radius:10px;border:2px solid var(--line);background:#fff;font-size:13.5px;font-weight:900}
 .qb button.go{flex:2;background:var(--ac);border-color:var(--ac);color:#fff}
+.rng{margin-top:10px;padding:10px 12px;border-radius:12px;background:#FFF1E4;border:2px solid var(--ac);text-align:center;font-size:12.5px;font-weight:800;color:var(--ac-d);line-height:1.45}
+.rng b{display:block;font-size:16px;color:var(--ink);margin:2px 0;word-break:keep-all}
+.rng span{display:block;font-size:11.5px;color:var(--ink2)}
+.tm small.rs{color:var(--ac-d)}
 .alert{padding:12px;border-radius:12px;background:var(--ac);color:#fff;font-weight:900;text-align:center;margin-bottom:12px}
 #app-credit{text-align:center;font-size:11px;color:var(--mute);margin-top:18px;line-height:1.7}
 </style>
@@ -265,6 +269,8 @@ function drawTop(){
   var t = P.info.teams.filter(function(x){ return x.no === P.team; })[0];
   el.innerHTML = '<div class="sub" style="text-align:center">' + esc(P.info.cls) + '반 · 방 ' + P.code +
                  (t ? ' · <b>' + t.emo + ' ' + t.no + '모둠</b> <a href="#" onclick="P.st=\'team\';draw();return false" style="color:var(--ac-d)">바꾸기</a>' : '') + '</div>' +
+                 (t && t.rng ? '<div class="rng">📚 우리 모둠 범위<b>' + esc(t.rng) + '</b>' +
+                   (t.rng.indexOf('🔀') === 0 ? '<span>두 학습지 내용을 이어서 묻는 문제를 만들어요</span>' : '<span>이 범위에서 문제를 만들어요</span>') + '</div>' : '') +
                  (P.info.due > 0 ? '<div class="due" style="margin-top:6px">⏱ 남은 시간 약 ' + Math.max(1, Math.round((P.info.due - (Date.now() - P.info.rx)) / 60000)) + '분</div>' :
                   P.info.due < 0 ? '<div class="due" style="margin-top:6px">⏰ 시간이 다 됐어요 — 얼른 보내 주세요!</div>' : '');
 }
@@ -325,7 +331,8 @@ function draw(){
     h = '<div class="card"><div id="top"></div><div class="k" style="margin-top:10px">우리 모둠을 골라요</div><div class="teams">' +
         P.info.teams.map(function(t){
           return '<button class="tm' + (t.no === P.team ? ' on' : '') + (t.done ? ' done' : '') + '" onclick="pickTeam(' + t.no + ')">' +
-                 '<span class="e">' + t.emo + '</span>' + t.no + '모둠<small>' + (t.nums.length ? t.nums.join('·') + '번' : '') + (t.cnt ? ' · 📨 ' + t.cnt + '개' : '') + '</small></button>';
+                 '<span class="e">' + t.emo + '</span>' + t.no + '모둠<small>' + (t.nums.length ? t.nums.join('·') + '번' : '') + (t.cnt ? ' · 📨 ' + t.cnt + '개' : '') + '</small>' +
+                 (t.rs ? '<small class="rs">📚 ' + esc(t.rs) + '</small>' : '') + '</button>';
         }).join('') + '</div><div class="sub" style="margin-top:10px">출석 번호를 보고 우리 모둠을 찾아요. 문제는 <b>몇 개든</b> 보내도 돼요. 선생님 피드백은 문제를 보낸 기기로 와요.</div></div>';
     app.innerHTML = h; drawTop(); return;
   }
