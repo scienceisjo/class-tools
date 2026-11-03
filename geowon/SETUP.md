@@ -40,7 +40,7 @@
 
 | 선생님이 올리는 것 (관리 화면) | 저절로 나오는 것 |
 |---|---|
-| 공지 (전체·학년·반·교과) · 긴급 공지 | 급식 (알레르기 번호, 나이스) |
+| 공지 (전체·학년·반·교과) · 긴급 공지 · 암기 카드 (한 장씩 넘어감) | 급식 (알레르기 번호, 나이스) |
 | 학생 호출 (「○○○ 교무실로」) | 학사일정 (방학·시험·공휴일, 나이스) |
 | 수업 장소 변경 | **학급 시간표 + 결보강 변경** (컴시간알리미, 평일 아침 8:30) |
 | 디데이 · 수행평가 일정 · 주요 일정 | 지금 몇 교시 · 날씨 · 미세먼지 · 우산 안내 |
@@ -182,7 +182,7 @@
 
 **① 1부: 그대로 복사해서 실행**
 1. 새 탭에서 `https://scienceisjo.github.io/class-tools/geowon/install-part1.txt`를 열고 **Ctrl+A**, **Ctrl+C**로 복사합니다.
-   표 20개·권한 규칙·거원중학교 정보가 들어 있고, 고칠 곳이 없습니다(부록 A-1과 같은 내용).
+   표 21개·권한 규칙·거원중학교 정보가 들어 있고, 고칠 곳이 없습니다(부록 A-1과 같은 내용).
 2. Supabase 왼쪽 **SQL Editor** → **New query**(또는 **+**) → 붙여 넣기 → **Run**(Ctrl+Enter)을 누릅니다.
 3. 「destructive operation」 같은 경고 창이 뜨면 **Run this query**를 누릅니다. 권한 규칙을 지우고 다시 만드는 부분 때문에 뜨는 경고이고, 새 프로젝트라 지워질 데이터는 없습니다.
 
@@ -198,9 +198,9 @@
 1. SQL Editor에서 **New query**를 하나 더 열고, AI가 준 2부를 붙여 넣어 **Run**합니다.
 
 ✅ 확인: 맨 아래 결과 한 줄이 아래와 같으면 성공입니다.
-**표_20개면_정상 = 20 · 학교 = 거원중학교 · 권한규칙_수 = 59 · 가입코드_1이면_정상 = 1 · 예약_1이면_정상 = 1**
+**표_21개면_정상 = 21 · 학교 = 거원중학교 · 권한규칙_수 = 63 · 가입코드_1이면_정상 = 1 · 예약_1이면_정상 = 1**
 
-- 권한규칙_수가 59보다 적으면 1부가 덜 복사된 것입니다. 1부를 다시 복사해서 실행해 주세요.
+- 권한규칙_수가 63보다 적으면 1부가 덜 복사된 것입니다. 1부를 다시 복사해서 실행해 주세요.
 - 두 부분 모두 여러 번 실행해도 괜찮습니다. 2부를 다시 실행하면 가입 코드가 그 값으로 바뀝니다. 가입 코드는 나중에 관리 화면 ⚙️ 설정에서도 바꿀 수 있습니다.
 
 ### 6단계 · 화면 연결 — A 또는 B
@@ -348,7 +348,7 @@
 -- 여러 번 실행해도 안전합니다.
 --
 -- 이 파일 하나로:
---   표 20개 · 권한 규칙 · 가입 코드 확인 · 첫 가입자 = 관리 담당자
+--   표 21개 · 권한 규칙 · 가입 코드 확인 · 첫 가입자 = 관리 담당자
 --   · 컴시간 시간표 매일 08:30 자동 받기 예약까지 끝납니다.
 --
 -- 🔒 해누리 초기판보다 단단하게:
@@ -588,6 +588,21 @@ CREATE TABLE IF NOT EXISTS videos (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS memo_decks (                     -- 🧠 암기 카드 (한 줄 = 한 묶음)
+  id          bigserial PRIMARY KEY,
+  subject     text,                                         -- 과목 (예: 영어)
+  title       text NOT NULL,                                -- 묶음 이름 (예: 3과 단어)
+  cards       jsonb NOT NULL                                -- [{"q":"앞면","a":"뒷면(없어도 됨)"}, …]
+              CHECK (jsonb_typeof(cards) = 'array' AND jsonb_array_length(cards) BETWEEN 1 AND 200),
+  grade       int,
+  class_no    int,
+  start_at    date NOT NULL DEFAULT current_date,
+  end_at      date,
+  author_id   uuid,
+  author_name text,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS birthdays (
   id         bigserial PRIMARY KEY,
   grade      int  NOT NULL,
@@ -624,6 +639,7 @@ CREATE INDEX IF NOT EXISTS idx_msg_to           ON messages(to_auth_id);
 CREATE INDEX IF NOT EXISTS idx_audit_created    ON audit_log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_tt_updated       ON timetables(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_videos_class     ON videos(grade, class_no);
+CREATE INDEX IF NOT EXISTS idx_memo_class       ON memo_decks(grade, class_no);
 CREATE INDEX IF NOT EXISTS idx_birthdays_class  ON birthdays(grade, class_no, month, day);
 
 
@@ -791,7 +807,7 @@ BEGIN
     WHERE schemaname = 'public' AND tablename IN (
       'display_config','notice_admins','notices','schedules','timetable_changes','ddays','assessments',
       'calls','cleaning_duties','lost_items','class_roles','class_locations','messages','message_reads',
-      'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters')
+      'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters','memo_decks')
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON %I', pol.policyname, pol.tablename);
   END LOOP;
@@ -799,7 +815,7 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
       'display_config','notice_admins','notices','schedules','timetable_changes','ddays','assessments',
       'calls','cleaning_duties','lost_items','class_roles','class_locations','messages','message_reads',
-      'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters']
+      'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters','memo_decks']
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON %I TO anon, authenticated, service_role', t);   -- 이 앱 표만
@@ -808,13 +824,13 @@ BEGIN
   -- 교실 화면이 읽는 표: 누구나 읽기
   FOREACH t IN ARRAY ARRAY['notices','schedules','timetable_changes','ddays','assessments','calls',
                            'cleaning_duties','lost_items','class_roles','class_locations',
-                           'timetables','timetable_sync_log','videos']
+                           'timetables','timetable_sync_log','videos','memo_decks']
   LOOP
     EXECUTE format('CREATE POLICY %I ON %I FOR SELECT USING (true)', t || '_read', t);
   END LOOP;
 
   -- 학년·반이 있는 표: 승인된 선생님이 쓰고, 본인·관리 담당자·그 반 담임이 고치고 지움
-  FOREACH t IN ARRAY ARRAY['notices','schedules','ddays','assessments','class_locations','videos']
+  FOREACH t IN ARRAY ARRAY['notices','schedules','ddays','assessments','class_locations','videos','memo_decks']
   LOOP
     EXECUTE format('CREATE POLICY %I ON %I FOR INSERT WITH CHECK (is_notice_staff())', t || '_ins', t);
     EXECUTE format($p$CREATE POLICY %I ON %I FOR UPDATE USING (
@@ -901,7 +917,7 @@ BEGIN
     CREATE PUBLICATION supabase_realtime;
   END IF;
   FOREACH t IN ARRAY ARRAY['notices','schedules','timetable_changes','display_config','ddays','assessments',
-                           'calls','cleaning_duties','lost_items','class_locations','class_roles','messages','videos']
+                           'calls','cleaning_duties','lost_items','class_locations','class_roles','messages','videos','memo_decks']
   LOOP
     BEGIN
       EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE %I', t);
@@ -966,7 +982,7 @@ SELECT
     WHERE table_schema = 'public' AND table_name IN (
       'display_config','notice_admins','notices','schedules','timetable_changes','ddays','assessments',
       'calls','cleaning_duties','lost_items','class_roles','class_locations','messages','message_reads',
-      'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters')) AS 표_20개면_정상,
+      'audit_log','timetables','timetable_sync_log','videos','birthdays','shared_posters','memo_decks')) AS 표_21개면_정상,
   (SELECT value FROM display_config WHERE key = 'school_name')                          AS 학교,
   (SELECT count(*) FROM pg_policies WHERE schemaname = 'public')                        AS 권한규칙_수,
   (SELECT count(*) FROM display_config WHERE key = 'admin_code' AND value <> ''

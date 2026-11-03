@@ -368,6 +368,39 @@
   .setup .kbd{display:inline-block;background:#eff6ff;color:var(--accent);font-weight:900;
     border-radius:.4rem;padding:.05rem .55rem}
 
+  /* ═══ 🧠 암기 카드 — 공지 칸에서 한 장씩 ════════════════════ */
+  /* 이 교실에 보여 줄 암기 카드가 있을 때만 공지 칸 제목에 전환 단추가 나타납니다 */
+  #noticeCard h2 .ntabs{display:none;margin-left:auto;gap:.3rem}
+  body.hasmemo #noticeCard h2 .ntabs{display:inline-flex}
+  .ntabs button{border:none;font-family:inherit;font-weight:800;cursor:pointer;
+    background:#eef2f7;color:var(--sub);border-radius:99px;padding:.35rem .95rem;font-size:1.05rem}
+  .ntabs button.on{background:var(--accent);color:#fff}
+  .ntabs b{font-size:.85rem;margin-left:.25rem;opacity:.85}
+  #memoStage{display:none;flex:1 1 auto;min-height:0;flex-direction:column;gap:.55rem}
+  body.memomode #noticeStage,body.memomode #dots{display:none !important}
+  body.memomode #memoStage{display:flex}
+  .mhead{display:flex;align-items:center;gap:.6rem;flex:0 0 auto;min-width:0}
+  .mhead .msubj{flex:0 0 auto;font-size:1.05rem;font-weight:900;color:var(--purple);
+    background:rgba(124,92,255,.13);padding:.15rem .8rem;border-radius:99px}
+  .mhead .msubj:empty{display:none}
+  .mhead .mdeck{font-size:1.25rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .mhead .mwho{font-size:.95rem;color:var(--sub);font-weight:600;white-space:nowrap}
+  .mhead .mctl{margin-left:auto;display:flex;align-items:center;gap:.3rem;flex:0 0 auto}
+  .mctl button{border:none;background:var(--panel2);color:var(--sub);font-family:inherit;font-weight:900;
+    font-size:.95rem;width:2.3rem;height:2.3rem;border-radius:99px;cursor:pointer}
+  .mctl button.paused{background:var(--gold);color:#fff}
+  .mctl .mpos{font-size:1rem;font-weight:800;color:var(--sub);min-width:3.8rem;text-align:right}
+  .mcard{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.9rem;background:var(--panel2);border-radius:.9rem;padding:1rem 1.6rem;text-align:center;
+    cursor:pointer;overflow:hidden;user-select:none}
+  .mcard .mq{font-weight:900;line-height:1.25;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
+  .mcard .ma{font-weight:800;color:var(--accent);line-height:1.3;white-space:pre-wrap;
+    word-break:keep-all;overflow-wrap:anywhere;transition:opacity .5s}
+  .mcard .ma.hide{opacity:0}
+  .mcard .mline{width:28%;height:3px;border-radius:3px;background:var(--line);flex:0 0 auto}
+  .mbar{flex:0 0 auto;height:.42rem;background:var(--line);border-radius:99px;overflow:hidden}
+  .mbar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px}
+
   /* ═══ 🎬 영상 보기 ═══════════════════════════════════════════ */
   /* 볼 영상이 있을 때만 머리말에 전환 단추가 나타납니다 */
   .viewtabs{display:none;gap:.35rem;margin-left:1rem}
@@ -599,8 +632,31 @@
 
     <!-- 공지 카드 (우상단) -->
     <section class="card" id="noticeCard">
-      <h2><span class="em">📢</span>공지사항</h2>
-      <div class="body"><div id="noticeStage"></div></div>
+      <h2><span class="em" id="ncIcon">📢</span><span id="ncTitle">공지사항</span>
+        <span class="ntabs">
+          <button id="ntNotice" class="on" onclick="setNoticeMode('notice')">📢 공지</button>
+          <button id="ntMemo" onclick="setNoticeMode('memo')">🧠 암기</button>
+        </span></h2>
+      <div class="body"><div id="noticeStage"></div>
+        <!-- 🧠 암기 카드 — 한 장씩 보여 주고 저절로 넘어갑니다 -->
+        <div id="memoStage">
+          <div class="mhead">
+            <span class="msubj" id="mSubj"></span><span class="mdeck" id="mDeck"></span><span class="mwho" id="mWho"></span>
+            <span class="mctl">
+              <button onclick="memoGo(-1)" title="앞 카드">◀</button>
+              <button id="mPause" onclick="memoTogglePause()" title="멈춤">⏸</button>
+              <button onclick="memoGo(1)" title="다음 카드">▶</button>
+              <span class="mpos" id="mPos"></span>
+            </span>
+          </div>
+          <div class="mcard" id="mCard" onclick="memoTap()">
+            <div class="mq" id="mQ"></div>
+            <div class="mline" id="mLine"></div>
+            <div class="ma" id="mA"></div>
+          </div>
+          <div class="mbar"><i id="mBar"></i></div>
+        </div>
+      </div>
       <div id="dots"></div>
     </section>
 
@@ -1278,6 +1334,150 @@ function nextSlide(){
   if(cnt) cnt.textContent = cnt.textContent.replace(/\d+\/\d+$/, `${slideIdx+1}/${slides.length}`);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   🧠 암기 카드
+   ───────────────────────────────────────────────────────────────
+   교과 선생님이 올린 암기 내용을 공지 칸에서 한 장씩 보여 줍니다.
+   앞면 → (답이 있으면) 잠시 뒤 답 → 다음 장. 글자가 많을수록 오래 머뭅니다.
+   카드를 누르면 답이 바로 나오고, 한 번 더 누르면 다음 장으로 넘어갑니다.
+   공지/암기 중 무엇을 띄울지는 이 기기에 기억합니다.
+   ═══════════════════════════════════════════════════════════════ */
+const LS_NMODE = SCHOOL.key('hnr_notice_mode');
+let noticeMode = (()=>{ try{ return localStorage.getItem(LS_NMODE) || 'notice'; }catch(e){ return 'notice'; } })();
+let memoDecks = [], MEMO = [], memoIdx = 0, memoLive = false;
+let memoTimer = null, memoRevealTimer = null, memoResumeTimer = null;
+let memoPaused = false, memoDur = 0, memoLeft = 0, memoRevealLeft = -1, memoStartAt = 0;
+
+async function loadMemo(){
+  const t = todayStr();
+  const { data, error } = await sb.from('memo_decks').select('*')
+    .lte('start_at', t).or(`end_at.is.null,end_at.gte.${t}`)
+    .order('created_at', {ascending:false});
+  memoDecks = error ? [] : (data||[]).filter(forThisBoard);   // 표가 아직 없어도 화면은 그대로
+  buildMemo();
+  // 표가 있을 때만 실시간 구독 (없는 표를 구독하면 다른 실시간까지 막힐 수 있어 따로 둡니다)
+  if(!error && !memoLive){
+    memoLive = true;
+    sb.channel('memo-live').on('postgres_changes',{event:'*',schema:'public',table:'memo_decks'}, loadMemo).subscribe();
+  }
+}
+function buildMemo(){
+  const cur = MEMO[memoIdx];
+  MEMO = [];
+  memoDecks.forEach(d=>{
+    const cards = Array.isArray(d.cards) ? d.cards : [];
+    cards.forEach((c,i)=>{
+      const q = String(c?.q ?? '').trim(); if(!q) return;
+      MEMO.push({ q, a:String(c?.a ?? '').trim(), deck:d, n:i+1, of:cards.length, key:`${d.id}:${i}` });
+    });
+  });
+  document.body.classList.toggle('hasmemo', MEMO.length > 0);
+  $('ntMemo').innerHTML = '🧠 암기' + (MEMO.length ? ` <b>${MEMO.length}</b>` : '');
+  // 보던 카드가 그대로 있으면 이어서, 없어졌으면 처음부터
+  const k = cur ? MEMO.findIndex(m => m.key===cur.key) : -1;
+  const same = k >= 0 && MEMO[k].q===cur.q && MEMO[k].a===cur.a;
+  memoIdx = k >= 0 ? k : 0;
+  applyNoticeMode(!same);
+}
+function setNoticeMode(m){
+  noticeMode = m;
+  try{ localStorage.setItem(LS_NMODE, m); }catch(e){}
+  applyNoticeMode(true);
+}
+function applyNoticeMode(restart){
+  const memo = noticeMode==='memo' && MEMO.length > 0;
+  const was = document.body.classList.contains('memomode');
+  document.body.classList.toggle('memomode', memo);
+  $('ntNotice').classList.toggle('on', !memo); $('ntMemo').classList.toggle('on', memo);
+  $('ncIcon').textContent = memo ? '🧠' : '📢';
+  $('ncTitle').textContent = memo ? '암기 카드' : '공지사항';
+  if(memo){ if(restart || !was) showMemo(memoIdx); }
+  else {
+    stopMemo();
+    if(was) rebuildStage();          // 가려져 있던 동안엔 칸 크기를 잴 수 없어 다시 배치
+  }
+}
+function memoDuration(m){              // 6~16초, 글자가 많을수록 길게
+  return Math.min(16, Math.max(6, 5 + (m.q.length + m.a.length) * 0.12)) * 1000;
+}
+function stopMemo(){
+  clearTimeout(memoTimer); clearTimeout(memoRevealTimer);
+  memoTimer = memoRevealTimer = null;
+}
+function showMemo(i){
+  stopMemo();
+  if(!MEMO.length) return;
+  memoIdx = ((i % MEMO.length) + MEMO.length) % MEMO.length;
+  const m = MEMO[memoIdx], d = m.deck;
+  const tgt = d.grade ? `${d.grade}학년${d.class_no ? ' '+d.class_no+'반' : ''}` : '전교';
+  $('mSubj').textContent = d.subject || '';
+  $('mDeck').textContent = d.title + (m.of > 1 ? ` · ${m.n}/${m.of}` : '');
+  $('mWho').textContent = (d.author_name ? d.author_name+' 선생님 · ' : '') + tgt;
+  $('mPos').textContent = `${memoIdx+1} / ${MEMO.length}`;
+  $('mQ').textContent = m.q;
+  $('mA').textContent = m.a;
+  $('mA').style.display = $('mLine').style.display = m.a ? '' : 'none';
+  $('mA').classList.toggle('hide', !!m.a);
+  fitMemo();
+  memoDur = memoDuration(m);
+  memoRun(memoDur, m.a ? memoDur * 0.45 : -1);
+}
+function memoRun(left, revealIn){
+  memoLeft = left; memoRevealLeft = revealIn; memoStartAt = Date.now();
+  const bar = $('mBar');
+  bar.style.transition = 'none';
+  bar.style.width = ((memoDur - left) / memoDur * 100) + '%';
+  if(memoPaused) return;
+  void bar.offsetWidth;
+  bar.style.transition = `width ${left}ms linear`;
+  bar.style.width = '100%';
+  if(revealIn >= 0) memoRevealTimer = setTimeout(memoReveal, revealIn);
+  memoTimer = setTimeout(()=>showMemo(memoIdx + 1), left);
+}
+function memoReveal(){
+  $('mA').classList.remove('hide');
+  memoRevealLeft = -1;
+}
+/* 카드를 누르면: 답이 아직이면 답, 이미 보이면 다음 장 */
+function memoTap(){
+  if($('mA').classList.contains('hide')){ clearTimeout(memoRevealTimer); memoReveal(); }
+  else memoGo(1);
+}
+function memoGo(step){
+  if(memoPaused) memoTogglePause();
+  showMemo(memoIdx + step);
+}
+/* ⏸ 멈춤 — 설명하실 때. 잊고 가셔도 3분 뒤에는 다시 넘어갑니다 */
+function memoTogglePause(){
+  clearTimeout(memoResumeTimer);
+  if(!memoPaused){
+    const used = Date.now() - memoStartAt;
+    stopMemo();
+    memoPaused = true;
+    memoLeft = Math.max(800, memoLeft - used);
+    if(memoRevealLeft >= 0) memoRevealLeft = Math.max(0, memoRevealLeft - used);
+    memoRun(memoLeft, memoRevealLeft);
+    memoResumeTimer = setTimeout(memoTogglePause, 180000);
+  } else {
+    memoPaused = false;
+    memoRun(memoLeft, memoRevealLeft);
+  }
+  $('mPause').textContent = memoPaused ? '▶' : '⏸';
+  $('mPause').classList.toggle('paused', memoPaused);
+  $('mPause').title = memoPaused ? '다시 넘기기' : '멈춤';
+}
+/* 칸에 맞게 글자 크기 — 짧은 단어는 크게, 긴 문장은 작게 */
+function fitMemo(){
+  const card = $('mCard'), q = $('mQ'), a = $('mA');
+  if(!card || !card.clientHeight) return;
+  let qs = 6.2, as = 4.0;
+  const set = () => { q.style.fontSize = qs+'rem'; a.style.fontSize = as+'rem'; };
+  set();
+  for(let k=0; k<40 && (card.scrollHeight > card.clientHeight + 2 || card.scrollWidth > card.clientWidth + 2) && qs > 1.2; k++){
+    qs -= 0.2; as = Math.max(1.1, as - 0.14); set();
+  }
+}
+
 /* ── 호출 (학생 호출) ── */
 let callData = [];
 function classKey(c){ return `${c.grade??'?'}-${c.class_no??'?'}`; }
@@ -1900,6 +2100,16 @@ function renderDemo(){
     {item_name:'검정 우산',found_place:'3층 복도',keep_place:'교무실',photo_url:null}
   ];
   rebuildStage();
+  // 🧠 암기 카드
+  memoDecks = [
+    {id:1,subject:'영어',title:'Lesson 3 단어',grade:null,author_name:'김영희',
+     cards:[{q:'photosynthesis',a:'광합성'},{q:'carbon dioxide',a:'이산화 탄소'},{q:'oxygen',a:'산소'}]},
+    {id:2,subject:'과학',title:'원소 기호',grade:2,author_name:'조승재',
+     cards:[{q:'Na',a:'나트륨'},{q:'Cl',a:'염소'},{q:'Ca',a:'칼슘'}]},
+    {id:3,subject:'국어',title:'오늘의 고사성어',grade:null,author_name:'박철수',
+     cards:[{q:'각골난망 (刻骨難忘)',a:'남에게 입은 은혜가 뼈에 새길 만큼 커서 잊히지 않음'}]}
+  ];
+  buildMemo();
   // 청소당번 (교실 모드일 때만 보임)
   $('cleanBox').innerHTML = '<div class="squad small"><b>3조</b><span>이번 주</span></div>'
     + [['칠판','김OO'],['바닥 쓸기','이OO'],['쓰레기통','박OO']]
@@ -1952,11 +2162,11 @@ async function boot(){
   applyClassMode(); updatePeriod(); buildGoClass(); runSetup(); applyTTBig();
   if(DEMO){ renderDemo(); return; } // 데모: 정적 샘플만 (네트워크/실시간 없음)
   await loadConfig();
-  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadVideos(), loadBirthdays(), loadLiveTimetable(), loadMeal(), loadWeather(), loadAir()]);
+  await Promise.all([loadNotices(), loadLost(), loadSchedules(), loadSchoolSched(), loadTTC(), loadLocations(), loadTimetableNEIS(), loadWeekTT(), loadDdays(), loadAssessments(), loadCalls(), loadCleaning(), loadRoles(), loadVideos(), loadMemo(), loadBirthdays(), loadLiveTimetable(), loadMeal(), loadWeather(), loadAir()]);
   subscribe();
 }
 boot();
-addEventListener('resize', ()=>{ fitNoticeItems(); fitWeekTable(); });   // 창 크기 바뀌면 공지·시간표 칸 다시 맞춤
+addEventListener('resize', ()=>{ fitNoticeItems(); fitWeekTable(); fitMemo(); });   // 창 크기 바뀌면 공지·시간표 칸 다시 맞춤
 
 /* ── 🔄 하루 한 번 새로고침 ────────────────────────────────────────
    전자칠판은 몇 주씩 켜둔 채로 두게 됩니다. 그동안 자료는 계속 받아오지만
@@ -1973,7 +2183,7 @@ setInterval(()=>{
 setInterval(()=>{ updatePeriod(); if(ttMode==='week') renderWeekTT(); else if(document.body.classList.contains('ttbig')) renderTTC(); }, 20000); // 현재 교시 표시 갱신 (주간 표의 '지금' 칸도)
 if(!DEMO){
   setInterval(loadCalls, 30000); // 호출은 30초마다 (실시간 보조)
-  setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); loadVideos(); loadBirthdays(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
+  setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); loadVideos(); loadMemo(); loadBirthdays(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
   setInterval(loadMeal, 3600000);          // 급식 1시간마다
   setInterval(loadTimetableNEIS, 3600000); // NEIS 시간표 1시간마다
   setInterval(loadWeekTT, 21600000);       // 주간 시간표 6시간마다
