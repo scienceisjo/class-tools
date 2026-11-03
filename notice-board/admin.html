@@ -346,7 +346,7 @@
         <select id="nDept"><option value="">표시 안 함</option></select></div>
       <div class="field"><label>🔗 링크 URL (선택) — 입력하면 화면에 <b>QR코드</b>가 표시됩니다</label><input id="nLink" type="url" placeholder="예: https://forms.gle/... (신청서·설문)"></div>
       <div class="row">
-        <div class="field" id="nSubjWrap" style="display:none"><label>교과명</label><input id="nSubj" placeholder="예: 수학"></div>
+        <div class="field" id="nSubjWrap" style="display:none"><label>교과명 — 이 과목 수업 직전 쉬는 시간에 「⏭ 다음 시간」에도 나옵니다</label><input id="nSubj" placeholder="예: 수학"></div>
         <div class="field"><label>대상 학년</label>
           <select id="nGrade"><option value="">전교</option><option>1</option><option>2</option><option>3</option></select></div>
         <div class="field"><label>대상 반 (비우면 학년 전체)</label>
@@ -502,6 +502,15 @@
       <button class="btn" id="lcSave" onclick="saveLoc()">📍 장소 등록</button>
     </div>
     <div class="card"><h2>등록된 장소 안내</h2><div id="locList"><div class="empty">불러오는 중…</div></div></div>
+    <div class="card">
+      <h2>🚶 과목별 기본 수업 장소 (이동수업)</h2>
+      <div class="hint">교실 전자칠판 위쪽에 쉬는 시간마다 <b>⏭ 다음 시간</b>이 나옵니다(다음 교시·과목·장소·그 과목 교과 공지).
+        과목마다 늘 가는 곳을 적어 두시면 장소도 함께 나옵니다. 위에서 날짜별로 올린 장소가 있는 날은 그 장소가 빨간색으로 먼저 나옵니다.</div>
+      <textarea id="roomMap" rows="6" placeholder="과학 = 과학실&#10;체육 = 운동장&#10;음악 = 음악실&#10;2학년 미술 = 2층 미술실"></textarea>
+      <div class="hint" style="margin-top:6px">한 줄에 「과목 = 장소」. 학년마다 다르면 앞에 「2학년」처럼 붙입니다. 우리 반 교실에서 하는 과목은 적지 않으셔도 됩니다.
+        <span id="roomOwnerNote">저장은 관리 담당자만 할 수 있습니다.</span></div>
+      <button class="btn" id="roomSave" onclick="saveRoomMap()">기본 장소 저장</button>
+    </div>
   </div>
 
   <!-- 디데이 -->
@@ -1081,7 +1090,7 @@ function enterDash(){
   if(shared && document.querySelector('.tab.on')?.dataset.p === 'msg') tab('notice');
   $('whoami').textContent = READONLY ? '👀 둘러보기'
     : (shared ? '👥 공동계정' : (myName+' 선생님'));
-  loadNotices(); loadScheds(); loadLocs(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadVideos(); loadMemoDecks(); loadBirthdays(); loadCfg(); makeUrl();
+  loadNotices(); loadScheds(); loadLocs(); loadRoomMap(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadVideos(); loadMemoDecks(); loadBirthdays(); loadCfg(); makeUrl();
   if(!shared){ loadMsgs(false); refreshMsgBadge(); }   // 공동계정은 쪽지 조회 자체를 안 함
   msgUrlHint(); buildSquadChips(); loadSquadCfg();
   loadPalette('clean'); loadPalette('duty'); loadApprovals();
@@ -1613,6 +1622,26 @@ async function saveLoc(){
   $('lcNote').value='';
   toast('📍 장소 등록됨'); loadLocs();
 }
+/* 🚶 과목별 기본 수업 장소 — display_config 'subject_rooms' (교실 화면 ⏭ 다음 시간에 씀) */
+async function loadRoomMap(){
+  const ta=$('roomMap'); if(!ta) return;
+  const { data } = await sb.from('display_config').select('value').eq('key','subject_rooms').maybeSingle();
+  ta.value = data?.value || '';
+  const owner = !READONLY && !!myAdmin?.is_owner;
+  ta.readOnly = !owner;
+  $('roomSave').style.display = owner ? '' : 'none';
+  $('roomOwnerNote').textContent = owner ? '' : '바꿀 곳이 있으면 관리 담당 선생님께 말씀해 주세요.';
+}
+async function saveRoomMap(){
+  const value = $('roomMap').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).join('\n');
+  $('roomSave').disabled=true;
+  const { error } = await sb.from('display_config').upsert({ key:'subject_rooms', value });
+  $('roomSave').disabled=false;
+  if(error){ toast('저장 실패: '+error.message); return; }
+  $('roomMap').value = value;
+  toast('✅ 저장됐습니다 — 교실 화면에 바로 반영됩니다');
+}
+
 async function loadLocs(){
   const today=new Date().toISOString().slice(0,10);
   const { data } = await sb.from('class_locations').select('*').gte('loc_date',today)

@@ -368,6 +368,29 @@
   .setup .kbd{display:inline-block;background:#eff6ff;color:var(--accent);font-weight:900;
     border-radius:.4rem;padding:.05rem .55rem}
 
+  /* ═══ ⏭ 다음 시간 — 쉬는 시간에 다음 교시·장소·교과 공지 ═════ */
+  #nextBar{flex:0 0 auto;display:none;align-items:center;gap:1.1rem;padding:.65rem 1.8rem;min-width:0;
+    background:linear-gradient(90deg,#e9f0ff,#f5f8ff);border-bottom:2px solid #c9dafd}
+  body.shownext #nextBar{display:flex}
+  body.videomode #nextBar{display:none !important}
+  #nextBar .nb-lab{flex:0 0 auto;font-size:1.2rem;font-weight:900;color:#fff;background:var(--accent);
+    border-radius:99px;padding:.3rem 1rem}
+  #nextBar .nb-when{flex:0 0 auto;font-size:1.35rem;font-weight:700;color:var(--sub)}
+  #nextBar .nb-when b{color:var(--txt);font-weight:900}
+  #nextBar .nb-subj{flex:0 0 auto;font-size:2.1rem;font-weight:900;line-height:1.1}
+  #nextBar .nb-subj .was{font-size:1.3rem;color:var(--sub);text-decoration:line-through;margin-right:.4rem;font-weight:700}
+  #nextBar .nb-subj .chgb{font-size:1rem;font-weight:900;color:#fff;background:var(--urgent);border-radius:99px;
+    padding:.12rem .6rem;margin-left:.45rem;vertical-align:middle}
+  #nextBar .nb-loc{flex:0 0 auto;font-size:1.75rem;font-weight:900;color:var(--accent)}
+  #nextBar .nb-loc:empty{display:none}
+  #nextBar .nb-loc.moved{color:#fff;background:var(--urgent);border-radius:.6rem;padding:.12rem .8rem}
+  #nextBar .nb-loc small{font-size:1rem;font-weight:800;margin-left:.35rem;opacity:.9}
+  #nextBar .nb-note{flex:1 1 auto;min-width:0;font-size:1.35rem;font-weight:800;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;border-left:2px solid #c9dafd;padding-left:1rem}
+  #nextBar .nb-note:empty{display:none}
+  #nextBar .nb-note .nb-body{font-weight:600;color:#41506e}
+  #nextBar .nb-note .nb-who{font-size:1.05rem;color:var(--sub);font-weight:600;margin-left:.4rem}
+
   /* ═══ 🧠 암기 카드 — 공지 칸에서 한 장씩 ════════════════════ */
   /* 이 교실에 보여 줄 암기 카드가 있을 때만 공지 칸 제목에 전환 단추가 나타납니다 */
   #noticeCard h2 .ntabs{display:none;margin-left:auto;gap:.3rem}
@@ -609,6 +632,15 @@
     <span class="clabel">📣 호출</span>
     <select id="callFilter" onchange="renderCalls()"><option value="">전체 반</option></select>
     <div id="callList"></div>
+  </div>
+
+  <!-- ⏭ 다음 시간 — 교실 화면에서 쉬는 시간에만 -->
+  <div id="nextBar">
+    <span class="nb-lab">⏭ 다음 시간</span>
+    <span class="nb-when" id="nbWhen"></span>
+    <span class="nb-subj" id="nbSubj"></span>
+    <span class="nb-loc" id="nbLoc"></span>
+    <span class="nb-note" id="nbNote"></span>
   </div>
 
   <div id="ddayBar"></div>
@@ -1119,10 +1151,12 @@ setInterval(tick, 1000); tick();
 async function loadConfig(){
   // 화면에 필요한 값만 받아온다 (가입 코드 등은 애초에 요청하지 않음)
   const { data } = await sb.from('display_config').select('key,value')
-    .in('key', ['school_name','slide_seconds','neis_atpt','neis_school','weather_lat','weather_lon']);
+    .in('key', ['school_name','slide_seconds','neis_atpt','neis_school','weather_lat','weather_lon','subject_rooms']);
   if(data) data.forEach(r => CFG[r.key] = r.value);
   $('schoolName').textContent = CFG.school_name || SCHOOL.name;
   document.title = (CFG.school_name||'학교') + ' 공지';
+  SUBJECT_ROOMS = parseRooms(CFG.subject_rooms);      // 과목별 기본 수업 장소 (⏭ 다음 시간)
+  renderNextBar();
 }
 
 /* ── 공지 로드 + 슬라이드 ── */
@@ -1159,6 +1193,7 @@ async function loadNotices(){
   // (예전에는 비면 전체 목록으로 되돌렸는데, 그래서 다른 반 공지가 새어 나왔습니다)
   noticeCards = list.filter(n => n.category!=='긴급').filter(forThisBoard);
   rebuildStage();
+  renderNextBar();       // 교과 공지가 ⏭ 다음 시간 띠에도 나옵니다
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1953,6 +1988,7 @@ function renderTTC(){
       `<div class="listrow ttc"><span class="who">${l.period?l.period+'교시':esc(l.subject)}</span><span class="t">${l.period?esc(l.subject)+' ':''}<span class="locpin">📍${esc(l.location)}</span>${l.note?` <span class="loc">(${esc(l.note)})</span>`:''}</span></div>`));
     box.innerHTML = html + extra.join('');
     renderWeekTT();   // 변경사항을 주간 표에도 반영
+    renderNextBar();  // 바뀐 수업·장소를 ⏭ 다음 시간 띠에도
   } else {
     // ── 중앙 보드: 반을 골라 시간표를 보거나, 변경·장소 목록 ──
     $('ttcTitle').style.display='none';
@@ -1969,6 +2005,108 @@ function renderTTC(){
     ];
     box.innerHTML = rows.length ? rows.join('') : '<div class="empty">오늘 변경사항 없음 ✅</div>';
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ⏭ 다음 시간 안내 (교실 화면)
+   ───────────────────────────────────────────────────────────────
+   수업 중이 아니고 다음 교시가 15분 안에 시작하면 위쪽 띠에 보여 줍니다.
+     다음 교시·시작 시각 │ 과목 │ 📍 장소 │ 그 과목 교과 공지
+   장소: 그날 「📍 수업 장소」로 올린 것(빨간 「장소 바뀜」) → 없으면 과목별 기본 장소(설정)
+   교과 공지: 「📚 교과별」 공지 중 다음 과목과 같은 과목
+   미리보기: 주소에 &now=10:36 을 붙이면 그 시각처럼 보여 줍니다.
+   ═══════════════════════════════════════════════════════════════ */
+const NEXT_WINDOW = 15;                        // 몇 분 전부터 보여 줄지
+let SUBJECT_ROOMS = [];                        // [{grade, subj, room}]  ← display_config 'subject_rooms'
+let nbNotes = [], nbNoteIdx = 0, nbNoteTimer = null, nbKey = '';
+const NOW_OVERRIDE = (()=>{ const m=location.search.match(/[?&]now=(\d{1,2}):?(\d{2})/); return m ? [+m[1], +m[2]] : null; })();
+function nowDate(){ const d=new Date(); if(NOW_OVERRIDE) d.setHours(NOW_OVERRIDE[0], NOW_OVERRIDE[1], 0, 0); return d; }
+
+/* 「과목 = 장소」 줄 읽기 — 앞에 「2학년」을 붙이면 그 학년만 */
+function parseRooms(text){
+  return String(text||'').split(/\r?\n/).map(l=>{
+    const m = l.match(/^\s*(?:([1-6])\s*학년\s*)?(.+?)\s*[=:]\s*(.+?)\s*$/);
+    return m ? { grade: m[1] ? Number(m[1]) : null, subj: m[2], room: m[3] } : null;
+  }).filter(Boolean);
+}
+/* 과목 이름 맞추기 — 과학A·과학B → 과학, 기술·가정·기가 → 기술가정 */
+const SUBJ_ALIAS = { '기술':'기술가정', '가정':'기술가정', '기가':'기술가정' };
+function subjKey(s){
+  const raw = String(s||'').replace(/[\s·.,()]/g, '');
+  const k = raw.replace(/[A-Za-z0-9]+$/, '') || raw.toLowerCase();
+  return SUBJ_ALIAS[k] || k;
+}
+function subjMatch(a, b){
+  const x = subjKey(a), y = subjKey(b);
+  if(!x || !y) return false;
+  return x === y || (x.length >= 2 && y.length >= 2 && (x.startsWith(y) || y.startsWith(x)));
+}
+/* 오늘 이 반의 교시별 과목 (renderTTC 와 같은 순서: 컴시간 원본 → 나이스) */
+function todaySubjects(){
+  const periods = {};
+  (neisTT||[]).forEach(r=>{ const p=Number(r.PERIO); if(p && !periods[p]) periods[p]=r.ITRT_CNTNT||''; });
+  const baseDay = ttBaseDay(schoolDayFor(nowDate()));
+  if(baseDay) baseDay.forEach((s,i)=>{ if(s && s.trim()) periods[i+1]=s; });
+  return periods;
+}
+function nextPeriodInfo(){
+  if(!CLASS_MODE) return null;
+  const now = nowDate(), dow = now.getDay();
+  if(dow===0 || dow===6) return null;
+  const m = now.getHours()*60 + now.getMinutes();
+  const effDow = schoolDayFor(now).getDay() || dow;            // 요일변경일이면 바뀐 요일의 교시 수
+  const today = BELL.filter(p => !p.days || p.days.includes(effDow));
+  if(today.some(p => /교시$/.test(p.label) && m >= _toMin(p.s) && m < _toMin(p.e))) return null;   // 수업 중
+  const nx = today.find(p => /^\d+교시$/.test(p.label) && _toMin(p.s) > m);
+  if(!nx) return null;
+  const left = _toMin(nx.s) - m;
+  if(left > NEXT_WINDOW) return null;
+  return { p: parseInt(nx.label, 10), start: nx.s, left };
+}
+function renderNextBar(){
+  const info = nextPeriodInfo();
+  let subj = info ? (todaySubjects()[info.p] || '') : '';
+  const show = !!(info && subj.trim());
+  const was = document.body.classList.contains('shownext');
+  document.body.classList.toggle('shownext', show);
+  if(was !== show){ fitNoticeItems(); fitWeekTable(); fitMemo(); }   // 띠가 생기고 사라지면 아래 칸 크기가 바뀜
+  if(!show){ clearInterval(nbNoteTimer); nbNoteTimer=null; nbKey=''; return; }
+
+  const p = info.p;
+  // 과목 — 선생님이 올린 시간표 변경 / 컴시간 결보강
+  const chg = ttcRows.filter(_mine).find(c => c.period===p);
+  const autoChg = ttChangedOn(nowDate()).includes(p);
+  let subjHtml = esc(subj);
+  if(chg){ subj = chg.after_subj || subj;
+    subjHtml = `<span class="was">${esc(chg.before_subj||'')}</span>${esc(subj)}<span class="chgb">바뀐 수업</span>`; }
+  else if(autoChg) subjHtml = `${esc(subj)}<span class="chgb">🔁 바뀐 수업</span>`;
+  // 장소 — 그날 올린 수업 장소 → 과목별 기본 장소
+  const myLoc = locRows.filter(_mine);
+  const loc = myLoc.find(l => l.period===p) || myLoc.find(l => !l.period && subjMatch(l.subject, subj));
+  const room = SUBJECT_ROOMS.find(r => r.grade===CM_GRADE && subjMatch(r.subj, subj))
+            || SUBJECT_ROOMS.find(r => r.grade==null && subjMatch(r.subj, subj));
+  const locEl = $('nbLoc');
+  locEl.className = 'nb-loc' + (loc ? ' moved' : '');
+  locEl.innerHTML = loc ? `📍 ${esc(loc.location)}<small>장소 바뀜${loc.note?' · '+esc(loc.note):''}</small>`
+                  : room ? `📍 ${esc(room.room)}` : '';
+  $('nbWhen').innerHTML = `<b>${p}교시</b> ${info.start} · ${info.left<=0 ? '곧 시작' : info.left+'분 뒤'}`;
+  $('nbSubj').innerHTML = subjHtml;
+  // 그 과목 교과 공지 — 여러 건이면 6초마다 돌려 보여 줌
+  nbNotes = noticeCards.filter(n => n.category==='교과' && subjMatch(n.subject, subj));
+  const key = `${p}|${subj}|${nbNotes.map(n=>n.id||n.title).join(',')}`;
+  if(key !== nbKey){
+    nbKey = key; nbNoteIdx = 0; clearInterval(nbNoteTimer); nbNoteTimer = null;
+    if(nbNotes.length > 1) nbNoteTimer = setInterval(()=>{ nbNoteIdx=(nbNoteIdx+1)%nbNotes.length; renderNbNote(); }, 6000);
+  }
+  renderNbNote();
+}
+function renderNbNote(){
+  const n = nbNotes[nbNoteIdx % (nbNotes.length||1)], el = $('nbNote');
+  if(!n){ el.innerHTML = ''; return; }
+  const body = n.body && n.body.length <= 60 ? ` <span class="nb-body">— ${esc(n.body.replace(/\s+/g,' '))}</span>` : '';
+  el.innerHTML = `📢 ${esc(n.title)}${body}`
+    + `${n.author_name ? `<span class="nb-who">${esc(n.author_name)} 선생님</span>` : ''}`
+    + `${nbNotes.length > 1 ? `<span class="nb-who">(${nbNoteIdx+1}/${nbNotes.length})</span>` : ''}`;
 }
 
 /* ── 급식 (NEIS 직접 호출) ── */
@@ -2094,8 +2232,11 @@ function renderDemo(){
   // 공지 (교과/학년/일반 + QR) + 분실물 — 함께 순환
   noticeCards = [
     {category:'일반',grade:null,title:'독서골든벨 참가 신청',body:'아래 QR로 신청서를 작성하세요. (마감 금요일)',link:'https://example.com/form',author_name:'도서관',created_at:new Date().toISOString()},
-    {category:'학년',grade:1,title:'1학년 현장체험학습 동의서 제출',body:'금요일까지 담임 선생님께 제출해 주세요.',author_name:'박철수',created_at:new Date().toISOString()}
+    {category:'학년',grade:1,title:'1학년 현장체험학습 동의서 제출',body:'금요일까지 담임 선생님께 제출해 주세요.',author_name:'박철수',created_at:new Date().toISOString()},
+    {category:'교과',subject:'과학',grade:2,title:'실험복과 교과서를 챙겨 오세요',body:'오늘은 과학실에서 실험합니다.',author_name:'조승재',created_at:new Date().toISOString()},
+    {category:'교과',subject:'수학',grade:2,title:'익힘책 42쪽까지 풀어 오기',author_name:'이수학',created_at:new Date().toISOString()}
   ];
+  SUBJECT_ROOMS = parseRooms('과학 = 과학실\n체육 = 운동장\n음악 = 음악실\n미술 = 미술실\n정보 = 컴퓨터실\n기술 = 기술실');
   lostItems = [
     {item_name:'검정 우산',found_place:'3층 복도',keep_place:'교무실',photo_url:null}
   ];
@@ -2155,6 +2296,7 @@ function renderDemo(){
     {d:3,ty:'수행평가',g:2,sub:'과학',ti:'광합성 단원 수행평가',sc:'교과서 4단원'},
     {d:11,ty:'지필평가',g:null,sub:'수학',ti:'1학기 기말고사',sc:'함수~통계'}
   ].map(a=>{const dd=new Date(ymdPlus(a.d)+'T00:00');return `<div class="assessrow"><span class="d">${dd.getMonth()+1}/${dd.getDate()}(${DOW[dd.getDay()]})</span><span class="t"><span class="ty ty-${a.ty}">${a.ty}</span><span class="sub">${a.g?a.g+'학년 ':''}${a.sub}</span> ${a.ti}<span class="sc">📖 ${a.sc}</span></span></div>`;}).join('');
+  renderNextBar();   // ⏭ 다음 시간 (미리보기: &now=10:36 처럼 시각을 붙이면 그 시각의 화면)
 }
 
 /* ── 부팅 + 주기적 새로고침 ── */
@@ -2180,7 +2322,7 @@ setInterval(()=>{
   // 새벽 4시대 + 6시간 이상 켜져 있었을 때만
   if(d.getHours() === 4 && openedHours > 6) location.reload();
 }, 300000);   // 5분마다 확인
-setInterval(()=>{ updatePeriod(); if(ttMode==='week') renderWeekTT(); else if(document.body.classList.contains('ttbig')) renderTTC(); }, 20000); // 현재 교시 표시 갱신 (주간 표의 '지금' 칸도)
+setInterval(()=>{ updatePeriod(); renderNextBar(); if(ttMode==='week') renderWeekTT(); else if(document.body.classList.contains('ttbig')) renderTTC(); }, 20000); // 현재 교시 표시 갱신 (주간 표의 '지금' 칸도)
 if(!DEMO){
   setInterval(loadCalls, 30000); // 호출은 30초마다 (실시간 보조)
   setInterval(()=>{ loadNotices(); loadLost(); loadSchedules(); loadTTC(); loadLocations(); loadDdays(); loadAssessments(); loadCleaning(); loadRoles(); loadVideos(); loadMemo(); loadBirthdays(); }, 120000); // 2분마다 백업 새로고침 (디데이도 자정 지나면 자동 감소)
