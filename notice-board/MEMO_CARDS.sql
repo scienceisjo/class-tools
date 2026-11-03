@@ -39,6 +39,16 @@ CREATE INDEX IF NOT EXISTS idx_memo_class ON memo_decks(grade, class_no);
 GRANT SELECT, INSERT, UPDATE, DELETE ON memo_decks TO anon, authenticated, service_role;
 GRANT USAGE, SELECT ON SEQUENCE memo_decks_id_seq TO anon, authenticated, service_role;
 
+-- 공동계정 「지금 쓰시는 선생님」 명단 (없으면 만듦)
+CREATE TABLE IF NOT EXISTS shared_posters (                 -- 공동계정 「지금 쓰시는 선생님」 명단
+  name    text PRIMARY KEY,
+  subject text,
+  dept    text,
+  uses    int NOT NULL DEFAULT 0,
+  used_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON shared_posters TO anon, authenticated, service_role;
+
 -- 올리면 교실 화면에 바로 (실시간 반영)
 DO $rt$
 BEGIN
