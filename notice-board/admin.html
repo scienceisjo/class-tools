@@ -638,6 +638,30 @@
 
   <!-- 1인1역 -->
   <div class="panel" id="p-role">
+    <div class="card wform">
+      <h2>🧑‍🎓 학생 도우미 코드</h2>
+      <div class="hint">1인1역 학생에게 코드를 주면 학생용 페이지에서 <b>그 반의 🧠 암기 카드 · 🧹 청소당번 · 🙋 1인1역</b>만 고칠 수 있습니다.
+        공지·호출·쪽지·설정·다른 반은 건드릴 수 없고, 고친 학생 이름이 기록에 남습니다. 코드를 10번 틀리면 10분 잠깁니다.</div>
+      <div class="row">
+        <div class="field"><label>학년</label><select id="scGrade"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="scClass" type="number" min="1" placeholder="예: 3"></div>
+      </div>
+      <button class="btn" id="scMake" onclick="makeClassCode()">새 코드 만들기 (예전 코드는 바로 막힘)</button>
+      <div id="scOut" style="display:none;margin-top:12px;padding:14px;border:1.5px solid var(--line);border-radius:12px;background:#f8fafc">
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <img id="scQr" alt="QR" style="width:110px;height:110px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px">
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:12px;color:var(--sub);font-weight:700">학생 도우미 코드</div>
+            <div id="scCode" style="font-size:32px;font-weight:900;letter-spacing:4px;color:var(--txt)"></div>
+            <div style="font-size:12px;color:var(--sub);font-weight:700;margin-top:6px">학생용 주소</div>
+            <input id="scUrl" readonly onclick="this.select()" style="font-size:12.5px">
+          </div>
+        </div>
+        <div class="hint" style="margin:10px 0 0">이 코드는 지금만 보입니다(서버에는 암호로만 저장). 잊으면 새로 만들면 됩니다.</div>
+      </div>
+      <div style="margin-top:14px"><div style="font-size:12px;color:var(--sub);font-weight:800;margin-bottom:6px">코드가 켜진 반</div>
+        <div id="scList"><div class="empty">불러오는 중…</div></div></div>
+    </div>
     <div class="card">
       <h2>1인1역 추가</h2>
       <div class="hint">그 반의 <b>교실 전자칠판</b>(<code>?class=학년-반</code>) 청소당번 칸에서 <b>🙋 1인1역</b> 버튼을 누르면 보입니다.</div>
@@ -911,7 +935,7 @@ function applyDeviceClass(force){
   if(!d.grade) return;
   [['nGrade','nClass'],['sGrade','sClass'],['dGrade','dClass'],['aGrade','aClass'],
    ['kGrade','kClass'],['lcGrade','lcClass'],['clGrade','clClass'],['roGrade','roClass'],
-   ['vGrade','vClass'],['mmGrade','mmClass'],['bdGrade','bdClass'],['urlGrade','urlClass']].forEach(([gi,ci])=>{
+   ['vGrade','vClass'],['mmGrade','mmClass'],['scGrade','scClass'],['bdGrade','bdClass'],['urlGrade','urlClass']].forEach(([gi,ci])=>{
     const ge=$(gi), ce=$(ci);
     if(ge && (force || !ge.value)) ge.value=d.grade;
     if(ce && d.class_no && (force || !ce.value)) ce.value=d.class_no;
@@ -1090,7 +1114,7 @@ function enterDash(){
   if(shared && document.querySelector('.tab.on')?.dataset.p === 'msg') tab('notice');
   $('whoami').textContent = READONLY ? '👀 둘러보기'
     : (shared ? '👥 공동계정' : (myName+' 선생님'));
-  loadNotices(); loadScheds(); loadLocs(); loadRoomMap(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadVideos(); loadMemoDecks(); loadBirthdays(); loadCfg(); makeUrl();
+  loadNotices(); loadScheds(); loadLocs(); loadRoomMap(); loadDdays(); loadAssess(); loadCalls(); loadClean(); loadRoles(); loadLost(); loadVideos(); loadMemoDecks(); loadClassCodes(); loadBirthdays(); loadCfg(); makeUrl();
   if(!shared){ loadMsgs(false); refreshMsgBadge(); }   // 공동계정은 쪽지 조회 자체를 안 함
   msgUrlHint(); buildSquadChips(); loadSquadCfg();
   loadPalette('clean'); loadPalette('duty'); loadApprovals();
@@ -1930,6 +1954,55 @@ function subscribeMsgs(){
     }).subscribe();
 }
 
+/* ── 🧑‍🎓 학생 도우미 코드 — 반마다 하나, 서버엔 암호로만 저장 ── */
+function randomCode(){
+  const a = new Uint32Array(1); crypto.getRandomValues(a);
+  return String(100000 + (a[0] % 900000));            // 6자리
+}
+async function makeClassCode(){
+  const g=Number($('scGrade').value), c=Number($('scClass').value);
+  if(!g || !c){ toast('학년·반을 고르세요'); return; }
+  const had = (scCache||[]).some(x=>x.grade===g && x.class_no===c);
+  if(had && !confirm(`${g}학년 ${c}반은 이미 코드가 있습니다.\n새로 만들면 예전 코드는 바로 막힙니다. 만들까요?`)) return;
+  const code = randomCode();
+  $('scMake').disabled=true;
+  const { data, error } = await sb.rpc('set_class_code', { p_grade:g, p_class:c, p_code:code, p_by:posterName()||myName });
+  $('scMake').disabled=false;
+  if(error){
+    toast(/function|schema cache|PGRST202/i.test(error.message)
+      ? '학생 도우미가 아직 없습니다 — STUDENT_HELPER.sql 을 한 번 실행해 주세요' : '실패: '+error.message);
+    return;
+  }
+  if(data!=='set'){ toast('만들지 못했습니다 ('+data+')'); return; }
+  const url = SCHOOL.link(siblingPage('student'), `class=${g}-${c}`);
+  $('scCode').textContent = code; $('scUrl').value = url;
+  $('scQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=1&data=${encodeURIComponent(url)}`;
+  $('scOut').style.display='block';
+  toast(`✅ ${g}-${c} 학생 도우미 코드를 만들었습니다`);
+  loadClassCodes();
+}
+async function clearClassCode(g, c){
+  if(!confirm(`${g}학년 ${c}반 학생 도우미를 끌까요?\n학생 페이지에서 더는 고칠 수 없게 됩니다.`)) return;
+  const { data, error } = await sb.rpc('set_class_code', { p_grade:g, p_class:c, p_code:'', p_by:posterName()||myName });
+  if(error || data!=='cleared'){ toast('끄지 못했습니다'+(error?': '+error.message:'')); return; }
+  toast(`${g}-${c} 학생 도우미를 껐습니다`);
+  $('scOut').style.display='none';
+  loadClassCodes();
+}
+let scCache = [];
+async function loadClassCodes(){
+  const box=$('scList'); if(!box) return;
+  if(READONLY){ box.innerHTML='<div class="empty">로그인하면 보입니다</div>'; return; }
+  const { data, error } = await sb.rpc('list_class_codes');
+  if(error){ box.innerHTML='<div class="empty">학생 도우미가 아직 없습니다 — <b>STUDENT_HELPER.sql</b> 을 한 번 실행해 주세요</div>'; return; }
+  scCache = data || [];
+  if(!scCache.length){ box.innerHTML='<div class="empty">아직 없습니다</div>'; return; }
+  box.innerHTML = scCache.map(x=>`<div class="item"><span class="tag" style="background:#0ea371">${x.grade}-${x.class_no}</span>
+    <div class="main"><div class="t">학생 도우미 켜짐${x.locked?' <span style="color:#ef3b46">· 🔒 잠김(틀린 코드 10번)</span>':''}</div>
+    <div class="meta">${x.updated_by?esc(x.updated_by)+' · ':''}${fmtDate(x.updated_at)}</div></div>
+    <button class="del" onclick="clearClassCode(${x.grade},${x.class_no})">끄기</button></div>`).join('');
+}
+
 /* ── 🙋 1인1역 ── */
 const DUTY_ICON = { '우유당번':'🥛','전기·에어컨':'💡','알림장':'📋','창문·환기':'🪟','재활용':'♻️',
   '칠판지우개':'🧴','학습부장':'📚','급식도우미':'🍚','TV·컴퓨터':'🖥️','화분':'🌱' };
@@ -2075,8 +2148,8 @@ function siblingPage(kind){
   const dir  = base.replace(/[^/]*$/,'');
   const file = base.slice(dir.length) || 'index.html';
   const map = /^notice_/.test(file)
-    ? {display:'notice_display.html', admin:'notice_admin.html', message:'notice_message.html', guide:'notice_guide.html'}
-    : {display:'index.html',          admin:'admin.html',        message:'message.html',        guide:'guide.html'};
+    ? {display:'notice_display.html', admin:'notice_admin.html', message:'notice_message.html', guide:'notice_guide.html', student:'notice_student.html'}
+    : {display:'index.html',          admin:'admin.html',        message:'message.html',        guide:'guide.html',        student:'student.html'};
   return dir + map[kind];
 }
 

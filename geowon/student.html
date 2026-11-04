@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<script>window.SCHOOL_ID = 'geowon'; window.SCHOOL_BUILD_HOME = 'scienceisjo.github.io/class-tools/geowon/';</script>
+<meta name="description" content="거원중학교 공지 · 시간표 · 급식 · 학생 호출을 교실 전자칠판에 띄우는 알리미">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="거원중학교 전자칠판 알리미">
+<meta property="og:title" content="학생 도우미 — 거원중학교">
+<meta property="og:description" content="공지 · 시간표 · 급식 · 학생 호출을 교실 전자칠판에 띄우는 알리미">
+<meta property="og:image" content="https://scienceisjo.github.io/class-tools/geowon/og-geowon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>학생 도우미 — 거원중학교</title>
+<link rel="icon" href="logo-geowon.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="school.js?v=2610123"></script>
+<style>
+  :root{--bg:#f4f7fc;--card:#fff;--line:#e3e8f4;--txt:#1d2742;--sub:#6c7894;
+    --accent:#3b6ef5;--green:#0ea371;--warn:#d97706;--red:#ef3b46;--purple:#7c5cff}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--txt);line-height:1.55;
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+  .wrap{max-width:560px;margin:0 auto;padding:18px 16px 60px}
+  header{text-align:center;padding:14px 0 16px}
+  header h1{font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px}
+  header p{color:var(--sub);font-size:14px;margin-top:6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 16px;margin-bottom:14px}
+  .card h2{font-size:17px;font-weight:800;margin-bottom:10px}
+  label{display:block;font-size:13px;font-weight:800;color:var(--sub);margin-bottom:6px}
+  input,textarea,select{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:11px;
+    font-size:16px;font-family:inherit;background:#fff;color:var(--txt)}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
+  textarea{min-height:150px;resize:vertical}
+  .field{margin-bottom:13px}
+  .row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+  .btn{width:100%;padding:15px;border:none;border-radius:13px;background:var(--accent);color:#fff;
+    font-size:17px;font-weight:800;font-family:inherit;cursor:pointer}
+  .btn:disabled{opacity:.5}
+  .ghost{background:#fff;border:1.5px solid var(--line);color:var(--sub);padding:10px 14px;
+    border-radius:11px;font-weight:700;font-family:inherit;font-size:14px;cursor:pointer}
+  .note{font-size:12.5px;color:var(--sub);margin-top:8px;line-height:1.55}
+  .err{color:var(--red);font-size:13.5px;font-weight:700;margin-top:10px;display:none}
+  .err.show{display:block}
+  .who{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;font-size:14px;color:var(--sub);margin-top:6px}
+  .who b{color:var(--txt)}
+  .tabs{display:flex;gap:6px;margin-bottom:14px}
+  .tab{flex:1;padding:11px 6px;border:1.5px solid var(--line);border-radius:12px;background:#fff;
+    font-size:14px;font-weight:800;color:var(--sub);cursor:pointer;font-family:inherit}
+  .tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .panel{display:none}.panel.on{display:block}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .chip{padding:7px 12px;border:1.5px solid var(--line);border-radius:99px;font-size:13px;font-weight:700;
+    color:var(--sub);background:#fff;cursor:pointer;font-family:inherit}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .prev{font-size:13px;margin:-4px 0 12px}
+  .prev .cnt{font-weight:800;margin-bottom:4px}.prev .cnt.bad{color:var(--warn)}
+  .prev ol{padding-left:22px;color:var(--sub);line-height:1.7}
+  .prev .q{font-weight:700;color:var(--txt)}.prev .a{color:var(--accent);font-weight:700}
+  .prev .na{color:#94a3b8;font-size:12px}
+  .item{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:none}
+  .item .tag{flex:0 0 auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;color:#fff;background:var(--purple);margin-top:2px}
+  .item .main{flex:1;min-width:0}
+  .item .t{font-weight:800;font-size:15px}
+  .item .meta{font-size:12.5px;color:var(--sub);margin-top:2px}
+  .item .cards{font-size:12.5px;color:var(--sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item .acts{display:flex;gap:6px;flex:0 0 auto}
+  .item .acts button{border:none;border-radius:8px;padding:7px 10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+  .item .edit{background:#eef2fa;color:var(--accent)}
+  .item .del{background:#fef2f2;color:var(--red)}
+  .lock{font-size:12px;color:var(--sub);flex:0 0 auto;margin-top:4px}
+  .erow{display:flex;gap:8px;margin-bottom:8px}
+  .erow input{padding:10px 11px;font-size:15px}
+  .erow .ic{flex:0 0 3.4rem;text-align:center}
+  .erow .x{flex:0 0 auto;padding:8px 12px}
+  .empty{color:var(--sub);font-size:14px;padding:10px 0}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d2742;color:#fff;
+    padding:12px 18px;border-radius:12px;font-size:14px;font-weight:700;opacity:0;transition:.3s;pointer-events:none;
+    max-width:92vw;text-align:center;z-index:50}
+  .toast.show{opacity:1}
+  footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🧑‍🎓 학생 도우미</h1>
+    <p>1인1역을 맡은 친구가 <b>우리 반</b> 암기 카드·청소당번·1인1역을 고치는 곳이에요.</p>
+    <div class="who" id="who" style="display:none"></div>
+  </header>
+
+  <!-- 들어가기 -->
+  <div id="login">
+    <div class="card">
+      <div class="row field">
+        <div><label>학년</label>
+          <select id="lgGrade"><option value="">선택</option><option>1</option><option>2</option><option>3</option></select></div>
+        <div><label>반</label><input id="lgClass" type="number" inputmode="numeric" min="1" placeholder="예: 3"></div>
+      </div>
+      <div class="field"><label>내 이름</label><input id="lgName" maxlength="20" placeholder="예: 김OO" autocomplete="off"></div>
+      <div class="field"><label>학생 도우미 코드 (선생님께 받은 숫자)</label>
+        <input id="lgCode" inputmode="numeric" maxlength="12" placeholder="예: 6자리 숫자" autocomplete="off"></div>
+      <button class="btn" id="lgBtn" onclick="login()">들어가기</button>
+      <div class="err" id="lgErr"></div>
+      <div class="note">📌 내 이름은 고친 기록에 함께 남아요. 친구 이름으로 들어가지 마세요.<br>
+        📌 코드를 여러 번 틀리면 잠시 잠겨요.</div>
+    </div>
+  </div>
+
+  <!-- 들어간 뒤 -->
+  <div id="app" style="display:none">
+    <div class="tabs">
+      <button class="tab on" data-p="memo" onclick="tab('memo')">🧠 암기 카드</button>
+      <button class="tab" data-p="clean" onclick="tab('clean')">🧹 청소당번</button>
+      <button class="tab" data-p="role" onclick="tab('role')">🙋 1인1역</button>
+    </div>
+
+    <!-- 🧠 암기 카드 -->
+    <div class="panel on" id="p-memo">
+      <div class="card">
+        <h2 id="mmHead">🧠 암기 카드 만들기</h2>
+        <div class="row field">
+          <div style="flex:0 0 34%"><label>과목</label><input id="mmSubj" list="subjList" maxlength="20" placeholder="예: 영어"></div>
+          <div><label>묶음 이름</label><input id="mmTitle" maxlength="60" placeholder="예: 3과 단어"></div>
+        </div>
+        <datalist id="subjList">
+          <option>국어</option><option>영어</option><option>수학</option><option>과학</option><option>사회</option>
+          <option>역사</option><option>도덕</option><option>기술·가정</option><option>정보</option><option>한문</option>
+        </datalist>
+        <div class="field"><label>카드 — 한 줄에 한 장, <b>앞면 = 답</b></label>
+          <textarea id="mmCards" oninput="previewMemo()" placeholder="photosynthesis = 광합성&#10;Na = 나트륨&#10;답 없이 한 줄만 써도 돼요"></textarea></div>
+        <div id="mmPrev" class="prev"></div>
+        <div class="field"><label>언제까지 보여 줄까요</label>
+          <div class="chips" id="endChips">
+            <button class="chip" data-d="6" onclick="pickEnd(6)">1주일</button>
+            <button class="chip on" data-d="13" onclick="pickEnd(13)">2주일</button>
+            <button class="chip" data-d="29" onclick="pickEnd(29)">한 달</button>
+          </div></div>
+        <button class="btn" id="mmSave" onclick="saveMemo()">암기 카드 올리기</button>
+        <button class="ghost" id="mmCancel" style="width:100%;margin-top:8px;display:none" onclick="cancelEdit()">✕ 고치기 그만두기</button>
+        <div class="note">📌 우리 반 전자칠판 공지 칸의 <b>[🧠 암기]</b>에 한 장씩 나와요. 내 이름도 함께 나와요.<br>
+          📌 한 줄은 120자, 한 묶음은 100장까지예요.</div>
+      </div>
+      <div class="card"><h2>우리 반 화면에 나오는 암기 카드</h2><div id="memoList"><div class="empty">불러오는 중…</div></div></div>
+    </div>
+
+    <!-- 🧹 청소당번 -->
+    <div class="panel" id="p-clean">
+      <div class="card">
+        <h2>🧹 이번 청소당번</h2>
+        <label>조</label>
+        <div class="chips" id="squadChips"></div>
+        <div class="row field">
+          <div><label>조 직접 쓰기 (선택)</label><input id="sqCustom" maxlength="20" placeholder="예: 3모둠" oninput="pickSquad(this.value.trim()||null, true)"></div>
+          <div><label>한마디 (선택)</label><input id="clNote" maxlength="30" placeholder="예: 이번 주"></div>
+        </div>
+        <label>역할과 이름</label>
+        <div class="chips" id="cleanPal"></div>
+        <div id="clRows"></div>
+        <button class="ghost" style="width:100%;margin-bottom:12px" onclick="addCleanRow()">＋ 한 줄 더</button>
+        <button class="btn" id="clSave" onclick="saveClean()">청소당번 저장</button>
+        <div class="note">📌 저장하면 우리 반 청소당번이 이 내용으로 <b>통째로 바뀌어요.</b></div>
+      </div>
+    </div>
+
+    <!-- 🙋 1인1역 -->
+    <div class="panel" id="p-role">
+      <div class="card">
+        <h2>🙋 1인1역</h2>
+        <div class="chips" id="rolePal"></div>
+        <div id="roRows"></div>
+        <button class="ghost" style="width:100%;margin-bottom:12px" onclick="addRoleRow()">＋ 한 줄 더</button>
+        <button class="btn" id="roSave" onclick="saveRoles()">1인1역 저장</button>
+        <div class="note">📌 저장하면 우리 반 1인1역이 이 목록으로 <b>통째로 바뀌어요.</b> 비운 줄은 저장하지 않아요.</div>
+      </div>
+    </div>
+
+    <button class="ghost" style="width:100%" onclick="logout()">나가기</button>
+  </div>
+
+  <footer id="foot">거원중학교 · 학생 도우미</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL  = SCHOOL.supabaseUrl;
+const SUPABASE_ANON = SCHOOL.supabaseKey;
+if(!SCHOOL.ready) SCHOOL.notReady();
+const sb = window.supabase.createClient(SUPABASE_URL || 'https://not-ready.supabase.co', SUPABASE_ANON || 'not-ready');
+const $ = id => document.getElementById(id);
+document.title = '학생 도우미 — ' + SCHOOL.name;
+$('foot').textContent = SCHOOL.name + ' · 학생 도우미';
+const esc = s => (s??'').toString().replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'), 2600); }
+
+/* 들어간 정보는 이 창을 닫으면 사라집니다(교실 컴퓨터에 남지 않게) */
+const LS_ME = SCHOOL.key('hnr_student');
+let ME = null;      // {g, c, name, code}
+try{ ME = JSON.parse(sessionStorage.getItem(LS_ME) || 'null'); }catch(e){}
+const cm = new URLSearchParams(location.search).get('class');
+if(cm && /^\d+-\d+$/.test(cm)){ const [g,c]=cm.split('-'); $('lgGrade').value=g; $('lgClass').value=c; }
+
+const ERR = {
+  bad:'코드가 맞지 않아요.', locked:'코드를 여러 번 틀려서 10분 동안 잠겼어요. 조금 뒤에 다시 해 주세요.',
+  none:'우리 반은 학생 도우미가 꺼져 있어요. 담임 선생님께 여쭤보세요.',
+  name:'이름을 20자 안으로 써 주세요.', title:'묶음 이름을 60자 안으로 써 주세요.',
+  cards:'카드를 한 줄 이상, 100장까지 넣어 주세요.', card_len:'카드 한 줄은 120자, 답은 200자까지예요.',
+  end:'보여 줄 날짜가 너무 멀어요.', too_many:'우리 반 학생 암기 카드가 15묶음이 넘었어요. 오래된 것을 먼저 지워 주세요.',
+  not_yours:'선생님이 올린 것은 고치거나 지울 수 없어요.', rows:'줄이 너무 많아요.', row_len:'한 칸에 너무 긴 글이 있어요.',
+  not_ready:'학생 도우미가 아직 준비되지 않았어요. 선생님께 알려 주세요.'
+};
+const errText = e => ERR[e] || ('잘 안 됐어요: ' + e);
+
+async function call(fn, args){
+  const { data, error } = await sb.rpc(fn, args);
+  if(error){
+    if(/function|schema cache|PGRST202/i.test(error.message)) return { ok:false, err:'not_ready' };
+    return { ok:false, err:error.message };
+  }
+  return data || { ok:false, err:'?' };
+}
+function base(){ return { p_grade:ME.g, p_class:ME.c, p_code:ME.code }; }
+/* 코드가 바뀌었거나 꺼졌으면 다시 들어가게 */
+function handleFail(r){
+  if(['bad','none','locked'].includes(r.err)){ toast(errText(r.err)); logout(true); return true; }
+  toast(ERR[r.err] ? errText(r.err) : r.err); return true;
+}
+
+async function login(){
+  const g=Number($('lgGrade').value), c=Number($('lgClass').value), name=$('lgName').value.trim(), code=$('lgCode').value.trim();
+  const e=$('lgErr'); e.classList.remove('show');
+  if(!g || !c){ e.textContent='학년과 반을 골라 주세요.'; e.classList.add('show'); return; }
+  if(!name){ e.textContent='내 이름을 써 주세요.'; e.classList.add('show'); return; }
+  if(!code){ e.textContent='선생님께 받은 코드를 넣어 주세요.'; e.classList.add('show'); return; }
+  $('lgBtn').disabled=true;
+  const r = await call('student_login', { p_grade:g, p_class:c, p_code:code });
+  $('lgBtn').disabled=false;
+  if(!r.ok){ e.textContent = errText(r.err); e.classList.add('show'); return; }
+  ME = { g, c, name, code };
+  try{ sessionStorage.setItem(LS_ME, JSON.stringify(ME)); }catch(err){}
+  enter();
+}
+function logout(silent){
+  ME = null; try{ sessionStorage.removeItem(LS_ME); }catch(e){}
+  $('app').style.display='none'; $('login').style.display='block'; $('who').style.display='none';
+  $('lgCode').value='';
+  if(!silent) toast('나왔어요');
+}
+function enter(){
+  $('login').style.display='none'; $('app').style.display='block';
+  $('who').style.display='flex';
+  $('who').innerHTML = `<b>${ME.g}학년 ${ME.c}반</b> · ${esc(ME.name)}`;
+  loadMemo(); loadClean(); loadRoles();
+}
+function tab(p){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.p===p));
+  document.querySelectorAll('.panel').forEach(el=>el.classList.toggle('on', el.id==='p-'+p));
+}
+
+/* ═══ 🧠 암기 카드 ═══ */
+let memoCache=[], editingId=null, endDays=13;
+function parseMemoCards(text){
+  return (text||'').split(/\r?\n/).map(line=>{
+    let q=line, a='';
+    const tab=line.indexOf('\t');
+    if(tab>=0){ q=line.slice(0,tab); a=line.slice(tab+1).replace(/\t+/g,' '); }
+    else { const eq=line.indexOf('='); if(eq>0){ q=line.slice(0,eq); a=line.slice(eq+1); } }
+    return { q:q.trim(), a:a.trim() };
+  }).filter(c=>c.q);
+}
+function cardsToText(cards){
+  return (cards||[]).map(c => !c.a ? c.q : (c.q.includes('=') ? `${c.q}\t${c.a}` : `${c.q} = ${c.a}`)).join('\n');
+}
+function previewMemo(){
+  const box=$('mmPrev'), cards=parseMemoCards($('mmCards').value);
+  if(!cards.length){ box.innerHTML=''; return; }
+  const over = cards.length>100 || cards.some(c=>c.q.length>120 || c.a.length>200);
+  box.innerHTML = `<div class="cnt${over?' bad':''}">${over ? '⚠️ 100장까지, 한 줄은 120자까지예요' : `✅ ${cards.length}장으로 읽었어요`}</div>
+    <ol>${cards.slice(0,5).map(c=>`<li><span class="q">${esc(c.q)}</span>${c.a?` → <span class="a">${esc(c.a)}</span>`:' <span class="na">(답 없이 이 줄 그대로)</span>'}</li>`).join('')}</ol>
+    ${cards.length>5?`<div class="na" style="padding-left:22px">… 외 ${cards.length-5}장</div>`:''}`;
+}
+function pickEnd(d){ endDays=d; document.querySelectorAll('#endChips .chip').forEach(c=>c.classList.toggle('on', Number(c.dataset.d)===d)); }
+function endDate(){ const d=new Date(); d.setDate(d.getDate()+endDays);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+async function loadMemo(){
+  const box=$('memoList');
+  const { data, error } = await sb.from('memo_decks').select('*').order('created_at',{ascending:false});
+  if(error){ box.innerHTML='<div class="empty">암기 카드를 불러오지 못했어요.</div>'; return; }
+  const now=new Date(), today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  memoCache = (data||[]).filter(d => (d.grade==null || (d.grade===ME.g && (d.class_no==null || d.class_no===ME.c)))
+                                   && (!d.end_at || d.end_at>=today));
+  if(!memoCache.length){ box.innerHTML='<div class="empty">아직 없어요. 위에서 처음으로 만들어 보세요!</div>'; return; }
+  box.innerHTML = memoCache.map(d=>{
+    const cards=Array.isArray(d.cards)?d.cards:[];
+    const mine = d.by_student && d.grade===ME.g && d.class_no===ME.c;
+    return `<div class="item"><span class="tag">${esc(d.subject||'암기')}</span>
+      <div class="main"><div class="t">${esc(d.title)}</div>
+        <div class="cards">${cards.slice(0,3).map(c=>esc(c.q)+(c.a?` → ${esc(c.a)}`:'')).join(' · ')}</div>
+        <div class="meta">${cards.length}장 · ${esc(d.author_name||'')}${d.by_student?'':' 선생님'}${d.end_at?` · ~${d.end_at}`:''}</div></div>
+      ${mine ? `<div class="acts"><button class="edit" onclick="startEdit(${d.id})">고치기</button><button class="del" onclick="delMemo(${d.id})">지우기</button></div>`
+             : `<span class="lock">🔒 선생님 카드</span>`}</div>`;
+  }).join('');
+}
+async function saveMemo(){
+  const title=$('mmTitle').value.trim(), cards=parseMemoCards($('mmCards').value);
+  if(!title){ toast('묶음 이름을 써 주세요'); return; }
+  if(!cards.length){ toast('카드를 한 줄 이상 써 주세요'); return; }
+  $('mmSave').disabled=true;
+  const r = await call('student_save_memo', { ...base(), p_name:ME.name, p_id:editingId,
+    p_subject:$('mmSubj').value.trim(), p_title:title, p_cards:cards, p_end:endDate() });
+  $('mmSave').disabled=false;
+  if(!r.ok){ handleFail(r); return; }
+  const was=!!editingId; cancelEdit();
+  toast(was ? '✏️ 고쳤어요' : `🧠 ${cards.length}장 올렸어요! 우리 반 화면 [🧠 암기]에서 보여요`);
+  loadMemo();
+}
+function startEdit(id){
+  const d=memoCache.find(x=>x.id===id); if(!d) return;
+  editingId=id;
+  $('mmSubj').value=d.subject||''; $('mmTitle').value=d.title||''; $('mmCards').value=cardsToText(d.cards);
+  previewMemo();
+  $('mmHead').textContent='✏️ 암기 카드 고치기'; $('mmSave').textContent='고친 내용 저장'; $('mmCancel').style.display='block';
+  $('mmTitle').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function cancelEdit(){
+  editingId=null; $('mmTitle').value=''; $('mmCards').value=''; $('mmPrev').innerHTML='';
+  $('mmHead').textContent='🧠 암기 카드 만들기'; $('mmSave').textContent='암기 카드 올리기'; $('mmCancel').style.display='none';
+}
+async function delMemo(id){
+  const d=memoCache.find(x=>x.id===id);
+  if(!confirm(`「${d?.title||''}」를 지울까요? 되돌릴 수 없어요.`)) return;
+  const r = await call('student_delete_memo', { ...base(), p_name:ME.name, p_id:id });
+  if(!r.ok){ handleFail(r); return; }
+  toast('🗑️ 지웠어요'); if(editingId===id) cancelEdit(); loadMemo();
+}
+
+/* ═══ 🧹 청소당번 ═══ */
+const PAL_CLEAN = ['바닥 쓸기','바닥 걸레','칠판','창문','쓰레기통','사물함','복도','분리수거'];
+const PAL_DUTY  = ['우유당번','전기·에어컨','알림장','창문·환기','재활용','칠판지우개','학습부장','급식도우미','TV·컴퓨터','화분'];
+const DUTY_ICON = { '우유당번':'🥛','전기·에어컨':'💡','알림장':'📋','창문·환기':'🪟','재활용':'♻️',
+  '칠판지우개':'🧴','학습부장':'📚','급식도우미':'🍚','TV·컴퓨터':'🖥️','화분':'🌱' };
+let curSquad=null;
+async function cfgValue(key){
+  const { data } = await sb.from('display_config').select('value').eq('key', key).maybeSingle();
+  return data?.value || '';
+}
+function pickSquad(s, fromCustom){
+  curSquad = s || null;
+  document.querySelectorAll('#squadChips .chip').forEach(c=>c.classList.toggle('on', c.dataset.s===s));
+  if(!fromCustom){ const inChips=[...document.querySelectorAll('#squadChips .chip')].some(c=>c.dataset.s===s); $('sqCustom').value = (s && !inChips) ? s : ''; }
+}
+function addCleanRow(area='', name=''){
+  const d=document.createElement('div'); d.className='erow';
+  d.innerHTML=`<input class="ar" maxlength="20" placeholder="역할 (예: 칠판)" value="${esc(area)}">
+    <input class="mb" maxlength="40" placeholder="이름" value="${esc(name)}">
+    <button class="ghost x" onclick="this.parentElement.remove()">✕</button>`;
+  $('clRows').appendChild(d); return d;
+}
+async function loadClean(){
+  const key=`${ME.g}-${ME.c}`;
+  const [sq, pal] = await Promise.all([cfgValue('clean_squad_'+key), cfgValue('roles_clean_'+key)]);
+  const [n,u] = (sq || '8|조').split('|');
+  $('squadChips').innerHTML = Array.from({length:Number(n)||8},(_,i)=>`${i+1}${u||'조'}`)
+    .map(l=>`<button class="chip" data-s="${esc(l)}" onclick="pickSquad(this.dataset.s)">${esc(l)}</button>`).join('');
+  const list = pal ? pal.split('|').filter(Boolean) : PAL_CLEAN;
+  $('cleanPal').innerHTML = list.map(r=>`<button class="chip" data-r="${esc(r)}" onclick="addCleanRow(this.dataset.r).querySelector('.mb').focus()">＋ ${esc(r)}</button>`).join('');
+  const { data } = await sb.from('cleaning_duties').select('*').eq('grade',ME.g).eq('class_no',ME.c)
+    .order('sort_order',{ascending:true}).order('id',{ascending:true});
+  $('clRows').innerHTML=''; curSquad=null; $('clNote').value='';
+  (data||[]).forEach(r=>{
+    if(r.area==='청소당번'){ pickSquad(r.members.trim()); $('clNote').value=r.note||''; }
+    else addCleanRow((r.area||'').trim(), (r.members||'').trim());
+  });
+  if(!$('clRows').children.length) addCleanRow();
+}
+async function saveClean(){
+  const rows=[...document.querySelectorAll('#clRows .erow')].map(d=>({ area:d.querySelector('.ar').value.trim(), members:d.querySelector('.mb').value.trim() }))
+    .filter(r=>r.area||r.members);
+  if(!curSquad && !rows.length){ toast('조를 고르거나 역할·이름을 한 줄이라도 써 주세요'); return; }
+  const payload=[];
+  if(curSquad) payload.push({ area:'청소당번', members:curSquad, note:$('clNote').value.trim()||null, sort_order:0 });
+  rows.forEach((r,i)=>payload.push({ area:r.area||' ', members:r.members||' ', sort_order:i+1 }));
+  $('clSave').disabled=true;
+  const r = await call('student_replace_cleaning', { ...base(), p_name:ME.name, p_rows:payload });
+  $('clSave').disabled=false;
+  if(!r.ok){ handleFail(r); return; }
+  toast('🧹 저장했어요! 우리 반 화면에 바로 나와요'); loadClean();
+}
+
+/* ═══ 🙋 1인1역 ═══ */
+function addRoleRow(icon='🙋', role='', member=''){
+  const d=document.createElement('div'); d.className='erow';
+  d.innerHTML=`<input class="ic" maxlength="8" value="${esc(icon)}">
+    <input class="rl" maxlength="20" placeholder="역할" value="${esc(role)}">
+    <input class="mb" maxlength="40" placeholder="이름" value="${esc(member)}">
+    <button class="ghost x" onclick="this.parentElement.remove()">✕</button>`;
+  $('roRows').appendChild(d); return d;
+}
+async function loadRoles(){
+  const pal = await cfgValue(`roles_duty_${ME.g}-${ME.c}`);
+  const list = pal ? pal.split('|').filter(Boolean) : PAL_DUTY;
+  $('rolePal').innerHTML = list.map(r=>`<button class="chip" data-i="${DUTY_ICON[r]||'🙋'}" data-r="${esc(r)}" onclick="addRoleRow(this.dataset.i, this.dataset.r).querySelector('.mb').focus()">＋ ${esc(r)}</button>`).join('');
+  const { data } = await sb.from('class_roles').select('*').eq('grade',ME.g).eq('class_no',ME.c)
+    .order('sort_order',{ascending:true}).order('id',{ascending:true});
+  $('roRows').innerHTML='';
+  (data||[]).forEach(r=>addRoleRow(r.icon||'🙋', r.role, r.member));
+  if(!$('roRows').children.length) addRoleRow();
+}
+async function saveRoles(){
+  const rows=[...document.querySelectorAll('#roRows .erow')].map((d,i)=>({ icon:d.querySelector('.ic').value.trim()||'🙋',
+    role:d.querySelector('.rl').value.trim(), member:d.querySelector('.mb').value.trim(), sort_order:i }))
+    .filter(r=>r.role && r.member);
+  if(!confirm(`우리 반 1인1역을 ${rows.length}줄로 바꿀까요?`)) return;
+  $('roSave').disabled=true;
+  const r = await call('student_replace_roles', { ...base(), p_name:ME.name, p_rows:rows });
+  $('roSave').disabled=false;
+  if(!r.ok){ handleFail(r); return; }
+  toast('🙋 저장했어요! 우리 반 화면에 바로 나와요'); loadRoles();
+}
+
+if(ME && ME.g && ME.c && ME.code) enter();
+</script>
+</body>
+</html>

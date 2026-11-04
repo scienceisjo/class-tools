@@ -1454,7 +1454,7 @@ function showMemo(i){
   const tgt = d.grade ? `${d.grade}학년${d.class_no ? ' '+d.class_no+'반' : ''}` : '전교';
   $('mSubj').textContent = d.subject || '';
   $('mDeck').textContent = d.title + (m.of > 1 ? ` · ${m.n}/${m.of}` : '');
-  $('mWho').textContent = (d.author_name ? d.author_name+' 선생님 · ' : '') + tgt;
+  $('mWho').textContent = (d.author_name ? d.author_name + (d.by_student ? '' : ' 선생님') + ' · ' : '') + tgt;   // 학생 카드는 「학생 ○○○」
   $('mPos').textContent = `${memoIdx+1} / ${MEMO.length}`;
   $('mQ').textContent = m.q;
   $('mA').textContent = m.a;
