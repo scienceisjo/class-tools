@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="school.js?v=2610123"></script>
 <script src="video.js?v=2608301"></script>
+<script src="mood.js?v=2611091"></script>
 <style>
   :root{--bg:#f4f6fb;--card:#fff;--line:#e3e8f3;--txt:#1c2540;--sub:#7d8aa8;
     --accent:#4a72ff;--green:#1eb87f;--red:#ff4d5e;--gold:#f5a623;--purple:#8b6cff;}
@@ -303,6 +304,7 @@
     <button class="tab" data-p="clean" onclick="tab('clean')">🧹 청소당번</button>
     <button class="tab" data-p="role" onclick="tab('role')">🙋 1인1역</button>
     <button class="tab" data-p="bday" onclick="tab('bday')">🎂 생일</button>
+    <button class="tab" data-p="mood" onclick="tab('mood');loadMoodAdmin()">🌡️ 마음온도</button>
     <button class="tab" data-p="lost" onclick="tab('lost')">🔍 분실물</button>
     <button class="tab" data-p="cfg" onclick="tab('cfg')">⚙️ 설정</button>
   </div>
@@ -687,6 +689,25 @@
     </div>
   </div>
 
+  <!-- 🌡️ 마음온도 -->
+  <div class="panel" id="p-mood">
+    <div class="card">
+      <h2>🌡️ 우리 반 마음온도</h2>
+      <div class="hint">학생이 교실 전자칠판 <b>[🌡️ 마음 체크인]</b>이나 내 폰(QR)으로 누른 마음입니다. 이름은 남지 않습니다.
+        마음온도는 단계 평균을 0~100°로 바꾼 값입니다(꽁꽁 0° · 쌀쌀 25° · 미지근 50° · 따뜻 75° · 후끈 100°).</div>
+      <div class="row">
+        <div class="field"><label>학년</label><select id="moGrade" onchange="loadMoodAdmin()"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="field"><label>반</label><input id="moClass" type="number" min="1" placeholder="예: 3" oninput="loadMoodAdmin()"></div>
+      </div>
+      <div id="moToday"></div>
+      <h2 style="margin-top:14px">지난 2주</h2>
+      <div id="moDays"><div class="empty">학년·반을 고르세요</div></div>
+      <h2 style="margin-top:14px">자주 고른 마음 (지난 7일)</h2>
+      <div id="moWords"></div>
+      <div class="hint" style="margin-top:12px">「힘든 친구」는 꽁꽁·쌀쌀을 누른 횟수입니다. 같은 학생이 여러 번 눌렀을 수도 있습니다.</div>
+    </div>
+  </div>
+
   <!-- 🎂 생일 -->
   <div class="panel" id="p-bday">
     <div class="card wform">
@@ -935,7 +956,7 @@ function applyDeviceClass(force){
   if(!d.grade) return;
   [['nGrade','nClass'],['sGrade','sClass'],['dGrade','dClass'],['aGrade','aClass'],
    ['kGrade','kClass'],['lcGrade','lcClass'],['clGrade','clClass'],['roGrade','roClass'],
-   ['vGrade','vClass'],['mmGrade','mmClass'],['scGrade','scClass'],['bdGrade','bdClass'],['urlGrade','urlClass']].forEach(([gi,ci])=>{
+   ['vGrade','vClass'],['mmGrade','mmClass'],['scGrade','scClass'],['moGrade','moClass'],['bdGrade','bdClass'],['urlGrade','urlClass']].forEach(([gi,ci])=>{
     const ge=$(gi), ce=$(ci);
     if(ge && (force || !ge.value)) ge.value=d.grade;
     if(ce && d.class_no && (force || !ce.value)) ce.value=d.class_no;
@@ -1952,6 +1973,46 @@ function subscribeMsgs(){
       toast('📬 새 쪽지가 왔어요!'); refreshMsgBadge();
       if(document.getElementById('p-msg').classList.contains('on')) loadMsgs(true);
     }).subscribe();
+}
+
+/* ── 🌡️ 마음온도 (선생님 보기) — 표를 직접 읽음(승인된 선생님만) ── */
+async function loadMoodAdmin(){
+  const g=Number($('moGrade').value), c=Number($('moClass').value);
+  const dbox=$('moDays'), tbox=$('moToday'), wbox=$('moWords');
+  if(!g || !c){ dbox.innerHTML='<div class="empty">학년·반을 고르세요</div>'; tbox.innerHTML=''; wbox.innerHTML=''; return; }
+  const since=new Date(); since.setDate(since.getDate()-13);
+  const sinceStr=`${since.getFullYear()}-${String(since.getMonth()+1).padStart(2,'0')}-${String(since.getDate()).padStart(2,'0')}`;
+  const { data, error } = await sb.from('mood_checkins').select('level,feeling,day,created_at')
+    .eq('grade',g).eq('class_no',c).gte('day',sinceStr).order('created_at',{ascending:true}).limit(5000);
+  if(error){
+    dbox.innerHTML = /relation|does not exist|schema cache/i.test(error.message)
+      ? '<div class="empty">마음온도 표가 아직 없습니다 — <b>MOOD.sql</b> 을 한 번 실행해 주세요</div>'
+      : (READONLY ? '<div class="empty">로그인하면 보입니다</div>' : '<div class="empty">불러오지 못했습니다: '+esc(error.message)+'</div>');
+    tbox.innerHTML=''; wbox.innerHTML=''; return;
+  }
+  const rows=data||[], byDay={};
+  rows.forEach(r=>{ (byDay[r.day] ||= []).push(r); });
+  const now=new Date(), today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const tr=byDay[today]||[];
+  const tdeg = tr.length ? MOOD.tempOf(tr.reduce((s,r)=>s+r.level,0)/tr.length) : null;
+  tbox.innerHTML = `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:10px 0">
+    <div style="font-size:13px;color:var(--sub);font-weight:800">오늘<br><span style="font-size:28px;font-weight:900;color:${tdeg==null?'var(--sub)':MOOD.colorAt(tdeg)}">${tdeg==null?'--':tdeg.toFixed(1)+'°'}</span></div>
+    ${[5,4,3,2,1].map(lv=>`<div style="text-align:center;font-size:12px;font-weight:800;color:var(--sub)">${MOOD.face(lv,34)}<br>${MOOD.LEVELS[lv].key} ${tr.filter(r=>r.level===lv).length}</div>`).join('')}
+    <div style="font-size:13px;color:var(--sub);font-weight:700">${tr.length}번 체크인</div></div>`;
+  const days=Object.keys(byDay).sort().reverse();
+  dbox.innerHTML = days.length ? days.map(d=>{
+    const rs=byDay[d], deg=MOOD.tempOf(rs.reduce((s,r)=>s+r.level,0)/rs.length), low=rs.filter(r=>r.level<=2).length;
+    const dt=new Date(d+'T00:00');
+    return `<div class="item"><span class="tag" style="background:${MOOD.colorAt(deg)}">${Math.round(deg)}°</span>
+      <div class="main"><div class="t">${dt.getMonth()+1}/${dt.getDate()}(${'일월화수목금토'[dt.getDay()]}) · ${MOOD.LEVELS[MOOD.levelOfTemp(deg)].key}</div>
+      <div class="meta">${rs.length}번 체크인${low?` · <b style="color:#d33">힘든 친구 ${low}</b>`:''}</div></div></div>`;
+  }).join('') : '<div class="empty">지난 2주 동안 체크인이 없습니다</div>';
+  const wk=new Date(); wk.setDate(wk.getDate()-6);
+  const wkStr=`${wk.getFullYear()}-${String(wk.getMonth()+1).padStart(2,'0')}-${String(wk.getDate()).padStart(2,'0')}`;
+  const cnt={}; rows.filter(r=>r.day>=wkStr && r.feeling).forEach(r=>cnt[r.feeling]=(cnt[r.feeling]||0)+1);
+  const words=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  wbox.innerHTML = words.length ? '<div class="chips">'+words.map(([w,n])=>`<span class="chip">${esc(w)} ${n}</span>`).join('')+'</div>'
+    : '<div class="empty">아직 없습니다</div>';
 }
 
 /* ── 🧑‍🎓 학생 도우미 코드 — 반마다 하나, 서버엔 암호로만 저장 ── */

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<script>window.SCHOOL_ID = 'geowon'; window.SCHOOL_BUILD_HOME = 'scienceisjo.github.io/class-tools/geowon/';</script>
+<meta name="description" content="거원중학교 공지 · 시간표 · 급식 · 학생 호출을 교실 전자칠판에 띄우는 알리미">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="거원중학교 전자칠판 알리미">
+<meta property="og:title" content="마음온도 — 거원중학교">
+<meta property="og:description" content="공지 · 시간표 · 급식 · 학생 호출을 교실 전자칠판에 띄우는 알리미">
+<meta property="og:image" content="https://scienceisjo.github.io/class-tools/geowon/og-geowon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>마음온도 — 거원중학교</title>
+<link rel="icon" href="logo-geowon.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="school.js?v=2610123"></script>
+<script src="mood.js?v=2611091"></script>
+<style>
+  @font-face{font-family:'DSEG7';font-display:swap;
+    src:url(https://cdn.jsdelivr.net/npm/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Bold.woff2) format('woff2')}
+  :root{--bg:#f4f7fc;--card:#fff;--line:#e3e8f4;--txt:#1d2742;--sub:#6c7894;--accent:#3b6ef5}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--txt);line-height:1.55;--mc-fs:15px;
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+  .wrap{max-width:520px;margin:0 auto;padding:18px 16px 60px}
+  header{text-align:center;padding:12px 0 16px}
+  header h1{font-size:22px;font-weight:800}
+  header p{color:var(--sub);font-size:14px;margin-top:6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 16px;margin-bottom:14px}
+  label{display:block;font-size:13px;font-weight:800;color:var(--sub);margin-bottom:6px}
+  select,input{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:11px;font-size:16px;font-family:inherit;background:#fff}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  .go{width:100%;padding:18px;border:none;border-radius:14px;background:#13213a;color:#fff;font-size:19px;font-weight:900;
+    font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
+  .go:disabled{opacity:.45}
+  .faces{display:flex;justify-content:center;gap:4px;margin:6px 0 14px}
+  .wait{font-size:13.5px;color:var(--sub);text-align:center;margin-top:10px;font-weight:700}
+  .note{font-size:12.5px;color:var(--sub);line-height:1.6;margin-top:10px}
+  .sensor{background:#111b2c;color:#d7e2f5;border-radius:16px;padding:16px;margin-bottom:14px}
+  .sensor .hd{display:flex;align-items:center;gap:8px;font-size:13px;color:#8ea2c4;font-weight:700}
+  .sensor .hd b{color:#e9f0ff;font-size:15px}
+  .led{width:9px;height:9px;border-radius:50%;background:#19c37d;box-shadow:0 0 6px #19c37d;animation:bl 1.4s infinite}
+  @keyframes bl{50%{opacity:.3}}
+  .lcd{position:relative;margin:10px 0 6px;background:#0a111d;border-radius:12px;padding:8px 16px;text-align:right;
+    box-shadow:inset 0 0 0 2px #1b2840}
+  .lcd .gh{position:absolute;right:46px;top:8px;font-family:'DSEG7',monospace;font-size:54px;color:#16233a;line-height:1.1}
+  .lcd .num{position:relative;font-family:'DSEG7',monospace;font-size:54px;line-height:1.1;text-shadow:0 0 14px currentColor;color:#9fb3d4}
+  .lcd .u{position:relative;font-size:26px;font-weight:800;color:#6f82a6;margin-left:4px}
+  .sensor .meta{font-size:13.5px;color:#8ea2c4;font-weight:700}
+  .sensor .meta b{color:#e9f0ff}
+  .crowd{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;margin-top:12px}
+  .talk{display:block;text-align:center;margin-top:4px;color:var(--accent);font-weight:800;font-size:14px;text-decoration:none}
+  footer{text-align:center;color:var(--sub);font-size:12px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🌡️ 마음온도 체크인</h1>
+    <p id="sub">지금 내 마음은 몇 도인지 눌러 주세요.<br><b>이름은 남지 않아요.</b></p>
+  </header>
+
+  <div class="card" id="pickCard" style="display:none">
+    <div class="row">
+      <div><label>학년</label><select id="g"><option value="">선택</option><option>1</option><option>2</option><option>3</option></select></div>
+      <div><label>반</label><input id="c" type="number" inputmode="numeric" min="1" placeholder="예: 3"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="faces" id="faces"></div>
+    <button class="go" id="go" onclick="checkin()">🌡️ 마음 체크인 하기</button>
+    <div class="wait" id="wait"></div>
+    <div class="note">📌 누른 마음은 우리 반 전자칠판 마음온도 화면에 <b>모두의 표정으로만</b> 모여요. 누가 눌렀는지는 아무도 몰라요.<br>
+      📌 힘든 일이 있으면 <a id="talk1" href="#">📮 선생님께 말하기</a>로 조용히 이야기해도 돼요.</div>
+  </div>
+
+  <div class="sensor" id="sensor" style="display:none">
+    <div class="hd"><span class="led"></span><b>우리 반 마음온도</b><span id="cls"></span></div>
+    <div class="lcd"><span class="gh">88.8</span><span class="num" id="num">--.-</span><span class="u">°</span></div>
+    <div class="meta" id="meta"></div>
+    <div class="crowd" id="crowd"></div>
+  </div>
+
+  <footer id="foot">거원중학교 · 마음온도</footer>
+</div>
+
+<script>
+const SUPABASE_URL  = SCHOOL.supabaseUrl;
+const SUPABASE_ANON = SCHOOL.supabaseKey;
+if(!SCHOOL.ready) SCHOOL.notReady();
+const sb = window.supabase.createClient(SUPABASE_URL || 'https://not-ready.supabase.co', SUPABASE_ANON || 'not-ready');
+const $ = id => document.getElementById(id);
+document.title = '마음온도 — ' + SCHOOL.name;
+$('foot').textContent = SCHOOL.name + ' · 마음온도';
+const GAP_MIN = 20;                  // 한 폰에서 다시 체크인할 수 있는 간격(분)
+const MIN_SHOW = 3;
+
+let G = null, C = null;
+const cm = new URLSearchParams(location.search).get('class');
+if(cm && /^\d+-\d+$/.test(cm)){ [G, C] = cm.split('-').map(Number); }
+else $('pickCard').style.display = 'block';
+const lastKey = () => SCHOOL.key(`hnr_mood_last_${G}-${C}`);
+function talkUrl(){
+  const local = /notice_mood\.html$/.test(location.pathname);      // 원본 이름으로 열었을 때(미리보기)
+  return SCHOOL.link(local ? 'notice_message.html' : 'message.html', G && C ? `class=${G}-${C}` : '');
+}
+$('talk1').href = talkUrl();
+$('faces').innerHTML = [1,2,3,4,5].map(lv=>MOOD.face(lv, 54)).join('');
+
+function readClass(){
+  if(cm) return true;
+  G = Number($('g').value); C = Number($('c').value);
+  if(!G || !C){ alert('학년과 반을 골라 주세요'); return false; }
+  $('talk1').href = talkUrl();
+  return true;
+}
+function minutesLeft(){
+  try{ const t = Number(localStorage.getItem(lastKey())||0); return Math.ceil((t + GAP_MIN*60000 - Date.now())/60000); }catch(e){ return 0; }
+}
+function updateWait(){
+  if(!G || !C){ $('wait').textContent=''; $('go').disabled=false; return; }
+  const m = minutesLeft();
+  $('go').disabled = m > 0;
+  $('wait').textContent = m > 0 ? `체크인했어요. ${m}분 뒤에 다시 할 수 있어요.` : '';
+}
+function checkin(){
+  if(!readClass()) return;
+  if(minutesLeft() > 0){ updateWait(); return; }
+  MOOD.open({ sb, grade:G, cls:C, source:'phone', talkUrl:talkUrl(), autoClose:false,
+    onDone: ()=>{ try{ localStorage.setItem(lastKey(), String(Date.now())); }catch(e){} updateWait(); loadClass(); } });
+}
+async function loadClass(){
+  if(!G || !C) return;
+  const { data, error } = await sb.rpc('mood_today', { p_grade:G, p_class:C });
+  if(error) return;
+  const rows = data || [], n = rows.length;
+  $('sensor').style.display = 'block';
+  $('cls').textContent = ` · ${G}학년 ${C}반`;
+  if(n < MIN_SHOW){
+    $('num').textContent = '--.-'; $('num').style.color = '#9fb3d4';
+    $('meta').innerHTML = `오늘 <b>${n}명</b> 체크인 · ${MIN_SHOW}명이 넘으면 우리 반 마음온도가 나와요`;
+    $('crowd').innerHTML = ''; return;
+  }
+  const deg = MOOD.tempOf(rows.reduce((s,r)=>s+r.level,0)/n);
+  $('num').textContent = deg.toFixed(1); $('num').style.color = MOOD.colorAt(deg);
+  $('meta').innerHTML = `오늘 <b>${n}명</b> 체크인 · 지금 우리 반은 <b>${MOOD.LEVELS[MOOD.levelOfTemp(deg)].key}</b>`;
+  MOOD.crowd($('crowd'), rows, 40);
+}
+if(cm){ updateWait(); loadClass(); }
+$('g').onchange = $('c').oninput = ()=>{ G = Number($('g').value)||null; C = Number($('c').value)||null; $('talk1').href = talkUrl(); updateWait(); loadClass(); };
+</script>
+</body>
+</html>

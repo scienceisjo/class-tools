@@ -47,6 +47,7 @@
 | 영상 틀기 · 생일 · 청소당번 · 1인1역 · 분실물 | |
 
 학생은 전자칠판의 **📮 선생님께 말하기**로 선생님께 쪽지를 보낼 수 있습니다(익명 가능). 쪽지는 개인 계정으로 로그인한 선생님만 읽습니다.
+학생은 **🌡️ 마음온도**도 체크인합니다(전자칠판 [🌡️ 마음 체크인] 또는 내 폰 `mood.html`, 이름 없이). 교실 화면 [🌡️ 마음온도]에 우리 반 마음온도·그래프·표정이 모여 보입니다.
 1인1역 학생에게는 반마다 **🧑‍🎓 학생 도우미 코드**를 줄 수 있습니다. 학생은 학생용 페이지(`student.html`)에서 그 반의 암기 카드·청소당번·1인1역만 고칠 수 있습니다(관리 화면 🙋 1인1역 탭에서 만들고 끔).
 
 ### 🔗 거원중학교 주소 (6단계 A를 쓰실 때)
@@ -199,9 +200,9 @@
 1. SQL Editor에서 **New query**를 하나 더 열고, AI가 준 2부를 붙여 넣어 **Run**합니다.
 
 ✅ 확인: 맨 아래 결과 한 줄이 아래와 같으면 성공입니다.
-**표_21개면_정상 = 21 · 학교 = 거원중학교 · 권한규칙_수 = 63 · 가입코드_1이면_정상 = 1 · 예약_1이면_정상 = 1**
+**표_21개면_정상 = 21 · 학교 = 거원중학교 · 권한규칙_수 = 65 · 가입코드_1이면_정상 = 1 · 예약_1이면_정상 = 1**
 
-- 권한규칙_수가 63보다 적으면 1부가 덜 복사된 것입니다. 1부를 다시 복사해서 실행해 주세요.
+- 권한규칙_수가 65보다 적으면 1부가 덜 복사된 것입니다. 1부를 다시 복사해서 실행해 주세요.
 - 두 부분 모두 여러 번 실행해도 괜찮습니다. 2부를 다시 실행하면 가입 코드가 그 값으로 바뀝니다. 가입 코드는 나중에 관리 화면 ⚙️ 설정에서도 바꿀 수 있습니다.
 
 ### 6단계 · 화면 연결 — A 또는 B
@@ -1009,6 +1010,81 @@ GRANT EXECUTE ON FUNCTION student_delete_memo(int, int, text, text, bigint) TO a
 GRANT EXECUTE ON FUNCTION student_replace_cleaning(int, int, text, text, jsonb) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION student_replace_roles(int, int, text, text, jsonb)    TO anon, authenticated;
 -- ▲▲ 학생 도우미 끝
+
+
+-- ───────────────────────────────────────────────────────────────────
+-- 3-2. 🌡️ 마음온도 — 이름 없이 반·단계·느낌 낱말만
+--    교실 전자칠판이나 내 폰(mood.html)에서 체크인합니다.
+--    넣기·읽기는 아래 함수로만(교실 화면은 표를 직접 못 봄), 선생님은 표를 봄.
+--    단계 1~5 → 마음온도 0~100° (1=꽁꽁 0°, 3=미지근 50°, 5=후끈 100°)
+-- ───────────────────────────────────────────────────────────────────
+-- ▼▼ 마음온도 시작
+CREATE TABLE IF NOT EXISTS mood_checkins (                  -- 🌡️ 마음온도 체크인 (이름 없음)
+  id         bigserial PRIMARY KEY,
+  grade      int  NOT NULL,
+  class_no   int  NOT NULL,
+  level      int  NOT NULL CHECK (level BETWEEN 1 AND 5),
+  feeling    text,
+  source     text NOT NULL DEFAULT 'board' CHECK (source IN ('board', 'phone')),
+  day        date NOT NULL DEFAULT ((now() AT TIME ZONE 'Asia/Seoul')::date),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_mood_class_day ON mood_checkins(grade, class_no, day);
+ALTER TABLE mood_checkins ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mood_staff_read ON mood_checkins;
+DROP POLICY IF EXISTS mood_owner_del  ON mood_checkins;
+CREATE POLICY mood_staff_read ON mood_checkins FOR SELECT USING (is_notice_staff());
+CREATE POLICY mood_owner_del  ON mood_checkins FOR DELETE USING (is_notice_owner());
+REVOKE ALL ON mood_checkins FROM anon;
+GRANT SELECT, DELETE ON mood_checkins TO authenticated;
+GRANT ALL ON mood_checkins TO service_role;
+GRANT USAGE, SELECT ON SEQUENCE mood_checkins_id_seq TO service_role;
+
+-- 체크인 — 'ok' | 'bad' | 'full'(한 반 하루 200번까지)
+CREATE OR REPLACE FUNCTION mood_checkin(p_grade int, p_class int, p_level int, p_feeling text, p_source text)
+RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
+DECLARE v_day date := (now() AT TIME ZONE 'Asia/Seoul')::date;
+BEGIN
+  IF p_grade NOT BETWEEN 1 AND 6 OR p_class NOT BETWEEN 1 AND 40 OR p_level NOT BETWEEN 1 AND 5 THEN RETURN 'bad'; END IF;
+  IF p_feeling IS NOT NULL AND p_feeling NOT IN (
+       '피곤해요','속상해요','걱정돼요','화나요','외로워요','아파요','심심해요','졸려요','괜찮아요',
+       '편안해요','신나요','설레요','뿌듯해요','고마워요') THEN RETURN 'bad'; END IF;
+  IF COALESCE(p_source, 'board') NOT IN ('board', 'phone') THEN RETURN 'bad'; END IF;
+  IF (SELECT count(*) FROM mood_checkins WHERE grade = p_grade AND class_no = p_class AND day = v_day) >= 200 THEN
+    RETURN 'full'; END IF;
+  INSERT INTO mood_checkins (grade, class_no, level, feeling, source, day)
+  VALUES (p_grade, p_class, p_level, p_feeling, COALESCE(p_source, 'board'), v_day);
+  RETURN 'ok';
+END
+$fn$;
+
+-- 오늘 우리 반 (교실 화면 그래프·표정용, 이름 없음)
+CREATE OR REPLACE FUNCTION mood_today(p_grade int, p_class int)
+RETURNS TABLE (level int, feeling text, at timestamptz)
+LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $fn$
+  SELECT m.level, m.feeling, m.created_at FROM mood_checkins m
+   WHERE m.grade = p_grade AND m.class_no = p_class AND m.day = (now() AT TIME ZONE 'Asia/Seoul')::date
+   ORDER BY m.created_at;
+$fn$;
+
+-- 지난 며칠 우리 반 (하루 평균·인원·힘든 친구 수)
+CREATE OR REPLACE FUNCTION mood_days(p_grade int, p_class int, p_days int)
+RETURNS TABLE (day date, n int, avg_level numeric, low int)
+LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $fn$
+  SELECT m.day, count(*)::int, round(avg(m.level), 2), count(*) FILTER (WHERE m.level <= 2)::int
+    FROM mood_checkins m
+   WHERE m.grade = p_grade AND m.class_no = p_class
+     AND m.day > (now() AT TIME ZONE 'Asia/Seoul')::date - LEAST(GREATEST(COALESCE(p_days, 7), 1), 31)
+   GROUP BY m.day ORDER BY m.day;
+$fn$;
+
+REVOKE ALL ON FUNCTION mood_checkin(int, int, int, text, text) FROM public;
+REVOKE ALL ON FUNCTION mood_today(int, int)                    FROM public;
+REVOKE ALL ON FUNCTION mood_days(int, int, int)                FROM public;
+GRANT EXECUTE ON FUNCTION mood_checkin(int, int, int, text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mood_today(int, int)                    TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION mood_days(int, int, int)                TO anon, authenticated;
+-- ▲▲ 마음온도 끝
 
 
 -- ───────────────────────────────────────────────────────────────────
