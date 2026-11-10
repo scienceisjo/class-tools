@@ -1904,11 +1904,31 @@ async function loadLiveTimetable(){
        getComputedStyle($('weekBox')).display!=='none') renderPickedWeek();
   }catch(e){ /* 실패해도 내장표로 계속 동작 */ }
 }
-function ttSource(cls){ return (TT_LIVE && TT_LIVE[cls]) ? TT_LIVE[cls] : TT_BASE[cls]; }
+/* 서버(컴시간) 시간표가 이번 주에 받은 것인가
+   ⚠️ 2026-11 컴시간이 「웹보호」(시간 토큰·요청 제한·암호화)를 걸어 서버에서 못 받게 됐습니다.
+      받기가 멈추면 지난주 표(요일변경·결보강 표시까지)가 그대로 남으므로,
+      이번 주 것이 아니면 쓰지 않고 나이스 시간표(날짜별, 요일변경 반영)를 씁니다. */
+function ttLiveFresh(){
+  if(!TT_LIVE || !ttLiveAt) return false;
+  return new Date(ttLiveAt) >= mondayOf(new Date());
+}
+function ttSource(cls){ return (ttLiveFresh() && TT_LIVE[cls]) ? TT_LIVE[cls] : null; }
+/* 내장 정규표 하루치 — 나이스 과목 이름에 분반(과학A/B)을 붙일 때, 나이스가 통째로 안 될 때 씀 */
+function ttStaticDay(dateObj, cls){
+  const w=dateObj.getDay(); if(w<1||w>5) return null;
+  const t=TT_BASE[cls||CLASS_MODE]; return t ? (t[w-1]||null) : null;
+}
+/* 나이스 과목 → 같은 과목이면 정규표 이름으로 (과학 → 과학B, 국어 → 국어A) */
+function ttRefine(schoolDay, period, neisValue, cls){
+  const b=(ttStaticDay(schoolDay, cls)||[])[period-1];
+  return (neisValue && b && subjMatch(b, neisValue)) ? b : neisValue;
+}
+/* 이번 주 나이스가 하루도 안 왔으면(나이스 장애·방학) 내장표로 */
+function neisWeekEmpty(){ return !!weekTT && weekTT.rows.every(r=>!r || !r.length); }
 
-/* 🔁 그날 바뀐 교시 번호들 — 컴시간에서 결보강으로 바뀐 자리 */
+/* 🔁 그날 바뀐 교시 번호들 — 컴시간에서 결보강으로 바뀐 자리 (이번 주에 받은 자료일 때만) */
 function ttChangedOn(dateObj){
-  if(!CLASS_MODE || !TT_CHG || !TT_CHG[CLASS_MODE]) return [];
+  if(!CLASS_MODE || !TT_CHG || !TT_CHG[CLASS_MODE] || !ttLiveFresh()) return [];
   const w = schoolDayFor(dateObj).getDay();      // 요일변경일이면 그 요일 기준
   if(w<1 || w>5) return [];
   return TT_CHG[CLASS_MODE][w-1] || [];
@@ -1917,22 +1937,32 @@ function ttChangedOn(dateObj){
 function ttBaseDay(dateObj){
   const w=dateObj.getDay();            // 월=1 … 금=5
   if(w<1||w>5) return null;
-  const t=ttSource(CLASS_MODE);        // 서버 갱신본 우선, 없으면 내장표
+  const t=ttSource(CLASS_MODE);        // 이번 주에 받은 컴시간 표만 (아니면 null → 나이스)
   return t ? (t[w-1]||null) : null;
 }
-function ttSubject(dateObj, period, neisValue){
+function ttSubject(dateObj, period, neisValue){   // dateObj = schoolDayFor 를 거친 기준 요일
   const day=ttBaseDay(dateObj);
   const v=day ? day[period-1] : null;
-  return (v && v.trim()) ? v : neisValue;   // 원본 우선, 없으면 나이스
+  if(v && v.trim()) return v;               // 컴시간(이번 주) 우선
+  return ttRefine(dateObj, period, neisValue);   // 없으면 나이스(날짜별) + 분반 이름
+}
+/* 하루 교시별 과목 { 1:'수학', … } — 교실 오늘 시간표와 ⏭ 다음 시간 띠가 같이 씀
+   이번 주 컴시간 표 → 나이스(그날 실제 시간표, 요일변경 반영) → 나이스가 통째로 안 되면 내장표 */
+function dayPeriods(dateObj, neisRows){
+  const sd=schoolDayFor(dateObj), periods={};
+  (neisRows||[]).forEach(r=>{ const p=Number(r.PERIO); if(p && !periods[p]) periods[p]=ttSubject(sd, p, r.ITRT_CNTNT||''); });
+  const baseDay = ttBaseDay(sd) || (!Object.keys(periods).length && neisWeekEmpty() ? ttStaticDay(sd) : null);
+  if(baseDay) baseDay.forEach((s,i)=>{ if(s && s.trim()) periods[i+1]=s; });
+  return periods;
 }
 
 /* NEIS 시간표 하루치 가져오기
    ⚠️ NEIS 버그: 한 번에 5행만 주고 pIndex 페이징도 안 먹음(같은 5행 반복).
       그래서 전체 건수(list_total_count)가 5보다 크면 6·7교시는 PERIO 를 지정해 따로 조회. */
-async function fetchDayTT(dateObj){
+async function fetchDayTT(dateObj, grade, classNo){
   const base=`https://open.neis.go.kr/hub/misTimetable?Type=json&pIndex=1&pSize=20`
     +`&ATPT_OFCDC_SC_CODE=${CFG.neis_atpt}&SD_SCHUL_CODE=${CFG.neis_school}`
-    +`&GRADE=${CM_GRADE}&CLASS_NM=${CM_CLASS}&ALL_TI_YMD=${ymd(dateObj)}`;
+    +`&GRADE=${grade||CM_GRADE}&CLASS_NM=${classNo||CM_CLASS}&ALL_TI_YMD=${ymd(dateObj)}`;
   try{
     const j = await (await fetch(base)).json();
     const rows = j?.misTimetable?.[1]?.row || [];
@@ -1967,13 +1997,15 @@ async function loadWeekTT(){
     const res = await Promise.all(days.map(d => fetchDayTT(d)));
     weekTT = {mon, days, rows:res};
   }catch(e){ weekTT=null; }
-  renderWeekTT();
+  renderTTC();      // 오늘 시간표·주간 표·⏭ 띠를 같이 다시 그림
 }
 function renderWeekTT(){
   const box=$('weekBox'); if(!box||!CLASS_MODE) return;
   if(!weekTT){ box.innerHTML='<div class="empty">주간 시간표를 불러오지 못했습니다</div>'; return; }
   const {days, rows} = weekTT;
-  const basePeriods = days.map(d=>(ttBaseDay(schoolDayFor(d))||[]).length);
+  const neisDown = neisWeekEmpty();      // 나이스가 하루도 안 오면 내장표로
+  const dayBase = d => ttBaseDay(schoolDayFor(d)) || (neisDown ? ttStaticDay(schoolDayFor(d)) : null);
+  const basePeriods = days.map(d=>(dayBase(d)||[]).length);
   const maxP = Math.max(1, ...rows.flat().map(r=>Number(r.PERIO)||0), ...basePeriods);
   const todayY = ymd(new Date());
   const DW=['월','화','수','목','금'];
@@ -1986,6 +2018,7 @@ function renderWeekTT(){
     const isToday = ymd(d)===todayY;
     const cell = (rows[i]||[]).find(r=>Number(r.PERIO)===p);
     let subj = ttSubject(schoolDayFor(d), p, cell ? cell.ITRT_CNTNT : '');
+    if(!subj && neisDown) subj = (dayBase(d)||[])[p-1] || '';
     let cls = isToday?'tdcol':'';
     if(isToday && nowP===p) cls += ' now';
     if(ttChangedOn(d).includes(p)) cls += ' chg';
@@ -2055,16 +2088,43 @@ function buildClassPicker(){
   const saved = localStorage.getItem(SCHOOL.key('board_pick'));
   if(saved && keys.includes(saved)) sel.value = saved;
 }
+/* 중앙 보드에서 고른 반의 이번 주 나이스 시간표 (반마다 한 번만 받아 둠) */
+const pickedWeek = {};      // { '2-3': {mon:'20261109', days:[…], rows:[…5일]} }
+async function loadPickedWeek(cls){
+  const mon=mondayOf(new Date()), key=ymd(mon);
+  if(pickedWeek[cls] && pickedWeek[cls].mon===key) return;
+  pickedWeek[cls] = {mon:key, pending:true};
+  const [g,c] = cls.split('-').map(Number);
+  const days=[0,1,2,3,4].map(i=>{ const d=new Date(mon); d.setDate(d.getDate()+i); return d; });
+  const rows=await Promise.all(days.map(d=>fetchDayTT(d, g, c)));
+  pickedWeek[cls] = {mon:key, days, rows};
+  const sel=$('ttPick');
+  if(sel && sel.value===cls && $('weekBox').style.display!=='none') renderPickedWeek();
+}
 function renderPickedWeek(){
   const sel=$('ttPick'); if(!sel) return;
   const cls=sel.value; localStorage.setItem(SCHOOL.key('board_pick'), cls);
-  const wk=ttSource(cls); const box=$('weekBox');
+  const box=$('weekBox');
+  // 이번 주 컴시간 표 → 나이스(날짜별) → 내장 정규표
+  let wk=ttSource(cls), dated=null;
+  if(!wk){
+    const pw=pickedWeek[cls];
+    if(!pw || pw.mon!==ymd(mondayOf(new Date()))) loadPickedWeek(cls);
+    if(pw && pw.rows && pw.rows.some(r=>r.length)){
+      dated = pw.days;
+      wk = pw.rows.map((r,i)=>{
+        const arr=[];
+        r.forEach(x=>{ const p=Number(x.PERIO); if(p) arr[p-1]=ttRefine(schoolDayFor(pw.days[i]), p, x.ITRT_CNTNT||'', cls); });
+        return Array.from(arr, v=>v||'');
+      });
+    } else wk = TT_BASE[cls];
+  }
   if(!wk){ box.innerHTML='<div class="empty">시간표가 없습니다</div>'; return; }
   const DW=['월','화','수','목','금'];
   const todayIdx=new Date().getDay()-1;      // 월=0 … 금=4
-  const maxP=Math.max(...wk.map(d=>d.length));
+  const maxP=Math.max(1, ...wk.map(d=>(d||[]).length));
   let html='<table><thead><tr><th></th>'
-    + DW.map((d,i)=>`<th class="${i===todayIdx?'today':''}">${d}</th>`).join('')
+    + DW.map((d,i)=>`<th class="${i===todayIdx?'today':''}">${d}${dated?`<br>${dated[i].getMonth()+1}/${dated[i].getDate()}`:''}</th>`).join('')
     + '</tr></thead><tbody>';
   for(let p=1;p<=maxP;p++){
     html+=`<tr><td class="pn">${p}</td>`;
@@ -2148,11 +2208,8 @@ function renderTTC(){
       swBadge.textContent='🔁 오늘은 '+sw.label; swBadge.style.display='inline-flex';
     } else if(swBadge) swBadge.style.display='none';
     const myChg=ttcRows.filter(_mine), myLoc=locRows.filter(_mine);
-    const periods={};
-    (neisTT||[]).forEach(r=>{ const p=Number(r.PERIO); if(p && !periods[p]) periods[p]=r.ITRT_CNTNT||''; });
-    // 학교 원본 시간표(컴시간) 우선 — 분반(과학A/B 등)까지 정확
-    const baseDay = ttBaseDay(schoolDayFor(new Date()));
-    if(baseDay) baseDay.forEach((s,i)=>{ if(s && s.trim()) periods[i+1]=s; });
+    // 이번 주 컴시간 표 → 나이스(오늘 실제 시간표) → 나이스가 안 되면 내장표
+    const periods=dayPeriods(new Date(), neisTT);
     const pNums=Object.keys(periods).map(Number).sort((a,b)=>a-b);
     if(!pNums.length && !myChg.length && !myLoc.length){
       box.innerHTML='<div class="empty">오늘 시간표 정보가 없습니다</div>'; return; }
@@ -2230,14 +2287,8 @@ function subjMatch(a, b){
   if(!x || !y) return false;
   return x === y || (x.length >= 2 && y.length >= 2 && (x.startsWith(y) || y.startsWith(x)));
 }
-/* 오늘 이 반의 교시별 과목 (renderTTC 와 같은 순서: 컴시간 원본 → 나이스) */
-function todaySubjects(){
-  const periods = {};
-  (neisTT||[]).forEach(r=>{ const p=Number(r.PERIO); if(p && !periods[p]) periods[p]=r.ITRT_CNTNT||''; });
-  const baseDay = ttBaseDay(schoolDayFor(nowDate()));
-  if(baseDay) baseDay.forEach((s,i)=>{ if(s && s.trim()) periods[i+1]=s; });
-  return periods;
-}
+/* 오늘 이 반의 교시별 과목 (renderTTC 와 같은 dayPeriods) */
+function todaySubjects(){ return dayPeriods(nowDate(), neisTT); }
 function nextPeriodInfo(){
   if(!CLASS_MODE) return null;
   const now = nowDate(), dow = now.getDay();
@@ -2529,7 +2580,7 @@ if(!DEMO){
   setInterval(loadSchoolSched, 21600000);  // 학사일정 6시간마다
   setInterval(()=>{ loadWeather(); loadAir(); }, 1800000); // 날씨·미세먼지 30분마다
   // 자정 지나면 날짜 바뀌므로 급식/일정/디데이/평가/시간표 갱신
-  setInterval(()=>{ const d=new Date(); if(d.getHours()===0 && d.getMinutes()<3){ loadMeal(); loadSchedules(); loadSchoolSched(); loadTTC(); loadLocations(); loadTimetableNEIS(); loadDdays(); loadAssessments(); renderBirthdays._auto=false; loadBirthdays(); } }, 120000);
+  setInterval(()=>{ const d=new Date(); if(d.getHours()===0 && d.getMinutes()<3){ loadMeal(); loadSchedules(); loadSchoolSched(); loadTTC(); loadLocations(); loadTimetableNEIS(); loadWeekTT(); loadLiveTimetable(); loadDdays(); loadAssessments(); renderBirthdays._auto=false; loadBirthdays(); } }, 120000);
 }
 </script>
 
